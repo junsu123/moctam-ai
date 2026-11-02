@@ -1,0 +1,10 @@
+{
+  "_ghi_chu": "Facebook đổi giao diện thường xuyên. Nếu đăng bài báo lỗi 'không tìm thấy ô viết bài', thêm chữ hiển thị mới vào các danh sách dưới đây (không phân biệt hoa thường, so khớp một phần).",
+  "group_composer": ["Viết gì đó", "Bạn viết gì đi", "Write something", "Tạo bài viết công khai", "Create a public post"],
+  "profile_composer": ["Bạn đang nghĩ gì", "What's on your mind"],
+  "post_button": ["Đăng", "Post"],
+  "photo_button": ["Ảnh/video", "Photo/video"],
+  "discard_button": ["Bỏ", "Discard", "Rời khỏi", "Leave"],
+  "blocked_url_parts": ["checkpoint", "/login", "two_step_verification", "disabled"],
+  "blocked_texts": ["Tài khoản của bạn đã bị khóa", "Your account has been locked", "Chúng tôi đã tạm khóa", "We suspended your account", "Bạn tạm thời bị chặn", "You're Temporarily Blocked"]
+}

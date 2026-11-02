@@ -1,0 +1,18 @@
+# Dữ liệu chạy thật: cơ sở dữ liệu, ảnh chụp, ảnh sản phẩm
+# và HỒ SƠ CHROME CHỨA PHIÊN ĐĂNG NHẬP FACEBOOK — tuyệt đối không đẩy lên git
+data/
+
+# Khóa API và cấu hình riêng
+.env
+
+# Môi trường Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Hệ điều hành / trình soạn thảo
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

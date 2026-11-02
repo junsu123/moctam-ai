@@ -1,0 +1,1148 @@
+<meta charset="utf-8">
+<title>Phòng Kinh doanh AI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Bố cục: thanh điều hướng trái + vùng làm việc; văn phòng 3D là sân khấu chung cho "Văn phòng" và "Phòng họp" */
+:root{
+  --bg:#ecefe6; --panel:#fafbf6; --panel-2:#e2e7da; --ink:#1b2620; --muted:#5a695e; --line:#cfd7c8;
+  --accent:#3b7749; --accent-ink:#ffffff; --accent-soft:#d5e7d3; --honey:#a86f0e; --honey-soft:#f6e6c4;
+  --danger:#b2452c; --danger-soft:#f4dbd3; --stage:#dbe5d3;
+  --f-display:"Baloo 2","Be Vietnam Pro",system-ui,sans-serif;
+  --f-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:12px; --shadow:0 1px 2px rgba(20,40,25,.06),0 6px 20px rgba(20,40,25,.06);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1511; --panel:#171f1a; --panel-2:#212b24; --ink:#e5ebe3; --muted:#98a699; --line:#2c3930;
+  --accent:#7bbd88; --accent-ink:#0f1511; --accent-soft:#22382a; --honey:#e3ab4a; --honey-soft:#3a2f1a;
+  --danger:#e57f63; --danger-soft:#3d231c; --stage:#18221c; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1511; --panel:#171f1a; --panel-2:#212b24; --ink:#e5ebe3; --muted:#98a699; --line:#2c3930;
+  --accent:#7bbd88; --accent-ink:#0f1511; --accent-soft:#22382a; --honey:#e3ab4a; --honey-soft:#3a2f1a;
+  --danger:#e57f63; --danger-soft:#3d231c; --stage:#18221c; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body);margin:0}
+*{box-sizing:border-box}
+h1,h2,h3{font-family:var(--f-display);line-height:1.15;margin:0;text-wrap:balance}
+h1{font-size:28px;font-weight:800}
+h2{font-size:20px;font-weight:700}
+h3{font-size:16px;font-weight:700}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent);text-underline-offset:2px}
+a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
+a.btn.primary{color:var(--accent-ink)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.num{font-variant-numeric:tabular-nums}
+
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);height:100%}
+.side{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:18px;
+  padding-block:20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:16px;overflow-y:auto}
+.brand{display:flex;gap:10px;align-items:center}
+.brand-mark{width:38px;height:38px;border-radius:50% 50% 50% 8px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink);
+  font:800 18px var(--f-display)}
+.brand b{font:700 16px/1.1 var(--f-display);display:block}
+.brand span{font-size:12px;color:var(--muted)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{display:flex;gap:10px;align-items:center;border:0;background:none;padding:9px 10px;border-radius:9px;text-align:left;color:var(--muted);font-weight:500}
+.nav button svg{width:18px;height:18px;flex:none}
+.nav button:hover{background:var(--panel-2);color:var(--ink)}
+.nav button.on{background:var(--accent-soft);color:var(--ink);font-weight:600}
+.nav .badge{margin-left:auto;background:var(--honey);color:var(--panel);font-size:11px;font-weight:700;border-radius:10px;padding:0 7px}
+.mode{margin-top:auto;font-size:12px;border:1px dashed var(--line);border-radius:10px;padding:10px;color:var(--muted)}
+.mode b{color:var(--ink)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:6px;vertical-align:middle}
+.dot.live{background:var(--accent)} .dot.sim{background:var(--honey)}
+
+.main{overflow-y:auto;min-width:0;padding-block:22px 40px;padding-left:max(16px,2.2vw);padding-right:max(16px,env(safe-area-inset-right,0px))}
+.view{display:flex;flex-direction:column;gap:16px;max-width:1500px;margin:0 auto}
+.vh{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.vh p{color:var(--muted);margin-top:4px;max-width:70ch}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:8px 13px;font-weight:600;font-size:13.5px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted);padding:6px 8px}
+.btn.ghost:hover{color:var(--ink);background:var(--panel-2)}
+.btn.sm{padding:5px 9px;font-size:12.5px;border-radius:8px}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:default}
+.banner{background:var(--honey-soft);border:1px solid var(--honey);border-radius:var(--r);padding:10px 14px;font-size:13px}
+
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.sales{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.sale-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.sale-stats div{background:var(--panel-2);border-radius:9px;padding:6px 9px}
+.sale-stats b{font:800 18px var(--f-display);display:block;font-variant-numeric:tabular-nums}
+.sale-stats span{font-size:11.5px;color:var(--muted)}
+.recent{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:12.5px}
+.recent li{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.err{font-size:12px;color:var(--danger);background:var(--danger-soft);border-radius:8px;padding:6px 9px;word-break:break-word}
+details.limits summary{cursor:pointer;font-weight:600;font-size:13px}
+details.limits .grid2{margin-top:8px}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap}
+.thumbs figure{margin:0;position:relative}
+.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block}
+.thumbs button{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);background:var(--panel);font-size:12px;line-height:1;padding:0}
+.member-chips{display:flex;gap:4px;flex-wrap:wrap}
+.member-chips button{border:1px solid var(--line);background:none;border-radius:20px;font-size:11.5px;padding:2px 8px;color:var(--muted)}
+.member-chips button.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);font-weight:600}
+.alert{background:var(--danger-soft);border:1px solid var(--danger);border-radius:var(--r);padding:10px 14px;font-size:13px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.kpi .v{font:800 26px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.kpi .l{font-size:12px;color:var(--muted);margin-top:4px}
+.kpi.warn .v{color:var(--honey)}
+
+.split{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.stage-slot{min-width:0}
+.stage{position:relative;width:100%;height:min(66vh,620px);min-height:360px;border-radius:16px;overflow:hidden;background:var(--stage);border:1px solid var(--line)}
+.stage canvas{display:block;width:100%;height:100%}
+.overlay{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.tag{position:absolute;transform:translate(-50%,-100%);font:700 12px var(--f-display);background:var(--panel);color:var(--ink);padding:1px 8px;border-radius:8px;
+  border:1px solid var(--line);white-space:nowrap}
+.bubble{position:absolute;z-index:2;transform:translate(-50%,-100%);max-width:260px;background:#fff;color:#1b2620;border:2px solid #1b2620;border-radius:14px;padding:8px 11px;
+  font-size:12.5px;line-height:1.4;box-shadow:0 4px 0 rgba(0,0,0,.15);transition:opacity .25s}
+.bubble:after{content:"";position:absolute;left:50%;bottom:-9px;width:14px;height:14px;background:#fff;border-right:2px solid #1b2620;border-bottom:2px solid #1b2620;transform:translateX(-50%) rotate(45deg)}
+.bubble.mini{font-size:11.5px;padding:4px 9px;border-width:1.5px;max-width:190px;opacity:.92}
+.bubble.mini:after{width:10px;height:10px;bottom:-6px;border-width:1.5px}
+.bubble b{font-family:var(--f-display)}
+.stage-hint{position:absolute;left:12px;bottom:10px;font-size:11.5px;color:var(--muted);background:var(--panel);padding:2px 8px;border-radius:8px;opacity:.85}
+.cam{position:absolute;right:10px;top:10px;display:flex;gap:6px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sidecol{display:flex;flex-direction:column;gap:12px;min-width:0}
+.team{display:flex;flex-direction:column;gap:4px}
+.member{display:flex;gap:10px;align-items:center;padding:7px 6px;border-radius:9px;border:0;background:none;text-align:left;width:100%}
+.member:hover{background:var(--panel-2)}
+.ava{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font:800 15px var(--f-display);color:#fff;border:2px solid var(--panel)}
+.member .who{min-width:0;flex:1}
+.member .who b{display:block;font-size:13.5px}
+.member .who span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--panel-2);color:var(--muted);white-space:nowrap}
+.chip.working{background:var(--honey-soft);color:var(--honey)}
+.chip.meeting,.chip.talking{background:var(--accent-soft);color:var(--accent)}
+.chip.ok{background:var(--accent-soft);color:var(--accent)}
+.chip.warn{background:var(--honey-soft);color:var(--honey)}
+.chip.bad{background:var(--danger-soft);color:var(--danger)}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;max-height:300px;overflow-y:auto}
+.feed li{display:grid;grid-template-columns:auto 1fr;gap:8px;font-size:12.5px}
+.feed .ava{width:22px;height:22px;font-size:11px;border:0}
+.feed time{color:var(--muted);font-size:11px;display:block}
+
+/* Phòng họp */
+.transcript{display:flex;flex-direction:column;gap:10px;max-height:min(52vh,520px);overflow-y:auto;padding-right:4px}
+.msg{display:grid;grid-template-columns:30px 1fr;gap:8px}
+.msg .ava{width:30px;height:30px;font-size:13px;border:0}
+.msg .body{background:var(--panel-2);border-radius:4px 12px 12px 12px;padding:7px 10px;min-width:0}
+.msg .body header{display:flex;gap:6px;align-items:center;font-size:12px;margin-bottom:2px;flex-wrap:wrap}
+.msg .body header b{font-family:var(--f-display);font-size:13.5px}
+.msg.boss .body{background:var(--honey-soft)}
+.phase{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.empty{color:var(--muted);font-size:13px;padding:14px;text-align:center;border:1px dashed var(--line);border-radius:10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+input[type=text],input[type=number],input[type=url],input[type=time],select,textarea{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:80px;line-height:1.5}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:var(--muted);min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.history{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.mtg{cursor:pointer}
+.mtg:hover{border-color:var(--accent)}
+.items{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;font-size:13px}
+
+/* Bài đăng */
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+.col{background:var(--panel-2);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.col>header{display:flex;justify-content:space-between;align-items:center;padding:2px 4px}
+.col>header b{font-family:var(--f-display);font-size:15px}
+.post{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.post h4{margin:0;font-size:13.5px;line-height:1.35}
+.post .meta{display:flex;gap:5px;flex-wrap:wrap}
+.post pre{white-space:pre-wrap;word-break:break-word;font:13px/1.5 var(--f-body);margin:0;max-height:140px;overflow:hidden;position:relative}
+.post pre.open{max-height:none}
+.post .tags{font-size:12px;color:var(--accent)}
+.post .idea{font-size:12px;color:var(--muted);border-left:3px solid var(--honey);padding-left:8px}
+.post .acts{display:flex;gap:6px;flex-wrap:wrap}
+.inline-form{display:flex;flex-direction:column;gap:6px;background:var(--panel-2);padding:8px;border-radius:9px}
+
+/* Bảng */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;background:var(--panel-2)}
+tr:last-child td{border-bottom:0}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover td{background:var(--panel-2)}
+tbody tr.sel td{background:var(--accent-soft)}
+.pipe{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.pipe div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.pipe b{font:800 22px var(--f-display);display:block}
+.pipe span{font-size:12px;color:var(--muted)}
+.score{font-weight:700;font-variant-numeric:tabular-nums}
+.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.prod .cat{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12.5px}
+.kv dt{color:var(--muted)} .kv dd{margin:0}
+
+.drawer{position:fixed;right:0;top:0;bottom:0;width:min(380px,100%);background:var(--panel);border-left:1px solid var(--line);box-shadow:var(--shadow);z-index:30;
+  padding:max(20px,env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) 20px 18px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-weight:600;z-index:40;font-size:13px;max-width:calc(100% - 32px)}
+.tasks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.tasks label{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.tasks input{margin-top:3px}
+.tasks .done{text-decoration:line-through;color:var(--muted)}
+.note{font-size:12.5px;color:var(--muted);background:var(--panel-2);border-radius:9px;padding:10px 12px}
+.note b{color:var(--ink)}
+
+@media (max-width:1180px){.split{grid-template-columns:minmax(0,1fr)}.board{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:20;flex-direction:row;padding-block:6px calc(6px + env(safe-area-inset-bottom,0px));
+    padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));border-right:0;border-top:1px solid var(--line);overflow:visible}
+  .brand,.mode{display:none}
+  .nav{flex-direction:row;justify-content:space-between;width:100%}
+  .nav button{flex-direction:column;gap:2px;font-size:10px;padding:5px 2px;flex:1;align-items:center}
+  .nav .badge{display:none}
+  .main{padding-bottom:90px;padding-left:max(16px,env(safe-area-inset-left,0px))}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .board,.grid2,.grid3{grid-template-columns:minmax(0,1fr)}
+  .grid3>*{grid-column:auto!important}
+  .pipe{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .stage{height:52vh;min-height:300px}
+  h1{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="brand-mark">T</div><div><b id="coName">Xưởng Trà &amp; Bột</b><span>Phòng Kinh doanh AI</span></div></div>
+    <nav class="nav" id="nav">
+      <button data-v="office"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Văn phòng</button>
+      <button data-v="meeting"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="3.5" r="1.5"/><circle cx="12" cy="20.5" r="1.5"/><circle cx="3.5" cy="12" r="1.5"/><circle cx="20.5" cy="12" r="1.5"/></svg>Phòng họp<span class="badge" id="liveBadge" hidden>LIVE</span></button>
+      <button data-v="posts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Bài đăng<span class="badge" id="draftBadge" hidden></span></button>
+      <button data-v="sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M8 9.5l2.5 2.5L16 7"/></svg>Nhân viên sale<span class="badge" id="saleBadge" hidden>!</span></button>
+      <button data-v="groups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 2 6 5.5"/></svg>Hội nhóm</button>
+      <button data-v="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>Khách hàng</button>
+      <button data-v="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8l8-4 8 4v9l-8 4-8-4zM4 8l8 4 8-4M12 12v9"/></svg>Sản phẩm</button>
+      <button data-v="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Cài đặt</button>
+    </nav>
+    <div class="mode" id="modeBox"><span class="dot"></span>Đang kết nối…</div>
+  </aside>
+
+  <main class="main">
+    <!-- VĂN PHÒNG -->
+    <section class="view" id="v-office">
+      <div class="banner" id="demoBanner" hidden>Bạn đang xem <b>bản xem trước với dữ liệu mẫu</b>. Mọi thao tác đều chạy được nhưng không lưu lại. Chạy backend Python (hướng dẫn trong README) để dùng thật.</div>
+      <div class="vh">
+        <div><h1>Văn phòng</h1><p>Đội 5 nhân viên AI đang làm việc. Bấm vào một nhân vật để xem việc của họ.</p></div>
+        <div class="actions">
+          <button class="btn" id="btnDaily">Giao việc hằng ngày</button>
+          <button class="btn primary" id="btnCall">Triệu tập họp</button>
+        </div>
+      </div>
+      <div class="alert" id="saleAlert" hidden><span id="saleAlertTxt"></span><a class="btn sm" href="#sales">Xử lý</a></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="split">
+        <div class="stage-slot" id="slot-office"></div>
+        <div class="sidecol">
+          <div class="card"><div class="card-h"><h3>Đội ngũ</h3><span class="small muted" id="clock"></span></div><div class="team" id="team"></div></div>
+          <div class="card"><h3>Nhật ký hoạt động</h3><ol class="feed" id="feed"></ol></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHÒNG HỌP -->
+    <section class="view" id="v-meeting" hidden>
+      <div class="vh">
+        <div><h1>Phòng họp</h1><p>Mỗi sáng các agent họp giao ban: báo cáo số liệu, tranh luận một vấn đề, rồi trưởng phòng chốt việc. Sếp có thể chen vào phát biểu bất cứ lúc nào.</p></div>
+      </div>
+      <div class="split">
+        <div class="stage-slot" id="slot-meeting"></div>
+        <div class="sidecol">
+          <div class="card" id="startCard">
+            <h3>Mở cuộc họp mới</h3>
+            <label class="f" for="topicSel">Chủ đề tranh luận
+              <select id="topicSel"></select></label>
+            <label class="f" for="topicCustom">Hoặc sếp tự đặt chủ đề
+              <input type="text" id="topicCustom" placeholder="VD: Có nên làm combo quà Tết cho khách sỉ?"></label>
+            <button class="btn primary" id="btnStart">Bắt đầu họp</button>
+          </div>
+          <div class="card">
+            <div class="card-h"><h3 id="mTitle">Biên bản</h3><span class="chip" id="mState">—</span></div>
+            <p class="small muted" id="mTopic"></p>
+            <div class="transcript" id="transcript"><div class="empty">Chưa có cuộc họp nào. Bấm "Bắt đầu họp" để triệu tập.</div></div>
+            <form class="row" id="bossForm">
+              <input type="text" class="grow" id="bossText" placeholder="Sếp phát biểu…" aria-label="Sếp phát biểu">
+              <button class="btn primary" type="submit">Gửi</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Việc được giao</h3><ul class="tasks" id="taskList"></ul></div>
+        <div class="card"><h3>Các cuộc họp trước</h3><div class="sidecol" id="history"></div></div>
+      </div>
+    </section>
+
+    <!-- BÀI ĐĂNG -->
+    <section class="view" id="v-posts" hidden>
+      <div class="vh">
+        <div><h1>Bài đăng</h1><p>Lan viết bài, sếp duyệt, Tuấn xếp lịch theo nhóm và nick. Đến giờ, nhân viên sale AI tự mở Chrome của nick mình và đăng. Bài Fanpage đăng qua API chính thức.</p></div>
+        <div class="actions"><button class="btn" id="btnPlan">Tuấn xếp lịch đăng nhóm</button></div>
+      </div>
+      <form class="card" id="genForm">
+        <h3>Giao Lan viết bài</h3>
+        <div class="grid3">
+          <label class="f" for="gCount">Số bài<input type="number" id="gCount" min="1" max="10" value="3"></label>
+          <label class="f" for="gProduct">Sản phẩm<select id="gProduct"></select></label>
+          <label class="f" for="gTarget">Đăng ở đâu<select id="gTarget"><option value="group">Hội nhóm</option><option value="profile">Trang cá nhân</option><option value="page">Fanpage</option></select></label>
+          <label class="f" for="gAngle">Góc tiếp cận<select id="gAngle"><option value="">Lan tự chọn</option><option value="nguon_hang">Nguồn hàng tận xưởng</option><option value="loi_nhuan">Biên lợi nhuận</option><option value="livestream">Dễ livestream</option><option value="ads">Dễ chạy quảng cáo</option><option value="oem">In nhãn riêng (OEM)</option><option value="cau_chuyen">Câu chuyện xưởng</option></select></label>
+          <label class="f" for="gNote" style="grid-column:span 2">Dặn thêm<input type="text" id="gNote" placeholder="VD: nhấn mạnh có video thật, sắp vào mùa lạnh"></label>
+        </div>
+        <div><button class="btn primary" type="submit" id="gBtn">Viết bài</button></div>
+      </form>
+      <div class="board" id="board"></div>
+    </section>
+
+    <!-- NHÂN VIÊN SALE -->
+    <section class="view" id="v-sales" hidden>
+      <div class="vh"><div><h1>Nhân viên sale</h1><p>Mỗi sale AI giữ một tài khoản Facebook trong một hồ sơ Chrome riêng trên máy đang chạy phần mềm. Sếp đăng nhập một lần, sau đó sale tự đăng bài vào nhóm và trang cá nhân theo lịch Tuấn xếp.</p></div></div>
+      <div class="note"><b>Bắt đầu với một nick mới</b>
+        <ol class="steps" style="margin-top:6px">
+          <li>Tuyển sale ở cuối trang, đặt tên nick tương ứng.</li>
+          <li>Bấm <b>Mở Chrome</b>: một cửa sổ Chrome riêng của nick hiện lên trên máy này. Đăng nhập Facebook, vào sẵn các nhóm cần đăng, rồi đóng cửa sổ. Phiên đăng nhập được giữ lại.</li>
+          <li>Vào <b>Hội nhóm</b>, đánh dấu nick nào đã là thành viên nhóm nào.</li>
+          <li>Ở <b>Bài đăng</b>, bấm <b>Đăng thử</b> một bài: sale điền nội dung nhưng không bấm Đăng, kèm ảnh chụp để sếp kiểm tra. Ổn rồi thì để sale tự đăng theo lịch.</li>
+        </ol>
+        <p style="margin-top:6px">Gặp checkpoint hoặc bị chặn tạm thời, sale tự dừng nick đó và trả bài về hàng đợi để sếp xử lý. Facebook không khuyến khích đăng tự động, nên giữ giới hạn bài/ngày vừa phải.</p></div>
+      <div class="sales" id="salesGrid"></div>
+      <form class="card" id="saleForm">
+        <h3>Tuyển nhân viên sale</h3>
+        <div class="grid3">
+          <label class="f" for="saName">Tên sale<input type="text" id="saName" required placeholder="VD: Linh"></label>
+          <label class="f" for="saFb">Tên nick Facebook<input type="text" id="saFb" placeholder="VD: Linh Nguyễn (nick 2)"></label>
+          <div style="align-self:end"><button class="btn primary" type="submit">Tuyển sale</button></div>
+        </div>
+      </form>
+    </section>
+
+    <!-- HỘI NHÓM -->
+    <section class="view" id="v-groups" hidden>
+      <div class="vh"><div><h1>Hội nhóm</h1><p>Danh sách nhóm Tuấn theo dõi. Ghi rõ luật nhóm và số ngày giãn cách để không bị báo spam hay chặn nick. Ở cột "Nick đã vào nhóm", bấm tên nick để đánh dấu; nhóm chưa đánh dấu nick nào thì coi như mọi nick đều đã vào.</p></div></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Nhóm</th><th>Chủ đề</th><th class="num">Thành viên</th><th>Luật nhóm</th><th>Giãn cách</th><th>Đăng gần nhất</th><th>Trạng thái</th><th class="num">Khách</th><th>Nick đã vào nhóm</th><th></th></tr></thead><tbody id="groupRows"></tbody></table></div>
+      <form class="card" id="groupForm">
+        <h3>Thêm nhóm</h3>
+        <div class="grid3">
+          <label class="f" for="grName">Tên nhóm<input type="text" id="grName" required></label>
+          <label class="f" for="grUrl">Đường dẫn<input type="url" id="grUrl" placeholder="https://facebook.com/groups/…"></label>
+          <label class="f" for="grTopic">Chủ đề<input type="text" id="grTopic" placeholder="Nguồn hàng, Livestream…"></label>
+          <label class="f" for="grMembers">Thành viên<input type="number" id="grMembers" value="0"></label>
+          <label class="f" for="grDays">Giãn cách (ngày)<input type="number" id="grDays" value="3" min="1"></label>
+          <label class="f" for="grRules">Luật nhóm<input type="text" id="grRules"></label>
+        </div>
+        <div><button class="btn primary" type="submit">Thêm nhóm</button></div>
+      </form>
+    </section>
+
+    <!-- KHÁCH HÀNG -->
+    <section class="view" id="v-leads" hidden>
+      <div class="vh"><div><h1>Khách hàng</h1><p>Khách sỉ tiềm năng thu được từ bài đăng. Hà chấm điểm, soạn tin nhắn và nhắc bám khách sau 2 ngày chưa liên hệ.</p></div></div>
+      <div class="pipe" id="pipe"></div>
+      <div class="split">
+        <div class="sidecol">
+          <div class="tbl-wrap"><table><thead><tr><th>Khách</th><th>Kinh doanh</th><th>Nhu cầu</th><th>Nguồn</th><th class="num">Điểm</th><th>Trạng thái</th></tr></thead><tbody id="leadRows"></tbody></table></div>
+          <form class="card" id="leadForm">
+            <h3>Thêm khách</h3>
+            <div class="grid3">
+              <label class="f" for="lName">Tên / shop<input type="text" id="lName" required></label>
+              <label class="f" for="lContact">Liên hệ<input type="text" id="lContact" placeholder="Link FB, Zalo…"></label>
+              <label class="f" for="lSource">Đến từ nhóm/bài<input type="text" id="lSource"></label>
+              <label class="f" for="lType">Kinh doanh<select id="lType"><option>Livestream</option><option>Chạy quảng cáo</option><option>Sàn TMĐT</option><option>Bán đa kênh</option><option>Cửa hàng</option></select></label>
+              <label class="f" for="lNeed" style="grid-column:span 2">Nhu cầu<input type="text" id="lNeed" placeholder="VD: hỏi giá ngũ cốc 100 hũ"></label>
+            </div>
+            <div><button class="btn primary" type="submit">Thêm khách</button></div>
+          </form>
+        </div>
+        <div class="card" id="leadDetail"><div class="empty">Chọn một khách để Hà soạn tin nhắn.</div></div>
+      </div>
+    </section>
+
+    <!-- SẢN PHẨM -->
+    <section class="view" id="v-products" hidden>
+      <div class="vh"><div><h1>Sản phẩm</h1><p>Thông tin này là "tài liệu bán hàng" các agent dùng khi viết bài và tư vấn. Ghi giá sỉ, giá lẻ gợi ý và điểm mạnh càng rõ, bài càng thuyết phục.</p></div></div>
+      <div class="products" id="prodGrid"></div>
+      <form class="card" id="prodForm">
+        <h3>Thêm sản phẩm</h3>
+        <div class="grid3">
+          <label class="f" for="pName">Tên<input type="text" id="pName" required></label>
+          <label class="f" for="pCat">Dòng<select id="pCat"><option>Trà túi lọc</option><option>Bột ngũ cốc</option><option>Bột thiên nhiên</option><option>Cà phê hòa tan</option><option>Khác</option></select></label>
+          <label class="f" for="pMoq">Nhập tối thiểu<input type="text" id="pMoq" placeholder="50 hộp"></label>
+          <label class="f" for="pWp">Giá sỉ<input type="text" id="pWp"></label>
+          <label class="f" for="pRp">Giá lẻ gợi ý<input type="text" id="pRp"></label>
+          <label class="f" for="pDesc">Mô tả<input type="text" id="pDesc"></label>
+          <label class="f" for="pSell" style="grid-column:1/-1">Điểm mạnh khi bán<input type="text" id="pSell"></label>
+        </div>
+        <div><button class="btn primary" type="submit">Thêm sản phẩm</button></div>
+      </form>
+    </section>
+
+    <!-- CÀI ĐẶT -->
+    <section class="view" id="v-setup" hidden>
+      <div class="vh"><div><h1>Cài đặt</h1><p>Lịch làm việc tự động, giọng văn thương hiệu và kết nối Fanpage.</p></div></div>
+      <div class="grid2">
+        <form class="card" id="setForm">
+          <h3>Công ty &amp; lịch làm việc</h3>
+          <label class="f" for="sName">Tên xưởng<input type="text" id="sName"></label>
+          <label class="f" for="sVoice">Giọng văn thương hiệu<textarea id="sVoice"></textarea></label>
+          <label class="f" for="sContact">Thông tin liên hệ cuối bài<input type="text" id="sContact"></label>
+          <div class="grid2">
+            <label class="f" for="sTime">Giờ họp giao ban<input type="time" id="sTime"></label>
+            <label class="f" for="sPer">Số bài đăng nhóm mỗi ngày<input type="number" id="sPer" min="1" max="20"></label>
+          </div>
+          <label class="row small"><input type="checkbox" id="sAutoM"> Tự động họp mỗi ngày</label>
+          <label class="row small"><input type="checkbox" id="sAutoW"> Sau họp tự giao việc (viết bài, xếp lịch, lọc khách cần bám)</label>
+          <h3>Nhân viên sale đăng bài</h3>
+          <label class="row small"><input type="checkbox" id="sImg"> Đính kèm ảnh sản phẩm khi đăng</label>
+          <label class="row small"><input type="checkbox" id="sHeadless"> Ẩn cửa sổ Chrome khi sale đăng bài (để trống nếu muốn xem sale làm việc)</label>
+          <h3>Fanpage (đăng tự động)</h3>
+          <label class="f" for="sPage">Page ID<input type="text" id="sPage"></label>
+          <label class="f" for="sToken">Page Access Token<input type="text" id="sToken" autocomplete="off"></label>
+          <div><button class="btn primary" type="submit">Lưu cài đặt</button></div>
+        </form>
+        <div class="sidecol">
+          <div class="card"><h3>Bộ não AI</h3><div id="aiBox" class="note"></div></div>
+          <div class="card"><h3>Về việc đăng bài Facebook</h3>
+            <div class="note">Meta đã gỡ API đăng bài vào hội nhóm từ tháng 4/2024 và không cho ứng dụng đăng lên trang cá nhân. Công cụ tự động giả lập người dùng, đặc biệt khi chạy nhiều nick, rất dễ bị checkpoint hoặc khóa tài khoản.<br><br>
+            Vì vậy hệ thống chia việc như sau: <b>Fanpage</b> đăng tự động qua Graph API chính thức. <b>Hội nhóm và trang cá nhân</b>: agent viết bài, chọn nhóm, xếp giờ, tránh trùng nội dung; nhân viên chỉ cần sao chép, bấm đăng và dán link bài lại để hệ thống đo hiệu quả.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="stage" id="stage">
+  <canvas id="cv"></canvas>
+  <div class="overlay" id="overlay"></div>
+  <div class="cam"><button class="btn sm" id="camOffice">Khu làm việc</button><button class="btn sm" id="camMeet">Phòng họp</button></div>
+  <div class="stage-hint">Kéo để xoay · cuộn để phóng to</div>
+</div>
+<aside class="drawer" id="drawer" hidden></aside>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+"use strict";
+/* =========================================================== tiện ích */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtTime = s => s ? s.slice(11, 16) : "";
+const fmtDate = s => s ? `${s.slice(8,10)}/${s.slice(5,7)}` : "—";
+function toast(t){ const el=$("#toast"); el.textContent=t; el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,2600); }
+async function copyText(t){ try{ await navigator.clipboard.writeText(t); toast("Đã sao chép nội dung"); }catch(e){ toast("Không sao chép được, hãy bôi đen và sao chép thủ công"); } }
+const STATUS_TXT = {idle:"Rảnh", working:"Đang làm", meeting:"Đang họp", talking:"Đang nói"};
+const LEAD_ST = {new:"Mới", contacted:"Đã liên hệ", sample:"Đã gửi mẫu", ordered:"Đã nhập hàng", lost:"Không mua"};
+const PHASE = {open:"Mở đầu", report:"Báo cáo", debate:"Tranh luận", close:"Chốt", boss:"Sếp"};
+const TARGET = {group:"Hội nhóm", profile:"Trang cá nhân", page:"Fanpage"};
+
+/* =========================================================== dữ liệu mẫu (khi chưa chạy backend) */
+const AGENT_DEFS = [
+ {id:"minh",name:"Minh",role:"Trưởng phòng Kinh doanh",short:"Điều phối, chủ trì họp, ra quyết định",personality:"Điềm tĩnh, quyết đoán, luôn hỏi 'việc này ra được bao nhiêu khách?'.",look:{skin:"#f2c9a0",shirt:"#2f4b8f",pants:"#26303f",hair:"#2b2018",hairStyle:"side",accessory:"glasses",accent:"#f4b740"},desk:0},
+ {id:"lan",name:"Lan",role:"Chuyên viên Content",short:"Viết bài đăng, tiêu đề, ý tưởng hình ảnh/video",personality:"Sáng tạo, nhiều năng lượng, mê trend TikTok/Reels.",look:{skin:"#f6d2b3",shirt:"#e2557a",pants:"#3a2d4f",hair:"#4a2a1a",hairStyle:"long",accessory:"beret",accent:"#ffd1dc"},desk:1},
+ {id:"tuan",name:"Tuấn",role:"Chuyên viên Hội nhóm",short:"Chọn nhóm, lên lịch đăng, tránh vi phạm luật nhóm",personality:"Thực tế, cẩn thận, thuộc luật từng nhóm, ghét spam.",look:{skin:"#e8b88f",shirt:"#2e9e6b",pants:"#2c3a33",hair:"#1d1d1d",hairStyle:"cap",accessory:"cap",accent:"#bff0d4"},desk:2},
+ {id:"ha",name:"Hà",role:"Chăm sóc & Chốt khách",short:"Phân loại khách, soạn tin nhắn, bám đuổi đơn sỉ",personality:"Ngọt ngào nhưng bám khách rất chặt.",look:{skin:"#f3cfae",shirt:"#f08a24",pants:"#3b3b52",hair:"#2a1810",hairStyle:"bun",accessory:"headset",accent:"#ffe2c2"},desk:3},
+ {id:"khoa",name:"Khoa",role:"Phân tích số liệu",short:"Đo hiệu quả bài, nhóm, sản phẩm; báo cáo hằng ngày",personality:"Ít nói, chỉ tin vào con số.",look:{skin:"#eec29b",shirt:"#7a4fc9",pants:"#25223a",hair:"#3a2a20",hairStyle:"spiky",accessory:"none",accent:"#d9c8ff"},desk:4},
+];
+const AGENT = Object.fromEntries(AGENT_DEFS.map(a => [a.id, a]));
+
+const Demo = (() => {
+  const now = () => { const d=new Date(), p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
+  const today = () => now().slice(0,10);
+  let seq = 100; const id = () => ++seq;
+  const S = {
+    settings:{company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 09xx.xxx.xxx",ai_live:false,model:"mô phỏng"},
+    products:[
+      {id:1,name:"Trà gừng mật ong túi lọc",category:"Trà túi lọc",description:"Gừng sẻ sấy lạnh phối mật ong, hộp 20 túi x 2g.",wholesale_price:"38.000đ/hộp",retail_price:"65.000đ",moq:"50 hộp",selling_points:"Ấm bụng, dễ uống, bán chạy mùa lạnh; in nhãn riêng (OEM) được"},
+      {id:2,name:"Trà hoa đậu biếc - cỏ ngọt",category:"Trà túi lọc",description:"Hoa đậu biếc sấy khô phối cỏ ngọt, hộp 25 túi.",wholesale_price:"35.000đ/hộp",retail_price:"60.000đ",moq:"50 hộp",selling_points:"Màu xanh đẹp lên video, hợp livestream pha chế"},
+      {id:3,name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",category:"Bột ngũ cốc",description:"Hũ 500g, không đường hóa học, rang xay tại xưởng.",wholesale_price:"85.000đ/hũ",retail_price:"150.000đ",moq:"30 hũ",selling_points:"Biên lợi nhuận cao, khách mua lặp lại, hợp bán sàn"},
+      {id:4,name:"Bột cần tây sấy lạnh",category:"Bột thiên nhiên",description:"Túi 100g, sấy lạnh giữ màu xanh tự nhiên.",wholesale_price:"75.000đ/túi",retail_price:"135.000đ",moq:"30 túi",selling_points:"Trend giữ dáng, nội dung TikTok/Reels dễ làm"},
+      {id:5,name:"Bột diếp cá - rau má",category:"Bột thiên nhiên",description:"Túi 100g, nguyên chất 100%.",wholesale_price:"60.000đ/túi",retail_price:"110.000đ",moq:"30 túi",selling_points:"Hợp tệp mẹ bỉm, chị em quan tâm làn da"},
+      {id:6,name:"Cà phê hòa tan 3in1 vị đậm",category:"Cà phê hòa tan",description:"Hộp 18 gói x 17g, vị đậm kiểu phố.",wholesale_price:"42.000đ/hộp",retail_price:"75.000đ",moq:"50 hộp",selling_points:"Giá dễ chốt, combo quà tặng, bán quanh năm"}],
+    groups:[
+      {id:1,name:"Cộng đồng bán hàng online toàn quốc",url:"",topic:"Bán hàng online",members:520000,rules:"Chỉ đăng bài bán hàng vào thứ 3, 5, 7. Không để số điện thoại trong bài.",min_days_between_posts:4,last_posted_at:null,leads_count:2},
+      {id:2,name:"Hội chạy quảng cáo Facebook Ads",url:"",topic:"Quảng cáo",members:180000,rules:"Ưu tiên bài chia sẻ kinh nghiệm.",min_days_between_posts:5,last_posted_at:null,leads_count:1},
+      {id:3,name:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",url:"",topic:"Nguồn hàng",members:310000,rules:"Được đăng nguồn hàng mỗi ngày 1 bài.",min_days_between_posts:2,last_posted_at:null,leads_count:4},
+      {id:4,name:"Hội Livestream bán hàng",url:"",topic:"Livestream",members:95000,rules:"Không spam link. Đăng kèm video/ảnh thật.",min_days_between_posts:3,last_posted_at:null,leads_count:3},
+      {id:5,name:"Bán hàng Shopee - TikTok Shop",url:"",topic:"Sàn TMĐT",members:240000,rules:"Bài nguồn hàng đăng trong chủ đề 'Tìm nguồn hàng'.",min_days_between_posts:3,last_posted_at:null,leads_count:0}],
+    leads:[
+      {id:1,name:"Shop Mộc An",contact:"Zalo 09xx",channel:"Zalo",source:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",business_type:"Sàn TMĐT",need:"Hỏi giá ngũ cốc số lượng 100 hũ, cần hóa đơn",score:90,status:"sample",note:""},
+      {id:2,name:"Thu Trang",contact:"fb.com/thutrang.shop",channel:"Facebook",source:"Hội Livestream bán hàng",business_type:"Livestream",need:"Muốn lấy sỉ trà đậu biếc để live pha chế",score:80,status:"contacted",note:""},
+      {id:3,name:"Anh Quân Ads",contact:"Inbox page",channel:"Facebook",source:"Hội chạy quảng cáo Facebook Ads",business_type:"Chạy quảng cáo",need:"Tìm sản phẩm biên lợi nhuận cao để test ads",score:65,status:"new",note:""},
+      {id:4,name:"Mẹ Bin Store",contact:"fb.com/mebin",channel:"Facebook",source:"Hội mẹ bỉm kinh doanh online",business_type:"Bán đa kênh",need:"Hỏi bột diếp cá có giấy kiểm nghiệm không",score:72,status:"new",note:""}],
+    posts:[], meetings:[], msgs:[], tasks:[], activity:[],
+    status:Object.fromEntries(AGENT_DEFS.map(a=>[a.id,{state:"idle",text:"Đang sẵn sàng"}])), running:null, busy:{},
+    sales:[{id:1,name:"Linh",fb_name:"Linh Nguyễn",login_status:"ok",auto_post:1,max_posts_per_day:5,min_gap_minutes:40,active_from:"08:00",active_to:"22:00",last_error:null},
+      {id:2,name:"Phương",fb_name:"Phương Sỉ Tận Gốc",login_status:"ok",auto_post:1,max_posts_per_day:4,min_gap_minutes:45,active_from:"08:30",active_to:"21:30",last_error:null},
+      {id:3,name:"Nam",fb_name:"Nam Nguồn Hàng",login_status:"not_logged_in",auto_post:1,max_posts_per_day:5,min_gap_minutes:40,active_from:"08:00",active_to:"22:00",last_error:"Chưa đăng nhập Facebook trong hồ sơ này"}],
+  };
+  const log=(a,action,detail)=>S.activity.unshift({id:id(),agent_id:a,action,detail,created_at:now()});
+  const ANG={nguon_hang:"📦 TÌM ĐẦU MỐI {cat} TẬN XƯỞNG — KHÔNG QUA TRUNG GIAN",loi_nhuan:"💰 Nhập {wp}, bán lẻ {rp}: bài toán lời lãi cho shop online",livestream:"🎥 Sản phẩm 'lên hình là bán': {name}",ads:"📈 Tìm sản phẩm test ads chi phí thấp? Thử {name}",oem:"🏷️ Muốn có thương hiệu {cat} riêng? Xưởng nhận in nhãn từ số lượng nhỏ",cau_chuyen:"☕ Một ngày ở xưởng: từ nguyên liệu tới hộp {name}"};
+  function makePost(p, ang, target){
+    const title=ANG[ang].replace("{cat}",p.category.toLowerCase()).replace("{name}",p.name).replace("{wp}",p.wholesale_price).replace("{rp}",p.retail_price);
+    const content=[title,"",`🌿 ${p.name}: ${p.description}`,`✅ Điểm mạnh khi bán: ${p.selling_points}`,`💵 Giá sỉ: ${p.wholesale_price}, giá lẻ gợi ý: ${p.retail_price}`,`📦 Nhập tối thiểu: ${p.moq}`,"","Xưởng hỗ trợ người bán online:","• Ảnh, video thật quay tại xưởng","• Gửi mẫu thử trước khi nhập","• Đóng gói sẵn giao hàng sàn TMĐT","",target==="group"?"Bạn nào quan tâm bình luận \"quan tâm\", mình inbox gửi bảng giá nhé!":`Liên hệ: ${S.settings.contact_info}`].join("\n");
+    return {id:id(),agent_id:"lan",product_id:p.id,product_name:p.name,target_type:target,angle:ang,title,content,hashtags:"#nguonhangsi #taxuong #banhangonline",image_idea:`Ảnh thật ${p.name} trên bàn gỗ trong xưởng, có tay người đang pha, chữ to: GIÁ SỈ TẬN XƯỞNG`,status:"draft",created_at:now(),comments:0,leads:0};
+  }
+  function genPosts(n, pid, target, angle){
+    const prods = pid ? S.products.filter(p=>p.id==pid) : S.products; const out=[];
+    for(let i=0;i<n;i++){ const p = prods[i%prods.length] || prods[0]; const ks=Object.keys(ANG); out.push(makePost(pid?p:S.products[Math.floor(Math.random()*S.products.length)], angle||ks[Math.floor(Math.random()*ks.length)], target)); }
+    S.posts.unshift(...out); log("lan","Viết bài",`Đã viết ${out.length} bài nháp chờ sếp duyệt`); return out;
+  }
+  genPosts(6,null,"group"); S.posts[5].status="approved";
+  { const ok=S.sales; const gs=S.groups; const mk=(p,i,st,extra)=>Object.assign(p,{status:st,group_id:gs[i].id,group_name:gs[i].name,sale_id:ok[i%2].id,sale_name:ok[i%2].name,...extra});
+    mk(S.posts[0],0,"posted",{posted_at:now(),poster:"Linh (tự động)"}); mk(S.posts[1],2,"scheduled",{scheduled_for:`${today()} 20:05`});
+    mk(S.posts[2],3,"failed",{error:"Không tìm thấy ô viết bài. Kiểm tra nick đã vào nhóm chưa, hoặc thêm chữ hiển thị mới vào fb_selectors.json"}); }
+  const ready=g=>!g.last_posted_at;
+  const SALE_LOOKS=[{skin:"#f3cfae",shirt:"#d64545",pants:"#2d2d3a",hair:"#2a1810",hairStyle:"long",accessory:"none"},{skin:"#e8b88f",shirt:"#2f86c9",pants:"#25303a",hair:"#1d1d1d",hairStyle:"spiky",accessory:"glasses"},{skin:"#f6d2b3",shirt:"#e0a12a",pants:"#3a2d2a",hair:"#5a3520",hairStyle:"bun",accessory:"none"},{skin:"#eec29b",shirt:"#1f9a8a",pants:"#22332f",hair:"#2b2018",hairStyle:"side",accessory:"headset"},{skin:"#f2c9a0",shirt:"#a24fb5",pants:"#2c2236",hair:"#3b2414",hairStyle:"long",accessory:"beret"},{skin:"#e9bd96",shirt:"#5b7f2a",pants:"#2a3020",hair:"#141414",hairStyle:"cap",accessory:"cap"},{skin:"#f3d0b0",shirt:"#c4572b",pants:"#30262a",hair:"#4a2a1a",hairStyle:"bun",accessory:"glasses"},{skin:"#e6b48a",shirt:"#3b5bb5",pants:"#232a3a",hair:"#2a1d14",hairStyle:"spiky",accessory:"none"}];
+  const saleAgents=()=>S.sales.map((r,i)=>({id:`sale-${r.id}`,sale_id:r.id,kind:"sale",name:r.name,role:`Sale · nick ${r.fb_name||r.name}`,short:"Đăng bài lên trang cá nhân và hội nhóm bằng tài khoản Facebook mình quản lý",personality:"Chăm chỉ, đúng giờ, báo ngay khi tài khoản gặp sự cố.",look:SALE_LOOKS[(r.id-1)%8],desk:5+i,login_status:r.login_status,
+    status:(S.status[`sale-${r.id}`]&&S.status[`sale-${r.id}`].state!=="idle")?S.status[`sale-${r.id}`]:{state:"idle",text:{ok:"Nick sẵn sàng",not_logged_in:"Chờ sếp đăng nhập Facebook",checkpoint:"Nick bị checkpoint, đã dừng"}[r.login_status]}}));
+  const saleOut=r=>{ const mine=S.posts.filter(p=>p.sale_id===r.id); return {...r,agent_id:`sale-${r.id}`,busy:S.busy[r.id]||null,posted_today:mine.filter(p=>p.status==="posted").length,scheduled_today:mine.filter(p=>["scheduled","posting"].includes(p.status)).length,failed:mine.filter(p=>p.status==="failed").length,
+    recent:mine.slice(0,6).map(p=>({id:p.id,status:p.status,target_type:p.target_type,group_name:p.group_name,posted_at:p.posted_at,scheduled_for:p.scheduled_for,error:p.error,screenshot:null}))}; };
+  function plan(){
+    const ap=S.posts.filter(p=>p.status==="approved"&&p.target_type==="group"); const gs=S.groups.filter(ready); const slots=["09:10","10:05","11:20","14:40","16:15","20:05"]; const out=[];
+    const ok=S.sales.filter(x=>x.login_status==="ok"&&x.auto_post);
+    ap.slice(0,gs.length).forEach((p,i)=>{ const g=gs[i]; const sa=ok.length?ok[i%ok.length]:null; Object.assign(p,{group_id:g.id,group_name:g.name,group_url:g.url,status:"scheduled",scheduled_for:`${today()} ${slots[i%6]}`,sale_id:sa?.id||null,sale_name:sa?.name||null}); out.push({post_id:p.id,group:g.name,time:p.scheduled_for,sale:sa?.name}); });
+    log("tuan","Xếp lịch",out.length?`Đã xếp ${out.length} bài vào ${out.length} nhóm`:"Chưa có bài đã duyệt để xếp lịch"); return out;
+  }
+  function stats(){
+    const c=f=>S.posts.filter(f).length;
+    return {drafts:c(p=>p.status==="draft"),approved:c(p=>["approved","scheduled"].includes(p.status)),posted_total:c(p=>p.status==="posted"),posted_today:c(p=>p.status==="posted"),
+      groups:S.groups.length,groups_ready:S.groups.filter(ready).length,leads:S.leads.length,leads_new:S.leads.filter(l=>l.status==="new").length,
+      leads_hot:S.leads.filter(l=>l.score>=75&&!["ordered","lost"].includes(l.status)).length,leads_ordered:S.leads.filter(l=>l.status==="ordered").length,
+      tasks_open:S.tasks.filter(t=>t.status!=="done").length,ai_live:false,failed:c(p=>p.status==="failed"),sales_total:S.sales.length,sales_ok:S.sales.filter(x=>x.login_status==="ok"&&x.auto_post).length,sales_problem:S.sales.filter(x=>x.login_status!=="ok").length,best_group:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",lead_per_post:0};
+  }
+  const TOPICS=["Tuần này nên tập trung đẩy sản phẩm nào cho khách sỉ?","Đăng nhiều bài mỗi ngày hay ít bài nhưng chất lượng hơn?","Có nên công khai giá sỉ ngay trong bài đăng hội nhóm không?","Gửi mẫu thử miễn phí cho khách sỉ mới: có đáng chi phí không?","Nên ưu tiên tệp khách livestream hay tệp khách chạy quảng cáo?","Có nên đẩy dịch vụ in nhãn riêng (OEM) cho shop online không?"];
+  const DEB={lan:["Em nghĩ phải mạnh dạn hơn: nội dung có video thật, câu chuyện xưởng sẽ khác biệt so với bài nguồn hàng đăng tràn lan.","Em đồng ý cần số liệu với anh Khoa, nhưng không thử nội dung mới thì lấy đâu ra số liệu để so ạ?"],
+    tuan:["Em hơi lo: nhóm lớn kiểm duyệt rất chặt, làm quá tay là bị chặn đăng cả nick. Phải theo luật nhóm trước.","Em đề xuất thử ở 2 nhóm nhỏ trước, nhóm lớn giữ nhịp cũ. Chị Lan làm video thì em xếp vào khung 20h là đẹp."],
+    ha:["Từ phía khách thì họ cần 3 thứ: giá rõ, có mẫu thử, có ảnh/video để bán lại. Đáp ứng được là chốt nhanh.","Em ủng hộ ý anh Tuấn. Khách mới sợ ôm hàng, chính sách nhập ít sẽ thuyết phục hơn mọi bài viết."],
+    khoa:["Dữ liệu hiện chưa đủ để kết luận. Em đề xuất A/B test 7 ngày: chia đôi số bài, đo số khách và tỉ lệ chốt.","Nếu theo hướng của Lan thì đặt ngưỡng: sau 7 ngày không tăng ít nhất 20% khách/bài thì quay lại cách cũ."]};
+  function startMeeting(topic){
+    if(S.running) return S.running;
+    topic = topic || TOPICS[Math.floor(Math.random()*TOPICS.length)];
+    const m={id:id(),date:today(),topic,status:"running",summary:"",action_items:[],created_at:now()}; S.meetings.unshift(m); S.running=m.id;
+    const st=stats(); const lines=[["minh","open",`Ok mọi người, họp sáng nay gọn nhé: báo cáo trước, rồi tranh luận "${topic}", cuối giờ mình chốt việc.`],
+      ["lan","report",`Bên content: kho có ${st.drafts} bài nháp, ${st.approved} bài đã duyệt chờ đăng. Góc 'dễ livestream' đang được bình luận nhiều nhất.`],
+      ["tuan","report",`Đang theo dõi ${st.groups} nhóm, hôm nay ${st.groups_ready} nhóm đủ điều kiện đăng lại. Đề nghị không đăng trùng nội dung giữa các nhóm.`],
+      ["ha","report",`Có ${st.leads} khách tiềm năng, ${st.leads_new} khách mới chưa liên hệ, ${st.leads_hot} khách nóng. Khách hỏi nhiều nhất là chính sách gửi mẫu.`],
+      ["khoa","report","Nhóm 'Tìm nguồn hàng sỉ' đang mang về nhiều khách nhất. Đề nghị gắn nguồn cho mọi khách để đo chính xác hơn."],
+      ["minh","debate",`Cảm ơn mọi người. Giờ vào chủ đề chính: "${topic}". Cứ phản biện thẳng thắn.`],
+      ...["lan","tuan","ha","khoa"].map(a=>[a,"debate",DEB[a][0]]), ...["khoa","lan","tuan","ha"].map(a=>[a,"debate",DEB[a][1]]),
+      ["minh","close","Chốt lại: thử nghiệm có kiểm soát trong 7 ngày. Lan làm nội dung mới kèm video thật, Tuấn chỉ áp dụng ở nhóm nhỏ, Hà chuẩn hóa chính sách mẫu thử, Khoa đo A/B và báo cáo cuối tuần."],
+      ["minh","close","Giao việc xong. Hết giờ họp, mọi người về vị trí làm việc nhé!"]];
+    const items=[{agent_id:"lan",title:"Viết 3 bài mới có kịch bản video pha chế tại xưởng"},{agent_id:"tuan",title:"Chọn 2 nhóm nhỏ để thử nghiệm, lên lịch đăng tuần này"},{agent_id:"ha",title:"Soạn kịch bản tin nhắn gửi mẫu thử cho khách mới"},{agent_id:"khoa",title:"Thiết lập bảng A/B: khách/bài theo từng góc nội dung"}];
+    const allIds=()=>AGENT_DEFS.map(a=>a.id).concat(S.sales.map(r=>`sale-${r.id}`));
+    allIds().forEach(a=>S.status[a]={state:"meeting",text:"Đi tới phòng họp"});
+    const saleLines=S.sales.map(r=>[`sale-${r.id}`,"report",`Em giữ nick ${r.fb_name}: hôm nay đã đăng ${S.posts.filter(p=>p.sale_id===r.id&&p.status==="posted").length} bài, còn ${S.posts.filter(p=>p.sale_id===r.id&&p.status==="scheduled").length} bài trong lịch. Tình trạng: ${r.login_status==="ok"?"nick hoạt động bình thường":"nick đang bị đăng xuất, nhờ sếp đăng nhập lại"}.`]);
+    lines.splice(5,0,...saleLines);
+    let i=0;
+    const step=()=>{
+      if(S.bossQ&&S.bossQ.length){ const t=S.bossQ.shift(); push("minh","boss",`Dạ em ghi nhận ý kiến của sếp: "${t}". Cả nhóm sẽ tính đến điểm này khi chốt việc.`); return setTimeout(step,2600); }
+      if(i>=lines.length){ m.status="done"; m.summary=lines[lines.length-2][2].replace("Chốt lại: ",""); m.action_items=items;
+        items.forEach(it=>S.tasks.unshift({id:id(),agent_id:it.agent_id,title:it.title,status:"todo",meeting_id:m.id}));
+        S.running=null; allIds().forEach(a=>S.status[a]={state:"idle",text:"Quay về bàn làm việc"}); log("minh","Kết thúc họp",`Chủ đề: ${topic}. Giao 4 việc.`);
+        setTimeout(()=>{S.status.lan={state:"working",text:"Đang viết 3 bài"}; setTimeout(()=>{genPosts(3,null,"group"); S.status.lan={state:"idle",text:"Vừa viết xong 3 bài"};},5000);},4000);
+        return; }
+      const [a,ph,t]=lines[i++]; push(a,ph,t); setTimeout(step,2600);
+    };
+    const push=(a,ph,t)=>{ allIds().forEach(x=>{ if(S.status[x]?.state==="talking") S.status[x]={state:"meeting",text:"Đang họp"}; }); S.status[a]={state:"talking",text:t.slice(0,60)}; S.msgs.push({id:id(),meeting_id:m.id,agent_id:a,phase:ph,content:t,created_at:now()}); };
+    setTimeout(step,3200); return m.id;
+  }
+  function reply(l,msg){ const n=l.name; return `Chào ${n} ạ! Cảm ơn ${n} đã quan tâm hàng bên xưởng 🌿\nMình gửi ${n} bảng giá sỉ và ảnh thật nhé. Với nhu cầu "${l.need||msg}", mình gợi ý ${n} nhập thử combo nhỏ trước để test thị trường, xưởng gửi kèm mẫu thử + bộ ảnh/video để ${n} đăng bán luôn.\n${n} đang bán chủ yếu kênh nào (live, ads hay sàn) để mình tư vấn sản phẩm hợp nhất ạ?`; }
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  async function handle(method, path, body){
+    const [p, qs] = path.split("?"); const P=p.replace(/^\/api/,""); let m;
+    if(method==="GET"){
+      if(P==="/health") return {ok:true,ai_live:false,model:"bản xem trước"};
+      if(P==="/agents") return AGENT_DEFS.map(a=>({...a,kind:"core",status:S.status[a.id],tasks:S.tasks.filter(t=>t.agent_id===a.id&&t.status!=="done")})).concat(saleAgents().map(a=>({...a,tasks:[]})));
+      if(P==="/sales") return S.sales.map(saleOut);
+      if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
+      if(P==="/products") return S.products; if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g)}));
+      if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return S.settings;
+      if(P==="/meetings") return S.meetings; if(P==="/meetings/topics") return TOPICS;
+      if((m=P.match(/^\/meetings\/(\d+)$/))){ const after=+(new URLSearchParams(qs).get("after")||0); const mt=S.meetings.find(x=>x.id==m[1]); return {...mt,messages:S.msgs.filter(x=>x.meeting_id==m[1]&&x.id>after)}; }
+    }
+    if(method==="POST"){
+      if(P==="/posts/generate"){ S.status.lan={state:"working",text:`Đang viết ${body.count} bài`}; await wait(1400); const r=genPosts(Math.min(body.count||3,10),body.product_id,body.target_type||"group",body.angle); S.status.lan={state:"idle",text:`Vừa viết xong ${r.length} bài`}; return r; }
+      if(P==="/distribution/plan") return plan();
+      if(P==="/meetings") return {id:startMeeting(body.topic)};
+      if((m=P.match(/^\/meetings\/(\d+)\/say$/))){ S.msgs.push({id:id(),meeting_id:+m[1],agent_id:"boss",phase:"boss",content:body.text,created_at:now()}); (S.bossQ=S.bossQ||[]).push(body.text); return {ok:true}; }
+      if((m=P.match(/^\/posts\/(\d+)\/posted$/))){ const po=S.posts.find(x=>x.id==m[1]); Object.assign(po,{status:"posted",posted_at:now(),posted_url:body.posted_url,poster:body.poster}); const g=S.groups.find(g=>g.id===po.group_id); if(g) g.last_posted_at=now(); log("tuan","Đã đăng",`Bài #${po.id} đã đăng`); return po; }
+      if(P==="/sales"){ if(S.sales.length>=8) throw new Error("Văn phòng tối đa 8 nhân viên sale"); const r={id:id(),name:body.name,fb_name:body.fb_name,login_status:"not_logged_in",auto_post:1,max_posts_per_day:5,min_gap_minutes:40,active_from:"08:00",active_to:"22:00",last_error:null}; r.id=S.sales.reduce((a,x)=>Math.max(a,x.id),0)+1; S.sales.push(r); log("minh","Tuyển sale",`${r.name} nhận quản lý nick ${r.fb_name||r.name}`); return saleOut(r); }
+      if((m=P.match(/^\/sales\/(\d+)\/(open|check)$/))){ const r=S.sales.find(x=>x.id==m[1]); S.busy[r.id]=m[2]; setTimeout(()=>{ delete S.busy[r.id]; r.login_status="ok"; r.last_error=null; },m[2]==="open"?6000:2000); return {ok:true}; }
+      if((m=P.match(/^\/posts\/(\d+)\/run$/))){ const po=S.posts.find(x=>x.id==m[1]); const r=S.sales.find(x=>x.id==body.sale_id); if(!r) throw new Error("Chọn nick sale để đăng bài này");
+        if(r.login_status!=="ok") throw new Error("Nick chưa đăng nhập. Vào Nhân viên sale → Mở Chrome để đăng nhập lại");
+        po.sale_id=r.id; po.sale_name=r.name; const aid=`sale-${r.id}`; S.busy[r.id]="post"; S.status[aid]={state:"working",text:`${body.dry_run?"Đăng thử":"Đang đăng"} bài vào ${po.group_name||"trang cá nhân"}`};
+        if(!body.dry_run) po.status="posting";
+        setTimeout(()=>{ delete S.busy[r.id]; S.status[aid]={state:"idle",text:"Chờ lịch đăng tiếp theo"};
+          if(body.dry_run){ log(aid,"Đăng thử",`Bài #${po.id}: điền nội dung thành công (chưa bấm Đăng)`); }
+          else { Object.assign(po,{status:"posted",posted_at:now(),poster:`${r.name} (tự động)`,posted_url:po.group_url||""}); const g=S.groups.find(g=>g.id===po.group_id); if(g) g.last_posted_at=now(); log(aid,"Đã đăng",`Bài #${po.id} lên ${po.group_name||"trang cá nhân"}`); } },5000);
+        return {ok:true}; }
+      if((m=P.match(/^\/posts\/(\d+)\/retry$/))){ const po=S.posts.find(x=>x.id==m[1]); Object.assign(po,{status:"approved",error:null,sale_id:null,sale_name:null,scheduled_for:null}); return po; }
+      if((m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const im=JSON.parse(pr.images||"[]"); im.push(body.data); pr.images=JSON.stringify(im); return {images:im}; }
+      if((m=P.match(/^\/posts\/(\d+)\/publish-page$/))) return {ok:false,error:"Bản xem trước không kết nối Facebook. Chạy backend và nhập Page Access Token trong Cài đặt."};
+      if((m=P.match(/^\/leads\/(\d+)\/reply$/))){ S.status.ha={state:"working",text:"Đang soạn tin nhắn"}; await wait(900); S.status.ha={state:"idle",text:"Chờ sếp duyệt tin"}; return {reply:reply(S.leads.find(l=>l.id==m[1]),body.message)}; }
+      if(P==="/leads"){ const l={id:id(),...body,score:60,status:"new",created_at:now()}; S.leads.unshift(l); log("ha","Khách mới",l.name); return l; }
+      if(P==="/products"){ const x={id:id(),...body}; S.products.push(x); return x; }
+      if(P==="/groups"){ const x={id:id(),...body,leads_count:0,last_posted_at:null}; S.groups.push(x); log("tuan","Thêm nhóm",x.name); return x; }
+      if(P==="/run/daily-work"){ genPosts(3,null,"group"); const pl=plan(); return {drafts:3,scheduled:pl.length,follow_ups:S.leads.filter(l=>l.status==="new").length}; }
+    }
+    if(method==="PATCH"){
+      if((m=P.match(/^\/posts\/(\d+)$/))){ const po=S.posts.find(x=>x.id==m[1]); Object.assign(po,body); if(body.status==="approved") log("minh","Duyệt bài",`Sếp duyệt bài #${po.id}`); return po; }
+      if((m=P.match(/^\/leads\/(\d+)$/))){ const l=S.leads.find(x=>x.id==m[1]); const {contacted,...rest}=body; Object.assign(l,rest); if(contacted) l.last_contact_at=now(); return l; }
+      if((m=P.match(/^\/tasks\/(\d+)$/))){ S.tasks.find(x=>x.id==m[1]).status=body.status; return {ok:true}; }
+    }
+    if(method==="PATCH"&&(m=P.match(/^\/sales\/(\d+)$/))){ const r=S.sales.find(x=>x.id==m[1]); Object.assign(r,body); if(body.auto_post===0) S.posts.filter(p=>p.sale_id===r.id&&p.status==="scheduled").forEach(p=>Object.assign(p,{status:"approved",sale_id:null,sale_name:null,scheduled_for:null})); return saleOut(r); }
+    if(method==="PUT"&&(m=P.match(/^\/groups\/(\d+)\/members$/))){ S.groups.find(x=>x.id==m[1]).member_sale_ids=body.sale_ids.join(","); return {ok:true}; }
+    if(method==="PUT"&&P==="/settings"){ Object.assign(S.settings,body); return S.settings; }
+    if(method==="DELETE"&&(m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const path=new URLSearchParams(qs).get("path"); pr.images=JSON.stringify(JSON.parse(pr.images||"[]").filter(x=>x!==path)); return {ok:true}; }
+    if(method==="DELETE"&&(m=P.match(/^\/sales\/(\d+)$/))){ S.sales=S.sales.filter(x=>x.id!=m[1]); return {ok:true}; }
+    if(method==="DELETE"){ if((m=P.match(/^\/products\/(\d+)$/))) S.products=S.products.filter(x=>x.id!=m[1]); if((m=P.match(/^\/groups\/(\d+)$/))) S.groups=S.groups.filter(x=>x.id!=m[1]); return {ok:true}; }
+    throw new Error("Không hỗ trợ trong bản xem trước: "+path);
+  }
+  return {handle};
+})();
+
+/* =========================================================== API */
+let DEMO = false;
+async function api(path, method="GET", body){
+  if(DEMO) return Demo.handle(method, "/api"+path, body||{});
+  const r = await fetch("/api"+path, {method, headers:{"content-type":"application/json"}, body: body?JSON.stringify(body):undefined});
+  if(!r.ok){ const t=await r.text(); let m=t; try{ m=JSON.parse(t).detail||t; }catch(e){} throw new Error(String(m).slice(0,200)); }
+  return r.json();
+}
+async function detect(){
+  try{
+    const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),2500);
+    const r=await fetch("/api/health",{signal:ctl.signal}); clearTimeout(t);
+    const j=await r.json(); if(!j.ok) throw 0; return j;
+  }catch(e){ DEMO=true; return Demo.handle("GET","/api/health"); }
+}
+
+/* =========================================================== 3D: văn phòng hoạt hình */
+const World = (() => {
+  const stage=$("#stage"), canvas=$("#cv"), overlay=$("#overlay");
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(38,1,0.1,200);
+  const controls=new THREE.OrbitControls(camera,canvas);
+  controls.enableDamping=true; controls.maxPolarAngle=Math.PI*0.44; controls.minDistance=6; controls.maxDistance=34; controls.enablePan=false;
+  const VIEWS={office:{pos:[-5,17,21],tgt:[-4,0.5,3]},meeting:{pos:[7.4,9,11.5],tgt:[7.4,0.9,-0.4]}};
+  let camGoal=null;
+  function setCam(v){ camGoal={pos:new THREE.Vector3(...VIEWS[v].pos),tgt:new THREE.Vector3(...VIEWS[v].tgt)}; }
+  camera.position.set(...VIEWS.office.pos); controls.target.set(...VIEWS.office.tgt); controls.maxDistance=38;
+  controls.addEventListener("start",()=>camGoal=null);
+
+  function applyTheme(){ const c=getComputedStyle(document.documentElement).getPropertyValue("--stage").trim()||"#dbe5d3"; scene.background=new THREE.Color(c); scene.fog=new THREE.Fog(c,30,60); }
+  applyTheme(); matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
+  new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+  // ánh sáng
+  scene.add(new THREE.HemisphereLight(0xffffff,0x9aa48f,0.75));
+  const sun=new THREE.DirectionalLight(0xfff3dc,0.85); sun.position.set(-6,16,10); sun.castShadow=true;
+  sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-16,right:16,top:12,bottom:-12,near:1,far:50}); sun.shadow.bias=-0.0005; scene.add(sun);
+
+  // vật liệu kiểu hoạt hình
+  const grad=(()=>{const t=new THREE.DataTexture(new Uint8Array([110,190,255]),3,1,THREE.LuminanceFormat); t.minFilter=t.magFilter=THREE.NearestFilter; t.needsUpdate=true; return t;})();
+  const mats={}; const toon=c=>mats[c]||(mats[c]=new THREE.MeshToonMaterial({color:new THREE.Color(c).convertSRGBToLinear(),gradientMap:grad}));
+  const lineMat=new THREE.MeshBasicMaterial({color:0x1b2620,side:THREE.BackSide});
+  const outline=(m,s=1.07)=>{const o=new THREE.Mesh(m.geometry,lineMat); o.scale.setScalar(s); m.add(o); return m;};
+  function mesh(geo,color,{x=0,y=0,z=0,shadow=true,parent}={}){ const m=new THREE.Mesh(geo,toon(color)); m.position.set(x,y,z); m.castShadow=shadow; m.receiveShadow=true; (parent||scene).add(m); return m; }
+  const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+  function textTex(lines,{w=512,h=256,bg="#ffffff",fg="#1b2620",font="700 44px 'Baloo 2', sans-serif",sub="500 26px 'Be Vietnam Pro', sans-serif"}={}){
+    const c=document.createElement("canvas"); c.width=w; c.height=h; const g=c.getContext("2d");
+    g.fillStyle=bg; g.fillRect(0,0,w,h); g.fillStyle=fg; g.textAlign="center"; g.textBaseline="middle";
+    g.font=font; g.fillText(lines[0],w/2,h*0.33);
+    if(lines[1]){ g.font=sub; wrap(g,lines[1],w/2,h*0.62,w-50,32); }
+    const t=new THREE.CanvasTexture(c); t.encoding=THREE.sRGBEncoding; return t;
+  }
+  function wrap(g,text,x,y,maxW,lh){ const words=text.split(" "); let line="",lines=[]; for(const w of words){ const tl=line?line+" "+w:w; if(g.measureText(tl).width>maxW&&line){lines.push(line);line=w;}else line=tl; } lines.push(line); lines=lines.slice(0,3); lines.forEach((l,i)=>g.fillText(l,x,y+(i-(lines.length-1)/2)*lh)); }
+
+  // sàn, tường
+  mesh(box(26,0.3,20),"#c9a679",{y:-0.15,z:2});
+  for(let i=-12;i<=12;i+=2){ mesh(box(0.04,0.01,20),"#b8946a",{x:i,y:0.005,z:2,shadow:false}); }
+  mesh(box(9,0.02,10),"#9fc4a7",{x:7.2,y:0.01,shadow:false}); // thảm phòng họp
+  mesh(box(26,4,0.3),"#e9e4d6",{y:2,z:-8}); mesh(box(0.3,4,20),"#e3ddcd",{x:-13,y:2,z:2});
+  // cửa sổ
+  for(const x of [-9,-4,1]){ mesh(box(3,1.8,0.1),"#a8d4e8",{x,y:2.3,z:-7.82,shadow:false}); mesh(box(3.2,0.12,0.2),"#f7f3e8",{x,y:1.35,z:-7.8}); }
+  // biển công ty
+  const signMat=new THREE.MeshBasicMaterial({map:textTex(["Phòng Kinh doanh","Trà túi lọc · Bột ngũ cốc · Bột thiên nhiên · Cà phê"],{bg:"#2f5d3a",fg:"#f6efd8",w:768,h:192})});
+  const sign=new THREE.Mesh(new THREE.PlaneGeometry(5.2,1.3),signMat); sign.position.set(-13+0.17,2.6,-1); sign.rotation.y=Math.PI/2; scene.add(sign);
+
+  // phòng họp kính
+  const glass=new THREE.MeshPhysicalMaterial({color:0xcfe9f2,transparent:true,opacity:0.22,roughness:0.1});
+  const gw=(w,x,z,ry)=>{ const m=new THREE.Mesh(box(w,2.6,0.06),glass); m.position.set(x,1.3,z); m.rotation.y=ry; scene.add(m); mesh(box(w,0.12,0.12),"#6c7f74",{x,y:2.62,z,parent:scene}).rotation.y=ry; };
+  gw(5.6,3,-4.6,Math.PI/2); gw(5.6,3,4.6,Math.PI/2); gw(9.8,7.9,6.5+0.9,0);
+  // bảng trắng
+  const board=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1.8),new THREE.MeshBasicMaterial({map:textTex(["Họp giao ban","Chưa có chủ đề"])}));
+  board.position.set(7.4,2.1,-7.82); scene.add(board); mesh(box(3.8,2,0.08),"#7b8a80",{x:7.4,y:2.1,z:-7.88});
+  let boardTopic="";
+  function setBoard(topic){ if(topic===boardTopic) return; boardTopic=topic; board.material.map=textTex(["Họp giao ban",topic||"Chưa có chủ đề"]); board.material.needsUpdate=true; }
+  document.fonts&&document.fonts.ready.then(()=>{ signMat.map=textTex(["Phòng Kinh doanh","Trà túi lọc · Bột ngũ cốc · Bột thiên nhiên · Cà phê"],{bg:"#2f5d3a",fg:"#f6efd8",w:768,h:192}); signMat.needsUpdate=true; const t=boardTopic; boardTopic=null; setBoard(t); });
+
+  // bàn họp tròn
+  const MC=new THREE.Vector3(7.4,0,0);
+  mesh(new THREE.CylinderGeometry(1.75,1.75,0.12,40),"#8a5a36",{x:MC.x,y:0.78,z:MC.z});
+  mesh(new THREE.CylinderGeometry(0.25,0.4,0.75,16),"#5d3d25",{x:MC.x,y:0.38,z:MC.z});
+  // cốc trà trên bàn
+  for(let i=0;i<6;i++){ const a=i/6*Math.PI*2+0.3; mesh(new THREE.CylinderGeometry(0.09,0.07,0.16,12),"#f4efe2",{x:MC.x+Math.sin(a)*1.25,y:0.92,z:MC.z+Math.cos(a)*1.25}); }
+  let SEATS={}; const seatGroup=new THREE.Group(); scene.add(seatGroup);
+  function layoutSeats(ids){ // ghế sếp luôn ở giữa phía trước, các agent xếp vòng quanh bàn
+    seatGroup.clear(); SEATS={}; const order=[...ids]; order.splice(Math.floor((ids.length+1)/2),0,"boss");
+    const N=order.length, R=Math.max(2.45,N*1.15/(Math.PI*2));
+    order.forEach((id,i)=>{ const a=Math.PI+i*(Math.PI*2/N); const x=MC.x+Math.sin(a)*R, z=MC.z+Math.cos(a)*R;
+      SEATS[id]={x,z,ry:Math.atan2(MC.x-x,MC.z-z)}; seatGroup.add(chair(x,z,SEATS[id].ry,id==="boss"?"#c9962d":"#3d4b44",true)); }); }
+  function chair(x,z,ry,color,detached){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=ry; if(!detached) scene.add(g);
+    mesh(box(0.62,0.1,0.6),color,{y:0.47,parent:g}); mesh(box(0.62,0.7,0.1),color,{y:0.85,z:-0.3,parent:g}); mesh(new THREE.CylinderGeometry(0.05,0.05,0.45,8),"#2a2f2c",{y:0.22,parent:g}); return g; }
+  // tên ghế sếp
+  // khu bàn làm việc
+  // 5 bàn của đội lõi + 8 bàn cho nhân viên sale (2 dãy phía trước)
+  const DESKS=[[-1.4,-2.8],[-9.4,-2.8],[-5.4,-2.8],[-9.4,2.6],[-5.4,2.6],
+    [-11,6.2],[-8,6.2],[-5,6.2],[-2,6.2],[-11,9.6],[-8,9.6],[-5,9.6],[-2,9.6]];
+  const deskObjs={};
+  function buildDesk(i,color,isSale){ const [x,z]=DESKS[i]; const g=new THREE.Group(); scene.add(g); const P={parent:g};
+    mesh(box(2,0.1,0.95),"#d8b48a",{...P,x,y:0.76,z:z+0.95}); for(const dx of [-0.9,0.9]) mesh(box(0.08,0.74,0.85),"#a7835c",{...P,x:x+dx,y:0.37,z:z+0.95});
+    mesh(box(0.95,0.6,0.06),"#2a2f2c",{...P,x,y:1.2,z:z+1.25}); const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.85,0.5),new THREE.MeshBasicMaterial({color:isSale?0x4a7fd6:i===0?0x6fb4ff:0x8fe0a8})); scr.position.set(x,1.2,z+1.215); scr.rotation.y=Math.PI; g.add(scr);
+    mesh(box(0.12,0.3,0.08),"#2a2f2c",{...P,x,y:0.95,z:z+1.25});
+    mesh(box(0.6,0.03,0.2),"#e8e8e8",{...P,x,y:0.82,z:z+0.75});
+    mesh(new THREE.CylinderGeometry(0.08,0.06,0.15,12),color,{...P,x:x+0.7,y:0.88,z:z+0.7});
+    if(isSale){ mesh(box(0.34,0.6,0.04),"#1877f2",{...P,x:x-0.75,y:1.12,z:z+1.25}); } // biểu tượng nick Facebook trên bàn
+    g.add(chair(x,z-0.05,0,"#3d4b44",true)); return g; }
+  for(let i=0;i<5;i++) buildDesk(i,["#2f4b8f","#e2557a","#2e9e6b","#f08a24","#7a4fc9"][i]);
+  // kệ hàng mẫu (hộp trà, hũ ngũ cốc)
+  const shelf=new THREE.Group(); shelf.position.set(-12.4,0,-5.5); shelf.rotation.y=Math.PI/2; scene.add(shelf);
+  mesh(box(3.4,2.6,0.6),"#8d6a48",{y:1.3,parent:shelf});
+  const prodCols=["#d9534f","#5b8def","#e9b949","#4caf7a","#9b6bd6","#8a5a36"];
+  for(let r=0;r<3;r++) for(let c=0;c<6;c++){ const tall=(r+c)%3===0; mesh(tall?new THREE.CylinderGeometry(0.17,0.17,0.45,14):box(0.38,0.4,0.28),prodCols[(c+r)%6],{x:-1.35+c*0.54,y:0.45+r*0.82,z:0.25,parent:shelf}); }
+  // cây xanh
+  function plant(x,z,s=1){ const g=new THREE.Group(); g.position.set(x,0,z); g.scale.setScalar(s); scene.add(g); mesh(new THREE.CylinderGeometry(0.32,0.25,0.55,14),"#c8643b",{y:0.28,parent:g});
+    for(let i=0;i<5;i++){ const l=mesh(new THREE.IcosahedronGeometry(0.42,0),"#4f9a5a",{x:Math.sin(i*1.3)*0.25,y:0.85+i*0.18,z:Math.cos(i*1.3)*0.25,parent:g}); l.rotation.set(i,i*2,0); } return g; }
+  plant(-12.3,11.3,1.1); plant(2.2,-7.2); plant(11.8,-7.2,1.2); plant(11.8,6.6); plant(0.8,11.2,0.9); plant(-12.3,-1.2,0.9);
+  // bình nước + sofa nhỏ
+  mesh(box(0.5,1.1,0.5),"#e9efe9",{x:-12.3,y:0.55,z:3}); mesh(new THREE.CylinderGeometry(0.2,0.2,0.5,14),"#7cc4e8",{x:-12.3,y:1.35,z:3});
+
+  /* --------------------------------------------- nhân vật chibi */
+  function makeChar(a){
+    const L=a.look, root=new THREE.Group(); scene.add(root);
+    const body=new THREE.Group(); root.add(body);
+    const legs=[-1,1].map(s=>{ const p=new THREE.Group(); p.position.set(0.15*s,0.55,0); body.add(p);
+      mesh(new THREE.CylinderGeometry(0.11,0.1,0.5,10),L.pants,{y:-0.25,parent:p});
+      const shoe=mesh(new THREE.SphereGeometry(0.13,12,8),"#2b2b2b",{y:-0.5,z:0.06,parent:p}); shoe.scale.set(1,0.6,1.45); return p; });
+    outline(mesh(new THREE.CylinderGeometry(0.31,0.37,0.62,18),L.shirt,{y:0.86,parent:body}),1.05);
+    mesh(new THREE.SphereGeometry(0.31,18,12),L.shirt,{y:1.16,parent:body}).scale.set(1,0.45,1);
+    mesh(new THREE.CylinderGeometry(0.1,0.12,0.08,10),L.skin,{y:1.27,parent:body});
+    const arms=[-1,1].map(s=>{ const p=new THREE.Group(); p.position.set(0.39*s,1.1,0); body.add(p);
+      const arm=mesh(new THREE.CylinderGeometry(0.075,0.07,0.46,10),L.shirt,{y:-0.22,parent:p}); arm.rotation.z=0.12*s;
+      mesh(new THREE.SphereGeometry(0.085,10,8),L.skin,{x:0.03*s,y:-0.47,parent:p}); return p; });
+    const head=new THREE.Group(); head.position.y=1.68; body.add(head);
+    outline(mesh(new THREE.SphereGeometry(0.44,28,20),L.skin,{parent:head}),1.045);
+    const eyes=[-1,1].map(s=>{ const e=new THREE.Group(); e.position.set(0.16*s,0.02,0.37); head.add(e);
+      mesh(new THREE.SphereGeometry(0.085,14,10),"#ffffff",{parent:e,shadow:false}).scale.set(1,1.15,0.5);
+      mesh(new THREE.SphereGeometry(0.055,12,10),"#1b1b1b",{z:0.035,y:-0.01,parent:e,shadow:false}).scale.set(1,1.2,0.6);
+      mesh(new THREE.SphereGeometry(0.018,8,6),"#ffffff",{x:0.02,y:0.025,z:0.07,parent:e,shadow:false}); return e; });
+    [-1,1].forEach(s=>{ const c=mesh(new THREE.CircleGeometry(0.065,16),"#f39a9a",{x:0.27*s,y:-0.11,z:0.35,parent:head,shadow:false}); c.rotation.y=0.6*s; c.material=new THREE.MeshBasicMaterial({color:0xf3a1a1,transparent:true,opacity:0.7}); });
+    const mouth=mesh(new THREE.TorusGeometry(0.06,0.017,8,16,Math.PI),"#7a2b2b",{y:-0.15,z:0.42,parent:head,shadow:false}); mouth.rotation.z=Math.PI;
+    // tóc
+    const capGeo=new THREE.SphereGeometry(0.47,28,14,0,Math.PI*2,0,Math.PI*0.52);
+    const cap=mesh(capGeo,L.hair,{y:0.04,parent:head}); cap.rotation.x=-0.28;
+    if(L.hairStyle==="side"){ const f=mesh(box(0.55,0.13,0.18),L.hair,{x:0.1,y:0.3,z:0.33,parent:head}); f.rotation.z=-0.35; }
+    if(L.hairStyle==="long"){ const b=mesh(new THREE.SphereGeometry(0.47,20,14),L.hair,{y:-0.2,z:-0.12,parent:head}); b.scale.set(1.02,1.15,0.75);
+      [-1,1].forEach(s=>mesh(box(0.14,0.55,0.2),L.hair,{x:0.4*s,y:-0.18,z:0.08,parent:head})); }
+    if(L.hairStyle==="bun"){ mesh(new THREE.SphereGeometry(0.19,16,12),L.hair,{y:0.45,z:-0.2,parent:head}); }
+    if(L.hairStyle==="spiky"){ for(let i=0;i<7;i++){ const a=i/7*Math.PI*2; const c=mesh(new THREE.ConeGeometry(0.11,0.3,8),L.hair,{x:Math.sin(a)*0.24,y:0.45,z:Math.cos(a)*0.2-0.05,parent:head}); c.rotation.set(Math.cos(a)*0.6,0,-Math.sin(a)*0.6); } }
+    // phụ kiện
+    if(L.accessory==="glasses"){ [-1,1].forEach(s=>mesh(new THREE.TorusGeometry(0.11,0.018,8,20),"#1b1b1b",{x:0.16*s,y:0.02,z:0.43,parent:head,shadow:false})); mesh(box(0.1,0.02,0.02),"#1b1b1b",{y:0.04,z:0.45,parent:head,shadow:false}); }
+    if(L.accessory==="beret"){ const b=mesh(new THREE.SphereGeometry(0.36,20,12),"#b8325a",{x:0.08,y:0.43,parent:head}); b.scale.set(1.15,0.38,1.15); b.rotation.z=-0.25; }
+    if(L.accessory==="cap"){ const c=mesh(new THREE.SphereGeometry(0.49,24,12,0,Math.PI*2,0,Math.PI*0.5),"#2e7d57",{y:0.08,parent:head}); c.rotation.x=-0.15;
+      const br=mesh(new THREE.CylinderGeometry(0.3,0.3,0.035,24,1,false,-Math.PI/2,Math.PI),"#26664a",{y:0.17,z:0.33,parent:head}); br.rotation.x=0.15; }
+    if(L.accessory==="headset"){ mesh(new THREE.TorusGeometry(0.49,0.03,8,28,Math.PI),"#333",{y:0.02,parent:head});
+      [-1,1].forEach(s=>{ const e=mesh(new THREE.CylinderGeometry(0.11,0.11,0.08,16),"#333",{x:0.48*s,parent:head}); e.rotation.z=Math.PI/2; });
+      const mic=mesh(new THREE.CylinderGeometry(0.015,0.015,0.38,6),"#333",{x:-0.4,y:-0.2,z:0.2,parent:head}); mic.rotation.set(1.1,0,0.4); mesh(new THREE.SphereGeometry(0.04,8,6),"#333",{x:-0.27,y:-0.3,z:0.36,parent:head}); }
+    root.traverse(o=>o.userData.agent=a.id);
+    return {id:a.id,a,root,body,legs,arms,head,mouth,eyes,path:[],mode:"desk",state:"idle",talk:0,blink:Math.random()*4,phase:Math.random()*10};
+  }
+
+  const chars={}, tags={}, bubbles={};
+  const DOOR_O=new THREE.Vector3(2.0,0,0), DOOR_I=new THREE.Vector3(4.0,0,0);
+  const deskSpot=id=>{ const [x,z]=DESKS[AGENT[id].desk]; return {x,z,ry:0}; };
+  function addAgent(a){ AGENT[a.id]=a; const c=makeChar(a); chars[a.id]=c; const d=deskSpot(a.id); c.root.position.set(d.x,0,d.z);
+    if(a.kind==="sale") deskObjs[a.id]=buildDesk(a.desk,a.look.shirt,true); addTag(a.id,a.name); }
+  function removeAgent(id){ const c=chars[id]; if(!c) return; scene.remove(c.root); if(deskObjs[id]) scene.remove(deskObjs[id]);
+    delete chars[id]; delete deskObjs[id]; tags[id]?.remove(); bubbles[id]?.remove(); delete tags[id]; delete bubbles[id]; }
+
+  // đường đi: lách cạnh bàn -> lối đi giữa -> cửa kính -> vòng quanh bàn họp -> ghế
+  const V=(x,z)=>new THREE.Vector3(x,0,z);
+  function deskLeg(id){ const d=deskSpot(id); if(d.z<5) return [V(d.x+1.5,d.z),V(d.x+1.5,0.4)];
+    const aisle=d.z<8?4.9:8.4; return [V(d.x+1.5,d.z),V(d.x+1.5,aisle),V(1.6,aisle)]; }   // dãy sale đi vòng lối trước
+  function seatLeg(id){ const s=SEATS[id]; const r=[DOOR_O.clone(),DOOR_I.clone()];
+    if(s.x>MC.x+0.5) r.push(V(MC.x,(s.z>=0?1:-1)*(Math.hypot(s.x-MC.x,s.z-MC.z)+0.7))); r.push(V(s.x,s.z)); return r; }
+  function goMeeting(id){ const c=chars[id]; if(!SEATS[id]||c.mode==="meeting"||c.mode==="toMeeting") return;
+    c.path=c.mode==="toDesk"? [V(c.root.position.x,c.root.position.z),...seatLeg(id)] : [...deskLeg(id),...seatLeg(id)]; c.final=SEATS[id]; c.mode="toMeeting"; }
+  function goDesk(id){ const c=chars[id]; if(c.mode==="desk"||c.mode==="toDesk") return; const d=deskSpot(id);
+    const back=[...deskLeg(id)].reverse();
+    c.path = c.mode==="toMeeting"&&c.root.position.x<3 ? [...back,V(d.x,d.z)] : [...[...seatLeg(id)].reverse().slice(1),...back,V(d.x,d.z)]; c.final=d; c.mode="toDesk"; }
+
+  /* --------------------------------------------- nhãn tên + bong bóng thoại */
+  function addTag(id,name){ const t=document.createElement("div"); t.className="tag"; t.textContent=name; overlay.appendChild(t); tags[id]=t;
+    const b=document.createElement("div"); b.className="bubble"; b.hidden=true; overlay.appendChild(b); bubbles[id]=b; }
+  addTag("boss","Ghế Sếp");
+  AGENT_DEFS.forEach(addAgent); layoutSeats(AGENT_DEFS.map(a=>a.id));
+  let speech={id:null,text:"",until:0}; const v3=new THREE.Vector3();
+  function say(id,text,ms=9000){ speech={id,text,until:performance.now()+ms}; }
+
+  /* --------------------------------------------- vòng lặp */
+  const clock=new THREE.Clock();
+  function resize(){ const w=stage.clientWidth,h=stage.clientHeight; if(!w||!h) return; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+  new ResizeObserver(resize).observe(stage);
+  const lerpA=(a,b,t)=>{ let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI; return a+d*t; };
+  function tick(){
+    const dt=Math.min(clock.getDelta(),0.2), t=clock.elapsedTime;
+    if(camGoal){ camera.position.lerp(camGoal.pos,0.06); controls.target.lerp(camGoal.tgt,0.06); if(camera.position.distanceTo(camGoal.pos)<0.05) camGoal=null; }
+    controls.update();
+    for(const c of Object.values(chars)){
+      const talking = speech.id===c.id && performance.now()<speech.until;
+      if(c.path.length){
+        const p=c.root.position, tgt=c.path[0], dx=tgt.x-p.x, dz=tgt.z-p.z, dist=Math.hypot(dx,dz);
+        if(dist<0.08){ c.path.shift(); if(!c.path.length){ c.mode=c.mode==="toMeeting"?"meeting":"desk"; } }
+        else { const sp=2.4*dt; p.x+=dx/dist*Math.min(sp,dist); p.z+=dz/dist*Math.min(sp,dist); c.root.rotation.y=lerpA(c.root.rotation.y,Math.atan2(dx,dz),0.2); }
+        const sw=Math.sin(t*11); c.legs[0].rotation.x=sw*0.6; c.legs[1].rotation.x=-sw*0.6; c.arms[0].rotation.x=-sw*0.5; c.arms[1].rotation.x=sw*0.5;
+        c.body.position.y=Math.abs(Math.sin(t*11))*0.06;
+      } else {
+        const f=c.final||deskSpot(c.id); c.root.rotation.y=lerpA(c.root.rotation.y,f.ry,0.12);
+        c.legs.forEach(l=>l.rotation.x+=(-1.45-l.rotation.x)*0.2); c.body.position.y+=(-0.04-c.body.position.y)*0.2;
+        if(c.state==="working" && c.mode==="desk"){ c.arms.forEach((a,i)=>a.rotation.x=-1.15+Math.sin(t*22+i*2)*0.12); c.head.rotation.x=0.12; }
+        else if(talking){ c.arms[1].rotation.x=-0.9+Math.sin(t*4)*0.4; c.arms[0].rotation.x+=( -0.2-c.arms[0].rotation.x)*0.1; c.head.rotation.x=Math.sin(t*5)*0.08; c.body.position.y=-0.04+Math.abs(Math.sin(t*6))*0.05; }
+        else { c.arms.forEach(a=>a.rotation.x+=(-0.15-a.rotation.x)*0.1); c.head.rotation.x=0; c.head.rotation.y=Math.sin(t*0.6+c.phase)*0.25; c.body.position.y=-0.04+Math.sin(t*2+c.phase)*0.015; }
+      }
+      c.mouth.scale.y = talking ? 0.6+Math.abs(Math.sin(t*14))*1.6 : 1; c.mouth.scale.x = talking?1.2:1;
+      c.blink-=dt; const bl=c.blink<0.12; c.eyes.forEach(e=>e.scale.y=bl?0.12:1); if(c.blink<0) c.blink=2+Math.random()*4;
+    }
+    renderer.render(scene,camera);
+    // vị trí nhãn
+    const w=stage.clientWidth,h=stage.clientHeight;
+    const place=(id,pos)=>{ v3.copy(pos).project(camera); const x=(v3.x*0.5+0.5)*w, y=(-v3.y*0.5+0.5)*h; const vis=v3.z<1&&x>-50&&x<w+50; return {x,y,vis}; };
+    for(const id of Object.keys(tags)){
+      if(id!=="boss"&&!chars[id]) continue;
+      const base = id==="boss" ? new THREE.Vector3(SEATS.boss.x,0,SEATS.boss.z) : chars[id].root.position;
+      const top=place(id,new THREE.Vector3(base.x,id==="boss"?1.5:2.3,base.z));
+      const tg=tags[id]; tg.hidden=!top.vis||(id==="boss"&&!Object.values(chars).some(c=>c.mode==="meeting")); tg.style.left=top.x+"px"; tg.style.top=top.y+"px";
+      top.y-=24;
+      const b=bubbles[id]; const showMain = speech.id===id && performance.now()<speech.until;
+      const st = id!=="boss" && chars[id].statusText && chars[id].state==="working" && chars[id].mode==="desk";
+      if(showMain||st){ b.hidden=!top.vis; b.className = showMain?"bubble":"bubble mini"; const nm=id==="boss"?"Sếp":AGENT[id].name;
+        const txt = showMain?speech.text:chars[id].statusText; const html = showMain?`<b>${esc(nm)}:</b> ${esc(txt.length>170?txt.slice(0,167)+"…":txt)}`:esc(txt);
+        if(b._h!==html){ b.innerHTML=html; b._h=html; } const half=Math.min(b.offsetWidth/2+8,w/2); b.style.left=Math.max(half,Math.min(w-half,top.x))+"px"; b.style.top=Math.max(b.offsetHeight+8,top.y-6)+"px"; }
+      else b.hidden=true;
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  // bấm vào nhân vật
+  const ray=new THREE.Raycaster(), mv=new THREE.Vector2(); let down=null;
+  canvas.addEventListener("pointerdown",e=>down=[e.clientX,e.clientY]);
+  canvas.addEventListener("pointerup",e=>{ if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5) return; const r=canvas.getBoundingClientRect();
+    mv.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(mv,camera);
+    const hit=ray.intersectObjects(Object.values(chars).map(c=>c.root),true)[0]; if(hit&&hit.object.userData.agent) openAgent(hit.object.userData.agent); });
+  canvas.addEventListener("pointermove",e=>{ const r=canvas.getBoundingClientRect(); mv.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1); ray.setFromCamera(mv,camera);
+    canvas.style.cursor=ray.intersectObjects(Object.values(chars).map(c=>c.root),true).length?"pointer":"grab"; });
+
+  function sync(agents, meetingRunning){
+    const ids=new Set(agents.map(a=>a.id)); let changed=false;
+    for(const a of agents) if(!chars[a.id]){ addAgent(a); changed=true; }
+    for(const id of Object.keys(chars)) if(!ids.has(id)){ removeAgent(id); changed=true; }
+    for(const a of agents) if(chars[a.id] && tags[a.id] && tags[a.id].textContent!==a.name){ tags[a.id].textContent=a.name; AGENT[a.id]=a; }
+    if(changed){ layoutSeats(agents.map(a=>a.id)); for(const c of Object.values(chars)) if(c.mode==="meeting"){ const s=SEATS[c.id]; c.root.position.set(s.x,0,s.z); c.final=s; } }
+    for(const a of agents){ const c=chars[a.id]; if(!c) continue; const st=a.status||{}; c.state=st.state||"idle"; c.statusText=st.text||"";
+      if(st.state==="meeting"||st.state==="talking"||meetingRunning) goMeeting(a.id); else goDesk(a.id); }
+  }
+  function mount(slot){ if(stage.parentNode!==slot){ slot.appendChild(stage); resize(); } }
+  return {setCam,sync,say,setBoard,mount};
+})();
+
+/* =========================================================== trạng thái giao diện */
+const ST = {view:"office", agents:[], dash:null, posts:[], groups:[], leads:[], products:[], meetingId:null, lastMsg:0, msgs:[], selLead:null, openPost:new Set(), editPost:null, postedForm:null};
+const avaHtml=(id,size)=>{ const a=AGENT[id]; if(!a) return `<div class="ava" style="background:#a86f0e${size?`;width:${size}px;height:${size}px`:""}">S</div>`; return `<div class="ava" style="background:${a.look.shirt}">${a.name[0]}</div>`; };
+
+function show(v){
+  if(!document.getElementById("v-"+v)) v="office";
+  ST.view=v; document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!=="v-"+v);
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
+  if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
+  if(v==="posts") loadPosts(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  $(".main").scrollTop=0;
+}
+$("#nav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) location.hash=b.dataset.v; });
+addEventListener("hashchange",()=>show(location.hash.slice(1)||"office"));
+$("#camOffice").onclick=()=>World.setCam("office"); $("#camMeet").onclick=()=>World.setCam("meeting");
+
+/* --------------------------------------------- văn phòng */
+async function refresh(){
+  try{
+    const [agents,dash]=await Promise.all([api("/agents"),api("/dashboard")]); ST.agents=agents; ST.dash=dash;
+    World.sync(agents, !!dash.meeting_running);
+    const s=dash.stats;
+    $("#kpis").innerHTML=[["Bài chờ sếp duyệt",s.drafts,s.drafts>0],["Bài đã duyệt / lên lịch",s.approved],["Bài đã đăng",s.posted_total],["Khách nóng",s.leads_hot,s.leads_hot>0],["Khách mới chưa liên hệ",s.leads_new,s.leads_new>0],["Nick sale đang chạy",`${s.sales_ok||0}/${s.sales_total||0}`,!!s.sales_problem]]
+      .map(([l,v,w])=>`<div class="kpi${w?" warn":""}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+    $("#team").innerHTML=agents.map(a=>`<button class="member" data-a="${a.id}">${avaHtml(a.id)}<span class="who"><b>${esc(a.name)} · <span class="muted" style="display:inline;font-weight:500">${esc(a.role)}</span></b><span>${esc(a.status?.text||"")}</span></span><span class="chip ${a.status?.state||""}">${STATUS_TXT[a.status?.state]||"Rảnh"}</span></button>`).join("");
+    $("#feed").innerHTML=dash.activity.length?dash.activity.map(x=>`<li>${avaHtml(x.agent_id)}<div><b>${esc(x.action)}</b> · ${esc(x.detail)}<time>${esc(AGENT[x.agent_id]?.name||"")} · ${fmtTime(x.created_at)} ${fmtDate(x.created_at)}</time></div></li>`).join(""):`<li class="muted">Chưa có hoạt động.</li>`;
+    const db=$("#draftBadge"); db.hidden=!s.drafts; db.textContent=s.drafts;
+    const prob=(s.sales_problem||0)+(s.failed||0); $("#saleBadge").hidden=!s.sales_problem; $("#saleAlert").hidden=!prob;
+    $("#saleAlertTxt").textContent=[s.sales_problem?`${s.sales_problem} nick cần sếp đăng nhập lại hoặc xử lý checkpoint`:"",s.failed?`${s.failed} bài đăng lỗi`:""].filter(Boolean).join(" · ");
+    $("#liveBadge").hidden=!dash.meeting_running;
+    if(dash.meeting_running && ST.meetingId!==dash.meeting_running){ ST.meetingId=dash.meeting_running; ST.lastMsg=0; ST.msgs=[]; }
+  }catch(e){ console.error(e); }
+}
+$("#team").addEventListener("click",e=>{ const b=e.target.closest("[data-a]"); if(b) openAgent(b.dataset.a); });
+function openAgent(id){
+  const a=ST.agents.find(x=>x.id===id)||AGENT[id]; const d=$("#drawer");
+  d.innerHTML=`<div class="row" style="justify-content:space-between"><div class="row">${avaHtml(id)}<div><h2>${esc(a.name)}</h2><span class="muted small">${esc(a.role)}</span></div></div><button class="btn ghost" id="dClose" aria-label="Đóng">Đóng</button></div>
+   <span class="chip ${a.status?.state||""}" style="align-self:flex-start">${STATUS_TXT[a.status?.state]||"Rảnh"} · ${esc(a.status?.text||"")}</span>
+   <div><h3>Nhiệm vụ</h3><p class="muted" style="margin-top:4px">${esc(a.short)}</p></div>
+   <div><h3>Tính cách</h3><p class="muted" style="margin-top:4px">${esc(a.personality)}</p></div>
+   <div><h3>Việc đang mở</h3><ul class="tasks" style="margin-top:6px">${(a.tasks||[]).length?a.tasks.map(t=>`<li>· ${esc(t.title)}</li>`).join(""):'<li class="muted small">Không có việc tồn.</li>'}</ul></div>
+   <div class="actions">${{lan:'<a class="btn primary" href="#posts">Giao Lan viết bài</a>',tuan:'<button class="btn primary" id="dPlan">Xếp lịch đăng nhóm</button>',ha:'<a class="btn primary" href="#leads">Mở danh sách khách</a>',khoa:'<a class="btn primary" href="#office">Xem số liệu</a>',minh:'<a class="btn primary" href="#meeting">Vào phòng họp</a>'}[id]||'<a class="btn primary" href="#sales">Quản lý nick</a>'}</div>`;
+  d.hidden=false; $("#dClose").onclick=()=>d.hidden=true; d.querySelectorAll("a").forEach(x=>x.addEventListener("click",()=>d.hidden=true));
+  const p=$("#dPlan"); if(p) p.onclick=async()=>{ const r=await api("/distribution/plan","POST"); toast(r.length?`Tuấn đã xếp ${r.length} bài vào nhóm`:"Chưa có bài đã duyệt để xếp"); d.hidden=true; refresh(); };
+}
+$("#btnDaily").onclick=async e=>{ e.target.disabled=true; toast("Đang giao việc cho cả đội…"); try{ const r=await api("/run/daily-work","POST"); toast(`Xong: ${r.drafts} bài mới, ${r.scheduled} bài lên lịch, ${r.follow_ups} khách cần bám`);}catch(err){toast(err.message);} e.target.disabled=false; refresh(); };
+$("#btnCall").onclick=()=>{ location.hash="meeting"; setTimeout(()=>startMeeting(),200); };
+
+/* --------------------------------------------- phòng họp */
+async function loadMeetingPage(){
+  const [topics,meetings,tasks]=await Promise.all([api("/meetings/topics"),api("/meetings"),api("/tasks")]);
+  if(!$("#topicSel").options.length) $("#topicSel").innerHTML=`<option value="">Để trưởng phòng tự chọn</option>`+topics.map(t=>`<option>${esc(t)}</option>`).join("");
+  if(!ST.meetingId && meetings[0]){ ST.meetingId=meetings[0].id; ST.lastMsg=0; ST.msgs=[]; }
+  $("#history").innerHTML=meetings.filter(m=>m.status==="done").slice(0,8).map(m=>{ const items=typeof m.action_items==="string"?JSON.parse(m.action_items||"[]"):(m.action_items||[]);
+    return `<div class="card mtg" data-m="${m.id}" style="padding:10px 12px"><div class="card-h"><b>${fmtDate(m.date)} · ${esc(m.topic)}</b></div><p class="small muted">${esc(m.summary||"")}</p>${items.length?`<ul class="items">${items.map(i=>`<li><b>${esc(AGENT[i.agent_id]?.name)}</b>: ${esc(i.title)}</li>`).join("")}</ul>`:""}</div>`; }).join("")||`<div class="empty">Chưa có cuộc họp nào kết thúc.</div>`;
+  $("#taskList").innerHTML=tasks.length?tasks.map(t=>`<li><label><input type="checkbox" data-t="${t.id}" ${t.status==="done"?"checked":""}><span class="${t.status==="done"?"done":""}"><b>${esc(AGENT[t.agent_id]?.name)}</b> · ${esc(t.title)}</span></label></li>`).join(""):`<li class="empty">Việc được giao sau mỗi cuộc họp sẽ hiện ở đây.</li>`;
+  pollMeeting();
+}
+$("#history").addEventListener("click",e=>{ const c=e.target.closest("[data-m]"); if(!c) return; ST.meetingId=+c.dataset.m; ST.lastMsg=0; ST.msgs=[]; $("#transcript").innerHTML=""; pollMeeting(); $(".main").scrollTop=0; });
+$("#taskList").addEventListener("change",async e=>{ const id=e.target.dataset.t; if(!id) return; await api(`/tasks/${id}`,"PATCH",{status:e.target.checked?"done":"todo"}); loadMeetingPage(); });
+async function startMeeting(){
+  const topic=$("#topicCustom").value.trim()||$("#topicSel").value;
+  const r=await api("/meetings","POST",{topic}); ST.meetingId=r.id; ST.lastMsg=0; ST.msgs=[]; $("#transcript").innerHTML=""; $("#topicCustom").value="";
+  toast("Đã triệu tập họp, mọi người đang vào phòng"); refresh(); pollMeeting();
+}
+$("#btnStart").onclick=startMeeting;
+$("#bossForm").addEventListener("submit",async e=>{ e.preventDefault(); const t=$("#bossText").value.trim(); if(!t) return;
+  if(!ST.dash?.meeting_running){ toast("Chưa có cuộc họp nào đang diễn ra"); return; }
+  await api(`/meetings/${ST.meetingId}/say`,"POST",{text:t}); $("#bossText").value=""; World.say("boss",t,6000); pollMeeting(); });
+let pollBusy=false;
+async function pollMeeting(){
+  if(!ST.meetingId||pollBusy) return; pollBusy=true;
+  try{
+    const m=await api(`/meetings/${ST.meetingId}?after=${ST.lastMsg}`);
+    $("#mTopic").textContent=m.topic?`Chủ đề: ${m.topic}`:""; $("#mTitle").textContent=`Biên bản ${fmtDate(m.date)}`;
+    const ms=$("#mState"); ms.textContent=m.status==="running"?"Đang họp":"Đã kết thúc"; ms.className="chip "+(m.status==="running"?"talking":"");
+    if(m.status==="running") World.setBoard(m.topic);
+    if(m.messages.length){
+      const box=$("#transcript"); if(!ST.msgs.length) box.innerHTML="";
+      for(const x of m.messages){ ST.msgs.push(x); ST.lastMsg=Math.max(ST.lastMsg,x.id);
+        const boss=x.agent_id==="boss"; const nm=boss?"Sếp":AGENT[x.agent_id]?.name;
+        box.insertAdjacentHTML("beforeend",`<div class="msg${boss?" boss":""}">${avaHtml(x.agent_id)}<div class="body"><header><b>${esc(nm)}</b><span class="phase">${PHASE[x.phase]||""}</span><span class="small muted">${fmtTime(x.created_at)}</span></header>${esc(x.content)}</div></div>`); }
+      box.scrollTop=box.scrollHeight;
+      const last=m.messages[m.messages.length-1]; if(m.status==="running"&&last.agent_id!=="boss") World.say(last.agent_id,last.content,8000);
+    } else if(!ST.msgs.length){ $("#transcript").innerHTML=`<div class="empty">${m.status==="running"?"Mọi người đang đi vào phòng họp…":"Cuộc họp chưa có nội dung."}</div>`; }
+    if(m.status!=="running" && ST.view==="meeting" && $("#taskList").dataset.m!=String(m.id)){ $("#taskList").dataset.m=m.id; }
+  }catch(e){ console.error(e); }
+  pollBusy=false;
+}
+
+/* --------------------------------------------- bài đăng */
+async function loadPosts(){
+  const [posts,products,sales]=await Promise.all([api("/posts"),api("/products"),api("/sales")]); ST.posts=posts; ST.products=products; ST.sales=sales;
+  const sel=$("#gProduct"), cur=sel.value; sel.innerHTML=`<option value="">Lan tự chọn</option>`+products.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(""); sel.value=cur;
+  renderBoard();
+}
+function postCard(p){
+  const open=ST.openPost.has(p.id), editing=ST.editPost===p.id, posting=ST.postedForm===p.id;
+  const meta=`<div class="meta"><span class="chip">${TARGET[p.target_type]||p.target_type}</span>${p.product_name?`<span class="chip">${esc(p.product_name)}</span>`:""}${p.group_name?`<span class="chip ok">${esc(p.group_name)}</span>`:""}${p.scheduled_for&&p.status==="scheduled"?`<span class="chip warn">${fmtTime(p.scheduled_for)} ${fmtDate(p.scheduled_for)}</span>`:""}${p.sale_name?`<span class="chip">Nick: ${esc(p.sale_name)}</span>`:""}${p.status==="posting"?`<span class="chip talking">Đang đăng…</span>`:""}${p.status==="failed"?`<span class="chip bad">Đăng lỗi</span>`:""}</div>`;
+  let acts="";
+  const shot = p.screenshot?`<a class="btn sm ghost" href="${esc(p.screenshot)}" target="_blank" rel="noopener">Ảnh chụp</a>`:"";
+  const salePick = p.target_type!=="page" && ST.sales?.length ? `<select class="sm" id="sale-${p.id}" aria-label="Nick đăng bài" style="width:auto;padding:4px 8px;font-size:12.5px">${ST.sales.map(s=>`<option value="${s.id}" ${s.id===p.sale_id?"selected":""}>${esc(s.name)}${s.login_status!=="ok"?" (chưa sẵn sàng)":""}</option>`).join("")}</select><button class="btn sm primary" data-act="runNow">Đăng ngay</button><button class="btn sm" data-act="dry">Đăng thử</button>`:"";
+  if(p.status==="draft") acts=`<button class="btn sm primary" data-act="approve">Duyệt</button><button class="btn sm" data-act="edit">Sửa</button><button class="btn sm ghost danger" data-act="reject">Bỏ</button>`;
+  else if(p.status==="approved"||p.status==="scheduled") acts=(p.target_type==="page"?`<button class="btn sm primary" data-act="page">Đăng Fanpage</button>`:"")+(p.target_type==="profile"||p.group_id?salePick:"")+`<button class="btn sm ghost" data-act="copy">Sao chép</button>${p.group_url?`<a class="btn sm ghost" href="${esc(p.group_url)}" target="_blank" rel="noopener">Mở nhóm</a>`:""}<button class="btn sm ghost" data-act="posted">Đăng tay xong</button>${shot}`;
+  else if(p.status==="posting") acts=`<span class="small muted">${esc(p.sale_name||"Sale")} đang mở Chrome và đăng bài…</span>`;
+  else if(p.status==="failed") acts=`<button class="btn sm primary" data-act="retry">Đưa về hàng đợi</button>${shot}`;
+  else if(p.status==="posted") acts=`${p.posted_url?`<a class="btn sm" href="${esc(p.posted_url)}" target="_blank" rel="noopener">Xem nhóm</a>`:""}${shot}<span class="small muted">${esc(p.poster||"")} · ${fmtTime(p.posted_at)} ${fmtDate(p.posted_at)}</span>`;
+  const body = editing ? `<textarea id="edit-${p.id}" rows="10">${esc(p.content)}</textarea><div class="acts"><button class="btn sm primary" data-act="save">Lưu</button><button class="btn sm ghost" data-act="cancel">Hủy</button></div>`
+    : `<pre class="${open?"open":""}">${esc(p.content)}</pre>${p.content.length>260?`<button class="btn ghost sm" data-act="more" style="align-self:flex-start">${open?"Thu gọn":"Xem đủ"}</button>`:""}`;
+  const posted = posting ? `<div class="inline-form"><input type="text" id="poster-${p.id}" placeholder="Ai đăng? (VD: Linh - nick 2)"><input type="url" id="purl-${p.id}" placeholder="Dán link bài vừa đăng"><div class="acts"><button class="btn sm primary" data-act="confirmPosted">Xác nhận đã đăng</button><button class="btn sm ghost" data-act="cancel">Hủy</button></div></div>`:"";
+  const result = p.status==="posted" ? `<div class="row small"><label class="f" style="flex:1">Bình luận<input type="number" min="0" value="${p.comments||0}" id="cm-${p.id}"></label><label class="f" style="flex:1">Khách thu được<input type="number" min="0" value="${p.leads||0}" id="ld-${p.id}"></label><button class="btn sm" data-act="result" style="align-self:flex-end">Lưu</button></div>`:"";
+  return `<article class="post" data-p="${p.id}"><h4>${esc(p.title||"(Không tiêu đề)")}</h4>${meta}${body}${p.hashtags?`<div class="tags">${esc(p.hashtags)}</div>`:""}${p.image_idea&&p.status!=="posted"?`<div class="idea"><b>Ảnh/video:</b> ${esc(p.image_idea)}</div>`:""}${p.error?`<div class="err">${esc(p.error)}</div>`:""}${posted}${result}<div class="acts">${acts}</div></article>`;
+}
+function renderBoard(){
+  const cols=[["draft","Chờ sếp duyệt"],["approved","Đã duyệt"],["scheduled","Lịch đăng hôm nay"],["posted","Đã đăng"]];
+  const inCol=(p,s)=>s==="scheduled"?["scheduled","posting","failed"].includes(p.status):p.status===s;
+  $("#board").innerHTML=cols.map(([s,l])=>{ const list=ST.posts.filter(p=>inCol(p,s)); return `<div class="col"><header><b>${l}</b><span class="chip num">${list.length}</span></header>${list.map(postCard).join("")||`<div class="empty">Trống</div>`}</div>`; }).join("");
+}
+$("#board").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-act]"); if(!b) return; const card=b.closest("[data-p]"); const id=+card.dataset.p; const p=ST.posts.find(x=>x.id===id); const act=b.dataset.act;
+  const patch=async body=>{ Object.assign(p,await api(`/posts/${id}`,"PATCH",body)); };
+  if(act==="more"){ ST.openPost.has(id)?ST.openPost.delete(id):ST.openPost.add(id); return renderBoard(); }
+  if(act==="edit"){ ST.editPost=id; return renderBoard(); }
+  if(act==="cancel"){ ST.editPost=null; ST.postedForm=null; return renderBoard(); }
+  if(act==="save"){ await patch({content:$(`#edit-${id}`).value}); ST.editPost=null; toast("Đã lưu bài"); return renderBoard(); }
+  if(act==="approve"){ await patch({status:"approved"}); toast("Đã duyệt. Tuấn sẽ xếp lịch."); refresh(); return loadPosts(); }
+  if(act==="reject"){ await patch({status:"rejected"}); return loadPosts(); }
+  if(act==="copy") return copyText(`${p.content}\n\n${p.hashtags||""}`);
+  if(act==="posted"){ ST.postedForm=id; return renderBoard(); }
+  if(act==="confirmPosted"){ await api(`/posts/${id}/posted`,"POST",{poster:$(`#poster-${id}`).value,posted_url:$(`#purl-${id}`).value}); ST.postedForm=null; toast("Đã ghi nhận bài đăng"); refresh(); return loadPosts(); }
+  if(act==="page"){ b.disabled=true; const r=await api(`/posts/${id}/publish-page`,"POST"); toast(r.ok?"Đã đăng lên Fanpage":r.error); b.disabled=false; return loadPosts(); }
+  if(act==="runNow"||act==="dry"){ const sid=+$(`#sale-${id}`).value; b.disabled=true;
+    try{ await api(`/posts/${id}/run`,"POST",{sale_id:sid,dry_run:act==="dry"}); toast(act==="dry"?"Sale đang mở Chrome điền thử bài, không bấm Đăng. Ảnh chụp sẽ có sau ít giây.":"Sale đang mở Chrome để đăng bài"); }
+    catch(err){ toast(err.message); } b.disabled=false; refresh(); return loadPosts(); }
+  if(act==="retry"){ await api(`/posts/${id}/retry`,"POST"); toast("Đã đưa bài về hàng đợi. Tuấn sẽ xếp lại."); return loadPosts(); }
+  if(act==="result"){ await patch({comments:+$(`#cm-${id}`).value,leads:+$(`#ld-${id}`).value}); toast("Khoa đã ghi nhận kết quả bài"); }
+});
+$("#genForm").addEventListener("submit",async e=>{ e.preventDefault(); const btn=$("#gBtn"); btn.disabled=true; btn.textContent="Lan đang viết…";
+  try{ const r=await api("/posts/generate","POST",{count:+$("#gCount").value||3,product_id:+$("#gProduct").value||null,target_type:$("#gTarget").value,angle:$("#gAngle").value||null,note:$("#gNote").value});
+    toast(`Lan đã viết ${r.length} bài, chờ sếp duyệt`); }catch(err){ toast(err.message); }
+  btn.disabled=false; btn.textContent="Viết bài"; loadPosts(); refresh(); });
+$("#btnPlan").onclick=async()=>{ const r=await api("/distribution/plan","POST"); toast(r.length?`Tuấn đã xếp ${r.length} bài: ${r.map(x=>`${fmtTime(x.time)} ${x.sale?x.sale+" → ":""}${x.group}`).join("; ")}`.slice(0,220):"Chưa xếp được bài nào: chưa có bài đã duyệt, nhóm đang giãn cách, hoặc các nick đã đủ bài/ngày"); loadPosts(); refresh(); };
+
+/* --------------------------------------------- nhân viên sale */
+const LOGIN={ok:["ok","Đã đăng nhập"],not_logged_in:["warn","Chưa đăng nhập"],checkpoint:["bad","Checkpoint / bị chặn"],error:["bad","Lỗi"]};
+const PST={scheduled:["warn","Trong lịch"],posting:["talking","Đang đăng"],posted:["ok","Đã đăng"],failed:["bad","Lỗi"],approved:["","Chờ xếp"]};
+let salesBusy=false;
+async function loadSales(){
+  if(salesBusy) return; salesBusy=true;
+  try{
+    ST.sales=await api("/sales"); const grid=$("#salesGrid");
+    if(document.activeElement && grid.contains(document.activeElement)) return; // đang gõ trong form giới hạn
+    grid.innerHTML=ST.sales.length?ST.sales.map(s=>{ const [lc,lt]=LOGIN[s.login_status]||["",s.login_status];
+      return `<div class="card" data-sale="${s.id}">
+      <div class="card-h"><div class="row">${avaHtml(s.agent_id)}<div><h3>${esc(s.name)}</h3><span class="small muted">Nick: ${esc(s.fb_name||s.name)}</span></div></div><span class="chip ${lc}">${lt}</span></div>
+      ${s.busy?`<span class="chip talking" style="align-self:flex-start">${s.busy==="open"?"Cửa sổ Chrome đang mở trên máy chủ":s.busy==="post"?"Đang đăng bài":"Đang kiểm tra phiên"}</span>`:""}
+      <div class="sale-stats"><div><b>${s.posted_today}/${s.max_posts_per_day}</b><span>Đã đăng hôm nay</span></div><div><b>${s.scheduled_today}</b><span>Trong lịch</span></div><div><b>${s.failed}</b><span>Bài lỗi</span></div></div>
+      ${s.last_error&&s.login_status!=="ok"?`<div class="err">${esc(s.last_error)}</div>`:""}
+      <div class="actions"><button class="btn sm primary" data-sa="open" ${s.busy?"disabled":""}>Mở Chrome${s.login_status==="ok"?"":" để đăng nhập"}</button><button class="btn sm" data-sa="check" ${s.busy?"disabled":""}>Kiểm tra phiên</button>
+        <button class="btn sm${s.auto_post?"":" primary"}" data-sa="toggle">${s.auto_post?"Tạm dừng tự đăng":"Bật tự đăng"}</button></div>
+      <details class="limits"><summary>Giới hạn an toàn: ${s.max_posts_per_day} bài/ngày, cách ${s.min_gap_minutes} phút, ${esc(s.active_from)}–${esc(s.active_to)}</summary>
+        <div class="grid2"><label class="f" for="mx-${s.id}">Bài tối đa/ngày<input type="number" min="1" max="20" id="mx-${s.id}" value="${s.max_posts_per_day}"></label>
+        <label class="f" for="gap-${s.id}">Cách nhau tối thiểu (phút)<input type="number" min="10" id="gap-${s.id}" value="${s.min_gap_minutes}"></label>
+        <label class="f" for="af-${s.id}">Bắt đầu<input type="time" id="af-${s.id}" value="${esc(s.active_from)}"></label>
+        <label class="f" for="at-${s.id}">Kết thúc<input type="time" id="at-${s.id}" value="${esc(s.active_to)}"></label></div>
+        <div class="actions" style="margin-top:8px"><button class="btn sm primary" data-sa="save">Lưu giới hạn</button><button class="btn sm ghost danger" data-sa="del">Cho nghỉ việc</button></div></details>
+      <div><b class="small">Việc gần đây</b><ul class="recent" style="margin-top:4px">${s.recent.length?s.recent.map(r=>{ const [c,t]=PST[r.status]||["",r.status];
+        return `<li><span class="chip ${c}">${t}</span><span>${esc(r.group_name||TARGET[r.target_type])}</span><span class="muted">${fmtTime(r.posted_at||r.scheduled_for)}</span>${r.screenshot?`<a href="${esc(r.screenshot)}" target="_blank" rel="noopener">ảnh chụp</a>`:""}${r.error?`<span class="err" style="width:100%">${esc(r.error)}</span>`:""}</li>`; }).join(""):'<li class="muted">Chưa có bài nào.</li>'}</ul></div>
+    </div>`; }).join(""):`<div class="empty">Chưa có nhân viên sale. Tuyển sale đầu tiên ở form bên dưới.</div>`;
+  }finally{ salesBusy=false; }
+}
+$("#salesGrid").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-sa]"); if(!b) return; const id=+b.closest("[data-sale]").dataset.sale; const s=ST.sales.find(x=>x.id===id); const a=b.dataset.sa;
+  try{
+    if(a==="open"){ await api(`/sales/${id}/open`,"POST"); toast(DEMO?"Bản xem trước không mở được Chrome. Khi chạy trên máy bạn, cửa sổ Chrome của nick sẽ hiện lên.":"Đã mở Chrome của nick trên máy chạy phần mềm. Đăng nhập Facebook rồi đóng cửa sổ."); }
+    if(a==="check"){ await api(`/sales/${id}/check`,"POST"); toast("Đang kiểm tra phiên đăng nhập…"); }
+    if(a==="toggle"){ await api(`/sales/${id}`,"PATCH",{auto_post:s.auto_post?0:1}); toast(s.auto_post?"Đã tạm dừng. Bài chờ của nick này trả về hàng đợi.":"Đã bật tự đăng"); }
+    if(a==="save"){ await api(`/sales/${id}`,"PATCH",{max_posts_per_day:+$(`#mx-${id}`).value,min_gap_minutes:+$(`#gap-${id}`).value,active_from:$(`#af-${id}`).value,active_to:$(`#at-${id}`).value}); document.activeElement.blur(); toast("Đã lưu giới hạn"); }
+    if(a==="del"){ if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xác nhận"; return; } await api(`/sales/${id}`,"DELETE"); toast("Đã cho nghỉ. Hồ sơ Chrome vẫn giữ trên máy."); }
+  }catch(err){ toast(err.message); }
+  loadSales(); refresh();
+});
+$("#saleForm").addEventListener("submit",async e=>{ e.preventDefault();
+  try{ await api("/sales","POST",{name:$("#saName").value,fb_name:$("#saFb").value}); e.target.reset(); toast("Đã tuyển sale mới. Bấm Mở Chrome để đăng nhập nick."); }catch(err){ toast(err.message); }
+  loadSales(); refresh(); });
+
+/* --------------------------------------------- hội nhóm */
+async function loadGroups(){
+  [ST.groups,ST.sales]=await Promise.all([api("/groups"),api("/sales")]);
+  const chips=g=>{ const mem=(g.member_sale_ids||"").split(",").filter(Boolean).map(Number); if(!ST.sales.length) return '<span class="small muted">Chưa có sale</span>';
+    return `<div class="member-chips">${ST.sales.map(s=>`<button type="button" data-gm="${g.id}" data-s="${s.id}" class="${mem.includes(s.id)?"on":""}">${esc(s.name)}</button>`).join("")}</div>`; };
+  $("#groupRows").innerHTML=ST.groups.map(g=>`<tr><td><b>${g.url?`<a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.name)}</a>`:esc(g.name)}</b></td><td>${esc(g.topic)}</td><td class="num">${(+g.members||0).toLocaleString("vi-VN")}</td><td class="small">${esc(g.rules)}</td><td class="num">${g.min_days_between_posts} ngày</td><td>${g.last_posted_at?fmtDate(g.last_posted_at):"Chưa đăng"}</td><td><span class="chip ${g.ready?"ok":"warn"}">${g.ready?"Đăng được":"Đang giãn cách"}</span></td><td class="num">${g.leads_count||0}</td><td>${chips(g)}</td><td><button class="btn sm ghost danger" data-g="${g.id}">Xóa</button></td></tr>`).join("");
+}
+$("#groupRows").addEventListener("click",async e=>{ const m=e.target.closest("[data-gm]");
+  if(m){ const g=ST.groups.find(x=>x.id==m.dataset.gm); let mem=(g.member_sale_ids||"").split(",").filter(Boolean).map(Number); const sid=+m.dataset.s;
+    mem=mem.includes(sid)?mem.filter(x=>x!==sid):[...mem,sid]; await api(`/groups/${g.id}/members`,"PUT",{sale_ids:mem}); return loadGroups(); }
+  const b=e.target.closest("[data-g]"); if(!b) return; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } await api(`/groups/${b.dataset.g}`,"DELETE"); loadGroups(); });
+$("#groupForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/groups","POST",{name:$("#grName").value,url:$("#grUrl").value,topic:$("#grTopic").value,members:+$("#grMembers").value||0,rules:$("#grRules").value,min_days_between_posts:+$("#grDays").value||3}); e.target.reset(); toast("Đã thêm nhóm"); loadGroups(); });
+
+/* --------------------------------------------- khách hàng */
+async function loadLeads(){
+  ST.leads=await api("/leads");
+  $("#pipe").innerHTML=Object.entries(LEAD_ST).map(([k,l])=>`<div><b class="num">${ST.leads.filter(x=>x.status===k).length}</b><span>${l}</span></div>`).join("");
+  $("#leadRows").innerHTML=ST.leads.map(l=>`<tr class="click${ST.selLead===l.id?" sel":""}" data-l="${l.id}"><td><b>${esc(l.name)}</b><div class="small muted">${esc(l.contact)}</div></td><td>${esc(l.business_type)}</td><td class="small">${esc(l.need)}</td><td class="small">${esc(l.source)}</td><td class="num score" style="color:${l.score>=75?"var(--accent)":"inherit"}">${l.score}</td><td><span class="chip ${l.status==="ordered"?"ok":l.status==="lost"?"bad":l.status==="new"?"warn":""}">${LEAD_ST[l.status]}</span></td></tr>`).join("");
+  if(ST.selLead) renderLead();
+}
+$("#leadRows").addEventListener("click",e=>{ const r=e.target.closest("[data-l]"); if(!r) return; ST.selLead=+r.dataset.l; loadLeads(); });
+function renderLead(){
+  const l=ST.leads.find(x=>x.id===ST.selLead); if(!l) return;
+  $("#leadDetail").innerHTML=`<div class="card-h"><h3>${esc(l.name)}</h3><span class="chip">${l.score} điểm</span></div>
+   <dl class="kv"><dt>Liên hệ</dt><dd>${esc(l.contact)}</dd><dt>Kinh doanh</dt><dd>${esc(l.business_type)}</dd><dt>Nguồn</dt><dd>${esc(l.source)}</dd><dt>Nhu cầu</dt><dd>${esc(l.need)}</dd></dl>
+   <label class="f" for="lStatus">Trạng thái<select id="lStatus">${Object.entries(LEAD_ST).map(([k,v])=>`<option value="${k}" ${k===l.status?"selected":""}>${v}</option>`).join("")}</select></label>
+   <label class="f" for="lMsg">Khách vừa nhắn gì?<textarea id="lMsg" rows="3" placeholder="Dán tin nhắn của khách, để trống nếu muốn Hà nhắn chủ động"></textarea></label>
+   <button class="btn primary" id="lDraft">Hà soạn tin trả lời</button>
+   <div id="lReply"></div>`;
+  $("#lStatus").onchange=async e=>{ await api(`/leads/${l.id}`,"PATCH",{status:e.target.value}); toast("Đã cập nhật trạng thái"); loadLeads(); };
+  $("#lDraft").onclick=async e=>{ e.target.disabled=true; e.target.textContent="Hà đang soạn…"; const r=await api(`/leads/${l.id}/reply`,"POST",{message:$("#lMsg").value});
+    $("#lReply").innerHTML=`<label class="f" for="lReplyTxt">Tin nhắn đề xuất (sửa được)<textarea id="lReplyTxt" rows="7">${esc(r.reply)}</textarea></label><div class="actions"><button class="btn" id="lCopy">Sao chép</button><button class="btn primary" id="lSent">Đã gửi cho khách</button></div>`;
+    $("#lCopy").onclick=()=>copyText($("#lReplyTxt").value);
+    $("#lSent").onclick=async()=>{ await api(`/leads/${l.id}`,"PATCH",{status:l.status==="new"?"contacted":l.status,contacted:true}); toast("Đã ghi nhận lần liên hệ"); loadLeads(); };
+    e.target.disabled=false; e.target.textContent="Soạn lại"; };
+}
+$("#leadForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/leads","POST",{name:$("#lName").value,contact:$("#lContact").value,source:$("#lSource").value,business_type:$("#lType").value,need:$("#lNeed").value}); e.target.reset(); toast("Đã thêm khách, Hà đã chấm điểm"); loadLeads(); refresh(); });
+
+/* --------------------------------------------- sản phẩm */
+async function loadProducts(){
+  ST.products=await api("/products");
+  $("#prodGrid").innerHTML=ST.products.map(p=>`<div class="card prod"><div class="cat">${esc(p.category)}</div><h3>${esc(p.name)}</h3><p class="small muted">${esc(p.description)}</p>
+   <dl class="kv"><dt>Giá sỉ</dt><dd class="num"><b>${esc(p.wholesale_price)}</b></dd><dt>Giá lẻ gợi ý</dt><dd class="num">${esc(p.retail_price)}</dd><dt>Nhập tối thiểu</dt><dd>${esc(p.moq)}</dd><dt>Điểm mạnh</dt><dd>${esc(p.selling_points)}</dd></dl>
+   <div class="thumbs">${JSON.parse(p.images||"[]").map(src=>`<figure><img src="${src.startsWith("data:")?src:"/"+esc(src)}" alt="Ảnh ${esc(p.name)}"><button type="button" data-delimg="${esc(src)}" data-p="${p.id}" aria-label="Xóa ảnh">×</button></figure>`).join("")}</div>
+   <div class="row"><label class="btn sm" for="up-${p.id}">Thêm ảnh để sale đăng kèm</label><input type="file" id="up-${p.id}" data-up="${p.id}" accept="image/png,image/jpeg,image/webp" multiple hidden><button class="btn sm ghost danger" data-pr="${p.id}">Xóa sản phẩm</button></div></div>`).join("");
+}
+$("#prodGrid").addEventListener("change",async e=>{ const pid=e.target.dataset.up; if(!pid) return;
+  for(const f of e.target.files){ const data=await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(f); });
+    try{ await api(`/products/${pid}/images`,"POST",{filename:f.name,data}); }catch(err){ toast(err.message); } }
+  toast("Đã thêm ảnh"); loadProducts(); });
+$("#prodGrid").addEventListener("click",async e=>{ const d=e.target.closest("[data-delimg]"); if(d){ await api(`/products/${d.dataset.p}/images?path=${encodeURIComponent(d.dataset.delimg)}`,"DELETE"); return loadProducts(); }
+  const b=e.target.closest("[data-pr]"); if(!b) return; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } await api(`/products/${b.dataset.pr}`,"DELETE"); loadProducts(); });
+$("#prodForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/products","POST",{name:$("#pName").value,category:$("#pCat").value,description:$("#pDesc").value,wholesale_price:$("#pWp").value,retail_price:$("#pRp").value,moq:$("#pMoq").value,selling_points:$("#pSell").value}); e.target.reset(); toast("Đã thêm sản phẩm"); loadProducts(); });
+
+/* --------------------------------------------- cài đặt */
+async function loadSettings(){
+  const s=await api("/settings");
+  $("#sName").value=s.company_name||""; $("#sVoice").value=s.brand_voice||""; $("#sContact").value=s.contact_info||""; $("#sTime").value=s.meeting_time||"08:30";
+  $("#sPer").value=s.posts_per_day||4; $("#sAutoM").checked=s.auto_meeting==="1"; $("#sAutoW").checked=s.auto_daily_work==="1"; $("#sPage").value=s.fb_page_id||""; $("#sToken").value=s.fb_page_token||""; $("#sImg").checked=s.attach_images!=="0"; $("#sHeadless").checked=s.browser_headless==="1";
+  $("#aiBox").innerHTML = DEMO ? "Bản xem trước dùng nội dung mẫu có sẵn. Khi chạy backend và đặt <b>ANTHROPIC_API_KEY</b> trong file <b>.env</b>, toàn bộ bài viết, tin nhắn và cuộc họp sẽ do Claude viết theo đúng tính cách từng agent."
+    : s.ai_live ? `Đang dùng <b>Claude (${esc(s.model)})</b>. Mọi bài viết, tin nhắn và cuộc họp đều do AI tạo theo vai từng agent.` : "Đang chạy <b>chế độ mô phỏng</b> (chưa có API key). Thêm <b>ANTHROPIC_API_KEY</b> vào file <b>.env</b> rồi khởi động lại để các agent thực sự suy nghĩ bằng Claude.";
+}
+$("#setForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{company_name:$("#sName").value,brand_voice:$("#sVoice").value,contact_info:$("#sContact").value,meeting_time:$("#sTime").value,posts_per_day:$("#sPer").value,auto_meeting:$("#sAutoM").checked?"1":"0",auto_daily_work:$("#sAutoW").checked?"1":"0",fb_page_id:$("#sPage").value,fb_page_token:$("#sToken").value,attach_images:$("#sImg").checked?"1":"0",browser_headless:$("#sHeadless").checked?"1":"0"}); $("#coName").textContent=$("#sName").value; toast("Đã lưu cài đặt"); });
+
+/* --------------------------------------------- khởi động */
+(async()=>{
+  const h=await detect();
+  $("#demoBanner").hidden=!DEMO;
+  $("#modeBox").innerHTML = DEMO ? `<span class="dot sim"></span><b>Bản xem trước</b><br>Dữ liệu mẫu, không lưu lại.` : h.ai_live ? `<span class="dot live"></span><b>AI đang hoạt động</b><br>${esc(h.model)}` : `<span class="dot sim"></span><b>Chế độ mô phỏng</b><br>Thêm API key để dùng Claude.`;
+  try{ const s=await api("/settings"); $("#coName").textContent=s.company_name; }catch(e){}
+  show(location.hash.slice(1)||"office");
+  await refresh();
+  setInterval(refresh,3000);
+  setInterval(()=>{ if(ST.view==="sales") loadSales(); if(ST.view==="posts"&&!ST.editPost&&!ST.postedForm&&ST.posts.some(p=>p.status==="posting")) loadPosts(); },4000);
+  setInterval(()=>{ if(ST.dash?.meeting_running||ST.view==="meeting") pollMeeting(); },1500);
+  const tick=()=>{ const d=new Date(); $("#clock").textContent=d.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}); }; tick(); setInterval(tick,30000);
+})();
+</script>
