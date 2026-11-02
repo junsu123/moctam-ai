@@ -25,6 +25,12 @@ def _tick():
     if s.get("auto_meeting") == "1" and str(now.isoweekday()) in days and now.strftime("%H:%M") >= s.get("meeting_time", "08:30"):
         if not db.one("SELECT id FROM meetings WHERE date=?", (db.today(),)) and not meeting.is_running():
             meeting.start()
+    # Tự học mỗi đêm
+    if s.get("learn_enabled") == "1" and now.strftime("%H:%M") >= (s.get("learn_time") or "23:15") \
+            and s.get("learn_last_date") != db.today():
+        import learning
+        db.set_setting("learn_last_date", db.today())
+        learning.nightly_async()
     # Bài Fanpage đã duyệt và đến giờ -> đăng qua Graph API
     if facebook.configured():
         for p in db.q("""SELECT * FROM posts WHERE target_type='page' AND status='scheduled'

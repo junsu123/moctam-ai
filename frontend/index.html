@@ -107,6 +107,34 @@ details.limits .grid2{margin-top:8px}
 .days label{display:flex;align-items:center;gap:3px;font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:3px 7px}
 .spark{display:flex;align-items:flex-end;gap:3px;height:56px}
 .spark div{flex:1;background:var(--accent);opacity:.75;border-radius:3px 3px 0 0;min-height:2px}
+.learn-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.agents-learn{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
+.member .who span.lv{display:inline-flex;font-size:11px;padding:0 6px;margin:0 2px}
+.lv{display:inline-flex;align-items:center;gap:4px;font:800 12px var(--f-display);background:var(--honey-soft);color:var(--honey);border-radius:20px;padding:1px 8px;white-space:nowrap}
+.xp{height:7px;border-radius:5px;background:var(--panel-2);overflow:hidden}
+.xp i{display:block;height:100%;background:var(--honey);border-radius:5px}
+.skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+.skills div{background:var(--panel-2);border-radius:9px;padding:6px 9px;min-width:0}
+.skills b{font:800 17px var(--f-display);font-variant-numeric:tabular-nums}
+.skills span{display:block;font-size:11.5px;color:var(--muted)}
+.trend-up{color:var(--accent);font-size:11.5px;font-weight:700} .trend-down{color:var(--danger);font-size:11.5px;font-weight:700}
+.lessons{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.lessons li{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:start;font-size:13px;padding:6px 8px;border-radius:9px;background:var(--panel-2)}
+.lessons li.pin{background:var(--honey-soft)}
+.lessons .src{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding-top:2px;white-space:nowrap}
+.lessons .ev{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.lessons .ops{display:flex;gap:2px}
+.lessons .ops button{border:0;background:none;color:var(--muted);font-size:12px;padding:2px 5px;border-radius:6px}
+.lessons .ops button:hover{background:var(--panel);color:var(--ink)}
+.goal{font-size:13px;border-left:3px solid var(--honey);padding:4px 0 4px 10px}
+.wbars{display:flex;flex-direction:column;gap:5px}
+.wbars .wb{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) 44px;gap:8px;align-items:center;font-size:12.5px}
+.wbars .track{height:10px;border-radius:6px;background:var(--panel-2);overflow:hidden}
+.wbars .track i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.wbars .wb span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reasons{display:flex;gap:4px;flex-wrap:wrap}
+.reasons button{border:1px solid var(--line);background:var(--panel);border-radius:20px;font-size:12px;padding:3px 9px}
+.reasons button:hover{border-color:var(--danger);color:var(--danger)}
 .alert{background:var(--danger-soft);border:1px solid var(--danger);border-radius:var(--r);padding:10px 14px;font-size:13px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
 .kpi .v{font:800 26px/1 var(--f-display);font-variant-numeric:tabular-nums}
@@ -218,6 +246,7 @@ tbody tr.sel td{background:var(--accent-soft)}
 
 @media (max-width:1180px){.split{grid-template-columns:minmax(0,1fr)}.board{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:760px){
+  .learn-top{grid-template-columns:minmax(0,1fr)} .agents-learn{grid-template-columns:minmax(0,1fr)}
   .cost-top,.presets{grid-template-columns:minmax(0,1fr)}
   .app{grid-template-columns:minmax(0,1fr)}
   .side{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:20;flex-direction:row;padding-block:6px calc(6px + env(safe-area-inset-bottom,0px));
@@ -248,6 +277,7 @@ tbody tr.sel td{background:var(--accent-soft)}
       <button data-v="groups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 2 6 5.5"/></svg>Hội nhóm</button>
       <button data-v="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>Khách hàng</button>
       <button data-v="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8l8-4 8 4v9l-8 4-8-4zM4 8l8 4 8-4M12 12v9"/></svg>Sản phẩm</button>
+      <button data-v="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5M22 9v6"/></svg>Đào tạo</button>
       <button data-v="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Cài đặt</button>
     </nav>
     <div class="mode" id="modeBox"><span class="dot"></span>Đang kết nối…</div>
@@ -380,7 +410,7 @@ tbody tr.sel td{background:var(--accent-soft)}
             <div class="grid3">
               <label class="f" for="lName">Tên / shop<input type="text" id="lName" required></label>
               <label class="f" for="lContact">Liên hệ<input type="text" id="lContact" placeholder="Link FB, Zalo…"></label>
-              <label class="f" for="lSource">Đến từ nhóm/bài<input type="text" id="lSource"></label>
+              <label class="f" for="lPost">Đến từ bài đăng nào<select id="lPost"><option value="">Không rõ / khác</option></select></label>
               <label class="f" for="lType">Kinh doanh<select id="lType"><option>Livestream</option><option>Chạy quảng cáo</option><option>Sàn TMĐT</option><option>Bán đa kênh</option><option>Cửa hàng</option></select></label>
               <label class="f" for="lNeed" style="grid-column:span 2">Nhu cầu<input type="text" id="lNeed" placeholder="VD: hỏi giá ngũ cốc 100 hũ"></label>
             </div>
@@ -408,6 +438,29 @@ tbody tr.sel td{background:var(--accent-soft)}
         </div>
         <div><button class="btn primary" type="submit">Thêm sản phẩm</button></div>
       </form>
+    </section>
+
+    <!-- ĐÀO TẠO -->
+    <section class="view" id="v-learn" hidden>
+      <div class="vh"><div><h1>Đào tạo</h1><p>Mỗi đêm, các agent tự xem lại kết quả thật (khách, bình luận, bài sếp sửa hoặc loại, tin nhắn chốt đơn) rồi ghi bài học vào sổ tay, đặt mục tiêu cho ngày mai và dùng những bài học đó khi làm việc. Sếp xem, sửa, ghim hoặc xóa bất kỳ bài học nào.</p></div>
+        <div class="actions"><button class="btn primary" id="btnLearn">Cho cả đội học ngay</button></div></div>
+      <div class="learn-top">
+        <div class="card"><div class="card-h"><h3>Lan đang chọn góc viết như thế nào</h3><span class="small muted" id="explTxt"></span></div>
+          <p class="small muted">Cơ hội được chọn của mỗi góc, tính từ số khách và bình luận thật của bài đã đăng, nhân với mức sếp duyệt bài góc đó.</p>
+          <div class="wbars" id="angleBars"></div></div>
+        <div class="sidecol">
+          <div class="card"><h3>Sản phẩm được ưu tiên</h3><div class="wbars" id="prodBars"></div></div>
+          <form class="card" id="learnForm">
+            <div class="card-h"><h3>Cài đặt tự học</h3><span class="small muted" id="learnLast"></span></div>
+            <label class="row small"><input type="checkbox" id="lnOn"> Tự học mỗi đêm</label>
+            <div class="grid2"><label class="f" for="lnTime">Giờ tự học<input type="time" id="lnTime"></label>
+              <label class="f" for="lnExp">Tỉ lệ thử cái mới<select id="lnExp"><option value="0.1">10% (bám cái đang hiệu quả)</option><option value="0.25">25% (cân bằng)</option><option value="0.4">40% (thử nhiều)</option></select></label></div>
+            <p class="small muted">Bài học chỉ thay đổi cách viết, chọn góc, sản phẩm, nhóm và giờ đăng. Giới hạn bài/ngày, giãn cách và luật nhóm do sếp đặt, agent không tự đổi được.</p>
+            <div><button class="btn primary" type="submit">Lưu</button></div>
+          </form>
+        </div>
+      </div>
+      <div class="agents-learn" id="learnGrid"></div>
     </section>
 
     <!-- CÀI ĐẶT -->
@@ -535,7 +588,7 @@ const Demo = (() => {
   const today = () => now().slice(0,10);
   let seq = 100; const id = () => ++seq;
   const S = {
-    settings:{bump_enabled:"1",bump_folder:"D:\\AnhSanPham",bump_time:"19:30",bump_max_age_days:"7",bump_max_per_nick:"8",bump_gap_minutes:"6",bump_texts:"Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng",cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 09xx.xxx.xxx",ai_live:false,model:"mô phỏng"},
+    settings:{learn_enabled:"1",learn_time:"23:15",learn_explore:"0.25",bump_enabled:"1",bump_folder:"D:\\AnhSanPham",bump_time:"19:30",bump_max_age_days:"7",bump_max_per_nick:"8",bump_gap_minutes:"6",bump_texts:"Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng",cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 09xx.xxx.xxx",ai_live:false,model:"mô phỏng"},
     products:[
       {id:1,name:"Trà gừng mật ong túi lọc",category:"Trà túi lọc",description:"Gừng sẻ sấy lạnh phối mật ong, hộp 20 túi x 2g.",wholesale_price:"38.000đ/hộp",retail_price:"65.000đ",moq:"50 hộp",selling_points:"Ấm bụng, dễ uống, bán chạy mùa lạnh; in nhãn riêng (OEM) được"},
       {id:2,name:"Trà hoa đậu biếc - cỏ ngọt",category:"Trà túi lọc",description:"Hoa đậu biếc sấy khô phối cỏ ngọt, hộp 25 túi.",wholesale_price:"35.000đ/hộp",retail_price:"60.000đ",moq:"50 hộp",selling_points:"Màu xanh đẹp lên video, hợp livestream pha chế"},
@@ -581,6 +634,36 @@ const Demo = (() => {
   const SALE_LOOKS=[{skin:"#f3cfae",shirt:"#d64545",pants:"#2d2d3a",hair:"#2a1810",hairStyle:"long",accessory:"none"},{skin:"#e8b88f",shirt:"#2f86c9",pants:"#25303a",hair:"#1d1d1d",hairStyle:"spiky",accessory:"glasses"},{skin:"#f6d2b3",shirt:"#e0a12a",pants:"#3a2d2a",hair:"#5a3520",hairStyle:"bun",accessory:"none"},{skin:"#eec29b",shirt:"#1f9a8a",pants:"#22332f",hair:"#2b2018",hairStyle:"side",accessory:"headset"},{skin:"#f2c9a0",shirt:"#a24fb5",pants:"#2c2236",hair:"#3b2414",hairStyle:"long",accessory:"beret"},{skin:"#e9bd96",shirt:"#5b7f2a",pants:"#2a3020",hair:"#141414",hairStyle:"cap",accessory:"cap"},{skin:"#f3d0b0",shirt:"#c4572b",pants:"#30262a",hair:"#4a2a1a",hairStyle:"bun",accessory:"glasses"},{skin:"#e6b48a",shirt:"#3b5bb5",pants:"#232a3a",hair:"#2a1d14",hairStyle:"spiky",accessory:"none"}];
   const saleAgents=()=>S.sales.map((r,i)=>({id:`sale-${r.id}`,sale_id:r.id,kind:"sale",name:r.name,role:`Sale · nick ${r.fb_name||r.name}`,short:"Đăng bài lên trang cá nhân và hội nhóm bằng tài khoản Facebook mình quản lý",personality:"Chăm chỉ, đúng giờ, báo ngay khi tài khoản gặp sự cố.",look:SALE_LOOKS[(r.id-1)%8],desk:5+i,login_status:r.login_status,
     status:(S.status[`sale-${r.id}`]&&S.status[`sale-${r.id}`].state!=="idle")?S.status[`sale-${r.id}`]:{state:"idle",text:{ok:"Nick sẵn sàng",not_logged_in:"Chờ sếp đăng nhập Facebook",checkpoint:"Nick bị checkpoint, đã dừng"}[r.login_status]}}));
+  S.xp={minh:140,lan:310,tuan:230,ha:180,khoa:95,"sale-1":120,"sale-2":75,"sale-3":20}; S.learnRunning=false;
+  S.goals={minh:"Theo dõi để 4 việc giao trong cuộc họp được hoàn thành trong ngày.",lan:"Viết ít nhất 2 bài góc 'Sản phẩm dễ livestream' và thử 1 bài góc OEM để so sánh.",tuan:"Xếp ít nhất một nửa số bài vào giờ vàng 20h, 11h.",ha:"Liên hệ hết 2 khách mới trước 11h.",khoa:"Đảm bảo bài đăng hôm qua đều có số bình luận và số khách."};
+  S.lessons=[
+    {id:901,agent_id:"lan",text:"Ưu tiên góc 'Sản phẩm dễ livestream' (điểm 8,4/bài); hạn chế góc 'Câu chuyện xưởng' (1,2/bài).",evidence:"9 và 6 bài trong 30 ngày",source:"auto",confidence:0.8,pinned:0},
+    {id:902,agent_id:"lan",text:"Sếp thường rút ngắn bài; nên viết khoảng 120 chữ.",evidence:"5 lần sửa, còn 64% độ dài",source:"auto",confidence:0.75,pinned:0},
+    {id:903,agent_id:"lan",text:"Luôn nhắc xưởng xuất được hóa đơn VAT cho khách sỉ.",evidence:"Sếp dạy",source:"boss",confidence:1,pinned:1},
+    {id:904,agent_id:"lan",text:"Tiêu đề có con số giá sỉ cụ thể được bình luận nhiều hơn tiêu đề chung chung.",evidence:"Bài có giá trong tiêu đề: 5,2 bình luận/bài so với 2,1",source:"ai",confidence:0.65,pinned:0},
+    {id:905,agent_id:"tuan",text:"Nhóm 'Tìm nguồn hàng sỉ - Đầu mối tận xưởng' hiệu quả nhất (11 khách / 9 bài); nhóm 'Hội chạy quảng cáo Facebook Ads' kém nhất.",evidence:"Điểm TB 7,1 so với 0,8",source:"auto",confidence:0.7,pinned:0},
+    {id:906,agent_id:"tuan",text:"Giờ vàng đăng bài: 20h, 11h. Ưu tiên xếp lịch vào các khung này.",evidence:"Theo điểm hiệu quả bài 30 ngày",source:"auto",confidence:0.7,pinned:0},
+    {id:907,agent_id:"ha",text:"Nhóm khách 'Livestream' dễ chốt nhất (4/7); ưu tiên trả lời họ trước.",evidence:"",source:"auto",confidence:0.65,pinned:0},
+    {id:908,agent_id:"ha",text:"Đề nghị gửi mẫu thử ngay trong tin đầu tiên giúp khách trả lời nhanh hơn.",evidence:"3/4 tin đã chốt có đề nghị gửi mẫu",source:"ai",confidence:0.6,pinned:0},
+    {id:909,agent_id:"khoa",text:"Chỉ 40% bài có số liệu kết quả. Nhắc sếp gắn khách với bài đăng để cả đội học chính xác hơn.",evidence:"10 bài trong 14 ngày",source:"auto",confidence:0.8,pinned:0},
+    {id:910,agent_id:"minh",text:"Quyết định họp (Gửi mẫu thử miễn phí): thử 7 ngày với khách điểm từ 75 trở lên, Khoa đo tỉ lệ chốt.",evidence:"",source:"meeting",confidence:0.55,pinned:0},
+    {id:911,agent_id:"sale-1",text:"Nick hay lỗi khi đăng vào nhóm Livestream (2 lần/14 ngày). Lỗi gần nhất: không tìm thấy ô viết bài.",evidence:"",source:"auto",confidence:0.7,pinned:0}];
+  const SK={minh:[{label:"Việc giao được hoàn thành",unit:"%",now:75,prev:60},{label:"Bài học mới",unit:"",now:2,prev:1}],
+    lan:[{label:"Bài sếp duyệt ngay",unit:"%",now:68,prev:45},{label:"Khách mỗi bài",unit:"",now:0.9,prev:0.6},{label:"Bài học mới",unit:"",now:4,prev:2}],
+    tuan:[{label:"Khách mỗi bài",unit:"",now:0.9,prev:0.6},{label:"Đăng thành công",unit:"%",now:94,prev:88},{label:"Bài học mới",unit:"",now:2,prev:1}],
+    ha:[{label:"Tỉ lệ chốt đơn",unit:"%",now:38,prev:25},{label:"Tin nhắn đã gửi",unit:"",now:21,prev:14},{label:"Bài học mới",unit:"",now:2,prev:0}],
+    khoa:[{label:"Bài có số liệu kết quả",unit:"%",now:40,prev:35},{label:"Bài học mới",unit:"",now:1,prev:1}]};
+  const lvl=xp=>1+Math.floor(Math.sqrt(xp/50)), lxp=l=>50*(l-1)**2;
+  function demoLearning(){
+    const all=[...AGENT_DEFS.map(a=>({...a,kind:"core"})),...saleAgents()];
+    return {running:S.learnRunning,last:today(),agents:all.map(a=>{ const xp=S.xp[a.id]||0, L=lvl(xp);
+      return {id:a.id,name:a.name,role:a.role,kind:a.kind,look:a.look,progress:{xp,level:L,level_xp:lxp(L),next_xp:lxp(L+1),goal:S.goals[a.id]||null},
+        skills:SK[a.id]||[{label:"Khách mỗi bài",unit:"",now:0.7,prev:0.5},{label:"Đăng thành công",unit:"%",now:92,prev:85},{label:"Lượt up bài",unit:"",now:18,prev:9}],
+        lessons:S.lessons.filter(l=>l.agent_id===a.id).sort((x,y)=>y.pinned-x.pinned||y.confidence-x.confidence),retired:a.id==="lan"?3:0}; }),
+      choices:{explore:+(S.settings.learn_explore||0.25),golden_hours:[20,11],
+        angles:[["Sản phẩm dễ livestream",.38,9,8.4],["Biên lợi nhuận cho người bán",.19,7,4.6],["Nguồn hàng tận xưởng",.15,8,3.5],["Sản phẩm dễ chạy quảng cáo",.12,5,2.9],["Nhận in nhãn riêng (OEM)",.09,3,1.8],["Câu chuyện xưởng",.07,6,1.2]].map(([name,weight,n,avg])=>({name,weight,n,avg})),
+        products:[["Bột ngũ cốc dinh dưỡng 25 loại hạt",.31],["Trà hoa đậu biếc - cỏ ngọt",.22],["Trà gừng mật ong túi lọc",.17],["Bột cần tây sấy lạnh",.12],["Cà phê hòa tan 3in1 vị đậm",.1],["Bột diếp cá - rau má",.08]].map(([name,weight])=>({name,weight}))}};
+  }
   const saleOut=r=>{ const mine=S.posts.filter(p=>p.sale_id===r.id); return {...r,agent_id:`sale-${r.id}`,busy:S.busy[r.id]||null,posted_today:mine.filter(p=>p.status==="posted").length,scheduled_today:mine.filter(p=>["scheduled","posting"].includes(p.status)).length,failed:mine.filter(p=>p.status==="failed").length,
     recent:mine.slice(0,6).map(p=>({id:p.id,status:p.status,target_type:p.target_type,group_name:p.group_name,posted_at:p.posted_at,scheduled_for:p.scheduled_for,error:p.error,screenshot:null}))}; };
   function plan(){
@@ -638,12 +721,20 @@ const Demo = (() => {
     const [p, qs] = path.split("?"); const P=p.replace(/^\/api/,""); let m;
     if(method==="GET"){
       if(P==="/health") return {ok:true,ai_live:false,model:"bản xem trước"};
-      if(P==="/agents") return AGENT_DEFS.map(a=>({...a,kind:"core",status:S.status[a.id],tasks:S.tasks.filter(t=>t.agent_id===a.id&&t.status!=="done")})).concat(saleAgents().map(a=>({...a,tasks:[]})));
+      if(P==="/agents") return AGENT_DEFS.map(a=>({...a,kind:"core",level:lvl(S.xp[a.id]||0),status:S.status[a.id],tasks:S.tasks.filter(t=>t.agent_id===a.id&&t.status!=="done")})).concat(saleAgents().map(a=>({...a,level:lvl(S.xp[a.id]||0),tasks:[]})));
       if(P==="/sales") return S.sales.map(saleOut);
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products; if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g)}));
       if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
+      if(P==="/learning") return demoLearning();
+      if(P==="/posts/recent-posted") return S.posts.filter(p=>p.status==="posted").map(p=>({id:p.id,title:p.title,posted_at:p.posted_at,group_name:p.group_name,target_type:p.target_type}));
       if(P==="/bump/folder"){ const f=S.settings.bump_folder; return f?{path:f,exists:true,count:23,root_count:5,products:[{id:1,name:"Trà gừng mật ong túi lọc",count:8},{id:3,name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",count:6},{id:4,name:"Bột cần tây sấy lạnh",count:4}],samples:[]}:{path:"",exists:false,count:0,products:[],samples:[]}; }
+      if(P==="/learning/run"){ S.learnRunning=true; [...AGENT_DEFS.map(a=>a.id),...S.sales.map(r=>`sale-${r.id}`)].forEach(a=>S.status[a]={state:"working",text:"Đang tự xem lại và rút kinh nghiệm"});
+        setTimeout(()=>{ S.learnRunning=false; [...AGENT_DEFS.map(a=>a.id),...S.sales.map(r=>`sale-${r.id}`)].forEach(a=>S.status[a]={state:"idle",text:"Vừa học xong bài học hôm nay"});
+          S.lessons.push({id:id(),agent_id:"lan",text:"Mở bài bằng câu hỏi về lợi nhuận của người bán giúp tăng bình luận.",evidence:"Góc lợi nhuận: 6 bình luận/bài so với mức chung 3,1",source:"ai",confidence:0.7,pinned:0});
+          S.xp.lan+=15; S.xp.tuan+=5; log("khoa","Tự học","Cả đội rút ra 2 bài học mới, đặt mục tiêu cho ngày mai"); },6000); return {ok:true}; }
+      if(P==="/lessons"){ const l={id:id(),agent_id:body.agent_id,text:body.text,evidence:"Sếp dạy",source:"boss",confidence:1,pinned:1}; S.lessons.push(l); log(body.agent_id,"Được sếp dạy",body.text); return l; }
+      if((m=P.match(/^\/replies\/(\d+)\/sent$/))) return {ok:true};
       if(P==="/costs"){ const d=new Date(); const daily=[...Array(14)].map((_,i)=>{ const x=new Date(d-(13-i)*864e5); return {day:x.toISOString().slice(0,10),cost:0.09+((i*37)%11)/100}; });
         return {spent:0.38,budget:+S.settings.monthly_budget_usd||0,projected:3.9,state:"ok",batch_saved:0.27,live:false,pending_batches:0,daily,
           by_task:[{task:"posts",label:"Viết bài đăng",calls:96,tin:91200,tout:67300,cost:0.27,batched:84},{task:"replies",label:"Tin nhắn khách",calls:41,tin:45100,tout:8200,cost:0.0086},{task:"meeting",label:"Cuộc họp",calls:28,tin:39800,tout:5600,cost:0.0068}]}; }
@@ -685,6 +776,7 @@ const Demo = (() => {
       if((m=P.match(/^\/leads\/(\d+)$/))){ const l=S.leads.find(x=>x.id==m[1]); const {contacted,...rest}=body; Object.assign(l,rest); if(contacted) l.last_contact_at=now(); return l; }
       if((m=P.match(/^\/tasks\/(\d+)$/))){ S.tasks.find(x=>x.id==m[1]).status=body.status; return {ok:true}; }
     }
+    if(method==="PATCH"&&(m=P.match(/^\/lessons\/(\d+)$/))){ const l=S.lessons.find(x=>x.id==m[1]); if(body.status==="retired") S.lessons=S.lessons.filter(x=>x!==l); else Object.assign(l,body); return l||{}; }
     if(method==="PATCH"&&(m=P.match(/^\/sales\/(\d+)$/))){ const r=S.sales.find(x=>x.id==m[1]); Object.assign(r,body); if(body.auto_post===0) S.posts.filter(p=>p.sale_id===r.id&&p.status==="scheduled").forEach(p=>Object.assign(p,{status:"approved",sale_id:null,sale_name:null,scheduled_for:null})); return saleOut(r); }
     if(method==="PUT"&&(m=P.match(/^\/groups\/(\d+)\/members$/))){ S.groups.find(x=>x.id==m[1]).member_sale_ids=body.sale_ids.join(","); return {ok:true}; }
     if(method==="POST"&&P==="/costs/preset"){ const PR={tiet_kiem:["claude-haiku-5-5","claude-haiku-5-5","claude-haiku-5-5"],can_bang:["claude-sonnet-5-5","claude-haiku-5-5","claude-haiku-5-5"],chat_luong:["claude-sonnet-5-5","claude-sonnet-5-5","claude-sonnet-5-5"]}[body.name];
@@ -948,7 +1040,7 @@ const World = (() => {
     const ids=new Set(agents.map(a=>a.id)); let changed=false;
     for(const a of agents) if(!chars[a.id]){ addAgent(a); changed=true; }
     for(const id of Object.keys(chars)) if(!ids.has(id)){ removeAgent(id); changed=true; }
-    for(const a of agents) if(chars[a.id] && tags[a.id] && tags[a.id].textContent!==a.name){ tags[a.id].textContent=a.name; AGENT[a.id]=a; }
+    for(const a of agents){ const label=a.level?`${a.name} · Cấp ${a.level}`:a.name; if(chars[a.id] && tags[a.id] && tags[a.id].textContent!==label){ tags[a.id].textContent=label; AGENT[a.id]={...AGENT[a.id],...a}; } }
     if(changed){ layoutSeats(agents.map(a=>a.id)); for(const c of Object.values(chars)) if(c.mode==="meeting"){ const s=SEATS[c.id]; c.root.position.set(s.x,0,s.z); c.final=s; } }
     for(const a of agents){ const c=chars[a.id]; if(!c) continue; const st=a.status||{}; c.state=st.state||"idle"; c.statusText=st.text||"";
       if(st.state==="meeting"||st.state==="talking"||meetingRunning) goMeeting(a.id); else goDesk(a.id); }
@@ -967,7 +1059,7 @@ function show(v){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
   if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
-  if(v==="posts") loadPosts(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  if(v==="posts") loadPosts(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
 $("#nav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) location.hash=b.dataset.v; });
@@ -982,7 +1074,7 @@ async function refresh(){
     const s=dash.stats;
     $("#kpis").innerHTML=[["Bài chờ sếp duyệt",s.drafts,s.drafts>0],["Bài đã duyệt / lên lịch",s.approved],["Bài đã đăng",s.posted_total],["Khách nóng",s.leads_hot,s.leads_hot>0],["Khách mới chưa liên hệ",s.leads_new,s.leads_new>0],["Nick sale đang chạy",`${s.sales_ok||0}/${s.sales_total||0}`,!!s.sales_problem]]
       .map(([l,v,w])=>`<div class="kpi${w?" warn":""}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
-    $("#team").innerHTML=agents.map(a=>`<button class="member" data-a="${a.id}">${avaHtml(a.id)}<span class="who"><b>${esc(a.name)} · <span class="muted" style="display:inline;font-weight:500">${esc(a.role)}</span></b><span>${esc(a.status?.text||"")}</span></span><span class="chip ${a.status?.state||""}">${STATUS_TXT[a.status?.state]||"Rảnh"}</span></button>`).join("");
+    $("#team").innerHTML=agents.map(a=>`<button class="member" data-a="${a.id}">${avaHtml(a.id)}<span class="who"><b>${esc(a.name)} ${a.level?`<span class="lv">Cấp ${a.level}</span>`:""} <span class="muted" style="display:inline;font-weight:500">${esc(a.role)}</span></b><span>${esc(a.status?.text||"")}</span></span><span class="chip ${a.status?.state||""}">${STATUS_TXT[a.status?.state]||"Rảnh"}</span></button>`).join("");
     $("#feed").innerHTML=dash.activity.length?dash.activity.map(x=>`<li>${avaHtml(x.agent_id)}<div><b>${esc(x.action)}</b> · ${esc(x.detail)}<time>${esc(AGENT[x.agent_id]?.name||"")} · ${fmtTime(x.created_at)} ${fmtDate(x.created_at)}</time></div></li>`).join(""):`<li class="muted">Chưa có hoạt động.</li>`;
     const db=$("#draftBadge"); db.hidden=!s.drafts; db.textContent=s.drafts;
     if(!DEMO&&s.ai_live) $("#modeBox").innerHTML=`<span class="dot live"></span><b>AI đang hoạt động</b><br>Chi phí tháng này: <b>${usd(s.ai_cost_month||0)}</b>`;
@@ -1000,9 +1092,15 @@ function openAgent(id){
    <span class="chip ${a.status?.state||""}" style="align-self:flex-start">${STATUS_TXT[a.status?.state]||"Rảnh"} · ${esc(a.status?.text||"")}</span>
    <div><h3>Nhiệm vụ</h3><p class="muted" style="margin-top:4px">${esc(a.short)}</p></div>
    <div><h3>Tính cách</h3><p class="muted" style="margin-top:4px">${esc(a.personality)}</p></div>
+   <div id="dLearn"></div>
    <div><h3>Việc đang mở</h3><ul class="tasks" style="margin-top:6px">${(a.tasks||[]).length?a.tasks.map(t=>`<li>· ${esc(t.title)}</li>`).join(""):'<li class="muted small">Không có việc tồn.</li>'}</ul></div>
    <div class="actions">${{lan:'<a class="btn primary" href="#posts">Giao Lan viết bài</a>',tuan:'<button class="btn primary" id="dPlan">Xếp lịch đăng nhóm</button>',ha:'<a class="btn primary" href="#leads">Mở danh sách khách</a>',khoa:'<a class="btn primary" href="#office">Xem số liệu</a>',minh:'<a class="btn primary" href="#meeting">Vào phòng họp</a>'}[id]||'<a class="btn primary" href="#sales">Quản lý nick</a>'}</div>`;
   d.hidden=false; $("#dClose").onclick=()=>d.hidden=true; d.querySelectorAll("a").forEach(x=>x.addEventListener("click",()=>d.hidden=true));
+  api("/learning").then(L=>{ const x=L.agents.find(z=>z.id===id); if(!x||!$("#dLearn")) return; const pg=x.progress;
+    $("#dLearn").innerHTML=`<h3>Phát triển <span class="lv">Cấp ${pg.level}</span></h3>${pg.goal?`<p class="goal" style="margin-top:6px">${esc(pg.goal)}</p>`:""}
+      <ul class="lessons" style="margin-top:6px">${x.lessons.slice(0,3).map(l=>`<li style="display:block">${esc(l.text)}</li>`).join("")||'<li class="muted" style="display:block">Chưa có bài học.</li>'}</ul>
+      <a class="btn sm" href="#learn" style="margin-top:6px">Xem sổ tay, dạy ${esc(x.name)}</a>`;
+    $("#dLearn a").addEventListener("click",()=>d.hidden=true); }).catch(()=>{});
   const p=$("#dPlan"); if(p) p.onclick=async()=>{ const r=await api("/distribution/plan","POST"); toast(r.length?`Tuấn đã xếp ${r.length} bài vào nhóm`:"Chưa có bài đã duyệt để xếp"); d.hidden=true; refresh(); };
 }
 $("#btnDaily").onclick=async e=>{ e.target.disabled=true; toast("Đang giao việc cho cả đội…"); try{ const r=await api("/run/daily-work","POST"); toast(`${r.draft_mode==="batch"?`Lan gửi lô ${r.drafts} bài (giảm 50%), bài có sau vài phút`:r.drafts?`${r.drafts} bài mới`:"Kho bài đã đủ, không viết thêm"} · ${r.scheduled} bài lên lịch · ${r.follow_ups} khách cần bám`);}catch(err){toast(err.message);} e.target.disabled=false; refresh(); };
@@ -1062,7 +1160,8 @@ function postCard(p){
   let acts="";
   const shot = p.screenshot?`<a class="btn sm ghost" href="${esc(p.screenshot)}" target="_blank" rel="noopener">Ảnh chụp</a>`:"";
   const salePick = p.target_type!=="page" && ST.sales?.length ? `<select class="sm" id="sale-${p.id}" aria-label="Nick đăng bài" style="width:auto;padding:4px 8px;font-size:12.5px">${ST.sales.map(s=>`<option value="${s.id}" ${s.id===p.sale_id?"selected":""}>${esc(s.name)}${s.login_status!=="ok"?" (chưa sẵn sàng)":""}</option>`).join("")}</select><button class="btn sm primary" data-act="runNow">Đăng ngay</button><button class="btn sm" data-act="dry">Đăng thử</button>`:"";
-  if(p.status==="draft") acts=`<button class="btn sm primary" data-act="approve">Duyệt</button><button class="btn sm" data-act="edit">Sửa</button><button class="btn sm ghost danger" data-act="reject">Bỏ</button>`;
+  if(p.status==="draft") acts=`<button class="btn sm primary" data-act="approve">Duyệt</button><button class="btn sm" data-act="edit">Sửa</button><button class="btn sm ghost danger" data-act="rejectAsk">Loại</button>`;
+  if(p.status==="draft"&&ST.rejectForm===p.id) acts=`<div style="width:100%"><span class="small muted">Vì sao loại? Lan sẽ rút kinh nghiệm.</span><div class="reasons" style="margin-top:4px">${["Quá dài","Không hấp dẫn","Sai thông tin","Sai giọng văn","Trùng ý bài khác","Không hợp nhóm"].map(r=>`<button type="button" data-act="reject" data-reason="${r}">${r}</button>`).join("")}<button type="button" data-act="reject" data-reason="">Bỏ qua</button><button type="button" data-act="cancel">Hủy</button></div></div>`;
   else if(p.status==="approved"||p.status==="scheduled") acts=(p.target_type==="page"?`<button class="btn sm primary" data-act="page">Đăng Fanpage</button>`:"")+(p.target_type==="profile"||p.group_id?salePick:"")+`<button class="btn sm ghost" data-act="copy">Sao chép</button>${p.group_url?`<a class="btn sm ghost" href="${esc(p.group_url)}" target="_blank" rel="noopener">Mở nhóm</a>`:""}<button class="btn sm ghost" data-act="posted">Đăng tay xong</button>${shot}`;
   else if(p.status==="posting") acts=`<span class="small muted">${esc(p.sale_name||"Sale")} đang mở Chrome và đăng bài…</span>`;
   else if(p.status==="failed") acts=`<button class="btn sm primary" data-act="retry">Đưa về hàng đợi</button>${shot}`;
@@ -1098,10 +1197,11 @@ $("#board").addEventListener("click",async e=>{
   const patch=async body=>{ Object.assign(p,await api(`/posts/${id}`,"PATCH",body)); };
   if(act==="more"){ ST.openPost.has(id)?ST.openPost.delete(id):ST.openPost.add(id); return renderBoard(); }
   if(act==="edit"){ ST.editPost=id; return renderBoard(); }
-  if(act==="cancel"){ ST.editPost=null; ST.postedForm=null; return renderBoard(); }
+  if(act==="cancel"){ ST.editPost=null; ST.postedForm=null; ST.rejectForm=null; return renderBoard(); }
   if(act==="save"){ await patch({content:$(`#edit-${id}`).value}); ST.editPost=null; toast("Đã lưu bài"); return renderBoard(); }
   if(act==="approve"){ await patch({status:"approved"}); toast("Đã duyệt. Tuấn sẽ xếp lịch."); refresh(); return loadPosts(); }
-  if(act==="reject"){ await patch({status:"rejected"}); return loadPosts(); }
+  if(act==="rejectAsk"){ ST.rejectForm=id; return renderBoard(); }
+  if(act==="reject"){ await patch({status:"rejected",reason:b.dataset.reason||""}); ST.rejectForm=null; toast(b.dataset.reason?`Đã loại bài. Lan ghi nhận: "${b.dataset.reason}"`:"Đã loại bài"); return loadPosts(); }
   if(act==="copy") return copyText(`${p.content}\n\n${p.hashtags||""}`);
   if(act==="posted"){ ST.postedForm=id; return renderBoard(); }
   if(act==="confirmPosted"){ await api(`/posts/${id}/posted`,"POST",{poster:$(`#poster-${id}`).value,posted_url:$(`#purl-${id}`).value}); ST.postedForm=null; toast("Đã ghi nhận bài đăng"); refresh(); return loadPosts(); }
@@ -1164,6 +1264,43 @@ $("#saleForm").addEventListener("submit",async e=>{ e.preventDefault();
   try{ await api("/sales","POST",{name:$("#saName").value,fb_name:$("#saFb").value}); e.target.reset(); toast("Đã tuyển sale mới. Bấm Mở Chrome để đăng nhập nick."); }catch(err){ toast(err.message); }
   loadSales(); refresh(); });
 
+/* --------------------------------------------- đào tạo */
+const SRC={auto:"Số liệu",ai:"Tự rút ra",boss:"Sếp dạy",meeting:"Cuộc họp"};
+const fmtSkill=(v,u)=>v===null||v===undefined?"—":`${v}${u}`;
+function trend(s){ if(s.now==null||s.prev==null||s.now===s.prev) return ""; const up=s.now>s.prev; return `<span class="${up?"trend-up":"trend-down"}">${up?"▲":"▼"} ${Math.abs(Math.round((s.now-s.prev)*100)/100)}${s.unit}</span>`; }
+function wbars(rows){ const mx=Math.max(0.0001,...rows.map(r=>r.weight)); return rows.sort((a,b)=>b.weight-a.weight).map(r=>`<div class="wb"><span title="${esc(r.name)}">${esc(r.name)}</span><div class="track"><i style="width:${Math.round(r.weight/mx*100)}%"></i></div><span class="num small">${Math.round(r.weight*100)}%</span></div>`).join(""); }
+async function loadLearn(){
+  const d=await api("/learning"); ST.learn=d; const s=await api("/settings");
+  $("#angleBars").innerHTML=wbars(d.choices.angles.map(a=>({...a,name:`${a.name} · ${a.n} bài`})));
+  $("#prodBars").innerHTML=d.choices.products.length?wbars(d.choices.products):'<p class="small muted">Chưa có sản phẩm.</p>';
+  $("#explTxt").textContent=`Thử cái mới ${Math.round(d.choices.explore*100)}%${d.choices.golden_hours.length?` · Giờ vàng: ${d.choices.golden_hours.map(h=>h+"h").join(", ")}`:""}`;
+  $("#learnLast").textContent=d.last?`Lần học gần nhất: ${fmtDate(d.last)}`:"Chưa học lần nào";
+  $("#lnOn").checked=s.learn_enabled!=="0"; $("#lnTime").value=s.learn_time||"23:15"; $("#lnExp").value=s.learn_explore||"0.25";
+  $("#btnLearn").disabled=d.running; $("#btnLearn").textContent=d.running?"Cả đội đang học…":"Cho cả đội học ngay";
+  if(document.activeElement&&$("#learnGrid").contains(document.activeElement)&&document.activeElement.tagName==="INPUT") return;
+  $("#learnGrid").innerHTML=d.agents.map(a=>{ const p=a.progress; const pct=Math.round((p.xp-p.level_xp)/Math.max(1,p.next_xp-p.level_xp)*100);
+    return `<div class="card" data-la="${a.id}">
+      <div class="card-h"><div class="row">${avaHtml(a.id)}<div><h3>${esc(a.name)}</h3><span class="small muted">${esc(a.role)}</span></div></div><span class="lv">Cấp ${p.level}</span></div>
+      <div><div class="xp"><i style="width:${pct}%"></i></div><span class="small muted">${p.xp} kinh nghiệm · còn ${p.next_xp-p.xp} để lên cấp ${p.level+1}</span></div>
+      ${p.goal?`<div class="goal"><b>Mục tiêu hôm nay:</b> ${esc(p.goal)}</div>`:""}
+      ${a.skills.length?`<div class="skills">${a.skills.map(s=>`<div><b>${fmtSkill(s.now,s.unit)}</b> ${trend(s)}<span>${esc(s.label)} · tuần trước ${fmtSkill(s.prev,s.unit)}</span></div>`).join("")}</div>`:""}
+      <div><b class="small">Sổ tay kinh nghiệm (${a.lessons.length})</b>${a.retired?` <span class="small muted">· đã bỏ ${a.retired} bài học cũ</span>`:""}
+        <ul class="lessons" style="margin-top:6px">${a.lessons.length?a.lessons.map(l=>`<li class="${l.pinned?"pin":""}" data-l="${l.id}"><span class="src">${SRC[l.source]||l.source}</span><span>${esc(l.text)}${l.evidence?`<span class="ev">${esc(l.evidence)}</span>`:""}</span>
+          <span class="ops"><button type="button" data-op="pin" title="${l.pinned?"Bỏ ghim":"Ghim: luôn dùng"}" aria-label="${l.pinned?"Bỏ ghim":"Ghim"}">${l.pinned?"★":"☆"}</button><button type="button" data-op="del" title="Bỏ bài học này" aria-label="Bỏ bài học">✕</button></span></li>`).join(""):'<li class="muted" style="display:block">Chưa có bài học. Cần thêm bài đã đăng có số khách/bình luận, hoặc sếp dạy trực tiếp bên dưới.</li>'}</ul></div>
+      <form class="row" data-teach="${a.id}"><input type="text" class="grow" id="teach-${a.id}" placeholder="Dạy ${esc(a.name)} một điều…" aria-label="Dạy ${esc(a.name)}"><button class="btn sm primary" type="submit">Dạy</button></form>
+    </div>`; }).join("");
+}
+$("#learnGrid").addEventListener("click",async e=>{ const b=e.target.closest("[data-op]"); if(!b) return; const id=+b.closest("[data-l]").dataset.l;
+  const l=ST.learn.agents.flatMap(a=>a.lessons).find(x=>x.id===id);
+  if(b.dataset.op==="pin") await api(`/lessons/${id}`,"PATCH",{pinned:l.pinned?0:1});
+  if(b.dataset.op==="del"){ await api(`/lessons/${id}`,"PATCH",{status:"retired"}); toast("Đã bỏ bài học này khỏi sổ tay"); }
+  loadLearn(); });
+$("#learnGrid").addEventListener("submit",async e=>{ const f=e.target.closest("[data-teach]"); if(!f) return; e.preventDefault(); const aid=f.dataset.teach; const v=$(`#teach-${aid}`).value.trim(); if(!v) return;
+  try{ await api("/lessons","POST",{agent_id:aid,text:v}); toast(`Đã dạy ${AGENT[aid]?.name||""}. Bài học được ghim và dùng từ lần làm việc tới.`); }catch(err){ toast(err.message); }
+  $(`#teach-${aid}`).value=""; document.activeElement.blur(); loadLearn(); });
+$("#btnLearn").onclick=async()=>{ await api("/learning/run","POST"); toast("Cả đội đang xem lại số liệu và rút kinh nghiệm…"); $("#btnLearn").disabled=true; setTimeout(loadLearn,4000); setTimeout(loadLearn,12000); refresh(); };
+$("#learnForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{learn_enabled:$("#lnOn").checked?"1":"0",learn_time:$("#lnTime").value,learn_explore:$("#lnExp").value}); toast("Đã lưu cài đặt tự học"); loadLearn(); });
+
 /* --------------------------------------------- hội nhóm */
 async function loadGroups(){
   [ST.groups,ST.sales]=await Promise.all([api("/groups"),api("/sales")]);
@@ -1180,6 +1317,7 @@ $("#groupForm").addEventListener("submit",async e=>{ e.preventDefault(); await a
 /* --------------------------------------------- khách hàng */
 async function loadLeads(){
   ST.leads=await api("/leads");
+  api("/posts/recent-posted").then(ps=>{ const sel=$("#lPost"); const cur=sel.value; sel.innerHTML='<option value="">Không rõ / khác</option>'+ps.map(p=>`<option value="${p.id}">#${p.id} · ${esc(p.group_name||"Trang cá nhân")} · ${fmtDate(p.posted_at)} · ${esc((p.title||"").slice(0,40))}</option>`).join(""); sel.value=cur; }).catch(()=>{});
   $("#pipe").innerHTML=Object.entries(LEAD_ST).map(([k,l])=>`<div><b class="num">${ST.leads.filter(x=>x.status===k).length}</b><span>${l}</span></div>`).join("");
   $("#leadRows").innerHTML=ST.leads.map(l=>`<tr class="click${ST.selLead===l.id?" sel":""}" data-l="${l.id}"><td><b>${esc(l.name)}</b><div class="small muted">${esc(l.contact)}</div></td><td>${esc(l.business_type)}</td><td class="small">${esc(l.need)}</td><td class="small">${esc(l.source)}</td><td class="num score" style="color:${l.score>=75?"var(--accent)":"inherit"}">${l.score}</td><td><span class="chip ${l.status==="ordered"?"ok":l.status==="lost"?"bad":l.status==="new"?"warn":""}">${LEAD_ST[l.status]}</span></td></tr>`).join("");
   if(ST.selLead) renderLead();
@@ -1197,10 +1335,10 @@ function renderLead(){
   $("#lDraft").onclick=async e=>{ e.target.disabled=true; e.target.textContent="Hà đang soạn…"; const r=await api(`/leads/${l.id}/reply`,"POST",{message:$("#lMsg").value});
     $("#lReply").innerHTML=`<label class="f" for="lReplyTxt">Tin nhắn đề xuất (sửa được)<textarea id="lReplyTxt" rows="7">${esc(r.reply)}</textarea></label><div class="actions"><button class="btn" id="lCopy">Sao chép</button><button class="btn primary" id="lSent">Đã gửi cho khách</button></div>`;
     $("#lCopy").onclick=()=>copyText($("#lReplyTxt").value);
-    $("#lSent").onclick=async()=>{ await api(`/leads/${l.id}`,"PATCH",{status:l.status==="new"?"contacted":l.status,contacted:true}); toast("Đã ghi nhận lần liên hệ"); loadLeads(); };
+    $("#lSent").onclick=async()=>{ if(r.reply_id) await api(`/replies/${r.reply_id}/sent`,"POST",{text:$("#lReplyTxt").value}); await api(`/leads/${l.id}`,"PATCH",{status:l.status==="new"?"contacted":l.status,contacted:true}); toast("Đã ghi nhận. Khi khách chốt hoặc từ chối, Hà sẽ học từ tin nhắn này."); loadLeads(); };
     e.target.disabled=false; e.target.textContent="Soạn lại"; };
 }
-$("#leadForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/leads","POST",{name:$("#lName").value,contact:$("#lContact").value,source:$("#lSource").value,business_type:$("#lType").value,need:$("#lNeed").value}); e.target.reset(); toast("Đã thêm khách, Hà đã chấm điểm"); loadLeads(); refresh(); });
+$("#leadForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/leads","POST",{name:$("#lName").value,contact:$("#lContact").value,post_id:+$("#lPost").value||null,business_type:$("#lType").value,need:$("#lNeed").value}); const fromPost=!!$("#lPost").value; e.target.reset(); toast(fromPost?"Đã thêm khách và ghi công cho bài đăng nguồn":"Đã thêm khách, Hà đã chấm điểm"); loadLeads(); refresh(); });
 
 /* --------------------------------------------- sản phẩm */
 async function loadProducts(){

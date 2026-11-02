@@ -122,6 +122,23 @@ CREATE TABLE IF NOT EXISTS bumps (
   post_id INTEGER, sale_id INTEGER, image TEXT, text TEXT, status TEXT DEFAULT 'scheduled',
   scheduled_for TEXT, done_at TEXT, error TEXT, screenshot TEXT, created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS lessons (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  agent_id TEXT, text TEXT, evidence TEXT, source TEXT DEFAULT 'auto', rule_key TEXT,
+  confidence REAL DEFAULT 0.6, pinned INTEGER DEFAULT 0, status TEXT DEFAULT 'active',
+  created_at TEXT, updated_at TEXT
+);
+CREATE TABLE IF NOT EXISTS feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id INTEGER, kind TEXT, before TEXT, after TEXT, reason TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS replies (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lead_id INTEGER, text TEXT, sent INTEGER DEFAULT 0, outcome TEXT, created_at TEXT, sent_at TEXT
+);
+CREATE TABLE IF NOT EXISTS agent_progress (
+  agent_id TEXT PRIMARY KEY, xp INTEGER DEFAULT 0, level INTEGER DEFAULT 1, goal TEXT, updated_at TEXT
+);
 CREATE TABLE IF NOT EXISTS sales (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL, fb_name TEXT, profile_dir TEXT, look TEXT,
@@ -138,6 +155,7 @@ MIGRATIONS = [
     ("groups", "member_sale_ids", "TEXT DEFAULT ''"), ("products", "images", "TEXT DEFAULT '[]'"),
     ("posts", "permalink_status", "TEXT"), ("posts", "bump_enabled", "INTEGER DEFAULT 1"),
     ("posts", "bump_count", "INTEGER DEFAULT 0"), ("posts", "last_bump_at", "TEXT"),
+    ("leads", "post_id", "INTEGER"),
 ]
 
 DEFAULT_SETTINGS = {
@@ -167,6 +185,11 @@ DEFAULT_SETTINGS = {
     "bump_gap_minutes": "6",
     "bump_texts": "Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng\n",
     "bump_planned_date": "",
+    "learn_enabled": "1",
+    "learn_time": "23:15",
+    "learn_last_date": "",
+    "learn_explore": "0.25",
+    "model_learning": "claude-haiku-5-5",
     "attach_images": "1",
 }
 

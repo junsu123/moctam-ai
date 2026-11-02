@@ -87,6 +87,41 @@ D:\AnhSanPham\
 
 Up bài không gọi AI nên không tốn chi phí Claude.
 
+## Agent tự học và phát triển
+
+Mỗi agent có **sổ tay kinh nghiệm**, **cấp độ** và **mục tiêu hằng ngày** (trang **Đào tạo**).
+
+**Học từ đâu** (dữ liệu thật, không đoán):
+
+| Tín hiệu | Lấy từ | Ai học |
+|---|---|---|
+| Khách và bình luận của từng bài | Gắn khách với "bài đăng nguồn" khi thêm khách; số bình luận đọc tự động khi sale up bài | Lan, Tuấn, sale |
+| Sếp duyệt ngay / sửa / loại bài | Nút Duyệt, Sửa, Loại (chọn lý do: Quá dài, Không hấp dẫn…) | Lan |
+| Tin nhắn chốt được đơn hay không | Bấm "Đã gửi cho khách" (lưu bản cuối), rồi đổi trạng thái khách sang Đã nhập hàng / Không mua | Hà |
+| Lỗi đăng, bài bị gỡ, bài chờ duyệt | Nhân viên sale ghi lại khi đăng và up bài | Tuấn, sale |
+| Quyết định trong cuộc họp | Kết luận của Minh | Minh |
+
+**Học thế nào:**
+
+1. **Thống kê (không tốn AI):** điểm mỗi bài = khách × 5 + bình luận, làm mượt để vài bài may mắn không làm lệch.
+   Lan chọn góc viết và sản phẩm theo điểm này (vẫn dành 25% để thử cái mới, chỉnh được), Tuấn dời lịch đăng vào
+   "giờ vàng" khi có đủ dữ liệu.
+2. **Ví dụ mẫu:** bài nhiều khách nhất, bản sếp đã sửa và tin nhắn đã chốt đơn được đưa vào prompt để agent học cách viết.
+3. **Phản tỉnh mỗi đêm** (mặc định 23:15): mỗi agent đọc số liệu của mình, ghi tối đa 2 bài học mới có bằng chứng,
+   bỏ bài học không còn đúng và đặt mục tiêu cho ngày mai. Dùng Claude Haiku, khoảng 0,002 USD/đêm; không có API key
+   thì vẫn học bằng luật thống kê.
+
+Sổ tay giữ tối đa 10 bài học đang dùng mỗi agent (bài ghim không tính); 6 bài quan trọng nhất được đưa vào prompt.
+Sếp có thể **dạy trực tiếp** (bài học được ghim), **ghim** hoặc **bỏ** bất kỳ bài học nào.
+
+**Kinh nghiệm và cấp độ:** agent nhận điểm kinh nghiệm khi bài được duyệt, được đăng, có khách, khách chốt đơn,
+rút ra bài học… Cấp độ hiện trên nhân vật 3D. Trang Đào tạo so sánh kỹ năng tuần này với tuần trước
+(tỉ lệ bài duyệt ngay, khách mỗi bài, tỉ lệ đăng thành công, tỉ lệ chốt…).
+
+**Ranh giới:** bài học chỉ thay đổi cách viết và cách chọn góc, sản phẩm, nhóm, giờ đăng. Giới hạn bài/ngày, giãn cách,
+luật nhóm và việc dừng khi checkpoint là do sếp đặt; bài học đề xuất tăng tần suất, lách luật hay hứa công dụng chữa
+bệnh bị tự động loại.
+
 ## Cài đặt và chạy
 
 Cần Python 3.10 trở lên.
@@ -131,6 +166,7 @@ backend/
   facebook.py    Đăng Fanpage qua Graph API
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, đăng bài, lấy link bài, up bài
   media_folder.py    Đọc thư mục ảnh sản phẩm trên máy, chọn ảnh theo sản phẩm
+  learning.py    Tự học: thống kê hiệu quả, chọn góc/sản phẩm/giờ, sổ tay bài học, cấp độ, phản tỉnh mỗi đêm
   fb_selectors.json  Chữ hiển thị trên giao diện Facebook (sửa khi Facebook đổi giao diện)
   llm.py         Kết nối Claude (tự chuyển sang mô phỏng khi chưa có key)
   mock_brain.py  Nội dung mẫu cho chế độ mô phỏng

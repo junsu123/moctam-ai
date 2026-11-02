@@ -420,6 +420,10 @@ def _job_bump(pw, sale_id: int, bump_id: int):
         page.wait_for_timeout(3500)
         _check_blocked(page)
         body = page.inner_text("body").lower()
+        m = re.search(r"(\d[\d.,]*)\s*(bình luận|comments?)\b", body)
+        if m:  # số bình luận thật -> dữ liệu cho cả đội học
+            n = int(re.sub(r"[^\d]", "", m.group(1)) or 0)
+            db.run("UPDATE posts SET comments=MAX(COALESCE(comments,0), ?) WHERE id=?", (n, post["id"]))
         if any(t.lower() in body for t in s["removed_texts"]):
             db.run("UPDATE posts SET permalink_status='removed', bump_enabled=0 WHERE id=?", (post["id"],))
             _bump_done(bump_id, "skipped", "Bài đã bị xóa hoặc ẩn, đã ngừng up bài này")
@@ -465,6 +469,8 @@ def _job_bump(pw, sale_id: int, bump_id: int):
         _bump_done(bump_id, "done", None, f"/shots/{shot.name}", str(img))
         db.run("UPDATE posts SET bump_count=COALESCE(bump_count,0)+1, last_bump_at=? WHERE id=?", (db.now(), post["id"]))
         db.log(aid, "Up bài", f"Bình luận ảnh {img.name} vào bài #{post['id']} ở {where}")
+        import learning
+        learning.award(aid, 1, "Up bài")
     except Blocked as e:
         _bump_done(bump_id, "failed", str(e))
         _block(sale_id, str(e))

@@ -90,7 +90,7 @@ def sale_agent(row: dict) -> dict:
     }
 
 
-def system_prompt(agent_id: str, settings: dict | None = None) -> str:
+def system_prompt(agent_id: str, settings: dict | None = None, with_learning: bool = True) -> str:
     if agent_id.startswith("sale-"):
         a = {"name": agent_id, "role": "Nhân viên Sale", "short": "đăng bài Facebook", "personality": "chăm chỉ, ngắn gọn"}
         try:
@@ -107,7 +107,16 @@ def system_prompt(agent_id: str, settings: dict | None = None) -> str:
             f"Giọng thương hiệu: {s.get('brand_voice', '')}\n\n"
             f"Bạn tên là {a['name']}, vị trí: {a['role']} ({a['short']}).\n"
             f"Tính cách: {a['personality']}\n"
-            "Luôn trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, đúng vai.")
+            "Luôn trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, đúng vai." + (_learned(agent_id) if with_learning else ""))
+
+
+def _learned(agent_id: str) -> str:
+    try:
+        import learning
+        return learning.prompt_block(agent_id)
+    except Exception as e:  # sổ tay lỗi thì vẫn làm việc bình thường
+        print("[learning]", e)
+        return ""
 
 
 def sales_rows() -> list[dict]:

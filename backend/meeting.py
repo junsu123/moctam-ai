@@ -132,6 +132,10 @@ def _run(mid: int, topic: str):
         db.run("UPDATE meetings SET status='done', summary=?, action_items=?, ended_at=? WHERE id=?",
                (conc["summary"], db.dumps(items), db.now(), mid))
         db.log("minh", "Kết thúc họp", f"Chủ đề: {topic}. Giao {len(items)} việc.")
+        import learning
+        learning.from_meeting(mid, conc["summary"], topic)
+        for a in AGENTS:
+            learning.award(a, 3, "Tham gia họp giao ban")
     except Exception as e:
         db.run("UPDATE meetings SET status='done', summary=?, ended_at=? WHERE id=?",
                (f"Cuộc họp bị gián đoạn: {e}", db.now(), mid))

@@ -19,6 +19,7 @@ import agents
 import browser_poster
 import db
 import facebook
+import learning
 import media_folder
 import meeting
 import scheduler
@@ -49,6 +50,7 @@ def list_agents():
     sales_by_id = {f"sale-{r['id']}": r for r in db.q("SELECT id, login_status FROM sales")}
     for a in out:
         a["status"] = workflows.STATUS.get(a["id"]) or {"state": "idle", "text": "Đang sẵn sàng"}
+        a["level"] = learning.level_for((db.one("SELECT xp FROM agent_progress WHERE agent_id=?", (a["id"],)) or {"xp": 0})["xp"])
         if a["id"] in sales_by_id:
             a["login_status"] = sales_by_id[a["id"]]["login_status"]
             if a["status"].get("state") == "idle":
@@ -146,6 +148,7 @@ class PostPatch(BaseModel):
     scheduled_for: str | None = None
     posted_url: str | None = None
     bump_enabled: int | None = None
+    reason: str | None = None  # lý do sếp loại bài (để Lan học)
     comments: int | None = None
     leads: int | None = None
 
@@ -173,7 +176,20 @@ def gen_posts(r: GenReq):
 
 @app.patch("/api/posts/{pid}")
 def patch_post(pid: int, p: PostPatch):
-    fields = {k: v for k, v in p.model_dump().items() if v is not None}
+    old = db.one("SELECT * FROM posts WHERE id=?", (pid,))
+    if not old:
+        raise HTTPException(404)
+    # --- tín hiệu học từ sếp
+    if p.content is not None and p.content.strip() != (old["content"] or "").strip():
+        learning.record_feedback(pid, "edit", old["content"], p.content)
+    if p.status == "approved" and old["status"] == "draft":
+        edited = db.one("SELECT id FROM feedback WHERE post_id=? AND kind='edit'", (pid,))
+        if not edited:
+            learning.record_feedback(pid, "approve")
+        learning.award("lan", 5 if edited else 10, "Bài được sếp duyệt")
+    if p.status == "rejected" and old["status"] == "draft":
+        learning.record_feedback(pid, "reject", old["content"], "", (p.reason or "").strip()[:120])
+    fields = {k: v for k, v in p.model_dump().items() if v is not None and k != "reason"}
     if p.posted_url is not None:  # sếp dán link bài thủ công
         fields["permalink_status"] = "found" if p.posted_url.strip() else "not_found"
         if p.posted_url.strip() and p.bump_enabled is None:
@@ -181,6 +197,7 @@ def patch_post(pid: int, p: PostPatch):
     if fields:
         db.run(f"UPDATE posts SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), pid))
     if p.leads is not None:  # cập nhật số khách của nhóm để Khoa xếp hạng
+        learning.on_post_leads(pid, p.leads - (old["leads"] or 0))
         db.run("""UPDATE groups SET leads_count=(SELECT COALESCE(SUM(leads),0) FROM posts WHERE group_id=groups.id)""")
     if p.status == "approved":
         db.log("minh", "Duyệt bài", f"Sếp duyệt bài #{pid}")
@@ -218,6 +235,7 @@ class Lead(BaseModel):
     business_type: str = ""
     need: str = ""
     note: str = ""
+    post_id: int | None = None  # khách đến từ bài đăng nào (để cả đội học bài nào hiệu quả)
 
 
 class LeadPatch(BaseModel):
@@ -240,9 +258,18 @@ def leads():
 def add_lead(l: Lead):
     data = l.model_dump()
     score = workflows.score_lead(data)
+    src = l.source
+    if l.post_id:
+        post = db.one("""SELECT p.id, g.name gname, p.target_type FROM posts p LEFT JOIN groups g ON g.id=p.group_id
+                         WHERE p.id=?""", (l.post_id,))
+        if post:
+            src = src or f"Bài #{post['id']} · {post['gname'] or 'Trang cá nhân'}"
+            db.run("UPDATE posts SET leads=COALESCE(leads,0)+1 WHERE id=?", (post["id"],))
+            db.run("UPDATE groups SET leads_count=(SELECT COALESCE(SUM(leads),0) FROM posts WHERE group_id=groups.id)")
+            learning.on_post_leads(post["id"], 1)
     lid = db.run("""INSERT INTO leads(name, contact, channel, source, business_type, need, note, score, status,
-                    created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,'new',?,?)""",
-                 (l.name, l.contact, l.channel, l.source, l.business_type, l.need, l.note, score, db.now(), db.now()))
+                    post_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,'new',?,?,?)""",
+                 (l.name, l.contact, l.channel, src, l.business_type, l.need, l.note, score, l.post_id, db.now(), db.now()))
     db.log("ha", "Khách mới", f"{l.name} ({score} điểm)")
     return db.one("SELECT * FROM leads WHERE id=?", (lid,))
 
@@ -253,13 +280,29 @@ def patch_lead(lid: int, p: LeadPatch):
     fields["updated_at"] = db.now()
     if p.contacted:
         fields["last_contact_at"] = db.now()
+    old = db.one("SELECT status FROM leads WHERE id=?", (lid,))
     db.run(f"UPDATE leads SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), lid))
+    if p.status and old and p.status != old["status"]:
+        learning.on_lead_status(lid, p.status)
     return db.one("SELECT * FROM leads WHERE id=?", (lid,))
+
+
+class ReplySent(BaseModel):
+    text: str = ""
+
+
+@app.post("/api/replies/{rid}/sent")
+def reply_sent(rid: int, r: ReplySent):
+    """Sếp đã gửi tin cho khách (có thể đã sửa) -> lưu bản cuối để Hà học tin nào chốt được."""
+    db.run("UPDATE replies SET sent=1, text=CASE WHEN ?!='' THEN ? ELSE text END, sent_at=? WHERE id=?",
+           (r.text.strip(), r.text.strip(), db.now(), rid))
+    learning.award("ha", 2, "Gửi tin nhắn cho khách")
+    return {"ok": True}
 
 
 @app.post("/api/leads/{lid}/reply")
 def lead_reply(lid: int, r: ReplyReq):
-    return {"reply": workflows.draft_reply(lid, r.message)}
+    return workflows.draft_reply(lid, r.message) or {"reply": ""}
 
 
 @app.get("/api/leads/follow-up")
@@ -537,6 +580,56 @@ def del_image(pid: int, path: str):
     imgs = [i for i in json.loads((p or {}).get("images") or "[]") if i != path]
     db.run("UPDATE products SET images=? WHERE id=?", (json.dumps(imgs), pid))
     return {"images": imgs}
+
+
+# ------------------------------------------------------------------ tự học
+@app.get("/api/learning")
+def learning_overview():
+    return learning.overview()
+
+
+@app.post("/api/learning/run")
+def learning_run():
+    learning.nightly_async()
+    return {"ok": True}
+
+
+class Teach(BaseModel):
+    agent_id: str
+    text: str
+
+
+@app.post("/api/lessons")
+def teach(t: Teach):
+    """Sếp dạy trực tiếp: bài học được ghim, luôn nằm trong sổ tay của agent."""
+    lid = learning.add_lesson(t.agent_id, t.text, "Sếp dạy", "boss", 1.0, None, 1)
+    if not lid:
+        raise HTTPException(400, "Bài học quá ngắn")
+    db.log(t.agent_id, "Được sếp dạy", t.text[:120])
+    return db.one("SELECT * FROM lessons WHERE id=?", (lid,))
+
+
+class LessonPatch(BaseModel):
+    text: str | None = None
+    pinned: int | None = None
+    status: str | None = None
+
+
+@app.patch("/api/lessons/{lid}")
+def patch_lesson(lid: int, p: LessonPatch):
+    fields = {k: v for k, v in p.model_dump().items() if v is not None}
+    if p.status and p.status not in ("active", "retired"):
+        raise HTTPException(400)
+    if fields:
+        fields["updated_at"] = db.now()
+        db.run(f"UPDATE lessons SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), lid))
+    return db.one("SELECT * FROM lessons WHERE id=?", (lid,))
+
+
+@app.get("/api/posts/recent-posted")
+def recent_posted():
+    return db.q("""SELECT p.id, p.title, p.posted_at, g.name group_name, p.target_type FROM posts p
+                   LEFT JOIN groups g ON g.id=p.group_id WHERE p.status='posted' ORDER BY p.posted_at DESC LIMIT 40""")
 
 
 # ------------------------------------------------------------------ up bài

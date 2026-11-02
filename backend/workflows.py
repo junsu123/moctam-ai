@@ -94,10 +94,11 @@ def _plan_items(count: int, product_id: int | None, target_type: str, angle: str
                     (product_id,) if product_id else ())
     if not products:
         return []
+    import learning
     items = []
     for i in range(count):
-        p = products[i % len(products)] if product_id else random.choice(products)
-        items.append((i, p, angle or random.choice(list(mock_brain.ANGLES)), target_type))
+        p = products[i % len(products)] if product_id else learning.choose_product(products)
+        items.append((i, p, angle or learning.choose_angle(), target_type))
     return items
 
 
@@ -228,6 +229,10 @@ def plan_distribution() -> list[dict]:
               if group_ready(g) and g["id"] not in taken]
     plan = []
 
+    import learning
+    golden = learning.golden_hours()
+    explore = float(db.get_settings().get("learn_explore") or 0.25)
+
     def next_slot(s):
         L = load[s["id"]]
         if L["count"] >= int(s["max_posts_per_day"] or 5):
@@ -235,7 +240,16 @@ def plan_distribution() -> list[dict]:
         start = max(now + timedelta(minutes=3), _dt(f"{today} {s['active_from'] or '08:00'}"))
         if L["last"]:
             start = max(start, _dt(L["last"]) + timedelta(minutes=int(s["min_gap_minutes"] or 40) + random.randint(0, 12)))
-        return start if start <= _dt(f"{today} {s['active_to'] or '22:00'}") else None
+        end = _dt(f"{today} {s['active_to'] or '22:00'}")
+        if start > end:
+            return None
+        # Tuấn học được "giờ vàng": nếu giờ hiện tại không tốt mà trong ngày còn giờ vàng thì dời tới đó
+        if golden and start.hour not in golden and random.random() > explore:
+            later = [start.replace(hour=h, minute=random.randint(0, 25)) for h in golden if h > start.hour]
+            later = [t for t in later if t <= end]
+            if later:
+                return min(later)
+        return start
 
     def assign(post, sale, when, group=None):
         db.run("UPDATE posts SET sale_id=?, group_id=?, scheduled_for=?, status='scheduled', error=NULL WHERE id=?",
@@ -289,6 +303,10 @@ def mark_posted(post_id: int, posted_url: str = "", poster: str = "", fb_post_id
     if post and post.get("group_id"):
         db.run("UPDATE groups SET last_posted_at=? WHERE id=?", (db.now(), post["group_id"]))
     db.log("tuan", "Đã đăng", f"Bài #{post_id} được đánh dấu đã đăng {('bởi ' + poster) if poster else ''}")
+    import learning
+    learning.award("tuan", 3, "Bài được đăng đúng lịch")
+    if post and post.get("sale_id"):
+        learning.award(f"sale-{post['sale_id']}", 5, "Đăng bài thành công")
 
 
 # ---------------------------------------------------------------- Up bài hằng ngày
@@ -367,9 +385,10 @@ Danh sách sản phẩm: {products}
 Tin ngắn (dưới 90 chữ), thân thiện, gợi ý 1 bước tiếp theo rõ ràng (gửi bảng giá/mẫu thử/hẹn gọi), kết bằng 1 câu hỏi."""
     reply = llm.chat(system_prompt("ha", db.get_settings()), prompt, mock=lambda: mock_brain.lead_reply(lead, message),
                      max_tokens=350, task="replies")
+    rid = db.run("INSERT INTO replies(lead_id, text, created_at) VALUES (?,?,?)", (lead_id, reply, db.now()))
     db.log("ha", "Soạn tin", f"Soạn tin nhắn cho khách {lead['name']}")
     set_status("ha", "idle", "Chờ sếp duyệt tin nhắn")
-    return reply
+    return {"reply": reply, "reply_id": rid}
 
 
 def follow_up_list() -> list[dict]:
