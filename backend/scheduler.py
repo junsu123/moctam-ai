@@ -10,12 +10,19 @@ import meeting
 import workflows
 
 
+_n = {"tick": 0}
+
+
 def _tick():
+    _n["tick"] += 1
+    if _n["tick"] % 4 == 1:  # khoảng 2 phút một lần: lô viết bài nào xong thì nhập bài nháp
+        workflows.poll_batches()
     s = db.get_settings()
     now = datetime.now()
     stamp = now.strftime("%Y-%m-%d %H:%M")
     # Họp giao ban hằng ngày
-    if s.get("auto_meeting") == "1" and now.strftime("%H:%M") >= s.get("meeting_time", "08:30"):
+    days = {d.strip() for d in (s.get("meeting_weekdays") or "1,2,3,4,5,6,7").split(",")}
+    if s.get("auto_meeting") == "1" and str(now.isoweekday()) in days and now.strftime("%H:%M") >= s.get("meeting_time", "08:30"):
         if not db.one("SELECT id FROM meetings WHERE date=?", (db.today(),)) and not meeting.is_running():
             meeting.start()
     # Bài Fanpage đã duyệt và đến giờ -> đăng qua Graph API

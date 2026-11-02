@@ -1,18 +1,89 @@
-"""Kết nối mô hình ngôn ngữ (Claude). Không có API key -> chạy chế độ mô phỏng."""
+"""Kết nối Claude, có tối ưu chi phí.
+
+- Mỗi loại việc dùng mô hình riêng (Cài đặt): viết bài, tin nhắn khách, cuộc họp.
+- Ghi số token và tiền của từng lần gọi vào bảng `usage` để theo dõi chi phí thật.
+- Ngân sách tháng: chạm 100% -> mọi việc tự chuyển sang Haiku (rẻ nhất);
+  chạm 120% -> ngừng gọi AI, dùng nội dung mẫu cho tới tháng sau hoặc khi sếp nâng ngân sách.
+- Viết bài hằng ngày gửi theo lô (Message Batches API) được giảm 50%.
+Không có API key -> chạy chế độ mô phỏng, không tốn tiền.
+"""
 import json
 import os
 import re
+from datetime import datetime
 
 from dotenv import load_dotenv
 
-load_dotenv()
+import db
 
-MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-5-5")
+load_dotenv()
 
 try:
     import anthropic
 except ImportError:  # pragma: no cover
     anthropic = None
+
+HAIKU, SONNET, OPUS = "claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"
+DEFAULT_MODEL = os.getenv("CLAUDE_MODEL", SONNET)
+MODEL = DEFAULT_MODEL  # giữ tên cũ cho phần hiển thị
+
+# USD / 1 triệu token (bảng giá Claude Platform, 11/2026). Haiku 5.5: giá cho prompt ≤ 100K token.
+PRICES = {
+    HAIKU: (0.10, 0.50),
+    SONNET: (2.00, 10.00),
+    OPUS: (4.00, 20.00),
+}
+BATCH_DISCOUNT = 0.5
+TASKS = {"posts": "Viết bài đăng", "replies": "Tin nhắn khách", "meeting": "Cuộc họp", "other": "Khác"}
+
+PRESETS = {  # gói cấu hình sẵn trong Cài đặt
+    "tiet_kiem": {"model_posts": HAIKU, "model_replies": HAIKU, "model_meeting": HAIKU, "use_batch": "1"},
+    "can_bang": {"model_posts": SONNET, "model_replies": HAIKU, "model_meeting": HAIKU, "use_batch": "1"},
+    "chat_luong": {"model_posts": SONNET, "model_replies": SONNET, "model_meeting": SONNET, "use_batch": "1"},
+}
+
+
+def price_of(model: str) -> tuple[float, float]:
+    return PRICES.get(model, PRICES[SONNET])
+
+
+def cost_usd(model: str, tin: int, tout: int, batch: bool = False) -> float:
+    pi, po = price_of(model)
+    c = (tin * pi + tout * po) / 1_000_000
+    return c * BATCH_DISCOUNT if batch else c
+
+
+def record(task: str, model: str, usage, batch: bool = False):
+    if not usage:
+        return
+    tin = (getattr(usage, "input_tokens", 0) or 0) + (getattr(usage, "cache_read_input_tokens", 0) or 0) \
+        + (getattr(usage, "cache_creation_input_tokens", 0) or 0)
+    tout = getattr(usage, "output_tokens", 0) or 0
+    db.run("""INSERT INTO usage(task, model, input_tokens, output_tokens, cost_usd, batch, created_at)
+              VALUES (?,?,?,?,?,?,?)""", (task, model, tin, tout, cost_usd(model, tin, tout, batch), int(batch), db.now()))
+
+
+def month_spent() -> float:
+    r = db.one("SELECT COALESCE(SUM(cost_usd),0) c FROM usage WHERE created_at LIKE ?", (datetime.now().strftime("%Y-%m") + "%",))
+    return float(r["c"])
+
+
+def budget_state() -> str:
+    budget = float(db.get_settings().get("monthly_budget_usd") or 0)
+    if budget <= 0:
+        return "ok"
+    spent = month_spent()
+    if spent >= budget * 1.2:
+        return "stop"
+    if spent >= budget:
+        return "economy"
+    return "ok"
+
+
+def model_for(task: str) -> str:
+    s = db.get_settings()
+    m = s.get(f"model_{task}") or DEFAULT_MODEL
+    return HAIKU if budget_state() == "economy" else m
 
 
 class LLM:
@@ -26,30 +97,78 @@ class LLM:
     def live(self) -> bool:
         return self.client is not None
 
-    def chat(self, system: str, prompt: str, mock=None, max_tokens: int = 900) -> str:
+    def _mock(self, mock):
+        return mock() if callable(mock) else mock
+
+    def chat(self, system: str, prompt: str, mock=None, max_tokens: int = 600, task: str = "other") -> str:
         if not self.client:
-            return mock() if callable(mock) else (mock or "")
+            return self._mock(mock) or ""
+        if budget_state() == "stop":
+            db.log("khoa", "Ngân sách AI", "Đã vượt 120% ngân sách tháng, tạm dùng nội dung mẫu")
+            return self._mock(mock) or ""
+        model = model_for(task)
         try:
             resp = self.client.messages.create(
-                model=MODEL, max_tokens=max_tokens, system=system,
+                model=model, max_tokens=max_tokens, system=system,
                 messages=[{"role": "user", "content": prompt}],
             )
+            record(task, model, resp.usage)
             return "".join(b.text for b in resp.content if getattr(b, "type", "") == "text").strip()
         except Exception as e:  # lỗi mạng/khóa -> vẫn chạy bằng mô phỏng
             print(f"[LLM] lỗi: {e}")
-            return mock() if callable(mock) else (mock or f"(Lỗi gọi AI: {e})")
+            return self._mock(mock) if mock is not None else f"(Lỗi gọi AI: {e})"
 
-    def json(self, system: str, prompt: str, mock=None, max_tokens: int = 2000):
-        if not self.client:
-            return mock() if callable(mock) else mock
-        text = self.chat(system, prompt + "\n\nChỉ trả về JSON hợp lệ, không giải thích, không markdown.",
-                         mock=None, max_tokens=max_tokens)
-        m = re.search(r"(\[.*\]|\{.*\})", text, re.S)
+    def json(self, system: str, prompt: str, mock=None, max_tokens: int = 1200, task: str = "other"):
+        if not self.client or budget_state() == "stop":
+            return self._mock(mock)
+        text = self.chat(system, prompt + JSON_HINT, mock=None, max_tokens=max_tokens, task=task)
+        data = parse_json(text)
+        return data if data is not None else self._mock(mock)
+
+    # ------------------------------------------------ Batch API (giảm 50%, trả kết quả trong vòng vài phút đến 24 giờ)
+    def batch_create(self, task: str, items: list[dict], max_tokens: int = 1200) -> str | None:
+        """items: [{custom_id, system, prompt}] -> id lô, hoặc None nếu không gửi được."""
+        if not self.client or budget_state() == "stop" or not items:
+            return None
+        model = model_for(task)
         try:
-            return json.loads(m.group(1) if m else text)
-        except Exception:
-            print("[LLM] không đọc được JSON, dùng mô phỏng")
-            return mock() if callable(mock) else mock
+            b = self.client.messages.batches.create(requests=[{
+                "custom_id": it["custom_id"],
+                "params": {"model": model, "max_tokens": max_tokens, "system": it["system"],
+                           "messages": [{"role": "user", "content": it["prompt"] + JSON_HINT}]},
+            } for it in items])
+            return b.id
+        except Exception as e:
+            print(f"[LLM] không tạo được lô: {e}")
+            return None
+
+    def batch_status(self, batch_id: str) -> str:
+        return self.client.messages.batches.retrieve(batch_id).processing_status  # in_progress | canceling | ended
+
+    def batch_results(self, batch_id: str, task: str) -> dict[str, str | None]:
+        out = {}
+        for r in self.client.messages.batches.results(batch_id):
+            if r.result.type == "succeeded":
+                msg = r.result.message
+                record(task, msg.model, msg.usage, batch=True)
+                out[r.custom_id] = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
+            else:
+                out[r.custom_id] = None
+        return out
+
+
+JSON_HINT = "\n\nChỉ trả về JSON hợp lệ, không giải thích, không markdown."
+
+
+def parse_json(text: str):
+    if not text:
+        return None
+    m = re.search(r"(\[.*\]|\{.*\})", text, re.S)
+    try:
+        return json.loads(m.group(1) if m else text)
+    except Exception:
+        print("[LLM] không đọc được JSON")
+        return None
 
 
 llm = LLM()

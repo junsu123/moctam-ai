@@ -51,11 +51,12 @@ def _say(mid: int, agent_id: str, phase: str, content: str):
     workflows.set_status(agent_id, "meeting", "Đang họp")
 
 
-def _transcript(mid: int, limit: int = 30) -> str:
+def _transcript(mid: int, limit: int = 12) -> str:
     rows = db.q("SELECT agent_id, content FROM meeting_messages WHERE meeting_id=? ORDER BY id DESC LIMIT ?",
                 (mid, limit))[::-1]
     name = lambda a: "SẾP" if a == "boss" else (f"{AGENTS[a]['name']} ({AGENTS[a]['role']})" if a in AGENTS else f"{name_of(a)} (Sale)")
-    return "\n".join(f"{name(r['agent_id'])}: {r['content']}" for r in rows)
+    cut = lambda t: t if len(t) <= 260 else t[:257] + "…"
+    return "\n".join(f"{name(r['agent_id'])}: {cut(r['content'])}" for r in rows)
 
 
 def _boss_check(mid: int):
@@ -65,7 +66,7 @@ def _boss_check(mid: int):
         reply = llm.chat(system_prompt("minh", db.get_settings()),
                          f"Biên bản cuộc họp:\n{_transcript(mid)}\n\nSếp (chủ xưởng) vừa nói: \"{text}\". "
                          "Bạn là người chủ trì, hãy phản hồi sếp trong 1-2 câu và định hướng lại cuộc họp.",
-                         mock=lambda: mock_brain.chair_reply(text), max_tokens=250)
+                         mock=lambda: mock_brain.chair_reply(text), max_tokens=220, task="meeting")
         _say(mid, "minh", "boss", reply)
 
 
@@ -86,7 +87,7 @@ def _run(mid: int, topic: str):
         # 1. Mở đầu
         _say(mid, "minh", "open", llm.chat(system_prompt("minh", s),
              f"Mở đầu cuộc họp giao ban sáng ngày {db.today()} (1-2 câu). Chủ đề tranh luận hôm nay: \"{topic}\".",
-             mock=lambda: mock_brain.meeting_open(topic), max_tokens=200))
+             mock=lambda: mock_brain.meeting_open(topic), max_tokens=200, task="meeting"))
         # 2. Báo cáo
         for a in DEBATERS:
             _boss_check(mid)
@@ -94,14 +95,15 @@ def _run(mid: int, topic: str):
                  f"Số liệu hệ thống hiện tại: {json.dumps(st, ensure_ascii=False)}\n"
                  f"Hãy báo cáo công việc phần của bạn trong cuộc họp (2-3 câu, có con số cụ thể từ số liệu, "
                  "nêu 1 vướng mắc hoặc đề xuất).",
-                 mock=lambda a=a: mock_brain.report(a, st), max_tokens=300))
+                 mock=lambda a=a: mock_brain.report(a, st), max_tokens=220, task="meeting"))
         # 2b. Nhân viên sale báo cáo nick của mình (số liệu thật, không cần AI)
         for r in db.q("SELECT * FROM sales ORDER BY id LIMIT 8"):
             _boss_check(mid)
             _say(mid, f"sale-{r['id']}", "report", _sale_report(r))
         # 3. Tranh luận
         _say(mid, "minh", "debate", f"Cảm ơn mọi người. Giờ vào chủ đề chính: \"{topic}\". Mỗi người nêu quan điểm, cứ phản biện thẳng thắn.")
-        for rnd in range(2):
+        rounds = max(1, min(3, int(s.get("debate_rounds") or 2)))
+        for rnd in range(rounds):
             order = DEBATERS[:] if rnd == 0 else random.sample(DEBATERS, len(DEBATERS))
             for a in order:
                 _boss_check(mid)
@@ -110,14 +112,14 @@ def _run(mid: int, topic: str):
                      f"Chủ đề tranh luận: \"{topic}\". Đây là vòng {rnd + 1}. Nêu quan điểm của bạn theo đúng tính cách "
                      f"({'nêu lập trường ban đầu' if rnd == 0 else 'phản biện hoặc đồng tình với 1 người cụ thể, gọi tên họ'}). "
                      "Tối đa 3 câu, không lặp lại ý đã nói.",
-                     mock=lambda a=a, r=rnd: mock_brain.debate(a, r, topic), max_tokens=300))
+                     mock=lambda a=a, r=rnd: mock_brain.debate(a, r, topic), max_tokens=220, task="meeting"))
         _boss_check(mid)
         # 4. Kết luận + giao việc
         conc = llm.json(system_prompt("minh", s),
-                        f"Biên bản cuộc họp:\n{_transcript(mid, 40)}\n\nBạn là chủ trì. Chốt cuộc họp: tóm tắt quyết định "
+                        f"Biên bản cuộc họp:\n{_transcript(mid, 24)}\n\nBạn là chủ trì. Chốt cuộc họp: tóm tắt quyết định "
                         "và giao việc cụ thể cho từng người (lan, tuan, ha, khoa). Trả về JSON: "
                         '{"summary": "3-4 câu", "action_items": [{"agent_id": "lan", "title": "việc cụ thể"}]}',
-                        mock=lambda: mock_brain.conclusion(topic))
+                        mock=lambda: mock_brain.conclusion(topic), max_tokens=500, task="meeting")
         if not isinstance(conc, dict) or "summary" not in conc:
             conc = mock_brain.conclusion(topic)
         _say(mid, "minh", "close", "Chốt lại: " + conc["summary"])

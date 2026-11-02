@@ -22,6 +22,7 @@ import facebook
 import meeting
 import scheduler
 import workflows
+import llm as llm_mod
 from llm import llm, MODEL
 
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
@@ -318,12 +319,52 @@ def run_daily():
     return workflows.daily_work()
 
 
+@app.get("/api/costs")
+def costs():
+    """Chi phí AI thật (đo từ số token mỗi lần gọi) + dự báo cuối tháng."""
+    import calendar
+    from datetime import datetime
+    now = datetime.now()
+    month = now.strftime("%Y-%m") + "%"
+    spent = llm_mod.month_spent()
+    days_in = calendar.monthrange(now.year, now.month)[1]
+    by_task = db.q("""SELECT task, COUNT(*) calls, SUM(input_tokens) tin, SUM(output_tokens) tout, SUM(cost_usd) cost,
+                      SUM(batch) batched FROM usage WHERE created_at LIKE ? GROUP BY task ORDER BY cost DESC""", (month,))
+    for r in by_task:
+        r["label"] = llm_mod.TASKS.get(r["task"], r["task"])
+    by_model = db.q("SELECT model, COUNT(*) calls, SUM(cost_usd) cost FROM usage WHERE created_at LIKE ? GROUP BY model", (month,))
+    last = db.q("""SELECT substr(created_at,1,10) day, SUM(cost_usd) cost FROM usage
+                   GROUP BY day ORDER BY day DESC LIMIT 14""")[::-1]
+    saved = db.one("""SELECT COALESCE(SUM(cost_usd),0) c FROM usage WHERE batch=1 AND created_at LIKE ?""", (month,))["c"]
+    s = db.get_settings()
+    return {"spent": round(spent, 4), "budget": float(s.get("monthly_budget_usd") or 0),
+            "projected": round(spent / max(now.day, 1) * days_in, 3), "state": llm_mod.budget_state(),
+            "batch_saved": round(saved, 4), "by_task": by_task, "by_model": by_model, "daily": last,
+            "prices": llm_mod.PRICES, "presets": llm_mod.PRESETS, "live": llm.live,
+            "pending_batches": db.one("SELECT COUNT(*) n FROM ai_batches WHERE status='in_progress'")["n"]}
+
+
+class Preset(BaseModel):
+    name: str
+
+
+@app.post("/api/costs/preset")
+def apply_preset(p: Preset):
+    if p.name not in llm_mod.PRESETS:
+        raise HTTPException(400, "Gói không tồn tại")
+    for k, v in llm_mod.PRESETS[p.name].items():
+        db.set_setting(k, v)
+    db.set_setting("cost_preset", p.name)
+    return settings()
+
+
 @app.get("/api/settings")
 def settings():
     s = db.get_settings()
     s["fb_page_token"] = "••••••" if s.get("fb_page_token") else ""
     s["ai_live"] = llm.live
     s["model"] = MODEL
+    s["models"] = list(llm_mod.PRICES)
     return s
 
 

@@ -109,6 +109,14 @@ CREATE TABLE IF NOT EXISTS activity (
   agent_id TEXT, action TEXT, detail TEXT, created_at TEXT
 );
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS usage (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  task TEXT, model TEXT, input_tokens INTEGER, output_tokens INTEGER, cost_usd REAL,
+  batch INTEGER DEFAULT 0, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS ai_batches (
+  id TEXT PRIMARY KEY, task TEXT, meta TEXT, status TEXT DEFAULT 'in_progress', created_at TEXT, ended_at TEXT
+);
 CREATE TABLE IF NOT EXISTS sales (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL, fb_name TEXT, profile_dir TEXT, look TEXT,
@@ -136,6 +144,14 @@ DEFAULT_SETTINGS = {
     "brand_voice": "Thân thiện, chân thật, nói chuyện như người làm xưởng; nhấn mạnh nguồn hàng tận gốc, giá sỉ tốt, hỗ trợ người bán online.",
     "contact_info": "Inbox trang hoặc Zalo 09xx.xxx.xxx",
     "browser_headless": "0",
+    "cost_preset": "can_bang",
+    "model_posts": "claude-sonnet-5-5",
+    "model_replies": "claude-haiku-5-5",
+    "model_meeting": "claude-haiku-5-5",
+    "use_batch": "1",
+    "monthly_budget_usd": "10",
+    "meeting_weekdays": "1,2,3,4,5,6,7",
+    "debate_rounds": "2",
     "attach_images": "1",
 }
 

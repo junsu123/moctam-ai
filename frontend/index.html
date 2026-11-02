@@ -94,6 +94,19 @@ details.limits .grid2{margin-top:8px}
 .member-chips{display:flex;gap:4px;flex-wrap:wrap}
 .member-chips button{border:1px solid var(--line);background:none;border-radius:20px;font-size:11.5px;padding:2px 8px;color:var(--muted)}
 .member-chips button.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);font-weight:600}
+.cost-top{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+.spend b{font:800 34px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.bar{height:10px;border-radius:6px;background:var(--panel-2);overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.bar i.warn{background:var(--honey)} .bar i.bad{background:var(--danger)}
+.presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.preset{border:1.5px solid var(--line);background:var(--panel);border-radius:11px;padding:10px 11px;text-align:left;display:flex;flex-direction:column;gap:3px}
+.preset b{font:700 15px var(--f-display)} .preset span{font-size:12px;color:var(--muted)} .preset em{font-style:normal;font-weight:700;font-size:13px;color:var(--accent)}
+.preset.on{border-color:var(--accent);background:var(--accent-soft)}
+.days{display:flex;gap:4px;flex-wrap:wrap}
+.days label{display:flex;align-items:center;gap:3px;font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:3px 7px}
+.spark{display:flex;align-items:flex-end;gap:3px;height:56px}
+.spark div{flex:1;background:var(--accent);opacity:.75;border-radius:3px 3px 0 0;min-height:2px}
 .alert{background:var(--danger-soft);border:1px solid var(--danger);border-radius:var(--r);padding:10px 14px;font-size:13px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
 .kpi .v{font:800 26px/1 var(--f-display);font-variant-numeric:tabular-nums}
@@ -205,6 +218,7 @@ tbody tr.sel td{background:var(--accent-soft)}
 
 @media (max-width:1180px){.split{grid-template-columns:minmax(0,1fr)}.board{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:760px){
+  .cost-top,.presets{grid-template-columns:minmax(0,1fr)}
   .app{grid-template-columns:minmax(0,1fr)}
   .side{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:20;flex-direction:row;padding-block:6px calc(6px + env(safe-area-inset-bottom,0px));
     padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));border-right:0;border-top:1px solid var(--line);overflow:visible}
@@ -398,7 +412,40 @@ tbody tr.sel td{background:var(--accent-soft)}
 
     <!-- CÀI ĐẶT -->
     <section class="view" id="v-setup" hidden>
-      <div class="vh"><div><h1>Cài đặt</h1><p>Lịch làm việc tự động, giọng văn thương hiệu và kết nối Fanpage.</p></div></div>
+      <div class="vh"><div><h1>Cài đặt</h1><p>Chi phí AI, lịch làm việc tự động, giọng văn thương hiệu và kết nối Fanpage.</p></div></div>
+      <form class="card" id="costForm">
+        <div class="card-h"><h3>Chi phí AI</h3><span class="chip" id="costState">—</span></div>
+        <div class="cost-top">
+          <div class="sidecol">
+            <div class="spend"><span class="small muted">Đã dùng tháng này</span><div><b id="costSpent">$0</b> <span class="muted" id="costBudgetTxt"></span></div>
+              <div class="bar"><i id="costBar" style="width:0"></i></div>
+              <p class="small muted" style="margin-top:6px" id="costProj"></p></div>
+            <div><span class="small muted">14 ngày gần nhất</span><div class="spark" id="costSpark"></div></div>
+            <div class="tbl-wrap"><table style="min-width:0"><thead><tr><th>Việc</th><th class="num">Lượt</th><th class="num">Token vào / ra</th><th class="num">Chi phí</th></tr></thead><tbody id="costRows"></tbody></table></div>
+          </div>
+          <div class="sidecol">
+            <div><span class="small muted">Chọn nhanh một gói (ước tính cho 3 nick sale)</span>
+              <div class="presets" id="presets" style="margin-top:6px">
+                <button type="button" class="preset" data-preset="tiet_kiem"><b>Tiết kiệm</b><span>Haiku cho mọi việc, viết bài theo lô</span><em>dưới 1 USD/tháng</em></button>
+                <button type="button" class="preset" data-preset="can_bang"><b>Cân bằng</b><span>Sonnet viết bài (theo lô), Haiku cho tin nhắn và họp</span><em>khoảng 3–6 USD/tháng</em></button>
+                <button type="button" class="preset" data-preset="chat_luong"><b>Chất lượng</b><span>Sonnet cho mọi việc</span><em>khoảng 8–15 USD/tháng</em></button>
+              </div></div>
+            <div class="grid3">
+              <label class="f" for="mPosts">Viết bài đăng<select id="mPosts"></select></label>
+              <label class="f" for="mReplies">Tin nhắn khách<select id="mReplies"></select></label>
+              <label class="f" for="mMeeting">Cuộc họp<select id="mMeeting"></select></label>
+            </div>
+            <label class="row small"><input type="checkbox" id="cBatch"> Viết bài hằng ngày theo lô: rẻ hơn 50%, bài có sau vài phút (tối đa 24 giờ)</label>
+            <div class="grid2">
+              <label class="f" for="cBudget">Ngân sách tháng (USD)<input type="number" id="cBudget" min="0" step="0.5"></label>
+              <label class="f" for="cRounds">Số vòng tranh luận khi họp<select id="cRounds"><option value="1">1 vòng (rẻ hơn)</option><option value="2">2 vòng</option><option value="3">3 vòng</option></select></label>
+            </div>
+            <div><span class="small muted">Họp vào các ngày</span><div class="days" id="cDays" style="margin-top:4px"></div></div>
+            <p class="small muted">Chạm 100% ngân sách: mọi việc tự chuyển sang Haiku. Chạm 120%: tạm ngừng gọi AI, dùng nội dung mẫu đến tháng sau. Đặt 0 để bỏ giới hạn.</p>
+            <div><button class="btn primary" type="submit">Lưu cấu hình chi phí</button></div>
+          </div>
+        </div>
+      </form>
       <div class="grid2">
         <form class="card" id="setForm">
           <h3>Công ty &amp; lịch làm việc</h3>
@@ -422,8 +469,8 @@ tbody tr.sel td{background:var(--accent-soft)}
         <div class="sidecol">
           <div class="card"><h3>Bộ não AI</h3><div id="aiBox" class="note"></div></div>
           <div class="card"><h3>Về việc đăng bài Facebook</h3>
-            <div class="note">Meta đã gỡ API đăng bài vào hội nhóm từ tháng 4/2024 và không cho ứng dụng đăng lên trang cá nhân. Công cụ tự động giả lập người dùng, đặc biệt khi chạy nhiều nick, rất dễ bị checkpoint hoặc khóa tài khoản.<br><br>
-            Vì vậy hệ thống chia việc như sau: <b>Fanpage</b> đăng tự động qua Graph API chính thức. <b>Hội nhóm và trang cá nhân</b>: agent viết bài, chọn nhóm, xếp giờ, tránh trùng nội dung; nhân viên chỉ cần sao chép, bấm đăng và dán link bài lại để hệ thống đo hiệu quả.</div>
+            <div class="note">Meta đã gỡ API đăng bài vào hội nhóm từ tháng 4/2024 và không cho ứng dụng đăng lên trang cá nhân. Đăng tự động bằng trình duyệt, nhất là khi chạy nhiều nick, có thể khiến nick bị checkpoint hoặc khóa.<br><br>
+            Vì vậy: <b>Fanpage</b> đăng qua Graph API chính thức. <b>Hội nhóm và trang cá nhân</b> do nhân viên sale AI đăng bằng hồ sơ Chrome của nick mình, có giới hạn bài/ngày, giãn cách và tự dừng khi gặp checkpoint. Giữ số bài vừa phải để giảm rủi ro cho nick.</div>
           </div>
         </div>
       </div>
@@ -471,7 +518,7 @@ const Demo = (() => {
   const today = () => now().slice(0,10);
   let seq = 100; const id = () => ++seq;
   const S = {
-    settings:{company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 09xx.xxx.xxx",ai_live:false,model:"mô phỏng"},
+    settings:{cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 09xx.xxx.xxx",ai_live:false,model:"mô phỏng"},
     products:[
       {id:1,name:"Trà gừng mật ong túi lọc",category:"Trà túi lọc",description:"Gừng sẻ sấy lạnh phối mật ong, hộp 20 túi x 2g.",wholesale_price:"38.000đ/hộp",retail_price:"65.000đ",moq:"50 hộp",selling_points:"Ấm bụng, dễ uống, bán chạy mùa lạnh; in nhãn riêng (OEM) được"},
       {id:2,name:"Trà hoa đậu biếc - cỏ ngọt",category:"Trà túi lọc",description:"Hoa đậu biếc sấy khô phối cỏ ngọt, hộp 25 túi.",wholesale_price:"35.000đ/hộp",retail_price:"60.000đ",moq:"50 hộp",selling_points:"Màu xanh đẹp lên video, hợp livestream pha chế"},
@@ -577,7 +624,10 @@ const Demo = (() => {
       if(P==="/sales") return S.sales.map(saleOut);
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products; if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g)}));
-      if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return S.settings;
+      if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
+      if(P==="/costs"){ const d=new Date(); const daily=[...Array(14)].map((_,i)=>{ const x=new Date(d-(13-i)*864e5); return {day:x.toISOString().slice(0,10),cost:0.09+((i*37)%11)/100}; });
+        return {spent:0.38,budget:+S.settings.monthly_budget_usd||0,projected:3.9,state:"ok",batch_saved:0.27,live:false,pending_batches:0,daily,
+          by_task:[{task:"posts",label:"Viết bài đăng",calls:96,tin:91200,tout:67300,cost:0.27,batched:84},{task:"replies",label:"Tin nhắn khách",calls:41,tin:45100,tout:8200,cost:0.0086},{task:"meeting",label:"Cuộc họp",calls:28,tin:39800,tout:5600,cost:0.0068}]}; }
       if(P==="/meetings") return S.meetings; if(P==="/meetings/topics") return TOPICS;
       if((m=P.match(/^\/meetings\/(\d+)$/))){ const after=+(new URLSearchParams(qs).get("after")||0); const mt=S.meetings.find(x=>x.id==m[1]); return {...mt,messages:S.msgs.filter(x=>x.meeting_id==m[1]&&x.id>after)}; }
     }
@@ -613,6 +663,8 @@ const Demo = (() => {
     }
     if(method==="PATCH"&&(m=P.match(/^\/sales\/(\d+)$/))){ const r=S.sales.find(x=>x.id==m[1]); Object.assign(r,body); if(body.auto_post===0) S.posts.filter(p=>p.sale_id===r.id&&p.status==="scheduled").forEach(p=>Object.assign(p,{status:"approved",sale_id:null,sale_name:null,scheduled_for:null})); return saleOut(r); }
     if(method==="PUT"&&(m=P.match(/^\/groups\/(\d+)\/members$/))){ S.groups.find(x=>x.id==m[1]).member_sale_ids=body.sale_ids.join(","); return {ok:true}; }
+    if(method==="POST"&&P==="/costs/preset"){ const PR={tiet_kiem:["claude-haiku-5-5","claude-haiku-5-5","claude-haiku-5-5"],can_bang:["claude-sonnet-5-5","claude-haiku-5-5","claude-haiku-5-5"],chat_luong:["claude-sonnet-5-5","claude-sonnet-5-5","claude-sonnet-5-5"]}[body.name];
+      Object.assign(S.settings,{model_posts:PR[0],model_replies:PR[1],model_meeting:PR[2],use_batch:"1",cost_preset:body.name}); return S.settings; }
     if(method==="PUT"&&P==="/settings"){ Object.assign(S.settings,body); return S.settings; }
     if(method==="DELETE"&&(m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const path=new URLSearchParams(qs).get("path"); pr.images=JSON.stringify(JSON.parse(pr.images||"[]").filter(x=>x!==path)); return {ok:true}; }
     if(method==="DELETE"&&(m=P.match(/^\/sales\/(\d+)$/))){ S.sales=S.sales.filter(x=>x.id!=m[1]); return {ok:true}; }
@@ -909,6 +961,7 @@ async function refresh(){
     $("#team").innerHTML=agents.map(a=>`<button class="member" data-a="${a.id}">${avaHtml(a.id)}<span class="who"><b>${esc(a.name)} · <span class="muted" style="display:inline;font-weight:500">${esc(a.role)}</span></b><span>${esc(a.status?.text||"")}</span></span><span class="chip ${a.status?.state||""}">${STATUS_TXT[a.status?.state]||"Rảnh"}</span></button>`).join("");
     $("#feed").innerHTML=dash.activity.length?dash.activity.map(x=>`<li>${avaHtml(x.agent_id)}<div><b>${esc(x.action)}</b> · ${esc(x.detail)}<time>${esc(AGENT[x.agent_id]?.name||"")} · ${fmtTime(x.created_at)} ${fmtDate(x.created_at)}</time></div></li>`).join(""):`<li class="muted">Chưa có hoạt động.</li>`;
     const db=$("#draftBadge"); db.hidden=!s.drafts; db.textContent=s.drafts;
+    if(!DEMO&&s.ai_live) $("#modeBox").innerHTML=`<span class="dot live"></span><b>AI đang hoạt động</b><br>Chi phí tháng này: <b>${usd(s.ai_cost_month||0)}</b>`;
     const prob=(s.sales_problem||0)+(s.failed||0); $("#saleBadge").hidden=!s.sales_problem; $("#saleAlert").hidden=!prob;
     $("#saleAlertTxt").textContent=[s.sales_problem?`${s.sales_problem} nick cần sếp đăng nhập lại hoặc xử lý checkpoint`:"",s.failed?`${s.failed} bài đăng lỗi`:""].filter(Boolean).join(" · ");
     $("#liveBadge").hidden=!dash.meeting_running;
@@ -927,7 +980,7 @@ function openAgent(id){
   d.hidden=false; $("#dClose").onclick=()=>d.hidden=true; d.querySelectorAll("a").forEach(x=>x.addEventListener("click",()=>d.hidden=true));
   const p=$("#dPlan"); if(p) p.onclick=async()=>{ const r=await api("/distribution/plan","POST"); toast(r.length?`Tuấn đã xếp ${r.length} bài vào nhóm`:"Chưa có bài đã duyệt để xếp"); d.hidden=true; refresh(); };
 }
-$("#btnDaily").onclick=async e=>{ e.target.disabled=true; toast("Đang giao việc cho cả đội…"); try{ const r=await api("/run/daily-work","POST"); toast(`Xong: ${r.drafts} bài mới, ${r.scheduled} bài lên lịch, ${r.follow_ups} khách cần bám`);}catch(err){toast(err.message);} e.target.disabled=false; refresh(); };
+$("#btnDaily").onclick=async e=>{ e.target.disabled=true; toast("Đang giao việc cho cả đội…"); try{ const r=await api("/run/daily-work","POST"); toast(`${r.draft_mode==="batch"?`Lan gửi lô ${r.drafts} bài (giảm 50%), bài có sau vài phút`:r.drafts?`${r.drafts} bài mới`:"Kho bài đã đủ, không viết thêm"} · ${r.scheduled} bài lên lịch · ${r.follow_ups} khách cần bám`);}catch(err){toast(err.message);} e.target.disabled=false; refresh(); };
 $("#btnCall").onclick=()=>{ location.hash="meeting"; setTimeout(()=>startMeeting(),200); };
 
 /* --------------------------------------------- phòng họp */
@@ -1123,7 +1176,33 @@ $("#prodGrid").addEventListener("click",async e=>{ const d=e.target.closest("[da
 $("#prodForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/products","POST",{name:$("#pName").value,category:$("#pCat").value,description:$("#pDesc").value,wholesale_price:$("#pWp").value,retail_price:$("#pRp").value,moq:$("#pMoq").value,selling_points:$("#pSell").value}); e.target.reset(); toast("Đã thêm sản phẩm"); loadProducts(); });
 
 /* --------------------------------------------- cài đặt */
+const MODEL_NAME={"claude-haiku-5-5":"Haiku 5.5 (rẻ nhất)","claude-sonnet-5-5":"Sonnet 5.5 (cân bằng)","claude-opus-5-5":"Opus 5.5 (cao cấp)"};
+const DAY_NAME=["T2","T3","T4","T5","T6","T7","CN"];
+const usd=v=>"$"+(v<1?Number(v).toFixed(v<0.1?3:2):Number(v).toFixed(2));
+async function loadCosts(){
+  const [c,s]=await Promise.all([api("/costs"),api("/settings")]);
+  const opts=v=>(s.models||Object.keys(MODEL_NAME)).map(m=>`<option value="${m}" ${m===v?"selected":""}>${MODEL_NAME[m]||m}</option>`).join("");
+  $("#mPosts").innerHTML=opts(s.model_posts); $("#mReplies").innerHTML=opts(s.model_replies); $("#mMeeting").innerHTML=opts(s.model_meeting);
+  $("#cBatch").checked=s.use_batch==="1"; $("#cBudget").value=s.monthly_budget_usd||0; $("#cRounds").value=s.debate_rounds||"2";
+  const days=(s.meeting_weekdays||"").split(",");
+  $("#cDays").innerHTML=DAY_NAME.map((d,i)=>`<label><input type="checkbox" value="${i+1}" ${days.includes(String(i+1))?"checked":""}>${d}</label>`).join("");
+  document.querySelectorAll("#presets .preset").forEach(b=>b.classList.toggle("on",b.dataset.preset===s.cost_preset));
+  $("#costSpent").textContent=usd(c.spent);
+  $("#costBudgetTxt").textContent=c.budget?`/ ${usd(c.budget)} ngân sách`:"(chưa đặt ngân sách)";
+  const pct=c.budget?Math.min(100,c.spent/c.budget*100):0; const bar=$("#costBar"); bar.style.width=pct+"%"; bar.className=pct>=100?"bad":pct>=80?"warn":"";
+  $("#costProj").textContent=!c.live&&!DEMO?"Đang chạy mô phỏng nên chưa tốn tiền. Thêm API key để bắt đầu đo chi phí thật.":`Dự báo cả tháng: ${usd(c.projected)}. Viết theo lô đã tiết kiệm ${usd(c.batch_saved)} tháng này.${c.pending_batches?` Đang có ${c.pending_batches} lô bài chờ xong.`:""}`;
+  const st={ok:["ok","Trong ngân sách"],economy:["warn","Đã chuyển sang Haiku"],stop:["bad","Tạm ngừng AI"]}[c.state]||["",""]; $("#costState").className="chip "+st[0]; $("#costState").textContent=st[1];
+  const mx=Math.max(0.0001,...c.daily.map(d=>d.cost));
+  $("#costSpark").innerHTML=c.daily.length?c.daily.map(d=>`<div style="height:${Math.max(4,d.cost/mx*100)}%" title="${fmtDate(d.day)}: ${usd(d.cost)}"></div>`).join(""):'<span class="small muted">Chưa có dữ liệu</span>';
+  $("#costRows").innerHTML=c.by_task.length?c.by_task.map(r=>`<tr><td>${esc(r.label)}${r.batched?` <span class="chip ok">${r.batched} theo lô</span>`:""}</td><td class="num">${r.calls}</td><td class="num">${(r.tin/1000).toFixed(1)}k / ${(r.tout/1000).toFixed(1)}k</td><td class="num"><b>${usd(r.cost)}</b></td></tr>`).join(""):'<tr><td colspan="4" class="muted">Chưa có lượt gọi AI nào trong tháng.</td></tr>';
+}
+$("#presets").addEventListener("click",async e=>{ const b=e.target.closest("[data-preset]"); if(!b) return; await api("/costs/preset","POST",{name:b.dataset.preset}); toast(`Đã chuyển sang gói ${b.querySelector("b").textContent}`); loadCosts(); });
+$("#costForm").addEventListener("submit",async e=>{ e.preventDefault();
+  const days=[...document.querySelectorAll("#cDays input:checked")].map(x=>x.value).join(",");
+  await api("/settings","PUT",{model_posts:$("#mPosts").value,model_replies:$("#mReplies").value,model_meeting:$("#mMeeting").value,use_batch:$("#cBatch").checked?"1":"0",monthly_budget_usd:$("#cBudget").value||"0",debate_rounds:$("#cRounds").value,meeting_weekdays:days,cost_preset:"tuy_chinh"});
+  toast("Đã lưu cấu hình chi phí"); loadCosts(); });
 async function loadSettings(){
+  loadCosts();
   const s=await api("/settings");
   $("#sName").value=s.company_name||""; $("#sVoice").value=s.brand_voice||""; $("#sContact").value=s.contact_info||""; $("#sTime").value=s.meeting_time||"08:30";
   $("#sPer").value=s.posts_per_day||4; $("#sAutoM").checked=s.auto_meeting==="1"; $("#sAutoW").checked=s.auto_daily_work==="1"; $("#sPage").value=s.fb_page_id||""; $("#sToken").value=s.fb_page_token||""; $("#sImg").checked=s.attach_images!=="0"; $("#sHeadless").checked=s.browser_headless==="1";

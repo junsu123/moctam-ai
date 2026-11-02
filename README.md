@@ -118,7 +118,27 @@ frontend/
 Muốn thêm agent mới: thêm hồ sơ vào `agents.py` (`AGENTS`, `ORDER`), thêm vào `DEBATERS` trong
 `meeting.py`, thêm vào `AGENT_DEFS` và một vị trí bàn trong `DESKS` ở `frontend/index.html`.
 
-## Chi phí ước tính
+## Chi phí AI và cách tối ưu
 
-Mỗi cuộc họp khoảng 15 lượt gọi Claude, mỗi lần viết 3 bài là 3 lượt, mỗi tin nhắn khách là 1 lượt.
-Xem bảng giá hiện hành trên trang Anthropic. Muốn rẻ hơn, đặt `CLAUDE_MODEL=claude-haiku-5-5`.
+Vào **Cài đặt → Chi phí AI** để xem số tiền thật đã dùng trong tháng (đo từ số token của từng lượt gọi),
+dự báo cuối tháng và chi phí theo từng việc.
+
+| Gói | Viết bài | Tin nhắn khách | Cuộc họp | Ước tính / tháng (3 nick sale) |
+|---|---|---|---|---|
+| Tiết kiệm | Haiku 5.5, theo lô | Haiku 5.5 | Haiku 5.5 | dưới 1 USD |
+| **Cân bằng** (mặc định) | Sonnet 5.5, theo lô | Haiku 5.5 | Haiku 5.5 | khoảng 3–6 USD |
+| Chất lượng | Sonnet 5.5, theo lô | Sonnet 5.5 | Sonnet 5.5 | khoảng 8–15 USD |
+
+Các cơ chế tiết kiệm có sẵn:
+
+- **Viết theo lô (Batch API):** bài viết hằng ngày gửi một lần, giá giảm 50%, bài có sau vài phút (tối đa 24 giờ).
+  Bài sếp bấm "Viết bài" vẫn viết ngay.
+- **Chỉ viết đủ số bài cần đăng:** Lan tính số bài đăng được hôm nay (theo số nick, giới hạn bài/ngày, số nhóm đã hết
+  giãn cách) rồi trừ bài còn trong kho. Không viết bài thừa.
+- **Cuộc họp gọn:** mỗi lượt nói chỉ đưa 12 câu gần nhất vào AI, câu trả lời giới hạn độ dài; chọn được số vòng
+  tranh luận và các ngày họp trong tuần. Báo cáo của nhân viên sale lấy thẳng từ số liệu, không tốn AI.
+- **Ngân sách tháng:** chạm 100% thì mọi việc tự chuyển sang Haiku; chạm 120% thì tạm ngừng gọi AI và dùng
+  nội dung mẫu đến tháng sau. Nên đặt thêm giới hạn chi tiêu trong Anthropic Console để chắc chắn.
+
+Giá dùng để tính (USD / 1 triệu token, vào/ra): Haiku 5.5 0,10/0,50 · Sonnet 5.5 2/10 · Opus 5.5 4/20;
+theo lô giảm 50%. Khi Anthropic đổi giá, sửa bảng `PRICES` trong `backend/llm.py`.

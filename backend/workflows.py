@@ -1,11 +1,12 @@
 """Công việc của từng Agent: viết bài, phân phối nhóm, chăm khách, phân tích."""
+import json
 import random
 from datetime import datetime, timedelta
 
 import db
 import mock_brain
 from agents import system_prompt
-from llm import llm
+from llm import llm, month_spent, parse_json
 
 # Trạng thái hiện tại của từng agent (hiển thị trên văn phòng 3D)
 STATUS = {a: {"state": "idle", "text": "Đang sẵn sàng"} for a in ["minh", "lan", "tuan", "ha", "khoa"]}
@@ -47,6 +48,7 @@ def stats() -> dict:
         "sales_ok": c("SELECT COUNT(*) n FROM sales WHERE login_status='ok' AND auto_post=1"),
         "sales_problem": c("SELECT COUNT(*) n FROM sales WHERE login_status IN ('checkpoint','not_logged_in')"),
         "ai_live": llm.live,
+        "ai_cost_month": round(month_spent(), 3),
     }
 
 
@@ -58,43 +60,143 @@ def group_ready(g: dict) -> bool:
 
 
 # ---------------------------------------------------------------- Lan: viết bài
-def generate_posts(count: int = 3, product_id: int | None = None, target_type: str = "group",
-                   angle: str | None = None, note: str = "") -> list[dict]:
-    settings = db.get_settings()
-    products = db.q("SELECT * FROM products" + (" WHERE id=?" if product_id else ""),
-                    (product_id,) if product_id else ())
-    if not products:
-        return []
-    set_status("lan", "working", f"Đang viết {count} bài đăng")
-    created = []
-    for i in range(count):
-        p = products[i % len(products)] if product_id else random.choice(products)
-        ang = angle or random.choice(list(mock_brain.ANGLES))
-        where = {"group": "một hội nhóm Facebook về bán hàng online/nguồn hàng",
-                 "profile": "trang cá nhân Facebook của nhân viên kinh doanh",
-                 "page": "Fanpage của xưởng"}[target_type]
-        prompt = f"""Viết 1 bài đăng Facebook để đăng lên {where}, nhằm tìm khách SỈ (người bán online) nhập sản phẩm sau:
+WHERE = {"group": "một hội nhóm Facebook về bán hàng online/nguồn hàng",
+         "profile": "trang cá nhân Facebook của nhân viên kinh doanh",
+         "page": "Fanpage của xưởng"}
+
+
+def _post_prompt(p: dict, ang: str, target_type: str, settings: dict, note: str, i: int) -> str:
+    return f"""Viết 1 bài đăng Facebook để đăng lên {WHERE[target_type]}, nhằm tìm khách SỈ (người bán online) nhập sản phẩm sau:
 Tên: {p['name']} | Loại: {p['category']} | Mô tả: {p['description']}
 Giá sỉ: {p['wholesale_price']} | Giá lẻ gợi ý: {p['retail_price']} | Nhập tối thiểu: {p['moq']}
 Điểm bán: {p['selling_points']}
 Góc tiếp cận: {mock_brain.ANGLES.get(ang, ang)}
 Liên hệ: {settings.get('contact_info')}
 Yêu cầu thêm của sếp: {note or 'không'}
-Bài dài 120-220 chữ, có emoji vừa phải, mở đầu gây chú ý, kết thúc bằng lời kêu gọi bình luận/inbox.
-Mỗi bài phải khác nhau về câu chữ (đây là bài số {i + 1}). Không hứa công dụng chữa bệnh.
-Trả về JSON: {{"title": "...", "content": "...", "hashtags": "#... #...", "image_idea": "mô tả ảnh/video nên chụp"}}"""
-        data = llm.json(system_prompt("lan", settings), prompt,
-                        mock=lambda: mock_brain.post(p, ang, target_type, settings))
-        if not isinstance(data, dict) or not data.get("content"):
-            data = mock_brain.post(p, ang, target_type, settings)
-        pid = db.run("""INSERT INTO posts(agent_id, product_id, target_type, angle, title, content, hashtags,
-                        image_idea, status, created_at) VALUES ('lan',?,?,?,?,?,?,?,'draft',?)""",
-                     (p["id"], target_type, ang, data.get("title", ""), data["content"],
-                      data.get("hashtags", ""), data.get("image_idea", ""), db.now()))
-        created.append(db.one("SELECT * FROM posts WHERE id=?", (pid,)))
+Bài dài 110-180 chữ, emoji vừa phải, mở đầu gây chú ý, kết bằng lời kêu gọi bình luận/inbox.
+Câu chữ phải khác các bài khác (bài số {i + 1}, mã {random.randint(100, 999)}). Không hứa công dụng chữa bệnh.
+Trả về JSON: {{"title": "...", "content": "...", "hashtags": "#... #... (không dấu)", "image_idea": "1 câu mô tả ảnh nên chụp"}}"""
+
+
+def _save_post(p: dict, ang: str, target_type: str, data) -> dict:
+    if not isinstance(data, dict) or not data.get("content"):
+        data = mock_brain.post(p, ang, target_type, db.get_settings())
+    pid = db.run("""INSERT INTO posts(agent_id, product_id, target_type, angle, title, content, hashtags,
+                    image_idea, status, created_at) VALUES ('lan',?,?,?,?,?,?,?,'draft',?)""",
+                 (p["id"], target_type, ang, data.get("title", ""), data["content"],
+                  data.get("hashtags", ""), data.get("image_idea", ""), db.now()))
+    return db.one("SELECT * FROM posts WHERE id=?", (pid,))
+
+
+def _plan_items(count: int, product_id: int | None, target_type: str, angle: str | None):
+    products = db.q("SELECT * FROM products" + (" WHERE id=?" if product_id else ""),
+                    (product_id,) if product_id else ())
+    if not products:
+        return []
+    items = []
+    for i in range(count):
+        p = products[i % len(products)] if product_id else random.choice(products)
+        items.append((i, p, angle or random.choice(list(mock_brain.ANGLES)), target_type))
+    return items
+
+
+def generate_posts(count: int = 3, product_id: int | None = None, target_type: str = "group",
+                   angle: str | None = None, note: str = "") -> list[dict]:
+    """Viết ngay (sếp đang chờ trên giao diện)."""
+    settings = db.get_settings()
+    items = _plan_items(count, product_id, target_type, angle)
+    if not items:
+        return []
+    set_status("lan", "working", f"Đang viết {count} bài đăng")
+    created = []
+    for i, p, ang, tt in items:
+        data = llm.json(system_prompt("lan", settings), _post_prompt(p, ang, tt, settings, note, i),
+                        mock=lambda p=p, ang=ang, tt=tt: mock_brain.post(p, ang, tt, settings),
+                        max_tokens=900, task="posts")
+        created.append(_save_post(p, ang, tt, data))
     db.log("lan", "Viết bài", f"Đã viết {len(created)} bài nháp chờ sếp duyệt")
     set_status("lan", "idle", f"Vừa viết xong {len(created)} bài")
     return created
+
+
+def generate_posts_batch(plan: list[tuple[str, int]]) -> dict:
+    """Viết theo lô qua Batch API (rẻ hơn 50%). plan: [(target_type, số bài)].
+    Không có API key / tắt chế độ lô / gửi lỗi -> viết ngay như bình thường."""
+    settings = db.get_settings()
+    items = [it for tt, n in plan if n > 0 for it in _plan_items(n, None, tt, None)]
+    if not items:
+        return {"mode": "none", "count": 0}
+    if settings.get("use_batch") != "1" or not llm.live:
+        made = [_save_post(p, ang, tt, llm.json(system_prompt("lan", settings), _post_prompt(p, ang, tt, settings, "", i),
+                mock=lambda p=p, ang=ang, tt=tt: mock_brain.post(p, ang, tt, settings), max_tokens=900, task="posts"))
+                for i, p, ang, tt in items]
+        db.log("lan", "Viết bài", f"Đã viết {len(made)} bài nháp chờ sếp duyệt")
+        return {"mode": "now", "count": len(made)}
+    sysmsg = system_prompt("lan", settings)
+    reqs, meta = [], {}
+    for k, (i, p, ang, tt) in enumerate(items):
+        cid = f"post-{k}"
+        reqs.append({"custom_id": cid, "system": sysmsg, "prompt": _post_prompt(p, ang, tt, settings, "", k)})
+        meta[cid] = {"product_id": p["id"], "angle": ang, "target_type": tt}
+    bid = llm.batch_create("posts", reqs, max_tokens=900)
+    if not bid:
+        return generate_posts_batch_fallback(items, settings)
+    db.run("INSERT INTO ai_batches(id, task, meta, status, created_at) VALUES (?,?,?,?,?)",
+           (bid, "posts", db.dumps(meta), "in_progress", db.now()))
+    set_status("lan", "working", f"Đang viết lô {len(items)} bài (giảm 50% chi phí)")
+    db.log("lan", "Gửi lô viết bài", f"{len(items)} bài, giảm 50% chi phí, thường xong sau vài phút")
+    return {"mode": "batch", "count": len(items), "batch_id": bid}
+
+
+def generate_posts_batch_fallback(items, settings):
+    made = [_save_post(p, ang, tt, llm.json(system_prompt("lan", settings), _post_prompt(p, ang, tt, settings, "", i),
+            mock=lambda p=p, ang=ang, tt=tt: mock_brain.post(p, ang, tt, settings), max_tokens=900, task="posts"))
+            for i, p, ang, tt in items]
+    return {"mode": "now", "count": len(made)}
+
+
+def poll_batches():
+    """Gọi định kỳ: lô nào xong thì nhập bài nháp."""
+    if not llm.live:
+        return
+    for b in db.q("SELECT * FROM ai_batches WHERE status='in_progress'"):
+        try:
+            if llm.batch_status(b["id"]) != "ended":
+                continue
+            meta = json.loads(b["meta"])
+            res = llm.batch_results(b["id"], b["task"])
+            n = 0
+            for cid, m in meta.items():
+                p = db.one("SELECT * FROM products WHERE id=?", (m["product_id"],))
+                if p:
+                    _save_post(p, m["angle"], m["target_type"], parse_json(res.get(cid) or ""))
+                    n += 1
+            db.run("UPDATE ai_batches SET status='ended', ended_at=? WHERE id=?", (db.now(), b["id"]))
+            db.log("lan", "Viết bài (lô)", f"Lô xong: {n} bài nháp chờ sếp duyệt")
+            set_status("lan", "idle", f"Lô {n} bài đã xong")
+        except Exception as e:
+            print("[batch]", e)
+
+
+def post_demand() -> list[tuple[str, int]]:
+    """Chỉ viết đủ số bài thực sự đăng được hôm nay -> không tốn tiền cho bài thừa."""
+    today = db.today() + "%"
+    sales = db.q("SELECT * FROM sales WHERE login_status='ok' AND auto_post=1")
+    groups_ready = sum(1 for g in db.q("SELECT * FROM groups") if group_ready(g))
+    if sales:
+        cap_group = min(sum(int(s["max_posts_per_day"] or 5) for s in sales) - len(sales), groups_ready)
+        cap_profile = len(sales)
+    else:
+        cap_group = min(int(db.get_settings().get("posts_per_day", 4)), groups_ready)
+        cap_profile = 0
+    def have(tt):  # bài còn trong kho chưa dùng + bài đã lên lịch/đăng hôm nay
+        return db.one(f"""SELECT COUNT(*) n FROM posts WHERE target_type=? AND (status IN ('draft','approved')
+                          OR (status IN ('scheduled','posting','posted') AND COALESCE(posted_at, scheduled_for) LIKE ?))""",
+                      (tt, today))["n"]
+    pending = db.one("SELECT COUNT(*) n FROM ai_batches WHERE status='in_progress'")["n"]
+    if pending:
+        return []  # đang có lô chưa xong, không gửi thêm
+    return [("group", max(0, cap_group - have("group"))), ("profile", max(0, cap_profile - have("profile")))]
 
 
 # ---------------------------------------------------------------- Tuấn: phân phối nhóm
@@ -211,7 +313,8 @@ Nhu cầu: {lead['need']} | Trạng thái: {lead['status']} | Ghi chú: {lead['n
 Tin nhắn mới nhất của khách: {message or '(chưa có, đây là tin chủ động)'}
 Danh sách sản phẩm: {products}
 Tin ngắn (dưới 90 chữ), thân thiện, gợi ý 1 bước tiếp theo rõ ràng (gửi bảng giá/mẫu thử/hẹn gọi), kết bằng 1 câu hỏi."""
-    reply = llm.chat(system_prompt("ha", db.get_settings()), prompt, mock=lambda: mock_brain.lead_reply(lead, message))
+    reply = llm.chat(system_prompt("ha", db.get_settings()), prompt, mock=lambda: mock_brain.lead_reply(lead, message),
+                     max_tokens=350, task="replies")
     db.log("ha", "Soạn tin", f"Soạn tin nhắn cho khách {lead['name']}")
     set_status("ha", "idle", "Chờ sếp duyệt tin nhắn")
     return reply
@@ -227,8 +330,8 @@ def follow_up_list() -> list[dict]:
 # ---------------------------------------------------------------- Việc hằng ngày
 def daily_work() -> dict:
     """Chạy sau cuộc họp: Lan viết bài, Tuấn xếp lịch, Hà lọc khách cần bám."""
-    s = db.get_settings()
-    drafts = generate_posts(count=max(2, int(s.get("posts_per_day", 4)) - 1))
+    demand = post_demand()
+    res = generate_posts_batch(demand) if demand else {"mode": "none", "count": 0}
     plan = plan_distribution()
     fu = follow_up_list()
     db.log("ha", "Danh sách bám khách", f"{len(fu)} khách cần liên hệ lại hôm nay")
@@ -236,4 +339,4 @@ def daily_work() -> dict:
     st = stats()
     db.log("khoa", "Báo cáo", f"{st['posted_total']} bài đã đăng, {st['leads']} khách, {st['leads_hot']} khách nóng")
     set_status("khoa", "idle", "Báo cáo đã cập nhật")
-    return {"drafts": len(drafts), "scheduled": len(plan), "follow_ups": len(fu)}
+    return {"drafts": res["count"], "draft_mode": res["mode"], "scheduled": len(plan), "follow_ups": len(fu)}
