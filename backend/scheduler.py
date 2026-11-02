@@ -7,6 +7,8 @@ import browser_poster
 import db
 import facebook
 import meeting
+import kpi
+import telegram_bot
 import workflows
 
 
@@ -55,6 +57,18 @@ def _tick():
         browser_poster.submit(sid, {"kind": "post", "post_id": p["id"]})
         started.add(sid)
     _dispatch_bumps(stamp, s, busy_post | started)
+    # Quét bình luận tìm khách theo các mốc giờ trong ngày
+    if s.get("scan_enabled") == "1":
+        hm = stamp[11:]
+        due_slots = [t.strip() for t in (s.get("scan_times") or "").split(",") if t.strip() and t.strip() <= hm]
+        if due_slots:
+            key = f"{stamp[:10]} {max(due_slots)}"
+            if s.get("scan_last") != key:
+                db.set_setting("scan_last", key)
+                telegram_bot.start_scan_round(force=False)
+    # KPI: chuyển khách cần sếp, nhắc lại; báo cáo Telegram
+    kpi.check_escalations()
+    telegram_bot.tick()
 
 
 def _dispatch_bumps(stamp: str, s: dict, busy_post: set):

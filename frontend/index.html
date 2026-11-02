@@ -135,6 +135,25 @@ details.limits .grid2{margin-top:8px}
 .reasons{display:flex;gap:4px;flex-wrap:wrap}
 .reasons button{border:1px solid var(--line);background:var(--panel);border-radius:20px;font-size:12px;padding:3px 9px}
 .reasons button:hover{border-color:var(--danger);color:var(--danger)}
+.kpi-hero{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.kpi-hero .big{font:800 40px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.kpi-hero .big small{font-size:18px;color:var(--muted);font-weight:700}
+.kbar{position:relative;height:14px;border-radius:8px;background:var(--panel-2);margin-top:6px}
+.kbar i{position:absolute;left:0;top:0;bottom:0;border-radius:8px;background:var(--honey)}
+.kbar i.ok{background:var(--accent)}
+.kbar .mk{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);opacity:.55}
+.kbar .mk span{position:absolute;top:18px;transform:translateX(-50%);font-size:11px;white-space:nowrap;color:var(--muted)}
+.khist{display:flex;align-items:flex-end;gap:4px;height:120px;position:relative;padding-top:6px}
+.khist .col2{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;min-width:0}
+.khist .b{width:100%;max-width:26px;border-radius:4px 4px 0 0;background:var(--honey);min-height:2px}
+.khist .b.ok{background:var(--accent)}
+.khist .col2 span{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.khist .line{position:absolute;left:0;right:0;border-top:1.5px dashed var(--danger);opacity:.6}
+.tg-code{font:800 30px var(--f-display);letter-spacing:.2em;background:var(--panel-2);border-radius:10px;padding:8px 14px;text-align:center;font-variant-numeric:tabular-nums}
+label.row.small{flex-wrap:nowrap;align-items:flex-start}
+label.row.small input{margin-top:3px;flex:none}
+.kbar .mk.end span{transform:translateX(-100%)}
+.phone{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .alert{background:var(--danger-soft);border:1px solid var(--danger);border-radius:var(--r);padding:10px 14px;font-size:13px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
 .kpi .v{font:800 26px/1 var(--f-display);font-variant-numeric:tabular-nums}
@@ -246,6 +265,7 @@ tbody tr.sel td{background:var(--accent-soft)}
 
 @media (max-width:1180px){.split{grid-template-columns:minmax(0,1fr)}.board{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:760px){
+  .kpi-hero{grid-template-columns:minmax(0,1fr)}
   .learn-top{grid-template-columns:minmax(0,1fr)} .agents-learn{grid-template-columns:minmax(0,1fr)}
   .cost-top,.presets{grid-template-columns:minmax(0,1fr)}
   .app{grid-template-columns:minmax(0,1fr)}
@@ -277,6 +297,7 @@ tbody tr.sel td{background:var(--accent-soft)}
       <button data-v="groups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 2 6 5.5"/></svg>Hội nhóm</button>
       <button data-v="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>Khách hàng</button>
       <button data-v="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8l8-4 8 4v9l-8 4-8-4zM4 8l8 4 8-4M12 12v9"/></svg>Sản phẩm</button>
+      <button data-v="kpi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>KPI & Báo cáo<span class="badge" id="bossBadge" hidden></span></button>
       <button data-v="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5M22 9v6"/></svg>Đào tạo</button>
       <button data-v="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Cài đặt</button>
     </nav>
@@ -295,6 +316,7 @@ tbody tr.sel td{background:var(--accent-soft)}
         </div>
       </div>
       <div class="alert" id="saleAlert" hidden><span id="saleAlertTxt"></span><a class="btn sm" href="#sales">Xử lý</a></div>
+      <a class="kpi-hero" id="officeKpi" href="#kpi" style="text-decoration:none;color:inherit"></a>
       <div class="kpis" id="kpis"></div>
       <div class="split">
         <div class="stage-slot" id="slot-office"></div>
@@ -404,7 +426,7 @@ tbody tr.sel td{background:var(--accent-soft)}
       <div class="pipe" id="pipe"></div>
       <div class="split">
         <div class="sidecol">
-          <div class="tbl-wrap"><table><thead><tr><th>Khách</th><th>Kinh doanh</th><th>Nhu cầu</th><th>Nguồn</th><th class="num">Điểm</th><th>Trạng thái</th></tr></thead><tbody id="leadRows"></tbody></table></div>
+          <div class="tbl-wrap"><table><thead><tr><th>Khách</th><th>SĐT</th><th>Nhu cầu</th><th>Nguồn</th><th class="num">Điểm</th><th>Trạng thái</th></tr></thead><tbody id="leadRows"></tbody></table></div>
           <form class="card" id="leadForm">
             <h3>Thêm khách</h3>
             <div class="grid3">
@@ -438,6 +460,65 @@ tbody tr.sel td{background:var(--accent-soft)}
         </div>
         <div><button class="btn primary" type="submit">Thêm sản phẩm</button></div>
       </form>
+    </section>
+
+    <!-- KPI & BÁO CÁO -->
+    <section class="view" id="v-kpi" hidden>
+      <div class="vh"><div><h1>KPI & Báo cáo</h1><p>KPI phòng kinh doanh tính bằng số khách mới để lại số điện thoại mỗi ngày. Nhân viên sale tự đọc bình luận trên bài của mình, tạo khách và trả lời xin SĐT. Khách AI không tư vấn được sẽ được chuyển cho sếp qua Telegram kèm kịch bản tư vấn.</p></div>
+        <div class="actions"><button class="btn" id="btnScan">Quét bình luận ngay</button></div></div>
+      <div class="kpi-hero" id="kpiHero"></div>
+      <div class="learn-top">
+        <div class="sidecol">
+          <div class="card"><div class="card-h"><h3>14 ngày gần nhất</h3><span class="small muted" id="kStreak"></span></div><div class="khist" id="kHist"></div></div>
+          <div class="tbl-wrap"><table style="min-width:520px"><thead><tr><th>Nick</th><th class="num">SĐT / KPI</th><th class="num">Khách</th><th class="num">Đã xin SĐT</th><th class="num">Bài</th><th class="num">Up</th></tr></thead><tbody id="kSales"></tbody></table></div>
+          <form class="card" id="kpiForm">
+            <h3>Đặt KPI</h3>
+            <div class="grid3">
+              <label class="f" for="kMin">Tối thiểu (khách có SĐT/ngày)<input type="number" id="kMin" min="1" max="200"></label>
+              <label class="f" for="kMax">Mục tiêu vượt<input type="number" id="kMax" min="1" max="500"></label>
+              <label class="f" for="kCheck">Kiểm tra tiến độ lúc<input type="time" id="kCheck"></label>
+            </div>
+            <p class="small muted">KPI được chia đều cho các nick đang chạy. Khách tính cho nick đã đăng bài mà khách bình luận. Đến giờ kiểm tra, nếu đang chậm, đội tự quét lại bình luận và báo sếp.</p>
+            <h3>Chuyển khách cho sếp</h3>
+            <label class="row small"><input type="checkbox" id="kEscPhone"> Mọi khách đã để SĐT (AI không gọi điện, nhắn Zalo được)</label>
+            <label class="row small"><input type="checkbox" id="kEscCx"> Khách hỏi vượt khả năng AI: số lượng lớn, in nhãn riêng, chiết khấu, đại lý, hóa đơn, khiếu nại</label>
+            <label class="f" for="kEscH">Khách có SĐT mà chưa ai tư vấn sau (giờ), 0 để tắt<input type="number" id="kEscH" min="0" step="0.5"></label>
+            <h3>Tìm khách trong bình luận</h3>
+            <label class="row small"><input type="checkbox" id="kScan"> Tự quét bình luận các bài của từng nick</label>
+            <div class="grid2">
+              <label class="f" for="kScanT">Các giờ quét (cách nhau dấu phẩy)<input type="text" id="kScanT" placeholder="11:30,16:30,20:45"></label>
+              <label class="f" for="kScanAge">Quét bài đăng trong vòng (ngày)<input type="number" id="kScanAge" min="1" max="30"></label>
+            </div>
+            <label class="row small"><input type="checkbox" id="kReply"> Trả lời khách quan tâm chưa có SĐT để xin số điện thoại</label>
+            <label class="f" for="kReplyMax">Tối đa câu trả lời mỗi nick/ngày<input type="number" id="kReplyMax" min="0" max="40"></label>
+            <label class="f" for="kReplyT">Câu trả lời xin SĐT (mỗi dòng một câu, chọn ngẫu nhiên)<textarea id="kReplyT" rows="3"></textarea></label>
+            <div><button class="btn primary" type="submit">Lưu KPI</button></div>
+          </form>
+        </div>
+        <div class="sidecol">
+          <form class="card" id="tgForm">
+            <div class="card-h"><h3>Telegram</h3><span class="chip" id="tgState">—</span></div>
+            <ol class="steps small">
+              <li>Trên Telegram, nhắn <b>@BotFather</b> → gửi <b>/newbot</b> → đặt tên → nhận token.</li>
+              <li>Dán token vào ô dưới, bấm <b>Lưu token</b>.</li>
+              <li>Bấm <b>Tạo mã ghép nối</b>, mở bot vừa tạo và gửi mã 6 số đó.</li>
+            </ol>
+            <label class="f" for="tgToken">Token bot<div class="row"><input type="text" class="grow" id="tgToken" autocomplete="off" placeholder="123456789:AA…"><button class="btn sm" type="submit">Lưu token</button></div></label>
+            <div id="tgPair"></div>
+            <div class="actions"><button type="button" class="btn" id="tgPairBtn">Tạo mã ghép nối</button><button type="button" class="btn" id="tgTest">Gửi tin thử</button><button type="button" class="btn" id="tgNow">Gửi báo cáo ngay</button></div>
+            <div class="grid2">
+              <label class="f" for="tgM">Báo cáo sáng<input type="time" id="tgM"></label>
+              <label class="f" for="tgE">Báo cáo cuối ngày<input type="time" id="tgE"></label>
+            </div>
+            <label class="row small"><input type="checkbox" id="tgL"> Gửi ngay khách cần sếp tư vấn (có nút Đã gọi / Chốt đơn / Không mua / Nhắc sau)</label>
+            <label class="row small"><input type="checkbox" id="tgK"> Cảnh báo KPI chậm, chúc mừng khi đạt KPI</label>
+            <label class="row small"><input type="checkbox" id="tgN"> Cảnh báo nick bị checkpoint, đăng xuất</label>
+            <p class="small muted">Lệnh trong Telegram: /baocao, /kpi, /khach, /hop [chủ đề], /tamdung, /tieptuc. Chỉ chat đã ghép nối mới ra lệnh được.</p>
+            <div class="actions"><button type="button" class="btn primary" id="tgSave">Lưu cài đặt báo cáo</button><button type="button" class="btn ghost danger" id="tgUnlink">Hủy ghép nối</button></div>
+          </form>
+          <div class="card"><div class="card-h"><h3>Khách đang chờ sếp</h3><a class="btn sm" href="#leads">Mở danh sách khách</a></div><ul class="recent" id="kBoss"></ul></div>
+        </div>
+      </div>
     </section>
 
     <!-- ĐÀO TẠO -->
@@ -588,7 +669,7 @@ const Demo = (() => {
   const today = () => now().slice(0,10);
   let seq = 100; const id = () => ++seq;
   const S = {
-    settings:{learn_enabled:"1",learn_time:"23:15",learn_explore:"0.25",bump_enabled:"1",bump_folder:"D:\\AnhSanPham",bump_time:"19:30",bump_max_age_days:"7",bump_max_per_nick:"8",bump_gap_minutes:"6",bump_texts:"Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng",cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 09xx.xxx.xxx",ai_live:false,model:"mô phỏng"},
+    settings:{kpi_min:"5",kpi_max:"10",kpi_check_time:"15:00",escalate_all_phone:"1",escalate_complex:"1",escalate_after_hours:"2",scan_enabled:"1",scan_times:"11:30,16:30,20:45",scan_max_age_days:"7",auto_reply_comments:"1",reply_max_per_nick:"10",reply_texts:"Dạ anh/chị để lại SĐT hoặc Zalo giúp em, bên em gọi tư vấn giá sỉ ngay ạ\nEm cảm ơn ạ, anh/chị cho em xin SĐT/Zalo để em gửi bảng giá sỉ và tư vấn kỹ hơn nhé",tg_token:"",tg_morning:"09:00",tg_evening:"21:30",tg_alert_leads:"1",tg_alert_kpi:"1",tg_alert_nick:"1",learn_enabled:"1",learn_time:"23:15",learn_explore:"0.25",bump_enabled:"1",bump_folder:"D:\\AnhSanPham",bump_time:"19:30",bump_max_age_days:"7",bump_max_per_nick:"8",bump_gap_minutes:"6",bump_texts:"Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng",cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 09xx.xxx.xxx",ai_live:false,model:"mô phỏng"},
     products:[
       {id:1,name:"Trà gừng mật ong túi lọc",category:"Trà túi lọc",description:"Gừng sẻ sấy lạnh phối mật ong, hộp 20 túi x 2g.",wholesale_price:"38.000đ/hộp",retail_price:"65.000đ",moq:"50 hộp",selling_points:"Ấm bụng, dễ uống, bán chạy mùa lạnh; in nhãn riêng (OEM) được"},
       {id:2,name:"Trà hoa đậu biếc - cỏ ngọt",category:"Trà túi lọc",description:"Hoa đậu biếc sấy khô phối cỏ ngọt, hộp 25 túi.",wholesale_price:"35.000đ/hộp",retail_price:"60.000đ",moq:"50 hộp",selling_points:"Màu xanh đẹp lên video, hợp livestream pha chế"},
@@ -603,6 +684,9 @@ const Demo = (() => {
       {id:4,name:"Hội Livestream bán hàng",url:"",topic:"Livestream",members:95000,rules:"Không spam link. Đăng kèm video/ảnh thật.",min_days_between_posts:3,last_posted_at:null,leads_count:3},
       {id:5,name:"Bán hàng Shopee - TikTok Shop",url:"",topic:"Sàn TMĐT",members:240000,rules:"Bài nguồn hàng đăng trong chủ đề 'Tìm nguồn hàng'.",min_days_between_posts:3,last_posted_at:null,leads_count:0}],
     leads:[
+      {id:11,name:"Nguyễn Thu Hà",contact:"0912 345 678",phone:"0912345678",origin:"comment",channel:"Facebook",source:"Bình luận bài #1 · Cộng đồng bán hàng online toàn quốc",business_type:"",need:"Quan tâm ạ, sđt 0912.345.678 gọi mình nhé",score:85,status:"new",escalated_at:"2026-11-03 10:12:00",escalate_reason:"Khách đã để lại SĐT, cần người gọi/nhắn Zalo tư vấn",consult_note:"Chào chị, em gọi từ xưởng về trà gừng mật ong. Giá sỉ 38.000đ/hộp, lẻ gợi ý 65.000đ, nhập từ 50 hộp. Chị đang bán kênh nào, dự kiến nhập bao nhiêu? Em gửi mẫu thử và video để chị đăng bán nhé.",note:""},
+      {id:12,name:"Lê Phương Shop",contact:"0987 654 321",phone:"0987654321",origin:"comment",channel:"Facebook",source:"Bình luận bài #1 · Cộng đồng bán hàng online toàn quốc",business_type:"",need:"Mình cần lấy 500 hộp, in nhãn riêng được không?",score:95,status:"contacted",escalated_at:"2026-11-03 10:13:00",escalate_reason:"Khách hỏi vượt khả năng của AI (500 hộp)",boss_status:"called",consult_note:"Đơn lớn và in nhãn riêng: sếp báo giá OEM theo số lượng, hỏi thời gian cần hàng và mẫu nhãn khách muốn.",note:""},
+      {id:13,name:"Trần Minh",contact:"Bình luận Facebook",origin:"comment",channel:"Facebook",source:"Bình luận bài #2 · Tìm nguồn hàng sỉ - Đầu mối tận xưởng",business_type:"",need:"ib giá sỉ giúp mình",score:60,status:"new",note:"Linh đã trả lời xin SĐT"},
       {id:1,name:"Shop Mộc An",contact:"Zalo 09xx",channel:"Zalo",source:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",business_type:"Sàn TMĐT",need:"Hỏi giá ngũ cốc số lượng 100 hũ, cần hóa đơn",score:90,status:"sample",note:""},
       {id:2,name:"Thu Trang",contact:"fb.com/thutrang.shop",channel:"Facebook",source:"Hội Livestream bán hàng",business_type:"Livestream",need:"Muốn lấy sỉ trà đậu biếc để live pha chế",score:80,status:"contacted",note:""},
       {id:3,name:"Anh Quân Ads",contact:"Inbox page",channel:"Facebook",source:"Hội chạy quảng cáo Facebook Ads",business_type:"Chạy quảng cáo",need:"Tìm sản phẩm biên lợi nhuận cao để test ads",score:65,status:"new",note:""},
@@ -654,6 +738,13 @@ const Demo = (() => {
     ha:[{label:"Tỉ lệ chốt đơn",unit:"%",now:38,prev:25},{label:"Tin nhắn đã gửi",unit:"",now:21,prev:14},{label:"Bài học mới",unit:"",now:2,prev:0}],
     khoa:[{label:"Bài có số liệu kết quả",unit:"%",now:40,prev:35},{label:"Bài học mới",unit:"",now:1,prev:1}]};
   const lvl=xp=>1+Math.floor(Math.sqrt(xp/50)), lxp=l=>50*(l-1)**2;
+  function demoKpi(){
+    const d=new Date(); const mn=+S.settings.kpi_min||5, mx=+S.settings.kpi_max||10; const ph=S.kpiPhone||3;
+    const history=[...Array(14)].map((_,i)=>{ const x=new Date(d-(13-i)*864e5); const v=i===13?ph:[4,6,5,7,3,8,6,5,9,6,11,7,8][i]; const p2=n=>String(n).padStart(2,"0"); return {date:`${x.getFullYear()}-${p2(x.getMonth()+1)}-${p2(x.getDate())}`,target_min:mn,target_max:mx,leads_phone:v,leads_total:v+3,achieved:+(v>=mn)}; });
+    const boss=S.leads.filter(l=>l.escalated_at&&!["ordered","lost"].includes(l.status)&&l.boss_status!=="called").length;
+    const td={date:today(),target_min:mn,target_max:mx,leads_phone:ph,leads_total:ph+3,leads_no_phone:3,from_comments:ph+1,asked_phone:4,posts:3,bumps:5,escalated:ph,boss_pending:boss,ordered:1,achieved:ph>=mn,exceeded:ph>=mx,pct:Math.round(ph/mn*100)};
+    return {today:td,pace:{expected:2.4,behind:false,frac:0.48},streak:4,history,per_sale:[{id:1,name:"Linh",active:true,target_min:3,target_max:5,leads_phone:Math.min(ph,2),leads:4,posts:2,bumps:3,asked:3,failed:0},{id:2,name:"Phương",active:true,target_min:3,target_max:5,leads_phone:Math.max(0,ph-2),leads:2,posts:1,bumps:2,asked:1,failed:0},{id:3,name:"Nam",active:false,target_min:0,target_max:0,leads_phone:0,leads:0,posts:0,bumps:0,asked:0,failed:0}]};
+  }
   function demoLearning(){
     const all=[...AGENT_DEFS.map(a=>({...a,kind:"core"})),...saleAgents()];
     return {running:S.learnRunning,last:today(),agents:all.map(a=>{ const xp=S.xp[a.id]||0, L=lvl(xp);
@@ -677,7 +768,7 @@ const Demo = (() => {
     return {drafts:c(p=>p.status==="draft"),approved:c(p=>["approved","scheduled"].includes(p.status)),posted_total:c(p=>p.status==="posted"),posted_today:c(p=>p.status==="posted"),
       groups:S.groups.length,groups_ready:S.groups.filter(ready).length,leads:S.leads.length,leads_new:S.leads.filter(l=>l.status==="new").length,
       leads_hot:S.leads.filter(l=>l.score>=75&&!["ordered","lost"].includes(l.status)).length,leads_ordered:S.leads.filter(l=>l.status==="ordered").length,
-      tasks_open:S.tasks.filter(t=>t.status!=="done").length,ai_live:false,failed:c(p=>p.status==="failed"),bumps_today:S.posts.reduce((n,p)=>n+(p.bump_count||0),0),sales_total:S.sales.length,sales_ok:S.sales.filter(x=>x.login_status==="ok"&&x.auto_post).length,sales_problem:S.sales.filter(x=>x.login_status!=="ok").length,best_group:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",lead_per_post:0};
+      tasks_open:S.tasks.filter(t=>t.status!=="done").length,ai_live:false,failed:c(p=>p.status==="failed"),kpi:demoKpi().today,bumps_today:S.posts.reduce((n,p)=>n+(p.bump_count||0),0),sales_total:S.sales.length,sales_ok:S.sales.filter(x=>x.login_status==="ok"&&x.auto_post).length,sales_problem:S.sales.filter(x=>x.login_status!=="ok").length,best_group:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",lead_per_post:0};
   }
   const TOPICS=["Tuần này nên tập trung đẩy sản phẩm nào cho khách sỉ?","Đăng nhiều bài mỗi ngày hay ít bài nhưng chất lượng hơn?","Có nên công khai giá sỉ ngay trong bài đăng hội nhóm không?","Gửi mẫu thử miễn phí cho khách sỉ mới: có đáng chi phí không?","Nên ưu tiên tệp khách livestream hay tệp khách chạy quảng cáo?","Có nên đẩy dịch vụ in nhãn riêng (OEM) cho shop online không?"];
   const DEB={lan:["Em nghĩ phải mạnh dạn hơn: nội dung có video thật, câu chuyện xưởng sẽ khác biệt so với bài nguồn hàng đăng tràn lan.","Em đồng ý cần số liệu với anh Khoa, nhưng không thử nội dung mới thì lấy đâu ra số liệu để so ạ?"],
@@ -725,10 +816,18 @@ const Demo = (() => {
       if(P==="/sales") return S.sales.map(saleOut);
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products; if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g)}));
-      if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
+      if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,tg_token:S.settings.tg_token?"••••••":"",models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
       if(P==="/learning") return demoLearning();
+      if(P==="/kpi") return demoKpi();
+      if(P==="/telegram") return {has_token:!!S.settings.tg_token,bot:S.settings.tg_token?"moctam_sales_bot":null,chats:S.tgChats||0,pair_code:S.pairCode||"",error:null};
       if(P==="/posts/recent-posted") return S.posts.filter(p=>p.status==="posted").map(p=>({id:p.id,title:p.title,posted_at:p.posted_at,group_name:p.group_name,target_type:p.target_type}));
       if(P==="/bump/folder"){ const f=S.settings.bump_folder; return f?{path:f,exists:true,count:23,root_count:5,products:[{id:1,name:"Trà gừng mật ong túi lọc",count:8},{id:3,name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",count:6},{id:4,name:"Bột cần tây sấy lạnh",count:4}],samples:[]}:{path:"",exists:false,count:0,products:[],samples:[]}; }
+      if(P==="/telegram/pair"){ if(!S.settings.tg_token) throw new Error("Dán token bot Telegram và bấm Lưu trước"); S.pairCode=String(Math.floor(100000+Math.random()*899999)); setTimeout(()=>{ S.tgChats=1; S.pairCode=""; log("minh","Kết nối Telegram","Đã ghép nối với Sếp"); },8000); return {has_token:true,bot:"moctam_sales_bot",chats:S.tgChats||0,pair_code:S.pairCode}; }
+      if(P==="/telegram/send"){ if(!S.tgChats) throw new Error("Chưa ghép nối Telegram. Tạo mã ghép nối và gửi mã đó cho bot"); return {ok:true}; }
+      if(P==="/telegram/unlink"){ S.tgChats=0; return {has_token:!!S.settings.tg_token,bot:"moctam_sales_bot",chats:0,pair_code:""}; }
+      if(P==="/scan/now"){ const sid=S.sales.find(x=>x.login_status==="ok"); if(!sid) return {posts:0}; const aid=`sale-${sid.id}`; S.status[aid]={state:"working",text:"Đang đọc bình luận 3 bài để tìm khách"};
+        setTimeout(()=>{ S.status[aid]={state:"idle",text:"Quét xong: 1 khách mới, 1 SĐT"}; S.leads.unshift({id:id(),name:"Đỗ Ngọc Ánh",contact:"0938 222 456",phone:"0938222456",origin:"comment",source:"Bình luận bài #3 · Cộng đồng bán hàng online toàn quốc",business_type:"",need:"Quan tâm trà đậu biếc, 0938222456",score:75,status:"new",escalated_at:now(),escalate_reason:"Khách đã để lại SĐT, cần người gọi/nhắn Zalo tư vấn",consult_note:"Chào chị, em gọi từ xưởng về trà hoa đậu biếc. Giá sỉ 35.000đ/hộp, lẻ gợi ý 60.000đ, nhập từ 50 hộp. Chị đang bán live hay sàn, dự kiến nhập bao nhiêu? Em gửi mẫu thử để chị quay video nhé.",created_at:now()}); S.kpiPhone=(S.kpiPhone||3)+1; log(aid,"Quét bình luận","Bài #3: 1 khách mới, 1 SĐT"); },5000); return {posts:3}; }
+      if((m=P.match(/^\/leads\/(\d+)\/escalate$/))){ const l=S.leads.find(x=>x.id==m[1]); Object.assign(l,{escalated_at:now(),escalate_reason:"Sếp chọn tự tư vấn khách này",consult_note:"Chào anh/chị, em gọi từ xưởng. Hỏi kênh bán, số lượng dự kiến, đề nghị gửi mẫu thử."}); return {ok:true,telegram:!!S.tgChats}; }
       if(P==="/learning/run"){ S.learnRunning=true; [...AGENT_DEFS.map(a=>a.id),...S.sales.map(r=>`sale-${r.id}`)].forEach(a=>S.status[a]={state:"working",text:"Đang tự xem lại và rút kinh nghiệm"});
         setTimeout(()=>{ S.learnRunning=false; [...AGENT_DEFS.map(a=>a.id),...S.sales.map(r=>`sale-${r.id}`)].forEach(a=>S.status[a]={state:"idle",text:"Vừa học xong bài học hôm nay"});
           S.lessons.push({id:id(),agent_id:"lan",text:"Mở bài bằng câu hỏi về lợi nhuận của người bán giúp tăng bình luận.",evidence:"Góc lợi nhuận: 6 bình luận/bài so với mức chung 3,1",source:"ai",confidence:0.7,pinned:0});
@@ -781,7 +880,7 @@ const Demo = (() => {
     if(method==="PUT"&&(m=P.match(/^\/groups\/(\d+)\/members$/))){ S.groups.find(x=>x.id==m[1]).member_sale_ids=body.sale_ids.join(","); return {ok:true}; }
     if(method==="POST"&&P==="/costs/preset"){ const PR={tiet_kiem:["claude-haiku-5-5","claude-haiku-5-5","claude-haiku-5-5"],can_bang:["claude-sonnet-5-5","claude-haiku-5-5","claude-haiku-5-5"],chat_luong:["claude-sonnet-5-5","claude-sonnet-5-5","claude-sonnet-5-5"]}[body.name];
       Object.assign(S.settings,{model_posts:PR[0],model_replies:PR[1],model_meeting:PR[2],use_batch:"1",cost_preset:body.name}); return S.settings; }
-    if(method==="PUT"&&P==="/settings"){ Object.assign(S.settings,body); return S.settings; }
+    if(method==="PUT"&&P==="/settings"){ if(body.tg_token==="••••••") delete body.tg_token; Object.assign(S.settings,body); return S.settings; }
     if(method==="DELETE"&&(m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const path=new URLSearchParams(qs).get("path"); pr.images=JSON.stringify(JSON.parse(pr.images||"[]").filter(x=>x!==path)); return {ok:true}; }
     if(method==="DELETE"&&(m=P.match(/^\/sales\/(\d+)$/))){ S.sales=S.sales.filter(x=>x.id!=m[1]); return {ok:true}; }
     if(method==="DELETE"){ if((m=P.match(/^\/products\/(\d+)$/))) S.products=S.products.filter(x=>x.id!=m[1]); if((m=P.match(/^\/groups\/(\d+)$/))) S.groups=S.groups.filter(x=>x.id!=m[1]); return {ok:true}; }
@@ -1059,7 +1158,7 @@ function show(v){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
   if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
-  if(v==="posts") loadPosts(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  if(v==="posts") loadPosts(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
 $("#nav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) location.hash=b.dataset.v; });
@@ -1079,6 +1178,7 @@ async function refresh(){
     const db=$("#draftBadge"); db.hidden=!s.drafts; db.textContent=s.drafts;
     if(!DEMO&&s.ai_live) $("#modeBox").innerHTML=`<span class="dot live"></span><b>AI đang hoạt động</b><br>Chi phí tháng này: <b>${usd(s.ai_cost_month||0)}</b>`;
     if($("#bumpToday")) $("#bumpToday").textContent=`Hôm nay đã up ${s.bumps_today||0} lượt`;
+    if(s.kpi){ $("#officeKpi").innerHTML=kpiHero(s.kpi,null,`<span class="small muted" style="display:block;margin-top:6px">Xem KPI →</span>`); const bb=$("#bossBadge"); bb.hidden=!s.kpi.boss_pending; bb.textContent=s.kpi.boss_pending; }
     const prob=(s.sales_problem||0)+(s.failed||0); $("#saleBadge").hidden=!s.sales_problem; $("#saleAlert").hidden=!prob;
     $("#saleAlertTxt").textContent=[s.sales_problem?`${s.sales_problem} nick cần sếp đăng nhập lại hoặc xử lý checkpoint`:"",s.failed?`${s.failed} bài đăng lỗi`:""].filter(Boolean).join(" · ");
     $("#liveBadge").hidden=!dash.meeting_running;
@@ -1264,6 +1364,50 @@ $("#saleForm").addEventListener("submit",async e=>{ e.preventDefault();
   try{ await api("/sales","POST",{name:$("#saName").value,fb_name:$("#saFb").value}); e.target.reset(); toast("Đã tuyển sale mới. Bấm Mở Chrome để đăng nhập nick."); }catch(err){ toast(err.message); }
   loadSales(); refresh(); });
 
+/* --------------------------------------------- KPI & Telegram */
+function kpiHero(k,pace,extra=""){
+  const mx=Math.max(k.target_max,k.leads_phone,1); const w=v=>Math.min(100,v/mx*100);
+  const st=k.exceeded?["ok","Vượt KPI"]:k.achieved?["ok","Đạt KPI"]:pace&&pace.behind?["bad","Đang chậm tiến độ"]:["warn","Đang thực hiện"];
+  return `<div><span class="small muted">KPI hôm nay · khách có SĐT</span><div class="big">${k.leads_phone}<small> / ${k.target_min}</small></div></div>
+    <div><div class="kbar"><i class="${k.achieved?"ok":""}" style="width:${w(k.leads_phone)}%"></i><div class="mk" style="left:${w(k.target_min)}%"><span>Tối thiểu ${k.target_min}</span></div><div class="mk end" style="left:calc(${w(k.target_max)}% - 2px)"><span>Vượt ${k.target_max}</span></div></div>
+      <p class="small muted" style="margin-top:22px">${k.leads_total} khách mới (${k.from_comments} từ bình luận) · đã xin SĐT ${k.asked_phone} người · chuyển sếp ${k.escalated} · đang chờ sếp ${k.boss_pending}${pace&&pace.expected?` · lúc này nên có ~${pace.expected}`:""}</p></div>
+    <div style="text-align:right"><span class="chip ${st[0]}">${st[1]}</span>${extra}</div>`;
+}
+const fmtPhone=p=>p&&p.length===10?`${p.slice(0,4)} ${p.slice(4,7)} ${p.slice(7)}`:(p||"");
+async function loadKpi(){
+  const [d,s,tg]=await Promise.all([api("/kpi"),api("/settings"),api("/telegram")]);
+  $("#kpiHero").innerHTML=kpiHero(d.today,d.pace);
+  $("#kStreak").textContent=d.streak?`Đạt KPI liên tiếp ${d.streak} ngày`:"";
+  const mx=Math.max(...d.history.map(h=>Math.max(h.leads_phone,h.target_min)),1);
+  $("#kHist").innerHTML=d.history.map(h=>`<div class="col2" title="${fmtDate(h.date)}: ${h.leads_phone}/${h.target_min} khách có SĐT"><span>${h.leads_phone}</span><div class="b ${h.leads_phone>=h.target_min?"ok":""}" style="height:${h.leads_phone/mx*80}%"></div><span>${h.date.slice(8,10)}</span></div>`).join("")+`<div class="line" style="bottom:calc(${d.today.target_min/mx*80}% + 18px)" title="KPI tối thiểu"></div>`;
+  $("#kSales").innerHTML=d.per_sale.length?d.per_sale.map(r=>`<tr><td><b>${esc(r.name)}</b>${r.active?"":' <span class="chip">Tạm dừng</span>'}</td><td class="num"><b style="color:${r.active&&r.leads_phone>=r.target_min?"var(--accent)":"inherit"}">${r.leads_phone}</b> / ${r.target_min}</td><td class="num">${r.leads}</td><td class="num">${r.asked}</td><td class="num">${r.posts}</td><td class="num">${r.bumps}</td></tr>`).join(""):'<tr><td colspan="6" class="muted">Chưa có nhân viên sale.</td></tr>';
+  if(!$("#kpiForm").contains(document.activeElement)){
+    $("#kMin").value=s.kpi_min; $("#kMax").value=s.kpi_max; $("#kCheck").value=s.kpi_check_time; $("#kEscPhone").checked=s.escalate_all_phone==="1"; $("#kEscCx").checked=s.escalate_complex==="1";
+    $("#kEscH").value=s.escalate_after_hours; $("#kScan").checked=s.scan_enabled==="1"; $("#kScanT").value=s.scan_times; $("#kScanAge").value=s.scan_max_age_days;
+    $("#kReply").checked=s.auto_reply_comments==="1"; $("#kReplyMax").value=s.reply_max_per_nick; $("#kReplyT").value=s.reply_texts; }
+  if(!$("#tgForm").contains(document.activeElement)){
+    $("#tgToken").value=s.tg_token||""; $("#tgM").value=s.tg_morning; $("#tgE").value=s.tg_evening; $("#tgL").checked=s.tg_alert_leads==="1"; $("#tgK").checked=s.tg_alert_kpi==="1"; $("#tgN").checked=s.tg_alert_nick==="1"; }
+  showTg(tg);
+  const boss=(await api("/leads")).filter(l=>l.escalated_at&&!["won","lost","called"].includes(l.boss_status||"")&&!["ordered","lost"].includes(l.status));
+  $("#kBoss").innerHTML=boss.length?boss.slice(0,8).map(l=>`<li><span class="phone">${esc(fmtPhone(l.phone)||"—")}</span><b>${esc(l.name)}</b><span class="muted small">${esc(l.escalate_reason||"")}</span></li>`).join(""):'<li class="muted">Không có khách nào đang chờ sếp.</li>';
+}
+function showTg(t){
+  const st=!t.has_token?["","Chưa có token"]:t.error?["bad","Lỗi kết nối"]:t.chats?["ok",`Đã kết nối ${t.chats} chat`]:["warn","Chờ ghép nối"];
+  $("#tgState").className="chip "+st[0]; $("#tgState").textContent=st[1];
+  $("#tgPair").innerHTML=t.error?`<div class="err">${esc(t.error)}</div>`:t.pair_code?`<div class="note">Mở <b>@${esc(t.bot||"bot của bạn")}</b> trên Telegram và gửi mã:<div class="tg-code" style="margin-top:6px">${esc(t.pair_code)}</div></div>`:t.bot?`<p class="small muted">Bot: <b>@${esc(t.bot)}</b></p>`:"";
+}
+$("#tgForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{tg_token:$("#tgToken").value.trim()}); toast("Đã lưu token"); showTg(await api("/telegram")); });
+$("#tgPairBtn").onclick=async()=>{ try{ showTg(await api("/telegram/pair","POST")); toast("Gửi mã này cho bot trên Telegram"); }catch(err){ toast(err.message); } };
+$("#tgTest").onclick=async()=>{ try{ await api("/telegram/send","POST",{kind:"test"}); toast("Đã gửi tin thử. Kiểm tra Telegram."); }catch(err){ toast(err.message); } };
+$("#tgNow").onclick=async()=>{ try{ await api("/telegram/send","POST",{kind:"evening"}); toast("Đã gửi báo cáo qua Telegram"); }catch(err){ toast(err.message); } };
+$("#tgUnlink").onclick=async e=>{ const b=e.target; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để hủy"; return; } b.dataset.confirm=""; b.textContent="Hủy ghép nối"; showTg(await api("/telegram/unlink","POST")); toast("Đã hủy ghép nối Telegram"); };
+$("#tgSave").onclick=async()=>{ await api("/settings","PUT",{tg_morning:$("#tgM").value,tg_evening:$("#tgE").value,tg_alert_leads:$("#tgL").checked?"1":"0",tg_alert_kpi:$("#tgK").checked?"1":"0",tg_alert_nick:$("#tgN").checked?"1":"0"}); toast("Đã lưu cài đặt báo cáo"); };
+$("#kpiForm").addEventListener("submit",async e=>{ e.preventDefault();
+  if(+$("#kMax").value < +$("#kMin").value){ toast("Mục tiêu vượt phải lớn hơn hoặc bằng mức tối thiểu"); return; }
+  await api("/settings","PUT",{kpi_min:$("#kMin").value,kpi_max:$("#kMax").value,kpi_check_time:$("#kCheck").value,escalate_all_phone:$("#kEscPhone").checked?"1":"0",escalate_complex:$("#kEscCx").checked?"1":"0",escalate_after_hours:$("#kEscH").value||"0",scan_enabled:$("#kScan").checked?"1":"0",scan_times:$("#kScanT").value.replace(/\s/g,""),scan_max_age_days:$("#kScanAge").value,auto_reply_comments:$("#kReply").checked?"1":"0",reply_max_per_nick:$("#kReplyMax").value,reply_texts:$("#kReplyT").value});
+  document.activeElement.blur(); toast("Đã lưu KPI"); loadKpi(); refresh(); });
+$("#btnScan").onclick=async()=>{ const r=await api("/scan/now","POST"); toast(r.posts?`Các nick đang đọc bình luận ${r.posts} bài để tìm khách`:"Chưa có bài nào đã lưu link để quét (cần nick đã đăng nhập và bài đã đăng)"); };
+
 /* --------------------------------------------- đào tạo */
 const SRC={auto:"Số liệu",ai:"Tự rút ra",boss:"Sếp dạy",meeting:"Cuộc họp"};
 const fmtSkill=(v,u)=>v===null||v===undefined?"—":`${v}${u}`;
@@ -1319,18 +1463,20 @@ async function loadLeads(){
   ST.leads=await api("/leads");
   api("/posts/recent-posted").then(ps=>{ const sel=$("#lPost"); const cur=sel.value; sel.innerHTML='<option value="">Không rõ / khác</option>'+ps.map(p=>`<option value="${p.id}">#${p.id} · ${esc(p.group_name||"Trang cá nhân")} · ${fmtDate(p.posted_at)} · ${esc((p.title||"").slice(0,40))}</option>`).join(""); sel.value=cur; }).catch(()=>{});
   $("#pipe").innerHTML=Object.entries(LEAD_ST).map(([k,l])=>`<div><b class="num">${ST.leads.filter(x=>x.status===k).length}</b><span>${l}</span></div>`).join("");
-  $("#leadRows").innerHTML=ST.leads.map(l=>`<tr class="click${ST.selLead===l.id?" sel":""}" data-l="${l.id}"><td><b>${esc(l.name)}</b><div class="small muted">${esc(l.contact)}</div></td><td>${esc(l.business_type)}</td><td class="small">${esc(l.need)}</td><td class="small">${esc(l.source)}</td><td class="num score" style="color:${l.score>=75?"var(--accent)":"inherit"}">${l.score}</td><td><span class="chip ${l.status==="ordered"?"ok":l.status==="lost"?"bad":l.status==="new"?"warn":""}">${LEAD_ST[l.status]}</span></td></tr>`).join("");
+  $("#leadRows").innerHTML=ST.leads.map(l=>`<tr class="click${ST.selLead===l.id?" sel":""}" data-l="${l.id}"><td><b>${esc(l.name)}</b><div class="small muted">${l.origin==="comment"?"Từ bình luận":esc(l.contact)}${l.business_type?` · ${esc(l.business_type)}`:""}</div></td><td>${l.phone?`<span class="phone">${esc(fmtPhone(l.phone))}</span>`:'<span class="muted small">Chưa có</span>'}</td><td class="small">${esc(l.need)}</td><td class="small">${esc(l.source)}</td><td class="num score" style="color:${l.score>=75?"var(--accent)":"inherit"}">${l.score}</td><td><span class="chip ${l.status==="ordered"?"ok":l.status==="lost"?"bad":l.status==="new"?"warn":""}">${LEAD_ST[l.status]}</span>${l.escalated_at&&!["ordered","lost"].includes(l.status)?`<span class="chip warn" style="margin-top:3px">${l.boss_status==="called"?"Sếp đã gọi":"Chờ sếp"}</span>`:""}</td></tr>`).join("");
   if(ST.selLead) renderLead();
 }
 $("#leadRows").addEventListener("click",e=>{ const r=e.target.closest("[data-l]"); if(!r) return; ST.selLead=+r.dataset.l; loadLeads(); });
 function renderLead(){
   const l=ST.leads.find(x=>x.id===ST.selLead); if(!l) return;
   $("#leadDetail").innerHTML=`<div class="card-h"><h3>${esc(l.name)}</h3><span class="chip">${l.score} điểm</span></div>
-   <dl class="kv"><dt>Liên hệ</dt><dd>${esc(l.contact)}</dd><dt>Kinh doanh</dt><dd>${esc(l.business_type)}</dd><dt>Nguồn</dt><dd>${esc(l.source)}</dd><dt>Nhu cầu</dt><dd>${esc(l.need)}</dd></dl>
+   ${l.escalated_at?`<div class="note"><b>Đã chuyển cho sếp</b> ${fmtTime(l.escalated_at)} ${fmtDate(l.escalated_at)}: ${esc(l.escalate_reason||"")}${l.consult_note?`<br><br><b>Kịch bản Hà gợi ý:</b> ${esc(l.consult_note)}`:""}</div>`:""}
+   <dl class="kv"><dt>Số điện thoại</dt><dd>${l.phone?`<span class="phone">${esc(fmtPhone(l.phone))}</span>`:"Chưa có"}</dd><dt>Liên hệ</dt><dd>${esc(l.contact)}</dd><dt>Kinh doanh</dt><dd>${esc(l.business_type)}</dd><dt>Nguồn</dt><dd>${esc(l.source)}</dd><dt>Nhu cầu</dt><dd>${esc(l.need)}</dd></dl>
    <label class="f" for="lStatus">Trạng thái<select id="lStatus">${Object.entries(LEAD_ST).map(([k,v])=>`<option value="${k}" ${k===l.status?"selected":""}>${v}</option>`).join("")}</select></label>
    <label class="f" for="lMsg">Khách vừa nhắn gì?<textarea id="lMsg" rows="3" placeholder="Dán tin nhắn của khách, để trống nếu muốn Hà nhắn chủ động"></textarea></label>
-   <button class="btn primary" id="lDraft">Hà soạn tin trả lời</button>
+   <div class="actions"><button class="btn primary" id="lDraft">Hà soạn tin trả lời</button>${l.escalated_at?"":`<button class="btn" id="lEsc">Chuyển cho sếp qua Telegram</button>`}</div>
    <div id="lReply"></div>`;
+  const esc2=$("#lEsc"); if(esc2) esc2.onclick=async()=>{ esc2.disabled=true; const r=await api(`/leads/${l.id}/escalate`,"POST"); toast(r.telegram?"Đã gửi phiếu khách kèm kịch bản tư vấn qua Telegram":"Đã chuyển cho sếp. Kết nối Telegram ở trang KPI & Báo cáo để nhận phiếu trên điện thoại."); loadLeads(); };
   $("#lStatus").onchange=async e=>{ await api(`/leads/${l.id}`,"PATCH",{status:e.target.value}); toast("Đã cập nhật trạng thái"); loadLeads(); };
   $("#lDraft").onclick=async e=>{ e.target.disabled=true; e.target.textContent="Hà đang soạn…"; const r=await api(`/leads/${l.id}/reply`,"POST",{message:$("#lMsg").value});
     $("#lReply").innerHTML=`<label class="f" for="lReplyTxt">Tin nhắn đề xuất (sửa được)<textarea id="lReplyTxt" rows="7">${esc(r.reply)}</textarea></label><div class="actions"><button class="btn" id="lCopy">Sao chép</button><button class="btn primary" id="lSent">Đã gửi cho khách</button></div>`;
@@ -1417,7 +1563,7 @@ $("#setForm").addEventListener("submit",async e=>{ e.preventDefault(); await api
   show(location.hash.slice(1)||"office");
   await refresh();
   setInterval(refresh,3000);
-  setInterval(()=>{ if(ST.view==="sales") loadSales(); if(ST.view==="posts"&&!ST.editPost&&!ST.postedForm&&ST.posts.some(p=>p.status==="posting")) loadPosts(); },4000);
+  setInterval(()=>{ if(ST.view==="kpi") loadKpi(); if(ST.view==="sales") loadSales(); if(ST.view==="posts"&&!ST.editPost&&!ST.postedForm&&ST.posts.some(p=>p.status==="posting")) loadPosts(); },4000);
   setInterval(()=>{ if(ST.dash?.meeting_running||ST.view==="meeting") pollMeeting(); },1500);
   const tick=()=>{ const d=new Date(); $("#clock").textContent=d.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}); }; tick(); setInterval(tick,30000);
 })();

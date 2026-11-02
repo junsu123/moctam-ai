@@ -7,6 +7,7 @@ Từ đó sale tự mở hồ sơ, đăng bài theo lịch rồi đóng lại.
 Hệ thống không lưu mật khẩu, không giải captcha, không giả mạo dấu vân tay trình duyệt.
 Gặp checkpoint hoặc khóa tạm thời -> dừng tự đăng nick đó và báo sếp.
 """
+import hashlib
 import json
 import os
 import random
@@ -18,6 +19,7 @@ from pathlib import Path
 from queue import Queue
 
 import db
+import kpi
 import media_folder
 import workflows
 
@@ -122,8 +124,11 @@ def _wait_click(page, labels, timeout=20, role="button"):
     return False
 
 
+PAUSE_SCALE = float(os.getenv("FB_PAUSE_SCALE", "1"))  # chỉ để kiểm tra nhanh; dùng thật để 1
+
+
 def _pause(page, a=0.6, b=1.6):
-    page.wait_for_timeout(int(random.uniform(a, b) * 1000))
+    page.wait_for_timeout(int(random.uniform(a, b) * 1000 * (PAUSE_SCALE if b > 5 else 1)))
 
 
 def _post_images(post: dict) -> list[str]:
@@ -254,6 +259,11 @@ def _block(sale_id: int, reason: str):
     db.run("UPDATE posts SET status='approved', sale_id=NULL, scheduled_for=NULL WHERE sale_id=? AND status='scheduled'",
            (sale_id,))
     db.log("tuan", "Nick gặp sự cố", f"Sale #{sale_id}: {reason}. Đã dừng tự đăng và trả các bài chờ về hàng đợi.")
+    try:
+        import telegram_bot
+        telegram_bot.alert_nick(sale_id, reason)
+    except Exception as e:
+        print("[telegram]", e)
 
 
 def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
@@ -382,6 +392,146 @@ def _capture_link(page, post: dict) -> tuple[str | None, str]:
     return link, st
 
 
+# ---------------------------------------------------------------- quét bình luận tìm khách, xin SĐT
+TIME_RX = re.compile(r"^(\d+\s*(giây|phút|giờ|ngày|tuần|tháng|năm|s|m|h|d|w|y|min|mins|hr|hrs)|vừa xong|just now)$", re.I)
+
+
+def _replies_today(sale_id: int) -> int:
+    return db.one("SELECT COUNT(*) n FROM comment_seen WHERE sale_id=? AND replied=1 AND created_at LIKE ?",
+                  (sale_id, db.today() + "%"))["n"]
+
+
+def _parse_comment(art, s: dict, label: str) -> tuple[str, str] | None:
+    author = ""
+    try:
+        for t in art.locator("a").evaluate_all("els => els.map(e => (e.innerText||'').trim()).filter(Boolean)")[:3]:
+            if not TIME_RX.match(t) and len(t) <= 60:
+                author = t
+                break
+    except Exception:
+        pass
+    if not author:
+        for pre in s["comment_labels"]:
+            if label.lower().startswith(pre.lower()):
+                author = re.split(r"\s+\d", label[len(pre):].strip())[0][:60]
+    ui = {w.lower() for w in s["comment_ui_words"]}
+    lines = [ln.strip() for ln in (art.inner_text(timeout=3000) or "").splitlines()]
+    lines = [ln for ln in lines if ln and ln != author and ln.lower() not in ui and not TIME_RX.match(ln) and not re.fullmatch(r"[\d.,]+", ln)]
+    text = " ".join(lines).strip()
+    return (author or "Khách Facebook", text) if text else None
+
+
+def _scan_comments(page, post: dict, sale: dict) -> dict:
+    """Đọc bình luận trên bài của chính nick này, tạo khách, trả lời xin SĐT (có giới hạn)."""
+    s = selectors()
+    st = db.get_settings()
+    found = {"comments": 0, "leads": 0, "phones": 0, "asked": 0}
+    for _ in range(3):  # mở thêm bình luận cũ
+        more = _visible_first(page, s["more_comments"])
+        if not more:
+            break
+        try:
+            more.click()
+            page.wait_for_timeout(1800)
+        except Exception:
+            break
+    own = {x.strip().lower() for x in (sale.get("fb_name"), sale.get("name")) if x}
+    ours = [t.strip().lower()[:40] for t in (st.get("reply_texts", "") + "\n" + st.get("bump_texts", "")).splitlines() if t.strip()]
+    arts = page.locator('[role="article"][aria-label]')
+    items = []
+    for i in range(min(arts.count(), 60)):
+        a = arts.nth(i)
+        try:
+            label = a.get_attribute("aria-label") or ""
+            if not any(label.lower().startswith(p.lower()) for p in s["comment_labels"]):
+                continue
+            parsed = _parse_comment(a, s, label)
+        except Exception:
+            continue
+        if parsed:
+            items.append((a, *parsed))
+    max_reply = int(st.get("reply_max_per_nick") or 10)
+    texts = [t.strip() for t in (st.get("reply_texts") or "").splitlines() if t.strip()]
+    for art, author, text in items:
+        if author.strip().lower() in own or any(text.lower().startswith(o) for o in ours):
+            continue
+        found["comments"] += 1
+        h = hashlib.md5(text.lower().encode("utf-8")).hexdigest()[:16]
+        if db.one("SELECT id FROM comment_seen WHERE post_id=? AND author=? AND text_hash=?", (post["id"], author, h)):
+            continue
+        lead_id, is_new, got_phone = (None, False, False)
+        if kpi.is_interested(text):
+            lead_id, is_new, got_phone = kpi.upsert_lead(author, text, post["id"], author)
+            found["leads"] += int(is_new)
+            found["phones"] += int(got_phone or (is_new and bool(kpi.norm_phone(text))))
+        cid = db.run("INSERT OR IGNORE INTO comment_seen(post_id, author, text_hash, lead_id, sale_id, created_at) VALUES (?,?,?,?,?,?)",
+                     (post["id"], author, h, lead_id, sale["id"], db.now()))
+        lead = db.one("SELECT phone FROM leads WHERE id=?", (lead_id,)) if lead_id else None
+        if (lead_id and not (lead or {}).get("phone") and st.get("auto_reply_comments") == "1" and texts
+                and _replies_today(sale["id"]) < max_reply
+                and not db.one("SELECT id FROM comment_seen WHERE lead_id=? AND replied=1", (lead_id,))):
+            try:
+                btn = _visible_first(art, s["reply_button"])
+                if btn:
+                    _pause(page, 6, 14)
+                    btn.click()
+                    page.wait_for_timeout(1200)
+                    page.keyboard.insert_text(random.choice(texts))
+                    _pause(page)
+                    page.keyboard.press("Enter")
+                    page.wait_for_timeout(2500)
+                    db.run("UPDATE comment_seen SET replied=1 WHERE id=?", (cid,))
+                    found["asked"] += 1
+            except Exception as e:
+                print("[reply]", e)
+    db.run("UPDATE posts SET last_scan_at=? WHERE id=?", (db.now(), post["id"]))
+    if found["leads"] or found["phones"] or found["asked"]:
+        db.log(f"sale-{sale['id']}", "Quét bình luận",
+               f"Bài #{post['id']}: {found['leads']} khách mới, {found['phones']} SĐT, đã xin SĐT {found['asked']} người")
+    kpi.check_escalations()
+    return found
+
+
+def _job_scan(pw, sale_id: int, post_ids: list[int]):
+    sale = db.one("SELECT * FROM sales WHERE id=?", (sale_id,))
+    if not sale:
+        return
+    aid = f"sale-{sale_id}"
+    workflows.set_status(aid, "working", f"Đang đọc bình luận {len(post_ids)} bài để tìm khách")
+    ctx = _launch(pw, sale_id)
+    page = ctx.pages[0] if ctx.pages else ctx.new_page()
+    total = {"leads": 0, "phones": 0, "asked": 0}
+    try:
+        if not _logged_in(ctx):
+            _set_login(sale_id, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
+            return
+        for pid in post_ids:
+            post = db.one("SELECT * FROM posts WHERE id=?", (pid,))
+            if not post or post.get("permalink_status") != "found":
+                continue
+            page.goto(post["posted_url"], wait_until="domcontentloaded", timeout=60000)
+            page.wait_for_timeout(3000)
+            _check_blocked(page)
+            body = page.inner_text("body").lower()
+            if any(t.lower() in body for t in selectors()["removed_texts"]):
+                db.run("UPDATE posts SET permalink_status='removed', bump_enabled=0 WHERE id=?", (pid,))
+                continue
+            r = _scan_comments(page, post, sale)
+            for k in total:
+                total[k] += r[k]
+            _pause(page, 4, 9)
+    except Blocked as e:
+        _block(sale_id, str(e))
+    except Exception as e:
+        db.log(aid, "Lỗi quét bình luận", str(e).splitlines()[0][:160])
+    finally:
+        try:
+            ctx.close()
+        except Exception:
+            pass
+        workflows.set_status(aid, "idle", f"Quét xong: {total['leads']} khách mới, {total['phones']} SĐT")
+
+
 # ---------------------------------------------------------------- up bài: bình luận ảnh sản phẩm
 def _bump_done(bump_id: int, status: str, err: str | None = None, shot: str | None = None, image: str | None = None):
     db.run("UPDATE bumps SET status=?, error=?, screenshot=COALESCE(?, screenshot), image=COALESCE(?, image), done_at=? WHERE id=?",
@@ -424,6 +574,13 @@ def _job_bump(pw, sale_id: int, bump_id: int):
         if m:  # số bình luận thật -> dữ liệu cho cả đội học
             n = int(re.sub(r"[^\d]", "", m.group(1)) or 0)
             db.run("UPDATE posts SET comments=MAX(COALESCE(comments,0), ?) WHERE id=?", (n, post["id"]))
+        if not any(t.lower() in body for t in s["removed_texts"]):
+            try:
+                _scan_comments(page, post, db.one("SELECT * FROM sales WHERE id=?", (sale_id,)))
+            except Blocked:
+                raise
+            except Exception as e:
+                print("[scan]", e)
         if any(t.lower() in body for t in s["removed_texts"]):
             db.run("UPDATE posts SET permalink_status='removed', bump_enabled=0 WHERE id=?", (post["id"],))
             _bump_done(bump_id, "skipped", "Bài đã bị xóa hoặc ẩn, đã ngừng up bài này")
@@ -516,6 +673,8 @@ def _worker(sale_id: int, q: Queue):
                     _job_post(pw, sale_id, job["post_id"], job.get("dry_run", False))
                 elif job["kind"] == "bump":
                     _job_bump(pw, sale_id, job["bump_id"])
+                elif job["kind"] == "scan":
+                    _job_scan(pw, sale_id, job["post_ids"])
         except Exception as e:
             traceback.print_exc()
             db.log(f"sale-{sale_id}", "Lỗi trình duyệt", str(e).splitlines()[0][:200])

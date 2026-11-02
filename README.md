@@ -87,6 +87,59 @@ D:\AnhSanPham\
 
 Up bài không gọi AI nên không tốn chi phí Claude.
 
+## KPI phòng kinh doanh và báo cáo Telegram
+
+**KPI:** số khách MỚI để lại số điện thoại mỗi ngày (mặc định tối thiểu 5, mục tiêu vượt 10; chỉnh ở trang
+**KPI & Báo cáo**). KPI chia đều cho các nick đang chạy; khách tính cho nick đã đăng bài mà khách bình luận.
+
+**Sale tìm khách và xin SĐT:**
+
+- Vào các mốc giờ quét (mặc định 11:30, 16:30, 20:45) và mỗi lần up bài, nhân viên sale đọc bình luận trên các bài
+  của chính nick mình (7 ngày gần nhất).
+- Bình luận có SĐT (0912.345.678, +84…) hoặc thể hiện quan tâm ("quan tâm", "ib", "xin giá", "lấy sỉ"…) được tạo
+  thành khách, ghi nguồn là bài đăng đó. Bình luận của chính nick và câu up bài bị bỏ qua; không tạo trùng khách.
+- Khách quan tâm nhưng chưa để số: sale trả lời ngay dưới bình luận để xin SĐT/Zalo (câu chọn ngẫu nhiên trong danh
+  sách, tối đa 10 câu mỗi nick/ngày). Lần quét sau, nếu khách để lại số, hệ thống tự cập nhật vào đúng khách đó.
+- Đến giờ kiểm tra (mặc định 15:00), nếu KPI đang chậm so với tiến độ trong ngày, đội tự quét lại bình luận và báo sếp.
+
+**Chuyển khách cho sếp** (AI không gọi điện hay nhắn Zalo được), bật/tắt từng loại:
+
+- Khách đã để lại SĐT.
+- Khách hỏi vượt khả năng AI: số lượng lớn (≥ 100 sản phẩm, theo thùng/kg), in nhãn riêng, chiết khấu, đại lý,
+  hóa đơn/VAT, giấy kiểm nghiệm, khiếu nại, đổi trả.
+- Khách có SĐT mà quá 2 giờ chưa ai tư vấn.
+
+Mỗi khách được gửi qua Telegram một phiếu gồm: tên, SĐT (bấm để gọi trên điện thoại), nội dung bình luận, link bài
+nguồn, lý do chuyển và **kịch bản tư vấn Hà soạn sẵn** (báo giá đúng sản phẩm khách quan tâm, câu hỏi khai thác nhu
+cầu, đề nghị chốt). Nút bấm ngay trên tin: **Đã gọi**, **Chốt đơn**, **Không mua**, **Nhắc sau 2 giờ**. Kết quả được ghi
+lại vào phần mềm và dùng cho việc tự học của Hà.
+
+**Kết nối Telegram (5 phút):**
+
+1. Trên Telegram, nhắn **@BotFather** → `/newbot` → đặt tên → nhận token.
+2. Phần mềm → **KPI & Báo cáo** → dán token → **Lưu token** → **Tạo mã ghép nối**.
+3. Mở bot vừa tạo, gửi mã 6 số. Bot trả lời "Đã kết nối". Chỉ chat đã ghép nối mới nhận báo cáo và ra lệnh được.
+
+Bot chạy ngay trên máy của bạn (không cần tên miền hay mở cổng). Máy phải bật và có Internet thì bot mới trả lời.
+
+**Báo cáo tự động:**
+
+| Lúc | Nội dung |
+|---|---|
+| 09:00 | KPI hôm qua, chuỗi ngày đạt KPI, mục tiêu hôm nay, lịch đăng, kết luận và việc giao trong cuộc họp sáng, nick cần xử lý |
+| Ngay khi có | Phiếu khách cần sếp tư vấn, nick bị checkpoint/đăng xuất |
+| 15:00 | Cảnh báo nếu KPI đang chậm |
+| Khi đạt | Chúc mừng đạt KPI tối thiểu, vượt KPI |
+| 21:30 | KPI cả ngày theo từng nick, khách còn chờ sếp gọi, đơn đã chốt, bài học mới, chi phí AI |
+
+**Lệnh Telegram:** `/baocao` báo cáo nhanh · `/kpi` tiến độ · `/khach` khách đang chờ sếp · `/hop [chủ đề]` triệu tập họp
+(gửi kết luận khi họp xong) · `/tamdung` tạm dừng mọi nick · `/tieptuc` bật lại.
+
+Hôm trước chưa đạt KPI thì cuộc họp sáng tự lấy chủ đề "làm gì để đạt KPI hôm nay".
+
+**Lưu ý:** việc trả lời bình luận là hành động công khai của nick; giữ số câu trả lời mỗi ngày vừa phải và câu chữ
+tự nhiên. Muốn sale chỉ đọc bình luận mà không trả lời, tắt "Trả lời khách quan tâm…" trong trang KPI.
+
 ## Agent tự học và phát triển
 
 Mỗi agent có **sổ tay kinh nghiệm**, **cấp độ** và **mục tiêu hằng ngày** (trang **Đào tạo**).
@@ -166,6 +219,8 @@ backend/
   facebook.py    Đăng Fanpage qua Graph API
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, đăng bài, lấy link bài, up bài
   media_folder.py    Đọc thư mục ảnh sản phẩm trên máy, chọn ảnh theo sản phẩm
+  kpi.py         KPI: nhận diện SĐT, tiến độ, chia theo nick, lịch sử; chuyển khách cho sếp, kịch bản tư vấn
+  telegram_bot.py  Bot Telegram: ghép nối, báo cáo, phiếu khách có nút bấm, lệnh /baocao /kpi /khach /hop
   learning.py    Tự học: thống kê hiệu quả, chọn góc/sản phẩm/giờ, sổ tay bài học, cấp độ, phản tỉnh mỗi đêm
   fb_selectors.json  Chữ hiển thị trên giao diện Facebook (sửa khi Facebook đổi giao diện)
   llm.py         Kết nối Claude (tự chuyển sang mô phỏng khi chưa có key)

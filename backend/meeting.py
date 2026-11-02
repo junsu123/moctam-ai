@@ -1,5 +1,6 @@
 """Phòng họp: các agent báo cáo, tranh luận và chốt việc mỗi ngày."""
 import json
+from datetime import datetime, timedelta
 import random
 import threading
 import time
@@ -86,8 +87,10 @@ def _run(mid: int, topic: str):
         time.sleep(3)  # thời gian các nhân vật đi vào phòng họp
         # 1. Mở đầu
         _say(mid, "minh", "open", llm.chat(system_prompt("minh", s),
-             f"Mở đầu cuộc họp giao ban sáng ngày {db.today()} (1-2 câu). Chủ đề tranh luận hôm nay: \"{topic}\".",
-             mock=lambda: mock_brain.meeting_open(topic), max_tokens=200, task="meeting"))
+             f"Mở đầu cuộc họp giao ban sáng ngày {db.today()} (1-2 câu). Nhắc KPI phòng: mỗi ngày tối thiểu "
+             f"{st.get('kpi', {}).get('target_min', 5)} khách để lại SĐT (hôm nay đang có {st.get('kpi', {}).get('leads_phone', 0)}). "
+             f"Chủ đề tranh luận hôm nay: \"{topic}\".",
+             mock=lambda: mock_brain.meeting_open(topic) + (f" KPI phòng mình: mỗi ngày tối thiểu {st['kpi']['target_min']} khách để lại SĐT, phấn đấu {st['kpi']['target_max']}." if st.get("kpi") else ""), max_tokens=200, task="meeting"))
         # 2. Báo cáo
         for a in DEBATERS:
             _boss_check(mid)
@@ -151,6 +154,12 @@ def _run(mid: int, topic: str):
 def start(topic: str | None = None) -> int:
     if _running["id"]:
         return _running["id"]
+    if not (topic or "").strip():
+        import kpi
+        y = kpi.day_stats((datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"))
+        if not y["achieved"] and y["posts"]:
+            topic = (f"Hôm qua mới có {y['leads_phone']}/{y['target_min']} khách để lại SĐT. "
+                     "Hôm nay làm gì để đạt KPI?")
     topic = (topic or "").strip() or random.choice(TOPICS)
     mid = db.run("INSERT INTO meetings(date, topic, status, created_at) VALUES (?,?,?,?)",
                  (db.today(), topic, "running", db.now()))

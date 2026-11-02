@@ -66,5 +66,42 @@
     "Bài viết này không còn",
     "Trang này không hiển thị",
     "This page isn't available"
+  ],
+  "comment_labels": [
+    "Bình luận của",
+    "Comment by",
+    "Phản hồi của",
+    "Reply by",
+    "Bình luận dưới tên"
+  ],
+  "more_comments": [
+    "Xem thêm bình luận",
+    "View more comments",
+    "Xem thêm phản hồi",
+    "View more replies",
+    "bình luận trước",
+    "previous comments"
+  ],
+  "reply_button": [
+    "Phản hồi",
+    "Reply"
+  ],
+  "comment_ui_words": [
+    "Thích",
+    "Phản hồi",
+    "Like",
+    "Reply",
+    "Chia sẻ",
+    "Share",
+    "Tác giả",
+    "Author",
+    "Đã chỉnh sửa",
+    "Edited",
+    "Xem bản dịch",
+    "See translation",
+    "Người đóng góp nhiều nhất",
+    "Top contributor",
+    "Quản trị viên",
+    "Admin"
   ]
 }

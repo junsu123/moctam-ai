@@ -79,6 +79,10 @@ def report(agent_id: str, st: dict) -> str:
     if agent_id == "ha":
         return (f"Tổng {st['leads']} khách tiềm năng, {st['leads_new']} khách mới chưa liên hệ, "
                 f"{st['leads_hot']} khách nóng (điểm ≥ 75). Khách hỏi nhiều nhất là chính sách gửi mẫu và giá theo số lượng.")
+    if agent_id == "khoa" and st.get("kpi"):
+        k = st["kpi"]
+        return (f"KPI: hôm nay đang có {k['leads_phone']}/{k['target_min']} khách để lại SĐT, đã xin SĐT {k['asked_phone']} người qua bình luận. "
+                f"Tổng {st['posted_total']} bài đã đăng, {st['leads']} khách. Đề nghị ưu tiên up các bài đang nhiều bình luận.")
     if agent_id == "khoa":
         best = st.get("best_group") or "chưa đủ dữ liệu"
         return (f"Số liệu: {st['posted_total']} bài đã đăng, thu về {st['leads']} khách. "

@@ -19,7 +19,9 @@ import agents
 import browser_poster
 import db
 import facebook
+import kpi
 import learning
+import telegram_bot
 import media_folder
 import meeting
 import scheduler
@@ -35,6 +37,7 @@ app = FastAPI(title="Công ty Agent AI - Phòng Kinh doanh")
 def startup():
     db.init()
     scheduler.start()
+    telegram_bot.start()
 
 
 # ------------------------------------------------------------------ chung
@@ -259,6 +262,7 @@ def add_lead(l: Lead):
     data = l.model_dump()
     score = workflows.score_lead(data)
     src = l.source
+    phone = kpi.norm_phone(f"{l.contact} {l.need}")
     if l.post_id:
         post = db.one("""SELECT p.id, g.name gname, p.target_type FROM posts p LEFT JOIN groups g ON g.id=p.group_id
                          WHERE p.id=?""", (l.post_id,))
@@ -268,8 +272,9 @@ def add_lead(l: Lead):
             db.run("UPDATE groups SET leads_count=(SELECT COALESCE(SUM(leads),0) FROM posts WHERE group_id=groups.id)")
             learning.on_post_leads(post["id"], 1)
     lid = db.run("""INSERT INTO leads(name, contact, channel, source, business_type, need, note, score, status,
-                    post_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,'new',?,?,?)""",
-                 (l.name, l.contact, l.channel, src, l.business_type, l.need, l.note, score, l.post_id, db.now(), db.now()))
+                    post_id, phone, phone_at, origin, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,'new',?,?,?,'manual',?,?)""",
+                 (l.name, l.contact, l.channel, src, l.business_type, l.need, l.note, score, l.post_id,
+                  phone, db.now() if phone else None, db.now(), db.now()))
     db.log("ha", "Khách mới", f"{l.name} ({score} điểm)")
     return db.one("SELECT * FROM leads WHERE id=?", (lid,))
 
@@ -414,6 +419,8 @@ def apply_preset(p: Preset):
 def settings():
     s = db.get_settings()
     s["fb_page_token"] = "••••••" if s.get("fb_page_token") else ""
+    s["tg_token"] = "••••••" if s.get("tg_token") else ""
+    s.pop("tg_chat_ids", None)
     s["ai_live"] = llm.live
     s["model"] = MODEL
     s["models"] = list(llm_mod.PRICES)
@@ -423,7 +430,11 @@ def settings():
 @app.put("/api/settings")
 def put_settings(data: dict):
     for k, v in data.items():
-        if k in db.DEFAULT_SETTINGS and not (k == "fb_page_token" and v == "••••••"):
+        if k in ("fb_page_token", "tg_token") and v == "••••••":
+            continue
+        if k == "tg_token":
+            telegram_bot.reset_token()
+        if k in db.DEFAULT_SETTINGS and k not in ("tg_chat_ids", "tg_pair_code", "tg_sent_log"):
             db.set_setting(k, str(v))
     return settings()
 
@@ -580,6 +591,59 @@ def del_image(pid: int, path: str):
     imgs = [i for i in json.loads((p or {}).get("images") or "[]") if i != path]
     db.run("UPDATE products SET images=? WHERE id=?", (json.dumps(imgs), pid))
     return {"images": imgs}
+
+
+# ------------------------------------------------------------------ KPI & Telegram
+@app.get("/api/kpi")
+def kpi_overview():
+    st = kpi.day_stats()
+    return {"today": st, "pace": kpi.pace(st), "per_sale": kpi.per_sale(), "history": kpi.history(14), "streak": kpi.streak()}
+
+
+@app.post("/api/leads/{lid}/escalate")
+def escalate_lead(lid: int):
+    ok = kpi.escalate(lid, "Sếp chọn tự tư vấn khách này", force=True)
+    return {"ok": ok, "telegram": telegram_bot.configured()}
+
+
+@app.post("/api/scan/now")
+def scan_now():
+    return {"posts": telegram_bot.start_scan_round(force=True)}
+
+
+@app.get("/api/telegram")
+def tg_status():
+    return telegram_bot.status()
+
+
+@app.post("/api/telegram/pair")
+def tg_pair():
+    if not telegram_bot.token():
+        raise HTTPException(400, "Dán token bot Telegram và bấm Lưu trước")
+    return {"code": telegram_bot.new_pair_code(), **telegram_bot.status()}
+
+
+class TgSend(BaseModel):
+    kind: str = "test"
+
+
+@app.post("/api/telegram/send")
+def tg_send(t: TgSend):
+    if not telegram_bot.configured():
+        raise HTTPException(400, "Chưa ghép nối Telegram. Tạo mã ghép nối và gửi mã đó cho bot")
+    text = {"test": "👋 Phòng kinh doanh AI đã kết nối thành công. Sếp sẽ nhận báo cáo và khách cần tư vấn tại đây.",
+            "kpi": None, "morning": None, "evening": None}.get(t.kind)
+    text = text or {"kpi": telegram_bot.kpi_text, "morning": telegram_bot.morning_text, "evening": telegram_bot.evening_text}[t.kind]()
+    sent = telegram_bot.send(text)
+    if not sent:
+        raise HTTPException(502, "Gửi Telegram không thành công: " + (telegram_bot.status().get("error") or "không rõ lỗi"))
+    return {"ok": True}
+
+
+@app.post("/api/telegram/unlink")
+def tg_unlink():
+    db.set_setting("tg_chat_ids", "")
+    return telegram_bot.status()
 
 
 # ------------------------------------------------------------------ tự học

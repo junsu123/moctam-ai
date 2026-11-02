@@ -139,6 +139,14 @@ CREATE TABLE IF NOT EXISTS replies (
 CREATE TABLE IF NOT EXISTS agent_progress (
   agent_id TEXT PRIMARY KEY, xp INTEGER DEFAULT 0, level INTEGER DEFAULT 1, goal TEXT, updated_at TEXT
 );
+CREATE TABLE IF NOT EXISTS kpi_daily (
+  date TEXT PRIMARY KEY, target_min INTEGER, target_max INTEGER, leads_phone INTEGER, leads_total INTEGER,
+  posts INTEGER, bumps INTEGER, escalated INTEGER, achieved INTEGER, detail TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS comment_seen (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, post_id INTEGER, author TEXT, text_hash TEXT, lead_id INTEGER,
+  replied INTEGER DEFAULT 0, sale_id INTEGER, created_at TEXT, UNIQUE(post_id, author, text_hash)
+);
 CREATE TABLE IF NOT EXISTS sales (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL, fb_name TEXT, profile_dir TEXT, look TEXT,
@@ -156,6 +164,10 @@ MIGRATIONS = [
     ("posts", "permalink_status", "TEXT"), ("posts", "bump_enabled", "INTEGER DEFAULT 1"),
     ("posts", "bump_count", "INTEGER DEFAULT 0"), ("posts", "last_bump_at", "TEXT"),
     ("leads", "post_id", "INTEGER"),
+    ("leads", "phone", "TEXT"), ("leads", "origin", "TEXT DEFAULT 'manual'"), ("leads", "fb_author", "TEXT"),
+    ("leads", "escalated_at", "TEXT"), ("leads", "escalate_reason", "TEXT"), ("leads", "consult_note", "TEXT"),
+    ("posts", "last_scan_at", "TEXT"),
+    ("leads", "phone_at", "TEXT"), ("leads", "boss_status", "TEXT"), ("leads", "remind_at", "TEXT"),
 ]
 
 DEFAULT_SETTINGS = {
@@ -190,6 +202,28 @@ DEFAULT_SETTINGS = {
     "learn_last_date": "",
     "learn_explore": "0.25",
     "model_learning": "claude-haiku-5-5",
+    "kpi_min": "5",
+    "kpi_max": "10",
+    "kpi_check_time": "15:00",
+    "escalate_all_phone": "1",
+    "escalate_complex": "1",
+    "escalate_after_hours": "2",
+    "scan_enabled": "1",
+    "scan_times": "11:30,16:30,20:45",
+    "scan_max_age_days": "7",
+    "auto_reply_comments": "1",
+    "reply_max_per_nick": "10",
+    "reply_texts": "Dạ anh/chị để lại SĐT hoặc Zalo giúp em, bên em gọi tư vấn giá sỉ ngay ạ\nEm cảm ơn ạ, anh/chị cho em xin SĐT/Zalo để em gửi bảng giá sỉ và tư vấn kỹ hơn nhé\nDạ có hàng sẵn ạ, anh/chị để lại số điện thoại giúp em, xưởng gọi báo giá liền ạ",
+    "scan_last": "",
+    "tg_token": "",
+    "tg_chat_ids": "",
+    "tg_pair_code": "",
+    "tg_morning": "09:00",
+    "tg_evening": "21:30",
+    "tg_alert_leads": "1",
+    "tg_alert_nick": "1",
+    "tg_alert_kpi": "1",
+    "tg_sent_log": "{}",
     "attach_images": "1",
 }
 
