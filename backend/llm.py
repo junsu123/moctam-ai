@@ -86,12 +86,61 @@ def model_for(task: str) -> str:
     return HAIKU if budget_state() == "economy" else m
 
 
+def mask_key(k: str) -> str:
+    k = (k or "").strip()
+    return f"{k[:10]}…{k[-4:]}" if len(k) > 18 else ("••••" if k else "")
+
+
+def check_key(key: str) -> dict:
+    """Kiểm tra khóa API: còn hiệu lực không, tài khoản còn tín dụng không (tốn ~0,00001 USD)."""
+    if not anthropic:
+        return {"ok": False, "error": "Thiếu thư viện anthropic. Chạy lại run.bat để cài."}
+    key = (key or "").strip()
+    if not key.startswith("sk-ant-"):
+        return {"ok": False, "error": "Khóa không đúng định dạng. Khóa Claude bắt đầu bằng sk-ant-"}
+    c = anthropic.Anthropic(api_key=key, max_retries=0, timeout=25)
+    try:
+        c.messages.create(model=HAIKU, max_tokens=1, messages=[{"role": "user", "content": "ok"}])
+        return {"ok": True}
+    except anthropic.AuthenticationError:
+        return {"ok": False, "error": "Khóa không hợp lệ hoặc đã bị xóa. Tạo khóa mới tại console.anthropic.com → API Keys."}
+    except anthropic.PermissionDeniedError:
+        return {"ok": False, "error": "Khóa không có quyền dùng mô hình này. Kiểm tra workspace của khóa trong Anthropic Console."}
+    except anthropic.RateLimitError:
+        return {"ok": True, "warning": "Khóa hợp lệ nhưng đang bị giới hạn tốc độ, thử lại sau ít phút."}
+    except anthropic.BadRequestError as e:
+        msg = str(e)
+        if "credit" in msg.lower() or "balance" in msg.lower():
+            return {"ok": False, "error": "Khóa hợp lệ nhưng tài khoản hết tín dụng. Nạp tiền tại console.anthropic.com → Billing."}
+        return {"ok": False, "error": f"Anthropic từ chối yêu cầu: {msg[:200]}"}
+    except anthropic.APIConnectionError:
+        return {"ok": False, "error": "Không kết nối được tới Anthropic. Kiểm tra Internet hoặc tường lửa của máy."}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200]}
+
+
 class LLM:
     def __init__(self):
         self.client = None
-        key = os.getenv("ANTHROPIC_API_KEY", "").strip()
-        if key and anthropic:
-            self.client = anthropic.Anthropic(api_key=key)
+        self.source = None
+        self.reload(use_db=False)
+
+    def current_key(self, use_db: bool = True) -> tuple[str, str | None]:
+        """Ưu tiên khóa nhập trong phần mềm, sau đó tới file .env."""
+        if use_db:
+            try:
+                k = (db.get_settings().get("anthropic_api_key") or "").strip()
+                if k:
+                    return k, "app"
+            except Exception:
+                pass
+        k = os.getenv("ANTHROPIC_API_KEY", "").strip()
+        return (k, "env") if k else ("", None)
+
+    def reload(self, use_db: bool = True):
+        key, src = self.current_key(use_db)
+        self.client = anthropic.Anthropic(api_key=key) if key and anthropic else None
+        self.source = src if self.client else None
 
     @property
     def live(self) -> bool:

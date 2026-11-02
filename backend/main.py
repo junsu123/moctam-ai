@@ -36,6 +36,7 @@ app = FastAPI(title="Công ty Agent AI - Phòng Kinh doanh")
 @app.on_event("startup")
 def startup():
     db.init()
+    llm.reload()  # khóa API nhập trong phần mềm (nếu có) được ưu tiên hơn file .env
     scheduler.start()
     telegram_bot.start()
 
@@ -43,7 +44,7 @@ def startup():
 # ------------------------------------------------------------------ chung
 @app.get("/api/health")
 def health():
-    return {"ok": True, "ai_live": llm.live, "model": MODEL if llm.live else "mô phỏng"}
+    return {"ok": True, "ai_live": llm.live, "model": llm_mod.model_for("posts") if llm.live else "mô phỏng"}
 
 
 @app.get("/api/agents")
@@ -420,6 +421,10 @@ def settings():
     s = db.get_settings()
     s["fb_page_token"] = "••••••" if s.get("fb_page_token") else ""
     s["tg_token"] = "••••••" if s.get("tg_token") else ""
+    key, src = llm.current_key()
+    s["anthropic_api_key"] = ""
+    s["ai_key_masked"] = llm_mod.mask_key(key)
+    s["ai_key_source"] = src
     s.pop("tg_chat_ids", None)
     s["ai_live"] = llm.live
     s["model"] = MODEL
@@ -432,6 +437,8 @@ def put_settings(data: dict):
     for k, v in data.items():
         if k in ("fb_page_token", "tg_token") and v == "••••••":
             continue
+        if k == "anthropic_api_key":
+            continue  # chỉ lưu qua /api/ai-key sau khi kiểm tra
         if k == "tg_token":
             telegram_bot.reset_token()
         if k in db.DEFAULT_SETTINGS and k not in ("tg_chat_ids", "tg_pair_code", "tg_sent_log"):
@@ -591,6 +598,42 @@ def del_image(pid: int, path: str):
     imgs = [i for i in json.loads((p or {}).get("images") or "[]") if i != path]
     db.run("UPDATE products SET images=? WHERE id=?", (json.dumps(imgs), pid))
     return {"images": imgs}
+
+
+# ------------------------------------------------------------------ khóa API Claude
+class AiKey(BaseModel):
+    key: str
+
+
+@app.post("/api/ai-key")
+def save_ai_key(k: AiKey):
+    """Kiểm tra khóa với Anthropic rồi mới lưu; hiệu lực ngay, không cần khởi động lại."""
+    res = llm_mod.check_key(k.key)
+    if not res["ok"]:
+        raise HTTPException(400, res["error"])
+    db.set_setting("anthropic_api_key", k.key.strip())
+    llm.reload()
+    db.log("minh", "Kết nối Claude", "Đã lưu khóa API, cả đội chuyển sang suy nghĩ bằng Claude")
+    return {"ok": True, "warning": res.get("warning"), "masked": llm_mod.mask_key(k.key), "source": llm.source}
+
+
+@app.post("/api/ai-key/test")
+def test_ai_key():
+    key, src = llm.current_key()
+    if not key:
+        raise HTTPException(400, "Chưa có khóa API")
+    res = llm_mod.check_key(key)
+    if not res["ok"]:
+        raise HTTPException(400, res["error"])
+    return {"ok": True, "warning": res.get("warning"), "source": src}
+
+
+@app.delete("/api/ai-key")
+def delete_ai_key():
+    db.set_setting("anthropic_api_key", "")
+    llm.reload()
+    db.log("minh", "Ngắt Claude", "Đã xóa khóa API trong phần mềm")
+    return {"ok": True, "live": llm.live, "source": llm.source}
 
 
 # ------------------------------------------------------------------ KPI & Telegram

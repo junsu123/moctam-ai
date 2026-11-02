@@ -202,6 +202,7 @@ DEFAULT_SETTINGS = {
     "learn_last_date": "",
     "learn_explore": "0.25",
     "model_learning": "claude-haiku-5-5",
+    "anthropic_api_key": "",
     "kpi_min": "5",
     "kpi_max": "10",
     "kpi_check_time": "15:00",

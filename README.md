@@ -200,12 +200,18 @@ Muốn mở từ máy khác trong mạng nội bộ, đặt `HOST=0.0.0.0` trong
 
 ### Bật bộ não Claude
 
-Chưa có API key, hệ thống vẫn chạy ở **chế độ mô phỏng** (nội dung mẫu) để bạn làm quen giao diện.
-Để các agent thực sự suy nghĩ, viết bài và tranh luận:
+Chưa có khóa API, hệ thống vẫn chạy ở **chế độ mô phỏng** (nội dung mẫu, không tốn tiền) để bạn làm quen giao diện.
+Để các agent thực sự suy nghĩ, viết bài, họp và tư vấn:
 
-1. Lấy API key tại <https://console.anthropic.com>.
-2. Đổi tên `.env.example` thành `.env`, điền `ANTHROPIC_API_KEY=...`.
-3. Khởi động lại. Góc trái dưới giao diện sẽ báo "AI đang hoạt động".
+1. Vào <https://console.anthropic.com> → **API Keys** → **Create Key**. Nạp tín dụng ở **Billing** và nên đặt giới hạn
+   chi tiêu tháng tại đó.
+2. Trong phần mềm: **Cài đặt → Khóa API Claude** → dán khóa → **Kiểm tra và lưu**.
+   Phần mềm gửi một yêu cầu rất nhỏ tới Anthropic để kiểm tra khóa còn hiệu lực và tài khoản còn tín dụng, rồi mới lưu.
+   Khóa có hiệu lực ngay, không cần khởi động lại.
+3. Góc trái dưới giao diện báo "AI đang hoạt động".
+
+Khóa được lưu trong `data/company.db` trên máy bạn, chỉ hiện dạng che (`sk-ant-api…abcd`). Vẫn có thể đặt
+`ANTHROPIC_API_KEY` trong file `.env` như trước; khóa nhập trong phần mềm được ưu tiên hơn.
 
 ## Cấu trúc mã nguồn
 
