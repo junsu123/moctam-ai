@@ -18,6 +18,7 @@ from pathlib import Path
 from queue import Queue
 
 import db
+import media_folder
 import workflows
 
 FB_BASE = os.getenv("FB_BASE_URL", "https://www.facebook.com").rstrip("/")
@@ -287,7 +288,11 @@ def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
             db.run("UPDATE posts SET screenshot=? WHERE id=?", (shot, post_id))
             db.run("UPDATE sales SET last_post_at=?, last_error=NULL WHERE id=?", (db.now(), sale_id))
             _set_login(sale_id, "ok")
-            db.log(aid, "Đã đăng", f"Bài #{post_id} lên {where}")
+            workflows.set_status(aid, "working", "Đang lấy link bài vừa đăng")
+            link, st = _capture_link(page, post)
+            note = {"found": "đã lưu link bài", "pending": "bài đang chờ nhóm duyệt, sẽ lấy link sau",
+                    "not_found": "chưa lấy được link, sẽ thử lại khi up bài"}[st]
+            db.log(aid, "Đã đăng", f"Bài #{post_id} lên {where}, {note}")
     except Blocked as e:
         _fail(page, post_id, str(e), dry_run)
         _block(sale_id, str(e))
@@ -300,6 +305,183 @@ def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
         except Exception:
             pass
         workflows.set_status(aid, "idle", "Chờ lịch đăng tiếp theo")
+
+
+# ---------------------------------------------------------------- lấy link bài
+PERMA_RX = re.compile(r"(/groups/[^/?#]+/(posts|permalink)/[\w]+|/posts/(pfbid\w+|\d+)|story_fbid=|/permalink\.php|/photo/\?fbid=)")
+
+
+def _norm(t: str) -> str:
+    return re.sub(r"[^\w]+", " ", (t or "").lower()).strip()
+
+
+def _snippet(content: str) -> str:
+    first = next((ln for ln in content.splitlines() if len(_norm(ln)) >= 12), content)
+    return _norm(first)[:45]
+
+
+def _clean_link(h: str) -> str:
+    from urllib.parse import parse_qs, urlencode, urljoin, urlparse
+    u = urlparse(urljoin(FB_BASE + "/", h))
+    if "permalink.php" in u.path or "story_fbid" in u.query:
+        q = parse_qs(u.query)
+        keep = {k: q[k][0] for k in ("story_fbid", "id") if k in q}
+        return f"{u.scheme}://{u.netloc}{u.path}?{urlencode(keep)}"
+    return f"{u.scheme}://{u.netloc}{u.path}".rstrip("/")
+
+
+def _find_permalink(page, post: dict) -> tuple[str | None, str]:
+    """Tìm bài vừa đăng trong 'Nội dung của bạn' của nhóm (hoặc trang cá nhân), trích link thật."""
+    s = selectors()
+    snip = _snippet(post["content"])
+    if post["target_type"] == "group" and post.get("group_url"):
+        base = post["group_url"].rstrip("/")
+        pages = [base + p for p in s.get("my_posts_paths", ["/my_posted_content", ""])]
+    else:
+        pages = [f"{FB_BASE}/me"]
+    for u in pages:
+        page.goto(u, wait_until="domcontentloaded", timeout=60000)
+        page.wait_for_timeout(3000)
+        _check_blocked(page)
+        for _ in range(4):
+            arts = page.locator('[role="article"]')
+            for i in range(min(arts.count(), 15)):
+                a = arts.nth(i)
+                try:
+                    if snip not in _norm(a.inner_text(timeout=3000)):
+                        continue
+                    hrefs = a.locator("a[href]").evaluate_all("els => els.map(e => e.href)")
+                except Exception:
+                    continue
+                for h in hrefs:
+                    if PERMA_RX.search(h):
+                        return _clean_link(h), "found"
+            page.mouse.wheel(0, 2400)
+            page.wait_for_timeout(1500)
+    if post["target_type"] == "group" and post.get("group_url"):
+        for pth in s.get("pending_paths", []):
+            page.goto(post["group_url"].rstrip("/") + pth, wait_until="domcontentloaded", timeout=60000)
+            page.wait_for_timeout(2500)
+            if snip in _norm(page.inner_text("body")):
+                return None, "pending"
+    return None, "not_found"
+
+
+def _capture_link(page, post: dict) -> tuple[str | None, str]:
+    try:
+        link, st = _find_permalink(page, post)
+    except Blocked:
+        raise
+    except Exception as e:
+        print("[permalink]", e)
+        link, st = None, "not_found"
+    if link:
+        db.run("UPDATE posts SET posted_url=?, permalink_status='found' WHERE id=?", (link, post["id"]))
+    else:
+        db.run("UPDATE posts SET permalink_status=? WHERE id=?", (st, post["id"]))
+    return link, st
+
+
+# ---------------------------------------------------------------- up bài: bình luận ảnh sản phẩm
+def _bump_done(bump_id: int, status: str, err: str | None = None, shot: str | None = None, image: str | None = None):
+    db.run("UPDATE bumps SET status=?, error=?, screenshot=COALESCE(?, screenshot), image=COALESCE(?, image), done_at=? WHERE id=?",
+           (status, err, shot, image, db.now(), bump_id))
+
+
+def _job_bump(pw, sale_id: int, bump_id: int):
+    b = db.one("SELECT * FROM bumps WHERE id=?", (bump_id,))
+    post = db.one("""SELECT p.*, g.url group_url, g.name group_name FROM posts p
+                     LEFT JOIN groups g ON g.id=p.group_id WHERE p.id=?""", (b["post_id"],)) if b else None
+    if not b or not post:
+        return
+    aid = f"sale-{sale_id}"
+    where = post.get("group_name") or "trang cá nhân"
+    img = media_folder.pick(post)
+    if not img:
+        _bump_done(bump_id, "failed", "Thư mục ảnh trống hoặc chưa cài. Vào Cài đặt → Up bài để chọn thư mục")
+        return
+    workflows.set_status(aid, "working", f"Đang up bài ở {where}")
+    ctx = _launch(pw, sale_id)
+    page = ctx.pages[0] if ctx.pages else ctx.new_page()
+    shot = db.SHOTS_DIR / f"bump-{bump_id}.png"
+    try:
+        if not _logged_in(ctx):
+            _set_login(sale_id, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
+            raise RuntimeError("Nick chưa đăng nhập")
+        link = post["posted_url"] if post.get("permalink_status") == "found" else None
+        if not link:
+            link, st = _capture_link(page, post)
+            if not link:
+                _bump_done(bump_id, "skipped", "Bài đang chờ nhóm duyệt" if st == "pending" else
+                           "Chưa lấy được link bài. Dán link vào thẻ bài ở mục Bài đăng để sale up được")
+                return
+        s = selectors()
+        page.goto(link, wait_until="domcontentloaded", timeout=60000)
+        page.wait_for_timeout(3500)
+        _check_blocked(page)
+        body = page.inner_text("body").lower()
+        if any(t.lower() in body for t in s["removed_texts"]):
+            db.run("UPDATE posts SET permalink_status='removed', bump_enabled=0 WHERE id=?", (post["id"],))
+            _bump_done(bump_id, "skipped", "Bài đã bị xóa hoặc ẩn, đã ngừng up bài này")
+            db.log(aid, "Bài bị gỡ", f"Bài #{post['id']} ở {where} không còn hiển thị, ngừng up")
+            return
+        box = None
+        end = time.time() + 15
+        while not box and time.time() < end:
+            box = _visible_first(page, s["comment_box"], role="textbox")
+            if not box:
+                page.mouse.wheel(0, 600)
+                page.wait_for_timeout(800)
+        if not box:
+            raise RuntimeError("Không tìm thấy ô bình luận. Thêm chữ hiển thị mới vào comment_box trong fb_selectors.json")
+        box.click()
+        _pause(page)
+        text = (b.get("text") or "").strip()
+        if text:
+            page.keyboard.insert_text(text)
+        attached = False
+        btn = _visible_first(page, s["comment_attach"])
+        if btn:
+            try:
+                with page.expect_file_chooser(timeout=8000) as fc:
+                    btn.click()
+                fc.value.set_files(str(img))
+                attached = True
+            except Exception:
+                pass
+        if not attached:
+            inp = page.locator('input[type="file"][accept*="image"]')
+            if inp.count():
+                inp.last.set_input_files(str(img))
+                attached = True
+        if not attached:
+            raise RuntimeError("Không đính kèm được ảnh vào bình luận (thêm chữ nút đính kèm vào comment_attach)")
+        page.wait_for_timeout(4000)
+        box.click()
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(5000)
+        _check_blocked(page)
+        page.screenshot(path=str(shot))
+        _bump_done(bump_id, "done", None, f"/shots/{shot.name}", str(img))
+        db.run("UPDATE posts SET bump_count=COALESCE(bump_count,0)+1, last_bump_at=? WHERE id=?", (db.now(), post["id"]))
+        db.log(aid, "Up bài", f"Bình luận ảnh {img.name} vào bài #{post['id']} ở {where}")
+    except Blocked as e:
+        _bump_done(bump_id, "failed", str(e))
+        _block(sale_id, str(e))
+        db.run("UPDATE bumps SET status='skipped', error='Nick bị dừng' WHERE sale_id=? AND status='scheduled'", (sale_id,))
+    except Exception as e:
+        try:
+            page.screenshot(path=str(shot))
+        except Exception:
+            pass
+        _bump_done(bump_id, "failed", str(e).splitlines()[0][:300], f"/shots/{shot.name}" if shot.exists() else None, str(img))
+        db.log(aid, "Lỗi up bài", f"Bài #{post['id']}: {str(e).splitlines()[0][:160]}")
+    finally:
+        try:
+            ctx.close()
+        except Exception:
+            pass
+        workflows.set_status(aid, "idle", "Chờ lịch tiếp theo")
 
 
 def _fail(page, post_id: int, msg: str, dry_run: bool):
@@ -326,9 +508,14 @@ def _worker(sale_id: int, q: Queue):
                     _job_check(pw, sale_id)
                 elif job["kind"] == "post":
                     _job_post(pw, sale_id, job["post_id"], job.get("dry_run", False))
+                elif job["kind"] == "bump":
+                    _job_bump(pw, sale_id, job["bump_id"])
         except Exception as e:
             traceback.print_exc()
             db.log(f"sale-{sale_id}", "Lỗi trình duyệt", str(e).splitlines()[0][:200])
+            if job["kind"] == "bump":
+                db.run("UPDATE bumps SET status='failed', error=? WHERE id=? AND status='running'",
+                       (str(e).splitlines()[0][:300], job["bump_id"]))
             if job["kind"] == "post" and not job.get("dry_run"):
                 db.run("UPDATE posts SET status='failed', error=? WHERE id=? AND status='posting'",
                        (str(e).splitlines()[0][:300], job["post_id"]))

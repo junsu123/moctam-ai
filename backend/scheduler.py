@@ -40,6 +40,7 @@ def _tick():
                   WHERE p.status='scheduled' AND p.scheduled_for <= ? AND s.auto_post=1 AND s.login_status='ok'
                   ORDER BY p.scheduled_for""", (stamp,))
     started = set()
+    busy_post = {p["sale_id"] for p in due}
     for p in due:
         sid = p["sale_id"]
         if sid in started or browser_poster.busy(sid) or browser_poster.queued(sid):
@@ -47,6 +48,28 @@ def _tick():
         db.run("UPDATE posts SET status='posting' WHERE id=?", (p["id"],))
         browser_poster.submit(sid, {"kind": "post", "post_id": p["id"]})
         started.add(sid)
+    _dispatch_bumps(stamp, s, busy_post | started)
+
+
+def _dispatch_bumps(stamp: str, s: dict, busy_post: set):
+    # Up bài: lên lịch 1 lần/ngày từ giờ đã cài, rồi giao từng lượt khi nick rảnh (ưu tiên việc đăng bài)
+    if s.get("bump_enabled") == "1" and stamp[11:] >= (s.get("bump_time") or "19:30"):
+        workflows.plan_bumps()
+    for b in db.q("""SELECT b.id, b.sale_id, s.active_to FROM bumps b JOIN sales s ON s.id=b.sale_id
+                     WHERE b.status='scheduled' AND b.scheduled_for <= ? AND s.auto_post=1 AND s.login_status='ok'
+                     ORDER BY b.scheduled_for""", (stamp,)):
+        sid = b["sale_id"]
+        if stamp[11:] > (b["active_to"] or "22:00"):
+            db.run("UPDATE bumps SET status='skipped', error='Ngoài khung giờ hoạt động của nick' WHERE id=?", (b["id"],))
+            continue
+        if sid in busy_post or browser_poster.busy(sid) or browser_poster.queued(sid):
+            continue
+        db.run("UPDATE bumps SET status='running' WHERE id=?", (b["id"],))
+        browser_poster.submit(sid, {"kind": "bump", "bump_id": b["id"]})
+        busy_post.add(sid)
+    # lượt up bài của ngày cũ chưa chạy được -> bỏ qua
+    db.run("UPDATE bumps SET status='skipped', error='Hết ngày, chưa đến lượt' WHERE status='scheduled' AND scheduled_for < ?",
+           (stamp[:10],))
 
 
 def start():

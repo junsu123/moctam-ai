@@ -1,10 +1,70 @@
 {
   "_ghi_chu": "Facebook đổi giao diện thường xuyên. Nếu đăng bài báo lỗi 'không tìm thấy ô viết bài', thêm chữ hiển thị mới vào các danh sách dưới đây (không phân biệt hoa thường, so khớp một phần).",
-  "group_composer": ["Viết gì đó", "Bạn viết gì đi", "Write something", "Tạo bài viết công khai", "Create a public post"],
-  "profile_composer": ["Bạn đang nghĩ gì", "What's on your mind"],
-  "post_button": ["Đăng", "Post"],
-  "photo_button": ["Ảnh/video", "Photo/video"],
-  "discard_button": ["Bỏ", "Discard", "Rời khỏi", "Leave"],
-  "blocked_url_parts": ["checkpoint", "/login", "two_step_verification", "disabled"],
-  "blocked_texts": ["Tài khoản của bạn đã bị khóa", "Your account has been locked", "Chúng tôi đã tạm khóa", "We suspended your account", "Bạn tạm thời bị chặn", "You're Temporarily Blocked"]
+  "group_composer": [
+    "Viết gì đó",
+    "Bạn viết gì đi",
+    "Write something",
+    "Tạo bài viết công khai",
+    "Create a public post"
+  ],
+  "profile_composer": [
+    "Bạn đang nghĩ gì",
+    "What's on your mind"
+  ],
+  "post_button": [
+    "Đăng",
+    "Post"
+  ],
+  "photo_button": [
+    "Ảnh/video",
+    "Photo/video"
+  ],
+  "discard_button": [
+    "Bỏ",
+    "Discard",
+    "Rời khỏi",
+    "Leave"
+  ],
+  "blocked_url_parts": [
+    "checkpoint",
+    "/login",
+    "two_step_verification",
+    "disabled"
+  ],
+  "blocked_texts": [
+    "Tài khoản của bạn đã bị khóa",
+    "Your account has been locked",
+    "Chúng tôi đã tạm khóa",
+    "We suspended your account",
+    "Bạn tạm thời bị chặn",
+    "You're Temporarily Blocked"
+  ],
+  "my_posts_paths": [
+    "/my_posted_content",
+    ""
+  ],
+  "pending_paths": [
+    "/my_pending_content"
+  ],
+  "comment_box": [
+    "Viết bình luận",
+    "Write a comment",
+    "Bình luận dưới tên",
+    "Comment as",
+    "Viết câu trả lời",
+    "Bình luận công khai"
+  ],
+  "comment_attach": [
+    "Đính kèm ảnh hoặc video",
+    "Attach a photo or video",
+    "Ảnh/video",
+    "Photo/video"
+  ],
+  "removed_texts": [
+    "Nội dung này hiện không hiển thị",
+    "This content isn't available",
+    "Bài viết này không còn",
+    "Trang này không hiển thị",
+    "This page isn't available"
+  ]
 }

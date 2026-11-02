@@ -60,6 +60,33 @@ và thêm chữ đang hiển thị trên nút (ví dụ chữ trong ô "Viết g
 hạn chế dù đã giãn cách, nên giữ số bài/ngày vừa phải, nội dung có giá trị và đúng luật từng nhóm.
 Máy chạy phần mềm phải bật trong giờ đăng bài; Chrome của các nick chạy trên chính máy đó.
 
+## Lưu link bài và tự động up bài
+
+**Link bài:** ngay sau khi đăng, nhân viên sale mở mục "Nội dung của bạn" trong nhóm (hoặc trang cá nhân), tìm đúng bài
+vừa đăng và lưu link thật của bài (đã bỏ phần theo dõi `__cft__`). Bài vào hàng chờ duyệt của nhóm được đánh dấu
+"chờ duyệt" và sẽ lấy link sau. Không tìm được link thì dán tay vào thẻ bài ở mục **Bài đăng**.
+
+**Up bài hằng ngày:** vào **Cài đặt → Tự động up bài**, chọn thư mục ảnh trên máy chạy phần mềm rồi bấm
+*Kiểm tra thư mục*. Từ giờ đã chọn (mặc định 19:30), mỗi nhân viên sale vào lại các bài chính mình đã đăng trong
+7 ngày gần nhất và bình luận một ảnh sản phẩm, kèm một câu ngẫu nhiên trong danh sách (để trống thì chỉ gửi ảnh).
+
+```
+D:\AnhSanPham\
+    Tra gung mat ong\      <- ảnh riêng cho sản phẩm (tên thư mục có dấu hay không dấu đều được)
+    Bot ngu coc\
+    anh-chung.jpg          <- ảnh để ngoài: dùng cho mọi bài
+```
+
+- Bài nào up ảnh của đúng sản phẩm bài đó; ảnh không lặp lại trên cùng một bài cho tới khi dùng hết ảnh.
+- Mỗi bài tối đa 1 lần/ngày; bài vừa đăng trong 10 giờ chưa up; mỗi nick tối đa 8 lượt/ngày, cách nhau ≥ 6 phút
+  cộng thêm vài phút ngẫu nhiên, trong khung giờ của nick. Đăng bài luôn được ưu tiên trước up bài.
+- Bài bị xóa hoặc ẩn: sale tự ngừng up bài đó. Nick gặp checkpoint: dừng cả đăng và up.
+- Thẻ bài ở mục **Bài đăng** có nút *Mở bài viết*, *Up ngay*, *Dừng tự up*, số lần đã up và ảnh chụp lượt gần nhất.
+- Nếu báo "Không tìm thấy ô bình luận" hoặc "không đính kèm được ảnh", thêm chữ đang hiển thị vào `comment_box`
+  hoặc `comment_attach` trong `backend/fb_selectors.json`.
+
+Up bài không gọi AI nên không tốn chi phí Claude.
+
 ## Cài đặt và chạy
 
 Cần Python 3.10 trở lên.
@@ -102,7 +129,8 @@ backend/
   meeting.py     Phòng họp: báo cáo → tranh luận → chốt việc
   scheduler.py   Lịch tự động: họp mỗi sáng, đăng Fanpage đúng giờ
   facebook.py    Đăng Fanpage qua Graph API
-  browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, đăng bài, phát hiện checkpoint
+  browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, đăng bài, lấy link bài, up bài
+  media_folder.py    Đọc thư mục ảnh sản phẩm trên máy, chọn ảnh theo sản phẩm
   fb_selectors.json  Chữ hiển thị trên giao diện Facebook (sửa khi Facebook đổi giao diện)
   llm.py         Kết nối Claude (tự chuyển sang mô phỏng khi chưa có key)
   mock_brain.py  Nội dung mẫu cho chế độ mô phỏng

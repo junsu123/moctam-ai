@@ -44,6 +44,7 @@ def stats() -> dict:
         "lead_per_post": round(leads / posted, 2) if posted else 0,
         "tasks_open": c("SELECT COUNT(*) n FROM tasks WHERE status!='done'"),
         "failed": c("SELECT COUNT(*) n FROM posts WHERE status='failed'"),
+        "bumps_today": c("SELECT COUNT(*) n FROM bumps WHERE status='done' AND done_at LIKE ?", (db.today() + "%",)),
         "sales_total": c("SELECT COUNT(*) n FROM sales"),
         "sales_ok": c("SELECT COUNT(*) n FROM sales WHERE login_status='ok' AND auto_post=1"),
         "sales_problem": c("SELECT COUNT(*) n FROM sales WHERE login_status IN ('checkpoint','not_logged_in')"),
@@ -288,6 +289,57 @@ def mark_posted(post_id: int, posted_url: str = "", poster: str = "", fb_post_id
     if post and post.get("group_id"):
         db.run("UPDATE groups SET last_posted_at=? WHERE id=?", (db.now(), post["group_id"]))
     db.log("tuan", "Đã đăng", f"Bài #{post_id} được đánh dấu đã đăng {('bởi ' + poster) if poster else ''}")
+
+
+# ---------------------------------------------------------------- Up bài hằng ngày
+def plan_bumps(force: bool = False) -> int:
+    """Lên lịch bình luận ảnh cho các bài đã đăng gần đây, mỗi bài tối đa 1 lần/ngày, đúng nick đã đăng."""
+    import media_folder
+    s = db.get_settings()
+    today = db.today()
+    if s.get("bump_enabled") != "1" and not force:
+        return 0
+    if s.get("bump_planned_date") == today and not force:
+        return 0
+    db.set_setting("bump_planned_date", today)
+    if not media_folder.root():
+        db.log("tuan", "Up bài", "Chưa cài thư mục ảnh sản phẩm (Cài đặt → Up bài), hôm nay bỏ qua")
+        return 0
+    now = datetime.now()
+    cutoff = (now - timedelta(days=int(s.get("bump_max_age_days") or 7))).strftime("%Y-%m-%d %H:%M:%S")
+    fresh = (now - timedelta(hours=10)).strftime("%Y-%m-%d %H:%M:%S")  # bài vừa đăng hôm nay chưa cần up
+    texts = [t.strip() for t in (s.get("bump_texts") or "").splitlines()]
+    texts = texts or [""]
+    per_nick = int(s.get("bump_max_per_nick") or 8)
+    gap = int(s.get("bump_gap_minutes") or 6)
+    total = 0
+    for sale in db.q("SELECT * FROM sales WHERE login_status='ok' AND auto_post=1"):
+        posts = db.q("""SELECT id FROM posts WHERE status='posted' AND sale_id=? AND COALESCE(bump_enabled,1)=1
+                        AND COALESCE(permalink_status,'') != 'removed' AND posted_at >= ? AND posted_at <= ?
+                        AND id NOT IN (SELECT post_id FROM bumps WHERE created_at LIKE ? AND status != 'skipped')
+                        ORDER BY COALESCE(last_bump_at, '') ASC, posted_at DESC LIMIT ?""",
+                     (sale["id"], cutoff, fresh, today + "%", per_nick))
+        t = now + timedelta(minutes=random.randint(1, 6))
+        end = datetime.strptime(f"{today} {sale['active_to'] or '22:00'}", "%Y-%m-%d %H:%M")
+        for p in posts:
+            if t > end:
+                break
+            db.run("INSERT INTO bumps(post_id, sale_id, text, status, scheduled_for, created_at) VALUES (?,?,?,?,?,?)",
+                   (p["id"], sale["id"], random.choice(texts), "scheduled", t.strftime("%Y-%m-%d %H:%M"), db.now()))
+            total += 1
+            t += timedelta(minutes=gap + random.randint(0, 4))
+    db.log("tuan", "Lịch up bài", f"Đã xếp {total} lượt bình luận ảnh để up bài hôm nay" if total
+           else "Không có bài nào cần up hôm nay")
+    return total
+
+
+def bump_now(post_id: int) -> int | None:
+    p = db.one("SELECT * FROM posts WHERE id=?", (post_id,))
+    if not p or not p.get("sale_id"):
+        return None
+    texts = [t.strip() for t in (db.get_settings().get("bump_texts") or "").splitlines()] or [""]
+    return db.run("INSERT INTO bumps(post_id, sale_id, text, status, scheduled_for, created_at) VALUES (?,?,?,?,?,?)",
+                  (post_id, p["sale_id"], random.choice(texts), "scheduled", datetime.now().strftime("%Y-%m-%d %H:%M"), db.now()))
 
 
 # ---------------------------------------------------------------- Hà: chăm sóc khách

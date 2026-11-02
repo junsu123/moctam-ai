@@ -8,7 +8,7 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -19,6 +19,7 @@ import agents
 import browser_poster
 import db
 import facebook
+import media_folder
 import meeting
 import scheduler
 import workflows
@@ -143,6 +144,8 @@ class PostPatch(BaseModel):
     group_id: int | None = None
     sale_id: int | None = None
     scheduled_for: str | None = None
+    posted_url: str | None = None
+    bump_enabled: int | None = None
     comments: int | None = None
     leads: int | None = None
 
@@ -154,7 +157,9 @@ class MarkPosted(BaseModel):
 
 @app.get("/api/posts")
 def posts(status: str | None = None):
-    sql = """SELECT p.*, pr.name product_name, g.name group_name, g.url group_url, s.name sale_name FROM posts p
+    sql = """SELECT p.*, pr.name product_name, g.name group_name, g.url group_url, s.name sale_name,
+             (SELECT status || '|' || COALESCE(error,'') || '|' || COALESCE(screenshot,'') || '|' || COALESCE(scheduled_for,'')
+              FROM bumps b WHERE b.post_id=p.id ORDER BY b.id DESC LIMIT 1) last_bump FROM posts p
              LEFT JOIN products pr ON pr.id=p.product_id LEFT JOIN groups g ON g.id=p.group_id
              LEFT JOIN sales s ON s.id=p.sale_id"""
     return db.q(sql + (" WHERE p.status=?" if status else "") + " ORDER BY p.id DESC LIMIT 200",
@@ -169,6 +174,10 @@ def gen_posts(r: GenReq):
 @app.patch("/api/posts/{pid}")
 def patch_post(pid: int, p: PostPatch):
     fields = {k: v for k, v in p.model_dump().items() if v is not None}
+    if p.posted_url is not None:  # sếp dán link bài thủ công
+        fields["permalink_status"] = "found" if p.posted_url.strip() else "not_found"
+        if p.posted_url.strip() and p.bump_enabled is None:
+            fields["bump_enabled"] = 1
     if fields:
         db.run(f"UPDATE posts SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), pid))
     if p.leads is not None:  # cập nhật số khách của nhóm để Khoa xếp hạng
@@ -528,6 +537,41 @@ def del_image(pid: int, path: str):
     imgs = [i for i in json.loads((p or {}).get("images") or "[]") if i != path]
     db.run("UPDATE products SET images=? WHERE id=?", (json.dumps(imgs), pid))
     return {"images": imgs}
+
+
+# ------------------------------------------------------------------ up bài
+@app.get("/api/bump/folder")
+def bump_folder():
+    return media_folder.info()
+
+
+@app.get("/api/bump/image")
+def bump_image(name: str):
+    f = media_folder.safe_file(name)
+    if not f:
+        raise HTTPException(404)
+    return FileResponse(f)
+
+
+@app.post("/api/posts/{pid}/bump")
+def bump_post(pid: int):
+    bid = workflows.bump_now(pid)
+    if not bid:
+        raise HTTPException(400, "Bài này không do nhân viên sale đăng nên chưa up tự động được")
+    if not media_folder.root():
+        raise HTTPException(400, "Chưa cài thư mục ảnh sản phẩm. Vào Cài đặt → Up bài")
+    return {"ok": True, "bump_id": bid, "note": "Sale sẽ up bài trong vòng 1 phút khi rảnh"}
+
+
+@app.post("/api/bump/plan-now")
+def bump_plan_now():
+    return {"scheduled": workflows.plan_bumps(force=True)}
+
+
+@app.get("/api/bumps")
+def bumps(post_id: int | None = None):
+    sql = """SELECT b.*, s.name sale_name FROM bumps b LEFT JOIN sales s ON s.id=b.sale_id"""
+    return db.q(sql + (" WHERE b.post_id=?" if post_id else "") + " ORDER BY b.id DESC LIMIT 100", (post_id,) if post_id else ())
 
 
 # ------------------------------------------------------------------ giao diện
