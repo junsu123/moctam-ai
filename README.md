@@ -288,6 +288,11 @@ tin bình thường (không cần lệnh) là giao việc cho CEO.
 - **Tự duyệt bài nháp** của Lan: loại bài hứa công dụng chữa bệnh, quá ngắn, quá dài hoặc trùng bài 30 ngày qua (lý do
   được ghi để Lan rút kinh nghiệm), duyệt bài đạt rồi cho Tuấn xếp lịch. Sau họp sáng, cả đội luôn vào việc hằng ngày.
 
+**CEO báo lại:** việc giao cho sale (tìm nhóm, xin vào nhóm) và cho Lan (viết bài) chạy nền; làm xong CEO nhắn lại kết quả
+trong khung chat (và Telegram nếu sếp giao qua Telegram). Khung chat có dòng "Đang làm" cho biết sale nào đang làm gì.
+Nếu chưa làm được (chưa có nick đăng nhập, nick bị tạm dừng, nick đang mở Chrome chờ đăng nhập…), CEO nói rõ lý do và
+sếp cần làm gì.
+
 Có khóa API Claude thì CEO dùng AI để hiểu lệnh (Haiku, rất rẻ); chưa có khóa thì CEO hiểu các mẫu câu thường gặp
 ("Viết 3 bài về…", "Xếp lịch", "Họp về…", "Tìm nhóm theo chủ đề “…”", "Tạm dừng Linh", "<Tên agent> … sai/dài quá/đừng…",
 "Từ nay …", "Tình hình hôm nay thế nào?").

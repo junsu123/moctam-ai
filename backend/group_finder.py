@@ -341,7 +341,13 @@ def _join_some(page, sale_id: int) -> dict:
     return res
 
 
-def job_discover(pw, sale_id: int, keywords: list[str]):
+def _report(notify, text):
+    if notify:
+        import ceo_orders
+        ceo_orders.followup(text, notify)
+
+
+def job_discover(pw, sale_id: int, keywords: list[str], notify: str | None = None):
     import browser_poster as B
     import workflows
     aid = f"sale-{sale_id}"
@@ -365,8 +371,30 @@ def job_discover(pw, sale_id: int, keywords: list[str]):
                                                            "found": found, "added": len(added), "joins": jr}, ensure_ascii=False))
         db.log(aid, "Tìm nhóm mới", f"Tìm “{'”, “'.join(keywords)}”: {found} nhóm mới, thêm {len(added)} nhóm vào danh sách"
                + (f", xin vào {jr.get('requested', 0) + jr.get('joined', 0)} nhóm" if jr else ""))
+        sale = db.one("SELECT name FROM sales WHERE id=?", (sale_id,))["name"]
+        if found or added:
+            if added:
+                msg = (f"{sale} tìm xong theo “{'”, “'.join(keywords)}”: {found} nhóm mới, em đã thêm {len(added)} nhóm tốt vào "
+                       f"danh sách Hội nhóm: " + ", ".join(g["name"] for g in added[:4]) + ".")
+            else:
+                limit = int(s().get("discover_add_per_day") or 5)
+                today_n = db.one("SELECT COUNT(*) n FROM groups WHERE source='search' AND created_at LIKE ?", (db.today() + "%",))["n"]
+                why = (f"hôm nay đã tự thêm đủ {limit} nhóm (giới hạn mỗi ngày)" if today_n >= limit else
+                       "các nhóm tìm được chưa đạt (tên không đúng chủ đề hoặc dưới 1.000 thành viên)")
+                msg = f"{sale} tìm xong theo “{'”, “'.join(keywords)}”: {found} nhóm mới, em chưa tự thêm nhóm nào vì {why}."
+            if jr and any(jr.get(k) for k in ("joined", "requested", "needs_answers")):
+                msg += (f" Đã vào {jr.get('joined', 0)} nhóm, đang chờ duyệt {jr.get('requested', 0)} nhóm"
+                        + (f", {jr['needs_answers']} nhóm cần sếp tự trả lời câu hỏi" if jr.get("needs_answers") else "") + ".")
+            rest = db.one("SELECT COUNT(*) n FROM group_candidates WHERE status='new'")["n"]
+            if rest:
+                msg += f" Còn {rest} nhóm khác chờ sếp xem ở Hội nhóm → Tìm nhóm mới."
+        else:
+            msg = (f"{sale} đã tìm theo “{'”, “'.join(keywords)}” nhưng không thấy nhóm mới nào (có thể các nhóm đã có trong danh "
+                   "sách, hoặc trang tìm kiếm của Facebook hiển thị khác). Sếp thử chủ đề khác, hoặc vào mục Lỗi xem có báo lỗi không.")
+        _report(notify, msg)
     except B.Blocked as e:
         B._block(sale_id, str(e))
+        _report(notify, f"Nick của sale bị Facebook chặn hoặc kiểm tra khi đang tìm nhóm: {e}. Em đã dừng nick này, sếp mở Chrome của sale để xử lý.")
     finally:
         try:
             ctx.close()
@@ -375,7 +403,7 @@ def job_discover(pw, sale_id: int, keywords: list[str]):
         workflows.set_status(aid, "idle", f"Tìm được {found} nhóm mới")
 
 
-def job_join(pw, sale_id: int):
+def job_join(pw, sale_id: int, notify: str | None = None):
     import browser_poster as B
     import workflows
     aid = f"sale-{sale_id}"
@@ -388,6 +416,10 @@ def job_join(pw, sale_id: int):
         if any(jr.values()):
             db.log(aid, "Xin vào nhóm", f"Vào được {jr['joined']} nhóm, chờ duyệt {jr['requested']}, "
                    f"cần sếp trả lời câu hỏi {jr['needs_answers']}")
+        sale = db.one("SELECT name FROM sales WHERE id=?", (sale_id,))["name"]
+        _report(notify, f"{sale} xin vào nhóm xong: vào được {jr.get('joined', 0)}, chờ duyệt {jr.get('requested', 0)}"
+                + (f", {jr['needs_answers']} nhóm cần sếp tự trả lời câu hỏi" if jr.get("needs_answers") else "")
+                + ("." if any(jr.values()) else ". Hôm nay nick đã xin đủ số nhóm cho phép hoặc chưa có nhóm mới để xin."))
     except B.Blocked as e:
         B._block(sale_id, str(e))
     finally:
@@ -404,7 +436,7 @@ def _working_sales() -> list[dict]:
                    AND login_status='ok' AND auto_post=1 ORDER BY id""")
 
 
-def start_discover(sale_id: int | None = None, keywords: list[str] | None = None) -> dict:
+def start_discover(sale_id: int | None = None, keywords: list[str] | None = None, notify: str | None = None) -> dict:
     import browser_poster as B
     sales = _working_sales()
     if not sales:
@@ -415,7 +447,7 @@ def start_discover(sale_id: int | None = None, keywords: list[str] | None = None
         sale_id = nxt[0]["id"]
     kws = keywords or today_keywords()
     db.set_setting("discover_last_sale", str(sale_id))
-    B.submit(sale_id, {"kind": "discover", "keywords": kws})
+    B.submit(sale_id, {"kind": "discover", "keywords": kws, "notify": notify})
     return {"sale_id": sale_id, "keywords": kws}
 
 

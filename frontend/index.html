@@ -169,6 +169,7 @@ label.row.small input{margin-top:3px;flex:none}
 .chatlog .c{align-self:flex-start;background:var(--panel-2);border-radius:12px 12px 12px 4px;padding:7px 11px;max-width:88%;font-size:13.5px;white-space:pre-wrap}
 .chatlog time{display:block;font-size:10.5px;opacity:.7;margin-top:2px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.ceo-run{margin:8px 0 0;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .chips button{border:1px solid var(--line);background:var(--panel);border-radius:20px;padding:3px 10px;font-size:12px;color:var(--muted);cursor:pointer}
 .chips button:hover{color:var(--ink);border-color:var(--accent)}
 .gf{border-top:3px solid #d4af37}
@@ -414,6 +415,7 @@ tbody tr.sel td{background:var(--accent-soft)}
       <section class="card ceo-chat" id="ceoChat">
         <div class="card-h"><h3>Giao việc cho CEO Đức</h3><span class="small muted" id="ceoChatMode"></span></div>
         <div class="chatlog" id="ceoLog" aria-live="polite"></div>
+        <p class="small ceo-run" id="ceoRun" hidden></p>
         <div class="chips" id="ceoSugg"></div>
         <form class="row" id="ceoForm"><input type="text" class="grow" id="ceoIn" placeholder="Nhắn việc cho CEO, ví dụ: Viết 3 bài về trà gừng · Lan viết dài quá, viết ngắn lại" aria-label="Việc giao cho CEO" autocomplete="off"><button class="btn primary" type="submit">Giao việc</button></form>
       </section>
@@ -959,14 +961,14 @@ const Demo = (() => {
     stats:st.pool.map((k,i)=>({keyword:k,groups:S.groups.filter(g=>g.keyword===k).length,leads:[4,2,3,1,0,0,0,0,0,0][i]||0,found:0,last_searched:i<3?"2026-11-03 10:40:00":null}))}; }
   S.chat=[]; S.orders=[];
   setInterval(()=>{ if(S.settings.ceo_autopilot==="0") return; const d=S.posts.filter(p=>p.status==="draft"); if(d.length){ d.forEach(p=>p.status="approved"); log("ceo","Duyệt bài",`Duyệt ${d.length} bài`); } },15000);
-  function demoChat(){ return {autopilot:S.settings.ceo_autopilot!=="0",history:S.chat,orders:S.orders.filter(o=>o.active),suggestions:["Tình hình hôm nay thế nào?","Viết 3 bài về trà gừng mật ong","Xếp lịch đăng nhóm","Tìm nhóm theo chủ đề “hội chạy quảng cáo facebook”","Lan viết bài dài quá, viết dưới 150 chữ","Từ nay bài nào cũng nhắc giao hàng toàn quốc"]}; }
+  function demoChat(){ return {autopilot:S.settings.ceo_autopilot!=="0",running:Object.entries(S.status).filter(([k,v])=>k.startsWith("sale-")&&v.state==="working").map(([k,v])=>`${(S.sales.find(x=>"sale-"+x.id===k)||{}).name}: ${v.text}`),history:S.chat,orders:S.orders.filter(o=>o.active),suggestions:["Tình hình hôm nay thế nào?","Viết 3 bài về trà gừng mật ong","Xếp lịch đăng nhóm","Tìm nhóm theo chủ đề “hội chạy quảng cáo facebook”","Lan viết bài dài quá, viết dưới 150 chữ","Từ nay bài nào cũng nhắc giao hàng toàn quốc"]}; }
   function demoCeoDo(t){ const low=t.toLowerCase(); const ag=[["lan","Lan"],["tuấn","Tuấn"],["hà","Hà"],["khoa","Khoa"],["minh","Minh"]].find(([k])=>new RegExp(`(^|\\s)${k}(\\s|$|,)`).test(low));
     const crit=/(sai|không đúng|dài quá|quá dài|ngắn quá|kém|đừng|không được|phải|nên|cấm|nhầm|chán|nhạt|sửa)/.test(low); let m;
     if(/tình hình|thế nào|báo cáo/.test(low)&&!crit){ const st=stats(); return ["Dạ sếp, tình hình hôm nay:",`Hôm nay ${S.kpiPhone||3}/5 khách có SĐT; ${st.drafts} bài nháp; ${st.approved} bài đã duyệt/lên lịch; ${st.posted_total} bài đã đăng.`]; }
     if(ag&&crit){ const aid=ag[0]==="tuấn"?"tuan":ag[0]==="hà"?"ha":ag[0]; S.lessons.push({id:id(),agent_id:aid,text:t,evidence:"Sếp nhắc qua CEO",source:"boss",confidence:1,pinned:1}); log(aid,"CEO yêu cầu sửa",t); return ["Dạ em nhận việc.",`Yêu cầu ${ag[1]} sửa: “${t}” (đã ghim vào sổ tay, áp dụng từ việc tiếp theo)`]; }
     if((m=low.match(/viết\s*(\d+)?\s*bài/))){ const n=+(m[1]||3); S.status.lan={state:"working",text:`Đang viết ${n} bài`}; setTimeout(()=>{ genPosts(n,null,"group"); S.status.lan={state:"idle",text:`Vừa viết xong ${n} bài`}; },5000); return ["Dạ em nhận việc.",`Giao Lan viết ${n} bài đăng nhóm (CEO sẽ duyệt rồi cho Tuấn xếp lịch)`]; }
     if(/xếp lịch|lên lịch/.test(low)){ const pl=plan(); return ["Dạ em nhận việc.",`Giao Tuấn xếp lịch: ${pl.length} bài đã có giờ đăng`]; }
-    if(/tìm (hội )?nhóm/.test(low)){ const kws=(t.match(/[“"']([^”"']{3,60})[”"']/g)||[]).map(x=>x.slice(1,-1)); if(kws.length){ S.gf.today=kws; S.gf.by="boss"; } return ["Dạ em nhận việc.",`Giao sale Linh lướt Facebook rồi tìm nhóm: ${S.gf.today.join(", ")}`]; }
+    if(/(tìm|kiếm|săn)\b.{0,30}?(nhóm|group|cộng đồng)/.test(low)){ setTimeout(()=>S.chat.push({id:id(),role:"ceo",text:`Linh tìm xong theo “${S.gf.today.join("”, “")}”: 2 nhóm mới, em đã thêm 1 nhóm tốt vào danh sách Hội nhóm: Kinh Doanh Online Tại Nhà. Đã vào 1 nhóm, đang chờ duyệt 0 nhóm.`,via:"web",created_at:now()}),10000); const kws=(t.match(/[“"']([^”"']{3,60})[”"']/g)||[]).map(x=>x.slice(1,-1)); if(kws.length){ S.gf.today=kws; S.gf.by="boss"; } return ["Dạ em nhận việc.",`Giao sale Linh lướt Facebook rồi tìm nhóm: ${S.gf.today.join(", ")}`]; }
     if(/\bhọp\b/.test(low)){ const topic=t.replace(/.*?họp\s*(về|bàn)?\s*/i,""); startMeeting(topic||null); return ["Dạ em nhận việc.",`Triệu tập họp${topic?": "+topic:""}`]; }
     if(/từ nay|từ giờ|luôn luôn|không được|cấm|bắt buộc/.test(low)){ const o={id:id(),agent:"all",text:t,active:1,created_at:now()}; S.orders.unshift(o); return ["Dạ em nhận việc.",`Ghi chỉ đạo lâu dài #${o.id} cho cả đội: “${t}”`]; }
     return ["Dạ em chưa hiểu rõ việc này. Sếp nói cụ thể hơn giúp em, ví dụ: “Viết 3 bài về trà gừng”, “Tìm nhóm theo chủ đề hội chạy quảng cáo facebook”, “Lan viết dài quá, viết ngắn lại”.",null]; }
@@ -2011,6 +2013,7 @@ async function loadCeoChat(force){
   if(!force&&document.activeElement===$("#ceoIn")&&ST.ceoChat) return;
   let d; try{ d=await api("/ceo/chat"); }catch(e){ return; }
   const n=(d.history||[]).length, changed=!ST.ceoChat||ST.ceoChat.history.length!==n; ST.ceoChat=d;
+  const run=$("#ceoRun"); run.hidden=!(d.running||[]).length; run.innerHTML=(d.running||[]).length?`<span class="dot live"></span><b>Đang làm:</b> ${d.running.map(esc).join(" · ")}`:"";
   $("#ceoChatMode").textContent=d.autopilot?"Luật: sếp chỉ giao việc cho CEO, CEO tự vận hành":"Sếp đang giao việc trực tiếp cho từng agent";
   if(changed){ const log=$("#ceoLog");
     log.innerHTML=n?d.history.slice(-12).map(m=>`<div class="${m.role==="boss"?"b":"c"}">${esc(m.text)}<time>${m.role==="boss"?"Sếp":"CEO Đức"}${m.via==="telegram"?" · Telegram":""} · ${fmtTime(m.created_at)}</time></div>`).join("")

@@ -104,6 +104,81 @@ def _bg(fn, *a, **kw):
     threading.Thread(target=fn, args=a, kwargs=kw, daemon=True).start()
 
 
+def followup(text: str, via: str = "web"):
+    """CEO báo lại cho sếp khi việc đã giao làm xong (hoặc không làm được)."""
+    _say("ceo", text, via=via)
+    if via == "telegram":
+        try:
+            import telegram_bot
+            telegram_bot.send("👔 <b>CEO Đức báo lại:</b> " + telegram_bot.e(text))
+        except Exception as ex:
+            print("[ceo_orders]", ex)
+
+
+JOB_TXT = {"open": "mở Chrome chờ sếp đăng nhập", "check": "kiểm tra phiên", "post": "đăng bài", "bump": "up bài",
+           "scan": "quét bình luận", "discover": "tìm nhóm mới", "join": "xin vào nhóm"}
+
+
+def why_no_sales() -> str:
+    """Giải thích rõ vì sao chưa có nick sale nào làm được việc trên Facebook, và sếp cần làm gì."""
+    import company
+    if company.status() == "dissolved":
+        return "Công ty đã giải thể nên mọi việc tự động đã dừng. Sếp thành lập lại ở trang Công ty."
+    rows = db.q("SELECT * FROM sales WHERE COALESCE(status,'active')!='fired' AND COALESCE(is_sample,0)=0")
+    if not rows:
+        return "Chưa có nhân viên sale nào giữ nick Facebook. Sếp vào trang Nhân viên sale để tuyển, hoặc bảo em “tuyển thêm 1 sale”."
+    not_in = [r["name"] for r in rows if r["login_status"] != "ok"]
+    paused = [r["name"] for r in rows if r["login_status"] == "ok" and not r["auto_post"]]
+    parts = []
+    if not_in:
+        parts.append(f"{', '.join(not_in)} chưa đăng nhập Facebook (hoặc nick bị checkpoint): sếp vào Nhân viên sale → "
+                     "Mở Chrome để đăng nhập")
+    if paused:
+        parts.append(f"{', '.join(paused)} đang bị tạm dừng tự đăng: sếp bảo em “bật lại {paused[0]}”")
+    return "Chưa có nick nào làm được: " + "; ".join(parts) + "." if parts else "Chưa có nick nào sẵn sàng."
+
+
+def _busy_note(sale_id: int) -> str:
+    import browser_poster
+    b, q = browser_poster.busy(sale_id), browser_poster.queued(sale_id)
+    if b:
+        return f" ({_name('sale-' + str(sale_id))} đang {JOB_TXT.get(b, b)}, xong việc đó sẽ làm ngay" + \
+            (" — nếu đang mở Chrome chờ đăng nhập, sếp đóng cửa sổ Chrome đó thì sale mới làm tiếp" if b == "open" else "") + ")"
+    if q > 1:
+        return f" (đang chờ {q - 1} việc khác của nick làm xong)"
+    return ""
+
+
+def _write_and_report(n, pid, tt, angle, note, via):
+    import workflows
+    try:
+        made = workflows.generate_posts(n, pid, tt, angle, note)
+    except Exception as e:
+        followup(f"Lan chưa viết được bài: {str(e)[:150]}", via)
+        return
+    ids = [p["id"] for p in made]
+    if not ids:
+        followup("Lan chưa viết được bài nào (chưa có sản phẩm hoặc sản phẩm không hợp). Sếp kiểm tra trang Sản phẩm.", via)
+        return
+    msg = f"Lan đã viết xong {len(ids)} bài."
+    if autopilot():
+        ok, bad = [], []
+        for pid_ in ids:
+            p = db.one("SELECT * FROM posts WHERE id=?", (pid_,))
+            if p and p["status"] == "draft":
+                good, why = review_post(p)
+                _apply_review(p, good, why)
+                (ok if good else bad).append((pid_, why))
+        plan = workflows.plan_distribution() if ok else []
+        msg += f" Em duyệt {len(ok)} bài" + (f", loại {len(bad)} bài ({', '.join(sorted({w for _, w in bad}))})" if bad else "") + "."
+        if plan:
+            msg += " Tuấn đã xếp lịch: " + "; ".join(f"{x['time'][11:16]} {x['sale'] + ' → ' if x.get('sale') else ''}{x['group']}" for x in plan[:4])
+        elif ok:
+            msg += " Chưa xếp lịch được: " + (why_no_sales() if not __import__("group_finder")._working_sales()
+                                             else "các nhóm đang giãn cách hoặc nick đã đủ bài hôm nay, bài chờ lượt sau.")
+    followup(msg, via)
+
+
 def execute(act: dict) -> str:
     """Thực hiện một việc trong danh sách được phép. Trả về một câu mô tả kết quả."""
     import workflows
@@ -113,10 +188,10 @@ def execute(act: dict) -> str:
         tt = act.get("target") if act.get("target") in ("group", "profile", "page") else "group"
         pid = act.get("product_id")
         pid = int(pid) if str(pid or "").isdigit() and db.one("SELECT id FROM products WHERE id=?", (int(pid),)) else None
-        _bg(workflows.generate_posts, n, pid, tt, act.get("angle") or None, (act.get("note") or "")[:300])
+        _bg(_write_and_report, n, pid, tt, act.get("angle") or None, (act.get("note") or "")[:300], act.get("_via", "web"))
         prod = db.one("SELECT name FROM products WHERE id=?", (pid,))["name"] if pid else "các sản phẩm"
         return f"Giao Lan viết {n} bài {({'group': 'đăng nhóm', 'profile': 'trang cá nhân', 'page': 'Fanpage'})[tt]} về {prod}" + \
-            (" (CEO sẽ duyệt rồi cho Tuấn xếp lịch)" if autopilot() else "")
+            (", viết xong em duyệt rồi cho Tuấn xếp lịch và báo lại sếp" if autopilot() else ", viết xong em báo lại sếp")
     if t == "plan":
         plan = workflows.plan_distribution()
         return f"Giao Tuấn xếp lịch: {len(plan)} bài đã có giờ đăng" if plan else "Tuấn xếp lịch: chưa có bài đã duyệt hoặc nhóm nào đủ điều kiện"
@@ -134,22 +209,26 @@ def execute(act: dict) -> str:
         kws = [k.strip() for k in (act.get("keywords") or []) if str(k).strip()]
         if kws:
             group_finder.set_today(kws)
-        try:
-            r = group_finder.start_discover(None, kws or None)
-            return f"Giao sale {_name('sale-' + str(r['sale_id']))} lướt Facebook rồi tìm nhóm: {', '.join(r['keywords'])}"
-        except ValueError as e:
-            return f"Chưa tìm nhóm được: {e}"
+        if not group_finder._working_sales():
+            return "Chưa giao tìm nhóm được. " + why_no_sales()
+        r = group_finder.start_discover(None, kws or None, notify=act.get("_via", "web"))
+        return (f"Giao sale {_name('sale-' + str(r['sale_id']))} lướt Facebook rồi tìm nhóm theo: {', '.join(r['keywords'])}"
+                f"{_busy_note(r['sale_id'])}. Tìm xong em báo lại sếp.")
     if t == "join_groups":
         import browser_poster
         import group_finder
         ss = group_finder._working_sales()
         for x in ss:
-            browser_poster.submit(x["id"], {"kind": "join"})
-        return f"Giao {len(ss)} nick xin vào các nhóm mới" if ss else "Chưa có nick nào đăng nhập để xin vào nhóm"
+            browser_poster.submit(x["id"], {"kind": "join", "notify": act.get("_via", "web")})
+        return f"Giao {len(ss)} nick xin vào các nhóm mới, xong em báo lại sếp" if ss else "Chưa giao xin vào nhóm được. " + why_no_sales()
     if t == "scan_comments":
         import telegram_bot
         n = telegram_bot.start_scan_round(force=True)
-        return f"Giao sale quét bình luận {n or 0} bài để tìm khách"
+        if not n:
+            import group_finder
+            return ("Chưa quét được: " + why_no_sales()) if not group_finder._working_sales() else \
+                "Chưa có bài nào đã lưu link để quét bình luận (sale đăng bài xong mới có link)"
+        return f"Giao sale quét bình luận {n} bài để tìm khách"
     if t == "learn_now":
         import learning
         learning.nightly_async()
@@ -312,64 +391,105 @@ def _num(t: str, default: int) -> int:
     return int(m.group(1)) if m else default
 
 
+FILLER = r"\b(giúp|giùm|hộ|anh|em|mình|nhé|nha|nhá|đi|thôi|cho|vài|mấy|thêm|các|những|một số|mới|ngay|luôn|hôm nay|đó|này|ạ|với)\b"
+GROUP_NOUN = r"(hội nhóm|hội|nhóm|group|groups|cộng đồng)"
+
+
+def _clean_kw(k: str) -> str:
+    k = re.sub(FILLER, " ", k, flags=re.I)
+    k = re.sub(r"[.!?]+$", "", re.sub(r"\s+", " ", k)).strip(" ,;:-")
+    return k
+
+
+def _keywords(t: str) -> list[str]:
+    """Rút chủ đề tìm nhóm từ câu của sếp."""
+    q = re.findall(r"[\"“”'‘’]([^\"“”'‘’]{3,80})[\"“”'‘’]", t)
+    if q:
+        return [k.strip() for k in q]
+    m = re.search(r"(?:về|theo|chủ đề|từ khóa|từ khoá|keyword|key|liên quan(?: đến| tới)?|ngành|lĩnh vực|kiểu|như)\s*:?\s*(.+)$", t, re.I)
+    rest = m.group(1) if m else None
+    if not rest:
+        m = re.search(GROUP_NOUN + r"\s+(.+)$", t, re.I)
+        rest = m.group(2) if m else ""
+    rest = re.sub(r"^(?:về|theo|chủ đề|từ khóa|keyword)\s*:?\s*", "", rest or "", flags=re.I)
+    rest = re.split(r"(?:^|\s+)(?:rồi|sau đó|xong|để|thì|và xin|và vào)(?:\s+|$)", rest.strip(), maxsplit=1, flags=re.I)[0]
+    out = [_clean_kw(k) for k in re.split(r"[,;]| và | hoặc |\+", rest)]
+    return [k for k in out if len(k) >= 4][:6]
+
+
 def _rule_plan(text: str) -> dict:
-    """Hiểu lệnh bằng mẫu câu (khi chưa có khóa AI)."""
+    """Hiểu lệnh bằng mẫu câu (khi chưa có khóa AI). Một câu có thể chứa nhiều việc."""
     t = text.strip()
     low = t.lower()
     acts = []
     agent = None
     for alias, aid in AGENT_ALIASES.items():
-        if re.search(rf"\b{re.escape(alias)}\b", low) and aid != "ceo":
+        if re.search(rf"(?<!\w){re.escape(alias)}(?!\w)", low) and aid != "ceo":
             agent = aid
             break
     if not agent:
         for r in _sales():
-            if re.search(rf"\b{re.escape(r['name'].lower())}\b", low):
+            if re.search(rf"(?<!\w){re.escape(r['name'].lower())}(?!\w)", low):
                 agent = f"sale-{r['id']}"
                 break
     critique = re.search(r"\b(sai|không đúng|chưa đúng|dài quá|quá dài|ngắn quá|quá ngắn|kém|tệ|đừng|không được|phải|nên|"
-                         r"cấm|nhầm|lỗi|chán|nhạt|sửa)\b", low)
-    if re.search(r"tình hình|báo cáo|thế nào|ra sao|bao nhiêu khách", low) and not critique:
+                         r"cấm|nhầm|lỗi|chán|nhạt|sửa|làm ẩu|lặp lại|trùng)\b", low)
+    want_find = re.search(r"\b(tìm|kiếm|săn|lùng|search|khám phá)\b.{0,30}?" + GROUP_NOUN, low) or \
+        re.search(GROUP_NOUN + r"\s+mới\b", low)
+    want_join = re.search(r"\b(xin|gia nhập|tham gia|join|vào)\b\s*(thêm\s*|các\s*|những\s*)?" + GROUP_NOUN, low)
+    want_write = re.search(r"\b(viết|soạn|làm|lên|tạo)\s*(thêm\s*)?(\d+)?\s*(bài|content|nội dung|post)", low)
+    want_plan = re.search(r"xếp lịch|lên lịch|sắp lịch|lịch đăng|đăng bài\b(?!.*viết)", low)
+    want_status = re.search(r"tình hình|báo cáo|thế nào|ra sao|bao nhiêu khách|đang làm gì|làm được gì", low)
+    if want_status and not critique and not (want_find or want_write or want_plan):
         acts.append({"type": "status"})
-    elif agent and critique and not re.search(r"^\s*(cho|bảo|giao)?\s*\w+\s+viết\s*\d+\s*bài", low):
+    elif agent and critique and not want_find and not re.search(r"(viết|soạn|làm|tạo)\s*(thêm\s*)?\d+\s*(bài|content|post)", low):
         acts.append({"type": "teach", "agent": agent, "text": t})  # sếp chê một agent -> sửa cách làm của agent đó
-    elif m := re.search(r"viết\s*(\d+)?\s*bài", low):
-        n = int(m.group(1)) if m.group(1) else 3
-        pid = None
-        for p in db.q("SELECT id, name FROM products"):
-            words = [w for w in p["name"].lower().split() if len(w) > 2][:3]
-            if words and sum(w in low for w in words) >= min(2, len(words)):
-                pid = p["id"]
-                break
-        tt = "profile" if "trang cá nhân" in low else "page" if "fanpage" in low else "group"
-        acts.append({"type": "write_posts", "count": n, "product_id": pid, "target": tt, "note": t})
-    elif re.search(r"xếp lịch|lên lịch", low):
-        acts.append({"type": "plan"})
-    elif re.search(r"\bhọp\b", low):
-        topic = re.sub(r".*?\bhọp\b\s*(về|bàn|chủ đề)?\s*:?\s*", "", t, count=1, flags=re.I).strip()
-        acts.append({"type": "meeting", "topic": topic})
-    elif re.search(r"tìm (hội )?nhóm", low):
-        kws = re.findall(r"[\"“”']([^\"“”']{3,60})[\"“”']", t)
-        if not kws:
-            m = re.search(r"tìm (?:hội )?nhóm\s*(?:theo|về|chủ đề|từ khóa|keyword)?\s*:?\s*(.+)$", t, re.I)
-            kws = [k.strip() for k in re.split(r"[,;]| và ", m.group(1)) if len(k.strip()) > 3] if m and m.group(1).strip() else []
-        acts.append({"type": "find_groups", "keywords": kws})
-    elif re.search(r"xin vào nhóm|tham gia nhóm", low):
-        acts.append({"type": "join_groups"})
-    elif re.search(r"quét bình luận|quét comment", low):
-        acts.append({"type": "scan_comments"})
-    elif re.search(r"tạm dừng|dừng đăng|ngừng đăng", low) and agent and agent.startswith("sale-"):
-        acts.append({"type": "pause_sale", "sale_id": int(agent[5:])})
-    elif re.search(r"bật lại|cho đăng lại|tiếp tục đăng", low) and agent and agent.startswith("sale-"):
-        acts.append({"type": "resume_sale", "sale_id": int(agent[5:])})
-    elif re.search(r"tự học|rút kinh nghiệm", low):
-        acts.append({"type": "learn_now"})
-    elif re.search(r"\b(từ nay|từ giờ|luôn luôn|không được|cấm|bắt buộc|mỗi ngày|đừng bao giờ)\b", low):
-        acts.append({"type": "order", "agent": agent or "all", "text": t})
-    elif agent:
-        acts.append({"type": "task", "agent": agent, "title": t})
-    reply = ("Dạ sếp, tình hình hôm nay:" if acts and all(a["type"] == "status" for a in acts) else "Dạ em nhận việc.") if acts else ("Dạ em chưa hiểu rõ việc này. Sếp nói cụ thể hơn giúp em, ví dụ: “Viết 3 bài về trà gừng”, "
-                                            "“Tìm nhóm theo chủ đề hội chạy quảng cáo facebook”, “Lan viết dài quá, viết ngắn lại”.")
+    else:
+        if want_find:
+            acts.append({"type": "find_groups", "keywords": _keywords(t)})
+        if want_join and not want_find:
+            acts.append({"type": "join_groups"})
+        if want_write:
+            n = int(want_write.group(3)) if want_write.group(3) else 3
+            pid = None
+            for p in db.q("SELECT id, name FROM products"):
+                words = [w for w in p["name"].lower().split() if len(w) > 2][:3]
+                if words and sum(w in low for w in words) >= min(2, len(words)):
+                    pid = p["id"]
+                    break
+            tt = "profile" if "trang cá nhân" in low else "page" if "fanpage" in low else "group"
+            acts.append({"type": "write_posts", "count": n, "product_id": pid, "target": tt, "note": t})
+        elif want_plan:
+            acts.append({"type": "plan"})
+        if re.search(r"\bhọp\b|triệu tập", low) and not acts:
+            topic = re.sub(r".*?(\bhọp\b|triệu tập)\s*(về|bàn|chủ đề)?\s*:?\s*", "", t, count=1, flags=re.I).strip()
+            acts.append({"type": "meeting", "topic": topic})
+        if re.search(r"quét|(đọc|xem|check)\s+(bình luận|comment|cmt)", low):
+            acts.append({"type": "scan_comments"})
+        if agent and agent.startswith("sale-") and re.search(r"tạm dừng|dừng đăng|ngừng đăng|nghỉ đăng", low):
+            acts.append({"type": "pause_sale", "sale_id": int(agent[5:])})
+        if agent and agent.startswith("sale-") and re.search(r"bật lại|cho đăng lại|tiếp tục đăng|chạy lại", low):
+            acts.append({"type": "resume_sale", "sale_id": int(agent[5:])})
+        if re.search(r"tự học|rút kinh nghiệm", low):
+            acts.append({"type": "learn_now"})
+        if re.search(r"làm việc (hằng|hàng) ngày|bắt đầu làm việc|vào việc", low) and not acts:
+            acts.append({"type": "daily_work"})
+        if m := re.search(r"tuyển\s*(thêm)?\s*(\d+)?\s*(sale|nhân viên)", low):
+            for _ in range(min(3, int(m.group(2) or 1))):
+                acts.append({"type": "hire", "reason": t})
+        if not acts and re.search(r"\b(từ nay|từ giờ|từ bây giờ|luôn luôn|bắt buộc|cấm|không được|đừng bao giờ|mỗi bài|bài nào cũng|mọi bài)\b", low):
+            acts.append({"type": "order", "agent": agent or "all", "text": t})
+        if not acts and agent and critique:
+            acts.append({"type": "teach", "agent": agent, "text": t})
+        if not acts and agent:
+            acts.append({"type": "task", "agent": agent, "title": t})
+    if acts and all(a["type"] == "status" for a in acts):
+        reply = "Dạ sếp, tình hình hôm nay:"
+    elif acts:
+        reply = "Dạ em nhận việc."
+    else:
+        reply = ("Dạ em chưa hiểu rõ việc này nên chưa giao cho ai. Sếp nói cụ thể hơn giúp em, ví dụ: “Tìm hội nhóm chạy quảng cáo "
+                 "facebook”, “Viết 3 bài về trà gừng”, “Xếp lịch đăng bài”, “Lan viết dài quá, viết ngắn lại”.")
     return {"reply": reply, "actions": acts}
 
 
@@ -384,13 +504,16 @@ def handle(text: str, via: str = "web") -> dict:
         plan = _llm_plan(text)
     except Exception as e:
         print("[ceo_orders]", e)
-    if not plan:
-        plan = _rule_plan(text)
+    if not plan or not plan.get("actions"):
+        rp = _rule_plan(text)
+        if rp["actions"] or not plan:
+            plan = rp
     done = []
     for a in (plan.get("actions") or [])[:6]:
         if not isinstance(a, dict) or not a.get("type"):
             continue
         try:
+            a["_via"] = via
             res = execute(a)
         except Exception as e:
             import errors
@@ -398,6 +521,8 @@ def handle(text: str, via: str = "web") -> dict:
             res = f"Lỗi khi làm “{a.get('type')}”: {str(e)[:120]}"
         done.append({"type": a["type"], "result": res})
     reply = (plan.get("reply") or "Dạ em nhận việc.").strip()
+    if done and all(d["result"].startswith(("Chưa", "Không")) for d in done) and reply.startswith("Dạ em nhận việc"):
+        reply = "Dạ, việc này em chưa làm được ngay:"
     if done:
         reply += "\n" + "\n".join(f"• {d['result']}" for d in done)
     _say("ceo", reply, done, via=via)
@@ -424,6 +549,17 @@ def review_post(p: dict) -> tuple[bool, str]:
     return True, ""
 
 
+def _apply_review(p: dict, good: bool, why: str):
+    import learning
+    if good:
+        db.run("UPDATE posts SET status='approved' WHERE id=?", (p["id"],))
+        learning.record_feedback(p["id"], "approve")
+        learning.award("lan", 8, "Bài được CEO duyệt")
+    else:
+        db.run("UPDATE posts SET status='rejected' WHERE id=?", (p["id"],))
+        learning.record_feedback(p["id"], "reject", p["content"], "", why)
+
+
 def review_drafts() -> dict:
     import learning
     import workflows
@@ -431,14 +567,10 @@ def review_drafts() -> dict:
     ok = bad = 0
     for p in db.q("SELECT * FROM posts WHERE status='draft' AND created_at <= ? ORDER BY id LIMIT 20", (cutoff,)):
         good, why = review_post(p)
+        _apply_review(p, good, why)
         if good:
-            db.run("UPDATE posts SET status='approved' WHERE id=?", (p["id"],))
-            learning.record_feedback(p["id"], "approve")
-            learning.award("lan", 8, "Bài được CEO duyệt")
             ok += 1
         else:
-            db.run("UPDATE posts SET status='rejected' WHERE id=?", (p["id"],))
-            learning.record_feedback(p["id"], "reject", p["content"], "", why)
             bad += 1
     if ok or bad:
         db.log("ceo", "Duyệt bài", f"Duyệt {ok} bài, loại {bad} bài" + (" (lý do được ghi để Lan rút kinh nghiệm)" if bad else ""))
@@ -459,7 +591,14 @@ def tick():
 
 
 def overview() -> dict:
-    return {"autopilot": autopilot(), "history": history(), "orders": orders(),
+    import browser_poster
+    running = []
+    for r in _sales():
+        b = browser_poster.busy(r["id"])
+        if b:
+            running.append(f"{r['name']}: {JOB_TXT.get(b, b)}" + (f" (+{browser_poster.queued(r['id']) - 1} việc chờ)"
+                                                                     if browser_poster.queued(r["id"]) > 1 else ""))
+    return {"autopilot": autopilot(), "history": history(), "orders": orders(), "running": running,
             "suggestions": ["Tình hình hôm nay thế nào?", "Viết 3 bài về trà gừng mật ong", "Xếp lịch đăng nhóm",
                             "Tìm nhóm theo chủ đề “hội chạy quảng cáo facebook”", "Lan viết bài dài quá, viết dưới 150 chữ",
                             "Từ nay bài nào cũng nhắc giao hàng toàn quốc"]}

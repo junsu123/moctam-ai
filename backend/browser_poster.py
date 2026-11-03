@@ -1038,10 +1038,10 @@ def _worker(sale_id: int, q: Queue):
                     _job_scan(pw, sale_id, job["post_ids"])
                 elif job["kind"] == "discover":
                     import group_finder
-                    group_finder.job_discover(pw, sale_id, job["keywords"])
+                    group_finder.job_discover(pw, sale_id, job["keywords"], job.get("notify"))
                 elif job["kind"] == "join":
                     import group_finder
-                    group_finder.job_join(pw, sale_id)
+                    group_finder.job_join(pw, sale_id, job.get("notify"))
         except Exception as e:
             traceback.print_exc()
             msg = friendly(e)
@@ -1056,6 +1056,10 @@ def _worker(sale_id: int, q: Queue):
                 db.run("UPDATE errors SET message=? WHERE id=?", (msg[:1000], eid))
             if job["kind"] == "check":
                 db.run("UPDATE sales SET last_error=? WHERE id=?", (msg[:300], sale_id))
+            if job.get("notify"):  # việc CEO giao theo lệnh sếp: báo lại là không làm được
+                import ceo_orders
+                ceo_orders.followup(f"{s.get('name') or 'Sale'} chưa {JOB_NAME.get(job['kind'], job['kind'])} được: {msg[:200]}. "
+                                    "Chi tiết ở mục Lỗi.", job["notify"])
             if job["kind"] == "bump":
                 db.run("UPDATE bumps SET status='failed', error=? WHERE id=? AND status='running'",
                        (msg[:300], job["bump_id"]))
