@@ -160,6 +160,8 @@ label.row.small input{margin-top:3px;flex:none}
 .post .thumbs img{width:52px;height:52px}
 .fname{font-size:11px;background:var(--panel-2);border-radius:6px;padding:2px 6px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
 .phone{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.offline{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:50;background:var(--danger);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+.reset-list{margin:0;padding-left:18px;columns:2;column-gap:20px;font-size:12.5px}
 .alert{background:var(--danger-soft);border:1px solid var(--danger);border-radius:var(--r);padding:10px 14px;font-size:13px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
 .kpi .v{font:800 26px/1 var(--f-display);font-variant-numeric:tabular-nums}
@@ -614,6 +616,15 @@ tbody tr.sel td{background:var(--accent-soft)}
           <div><button class="btn primary" type="submit">Lưu cài đặt</button></div>
         </form>
         <div class="sidecol">
+          <form class="card" id="resetForm">
+            <div class="card-h"><h3>Bắt đầu chạy thật</h3><span class="chip" id="resetChip"></span></div>
+            <p class="small muted">Xóa toàn bộ dữ liệu thử nghiệm để đội bắt đầu làm việc thật. Phần mềm tự sao lưu một bản vào thư mục data/backups trước khi xóa.</p>
+            <div id="resetPreview" class="note"></div>
+            <label class="row small"><input type="checkbox" id="rsProd"> Xóa cả sản phẩm đã nhập (thư mục ảnh trên máy không bị đụng tới)</label>
+            <label class="row small"><input type="checkbox" id="rsGroup"> Xóa cả hội nhóm đã nhập</label>
+            <label class="f" for="rsConfirm"><span>Gõ <b>CHAY THAT</b> để xác nhận</span><input type="text" id="rsConfirm" autocomplete="off" placeholder="CHAY THAT"></label>
+            <div><button class="btn primary" type="submit" id="rsBtn" disabled>Xóa dữ liệu thử nghiệm</button></div>
+          </form>
           <div class="card" id="sampleCard" hidden>
             <div class="card-h"><h3>Dữ liệu mẫu</h3><span class="chip warn" id="sampleChip"></span></div>
             <p class="small muted" id="sampleTxt"></p>
@@ -669,6 +680,7 @@ tbody tr.sel td{background:var(--accent-soft)}
 </div>
 <aside class="drawer" id="drawer" hidden></aside>
 <div class="toast" id="toast" hidden></div>
+<div class="offline" id="offline" hidden role="alert"><b>Mất kết nối với phần mềm trên máy.</b> Kiểm tra cửa sổ run.bat còn mở không. Trang sẽ tự kết nối lại.</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -772,7 +784,7 @@ const Demo = (() => {
   const lvl=xp=>1+Math.floor(Math.sqrt(xp/50)), lxp=l=>50*(l-1)**2;
   function demoFolder(p){ if(!p.image_folder) return {exists:false,source:"",count:0,fresh:0,samples:[]}; const n=[24,18,9,15,6,12][(p.id-1)%6]||10, fr=[17,11,2,9,4,7][(p.id-1)%6]||5; return {path:p.image_folder,exists:true,source:"product",count:n,fresh:fr,posts_left:Math.floor(fr/2),samples:[],error:null}; }
   function demoKpi(){
-    const d=new Date(); const mn=+S.settings.kpi_min||5, mx=+S.settings.kpi_max||10; const ph=S.kpiPhone||3;
+    const d=new Date(); const mn=+S.settings.kpi_min||5, mx=+S.settings.kpi_max||10; const ph=S.kpiPhone??3;
     const history=[...Array(14)].map((_,i)=>{ const x=new Date(d-(13-i)*864e5); const v=i===13?ph:[4,6,5,7,3,8,6,5,9,6,11,7,8][i]; const p2=n=>String(n).padStart(2,"0"); return {date:`${x.getFullYear()}-${p2(x.getMonth()+1)}-${p2(x.getDate())}`,target_min:mn,target_max:mx,leads_phone:v,leads_total:v+3,achieved:+(v>=mn)}; });
     const boss=S.leads.filter(l=>l.escalated_at&&!["ordered","lost"].includes(l.status)&&l.boss_status!=="called").length;
     const td={date:today(),target_min:mn,target_max:mx,leads_phone:ph,leads_total:ph+3,leads_no_phone:3,from_comments:ph+1,asked_phone:4,posts:3,bumps:5,escalated:ph,boss_pending:boss,ordered:1,achieved:ph>=mn,exceeded:ph>=mx,pct:Math.round(ph/mn*100)};
@@ -850,6 +862,7 @@ const Demo = (() => {
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products.map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g)}));
       if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,tg_token:S.settings.tg_token?"••••••":"",models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
+      if(P==="/reset"){ const c=(n,l)=>n?[{label:l,count:n}]:[]; return {delete:[...c(S.posts.length,"bài đăng"),...c(S.leads.length,"khách hàng"),...c(S.meetings.length,"cuộc họp"),...c(S.activity.length,"nhật ký hoạt động"),...c(S.lessons.length,"bài học của agent"),...c(S.tasks.length,"việc được giao")],keep:{sales:S.sales.filter(x=>!x.is_sample).length,products:0,groups:0},samples:{products:S.products.length,groups:S.groups.length,sales:S.sales.filter(x=>x.is_sample).length},shots:0}; }
       if(P==="/sample-data") return {sales:S.sales.filter(x=>x.is_sample).length,leads:S.leads.filter(x=>x.is_sample).length,groups:S.groups.length,products:S.products.length};
       if(P==="/learning") return demoLearning();
       if(P==="/kpi") return demoKpi();
@@ -921,6 +934,9 @@ const Demo = (() => {
     if(method==="POST"&&P==="/ai-key") throw new Error("Bản xem trước không lưu khóa. Chạy phần mềm trên máy bạn để nhập khóa API.");
     if(method==="PUT"&&P==="/settings"){ if(body.tg_token==="••••••") delete body.tg_token; Object.assign(S.settings,body); return S.settings; }
     if(method==="DELETE"&&(m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const path=new URLSearchParams(qs).get("path"); pr.images=JSON.stringify(JSON.parse(pr.images||"[]").filter(x=>x!==path)); return {ok:true}; }
+    if(method==="POST"&&P==="/reset"){ if(String(body.confirm).trim().toUpperCase()!=="CHAY THAT") throw new Error('Gõ đúng "CHAY THAT" để xác nhận');
+      S.posts=[]; S.leads=[]; S.meetings=[]; S.msgs=[]; S.tasks=[]; S.activity=[]; S.lessons=[]; S.xp={}; S.goals={}; S.kpiPhone=0; S.sales=S.sales.filter(x=>!x.is_sample);
+      if(body.products) S.products=[]; if(body.groups) S.groups=[]; log("minh","Bắt đầu chạy thật","Đã xóa dữ liệu thử nghiệm, giữ nhân viên sale và cài đặt"); return {deleted:[],backup:"data/backups/truoc-khi-chay-that.db"}; }
     if(method==="DELETE"&&P==="/sample-data"){ S.sales=S.sales.filter(x=>!x.is_sample); S.leads=S.leads.filter(x=>!x.is_sample); S.groups=[]; S.products=[]; log("minh","Dọn dữ liệu mẫu","Đã xóa dữ liệu mẫu"); return {deleted:{}}; }
     if(method==="DELETE"&&(m=P.match(/^\/sales\/(\d+)$/))){ S.sales=S.sales.filter(x=>x.id!=m[1]); return {ok:true}; }
     if(method==="DELETE"){ if((m=P.match(/^\/products\/(\d+)$/))) S.products=S.products.filter(x=>x.id!=m[1]); if((m=P.match(/^\/groups\/(\d+)$/))) S.groups=S.groups.filter(x=>x.id!=m[1]); return {ok:true}; }
@@ -933,7 +949,9 @@ const Demo = (() => {
 let DEMO = false;
 async function api(path, method="GET", body){
   if(DEMO) return Demo.handle(method, "/api"+path, body||{});
-  const r = await fetch("/api"+path, {method, headers:{"content-type":"application/json"}, body: body?JSON.stringify(body):undefined});
+  let r;
+  try{ r = await fetch("/api"+path, {method, headers:{"content-type":"application/json"}, body: body?JSON.stringify(body):undefined}); setOffline(false); }
+  catch(e){ setOffline(true); throw new Error("Mất kết nối với phần mềm trên máy"); }
   if(!r.ok){ const t=await r.text(); let m=t; try{ m=JSON.parse(t).detail||t; }catch(e){} throw new Error(String(m).slice(0,200)); }
   return r.json();
 }
@@ -942,8 +960,12 @@ async function detect(){
     const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),2500);
     const r=await fetch("/api/health",{signal:ctl.signal}); clearTimeout(t);
     const j=await r.json(); if(!j.ok) throw 0; return j;
-  }catch(e){ DEMO=true; return Demo.handle("GET","/api/health"); }
+  }catch(e){
+    if(window.__BACKEND__){ setOffline(true); await new Promise(r=>setTimeout(r,3000)); return detect(); }
+    DEMO=true; return Demo.handle("GET","/api/health");
+  }
 }
+function setOffline(off){ const b=$("#offline"); if(b) b.hidden=!off; }
 
 /* =========================================================== 3D: văn phòng hoạt hình */
 const World = (() => {
@@ -1636,7 +1658,21 @@ async function loadSamples(){
 }
 $("#sampleDel").onclick=async e=>{ const b=e.target; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa vĩnh viễn"; return; }
   b.dataset.confirm=""; b.textContent="Xóa toàn bộ dữ liệu mẫu"; await api("/sample-data","DELETE"); toast("Đã xóa dữ liệu mẫu"); loadSamples(); refresh(); };
+async function loadReset(){
+  const r=await api("/reset"); const total=r.delete.reduce((a,x)=>a+x.count,0);
+  $("#resetChip").className="chip "+(total?"warn":"ok"); $("#resetChip").textContent=total?"Còn dữ liệu thử nghiệm":"Sạch, sẵn sàng chạy thật";
+  $("#resetPreview").innerHTML=(total?`<b>Sẽ xóa:</b><ul class="reset-list">${r.delete.map(x=>`<li>${x.count} ${esc(x.label)}</li>`).join("")}${r.shots?`<li>${r.shots} ảnh chụp màn hình</li>`:""}${r.samples.products?`<li>${r.samples.products} sản phẩm mẫu</li>`:""}${r.samples.groups?`<li>${r.samples.groups} hội nhóm mẫu</li>`:""}${r.samples.sales?`<li>${r.samples.sales} sale mẫu</li>`:""}</ul>`:"Không còn dữ liệu thử nghiệm.")
+    +`<br><b>Giữ nguyên:</b> ${r.keep.sales} nhân viên sale (cả phiên đăng nhập Facebook), ${r.keep.products} sản phẩm và ${r.keep.groups} hội nhóm bạn đã nhập, khóa API, Telegram, KPI, thư mục ảnh, chi phí AI đã tiêu.`;
+}
+$("#rsConfirm").addEventListener("input",e=>{ $("#rsBtn").disabled=e.target.value.trim().toUpperCase()!=="CHAY THAT"; });
+$("#resetForm").addEventListener("submit",async e=>{ e.preventDefault(); const b=$("#rsBtn"); b.disabled=true; b.textContent="Đang sao lưu và xóa…";
+  try{ const r=await api("/reset","POST",{confirm:$("#rsConfirm").value,products:$("#rsProd").checked,groups:$("#rsGroup").checked});
+    toast("Đã xóa dữ liệu thử nghiệm. Đội sẵn sàng làm việc thật."); $("#rsConfirm").value=""; $("#rsProd").checked=false; $("#rsGroup").checked=false;
+    if(r.backup) $("#resetPreview").insertAdjacentHTML("beforeend",`<br><span class="small">Bản sao lưu: ${esc(r.backup)}</span>`); }
+  catch(err){ toast(err.message); }
+  b.textContent="Xóa dữ liệu thử nghiệm"; ST.posts=[]; ST.leads=[]; ST.meetingId=null; ST.msgs=[]; setTimeout(loadReset,300); loadSamples(); refresh(); });
 async function loadSettings(){
+  loadReset();
   loadSamples();
   loadCosts();
   const s=await api("/settings");

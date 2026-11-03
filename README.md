@@ -195,9 +195,24 @@ rút ra bài học… Cấp độ hiện trên nhân vật 3D. Trang Đào tạo
 luật nhóm và việc dừng khi checkpoint là do sếp đặt; bài học đề xuất tăng tần suất, lách luật hay hứa công dụng chữa
 bệnh bị tự động loại.
 
+## Bắt đầu chạy thật
+
+Sau khi thử nghiệm xong: **Cài đặt → Bắt đầu chạy thật** → gõ `CHAY THAT` → **Xóa dữ liệu thử nghiệm**.
+
+- **Xóa:** bài đăng, lượt up bài, lịch sử dùng ảnh, khách hàng, tin nhắn, bình luận đã quét, cuộc họp, việc giao,
+  nhật ký, bài học và cấp độ của agent, lịch sử KPI, ảnh chụp màn hình, cùng toàn bộ sản phẩm/hội nhóm/sale **mẫu**.
+  Có thể chọn xóa cả sản phẩm và hội nhóm bạn đã nhập.
+- **Giữ nguyên:** nhân viên sale và phiên đăng nhập Facebook của họ, sản phẩm và hội nhóm bạn đã nhập, khóa API Claude,
+  Telegram, KPI và mọi cài đặt, thư mục ảnh trên máy, chi phí AI đã tiêu (để ngân sách tháng vẫn đúng).
+- Trước khi xóa, phần mềm tự sao lưu toàn bộ dữ liệu vào `data/backups/`. Muốn khôi phục: tắt phần mềm, chép file sao lưu
+  đè lên `data/company.db`.
+
+Từ bản này, phần mềm không còn tạo khách hàng giả khi cài mới. Khi trang mở từ phần mềm trên máy mà phần mềm bị tắt,
+giao diện báo "Mất kết nối" và tự kết nối lại, không bao giờ hiển thị dữ liệu mẫu thay cho dữ liệu thật.
+
 ## Dữ liệu mẫu
 
-Lần đầu chạy, phần mềm tạo sẵn vài sản phẩm, hội nhóm và khách hàng **mẫu** để bạn xem thử. Chúng được đánh dấu riêng:
+Lần đầu chạy, phần mềm tạo sẵn vài sản phẩm và hội nhóm **mẫu** để bạn xem thử (bản cũ còn tạo cả khách hàng mẫu). Chúng được đánh dấu riêng:
 
 - Khách mẫu không bao giờ được chuyển sang Telegram và tự bị xóa khi có khách thật đầu tiên.
 - Sale mẫu tự rời văn phòng 3D khi bạn tuyển sale đầu tiên.

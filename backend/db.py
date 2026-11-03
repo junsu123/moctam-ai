@@ -276,6 +276,7 @@ SEED_GROUPS = [
      "Bài bán hàng cần duyệt, nội dung nhẹ nhàng.", 4),
 ]
 
+# Khách mẫu của các bản cũ: KHÔNG còn được tạo, chỉ giữ tên để nhận diện và dọn ở máy đã cài bản cũ
 SEED_LEADS = [
     ("Thu Trang", "fb.com/thutrang.shop", "Facebook", "Hội Livestream bán hàng", "Livestream",
      "Muốn lấy sỉ trà đậu biếc để live pha chế", 80, "contacted"),
@@ -307,10 +308,6 @@ def init():
         for g in SEED_GROUPS:
             run("""INSERT INTO groups(name, url, topic, members, rules, min_days_between_posts, created_at, is_sample)
                    VALUES (?,?,?,?,?,?,?,1)""", (*g, now()))
-        for l in SEED_LEADS:
-            run("""INSERT INTO leads(name, contact, channel, source, business_type, need, score, status,
-                   last_contact_at, created_at, updated_at, is_sample) VALUES (?,?,?,?,?,?,?,?,?,?,?,1)""",
-                (*l, now(), now(), now()))
     # Máy đã cài bản cũ: đánh dấu dữ liệu mẫu theo đúng tên đã gieo (1 lần)
     if not one("SELECT value FROM settings WHERE key='sample_marked'"):
         for name, *_ in SEED_LEADS:
@@ -324,6 +321,75 @@ def init():
 
 def sample_counts() -> dict:
     return {t: one(f"SELECT COUNT(*) n FROM {t} WHERE is_sample=1")["n"] for t in ("sales", "leads", "groups", "products")}
+
+
+# ---------------------------------------------------------------- bắt đầu chạy thật
+RESET_TABLES = {  # bảng: mô tả cho sếp
+    "posts": "bài đăng", "bumps": "lượt up bài", "image_usage": "lịch sử dùng ảnh", "leads": "khách hàng",
+    "replies": "tin nhắn Hà soạn", "comment_seen": "bình luận đã quét", "meetings": "cuộc họp",
+    "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
+    "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",
+    "kpi_daily": "lịch sử KPI", "ai_batches": "lô viết bài đang chờ",
+}
+RUN_STATE_KEYS = ["bump_planned_date", "learn_last_date", "scan_last", "tg_sent_log"]
+
+
+def reset_preview() -> dict:
+    counts = {t: one(f"SELECT COUNT(*) n FROM {t}" + (" WHERE action!='Bắt đầu chạy thật'" if t == "activity" else ""))["n"]
+              for t in RESET_TABLES}
+    return {"delete": [{"table": t, "label": RESET_TABLES[t], "count": n} for t, n in counts.items() if n],
+            "keep": {"sales": one("SELECT COUNT(*) n FROM sales WHERE COALESCE(is_sample,0)=0")["n"],
+                     "products": one("SELECT COUNT(*) n FROM products WHERE COALESCE(is_sample,0)=0")["n"],
+                     "groups": one("SELECT COUNT(*) n FROM groups WHERE COALESCE(is_sample,0)=0")["n"]},
+            "samples": {"products": one("SELECT COUNT(*) n FROM products WHERE is_sample=1")["n"],
+                        "groups": one("SELECT COUNT(*) n FROM groups WHERE is_sample=1")["n"],
+                        "sales": one("SELECT COUNT(*) n FROM sales WHERE is_sample=1")["n"]},
+            "shots": len(list(SHOTS_DIR.glob("*.png")))}
+
+
+def reset_test_data(products: bool = False, groups: bool = False) -> dict:
+    """Xóa dữ liệu thử nghiệm, GIỮ nhân viên sale (kèm hồ sơ Chrome đã đăng nhập Facebook),
+    cài đặt (khóa API, Telegram, KPI, thư mục ảnh), chi phí AI đã tiêu. Tự sao lưu trước khi xóa."""
+    import shutil
+    backup_dir = DATA_DIR / "backups"
+    backup_dir.mkdir(exist_ok=True)
+    backup = backup_dir / f"truoc-khi-chay-that-{datetime.now().strftime('%Y%m%d-%H%M%S')}.db"
+    with _lock:
+        conn().commit()
+        bk = sqlite3.connect(backup)
+        conn().backup(bk)
+        bk.close()
+    before = reset_preview()
+    with _lock:
+        c = conn()
+        for t in RESET_TABLES:
+            c.execute(f"DELETE FROM {t}")
+        c.execute("DELETE FROM sales WHERE is_sample=1")
+        c.execute("UPDATE sales SET last_post_at=NULL, last_error=NULL")
+        if products:
+            c.execute("DELETE FROM products")
+        else:
+            c.execute("DELETE FROM products WHERE is_sample=1")
+        if groups:
+            c.execute("DELETE FROM groups")
+        else:
+            c.execute("DELETE FROM groups WHERE is_sample=1")
+            c.execute("UPDATE groups SET last_posted_at=NULL, leads_count=0")
+        for k in RUN_STATE_KEYS:
+            c.execute("UPDATE settings SET value=? WHERE key=?", ("{}" if k == "tg_sent_log" else "", k))
+        tables = list(RESET_TABLES) + (["products"] if products else []) + (["groups"] if groups else [])
+        c.execute("DELETE FROM sqlite_sequence WHERE name IN (%s)" % ",".join("?" * len(tables)), tables)
+        c.commit()
+        c.execute("VACUUM")
+    shots = 0
+    for f in SHOTS_DIR.glob("*.png"):
+        f.unlink(missing_ok=True)
+        shots += 1
+    if products:  # ảnh tải lên trong phần mềm (thư mục ảnh trên máy sếp KHÔNG bị đụng tới)
+        shutil.rmtree(MEDIA_DIR, ignore_errors=True)
+        MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    log("minh", "Bắt đầu chạy thật", "Đã xóa dữ liệu thử nghiệm, giữ nhân viên sale và cài đặt")
+    return {"deleted": before["delete"], "shots": shots, "backup": str(backup)}
 
 
 def clear_samples(tables=("sales", "leads", "groups", "products")) -> dict:

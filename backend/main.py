@@ -657,6 +657,31 @@ def del_image(pid: int, path: str):
     return {"images": imgs}
 
 
+# ------------------------------------------------------------------ bắt đầu chạy thật
+class ResetReq(BaseModel):
+    confirm: str = ""
+    products: bool = False
+    groups: bool = False
+
+
+@app.get("/api/reset")
+def reset_preview():
+    return db.reset_preview()
+
+
+@app.post("/api/reset")
+def reset(r: ResetReq):
+    if r.confirm.strip().upper() != "CHAY THAT":
+        raise HTTPException(400, 'Gõ đúng "CHAY THAT" để xác nhận')
+    busy = [s["name"] for s in db.q("SELECT id, name FROM sales") if browser_poster.busy(s["id"]) or browser_poster.queued(s["id"])]
+    if busy or meeting.is_running():
+        raise HTTPException(409, "Đang có " + (f"nick {', '.join(busy)} làm việc" if busy else "cuộc họp") + ". Chờ xong rồi thử lại.")
+    res = db.reset_test_data(r.products, r.groups)
+    for k in list(workflows.STATUS):
+        workflows.STATUS[k] = {"state": "idle", "text": "Sẵn sàng làm việc thật"}
+    return res
+
+
 # ------------------------------------------------------------------ dữ liệu mẫu
 @app.get("/api/sample-data")
 def sample_data():
@@ -852,6 +877,7 @@ def index():
     return ('<!doctype html><html lang="vi"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
             '<style>html,body{height:100%;margin:0}[hidden]{display:none!important}</style>'
+            '<script>window.__BACKEND__=true</script>'
             f'</head><body>{body}</body></html>')
 
 

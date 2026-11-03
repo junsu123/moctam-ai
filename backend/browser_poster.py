@@ -124,11 +124,8 @@ def _wait_click(page, labels, timeout=20, role="button"):
     return False
 
 
-PAUSE_SCALE = float(os.getenv("FB_PAUSE_SCALE", "1"))  # chỉ để kiểm tra nhanh; dùng thật để 1
-
-
 def _pause(page, a=0.6, b=1.6):
-    page.wait_for_timeout(int(random.uniform(a, b) * 1000 * (PAUSE_SCALE if b > 5 else 1)))
+    page.wait_for_timeout(int(random.uniform(a, b) * 1000))
 
 
 def _publish(page, post: dict, target_url: str, composer_labels: list[str], dry_run: bool, imgs=None) -> str:
