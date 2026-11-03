@@ -1285,16 +1285,34 @@ def _kill_tree(p):
         pass
 
 
+def _listening(p) -> bool:
+    """Tiến trình có đang mở cổng web không (bản phần mềm thật sự đang chạy, khác với tiến trình khởi chạy)."""
+    try:
+        import psutil
+        conns = (getattr(p, "net_connections", None) or p.connections)(kind="tcp")
+        return any(c.status == psutil.CONN_LISTEN for c in conns)
+    except Exception:
+        return False
+
+
 def _kill_other_instances():
-    """Tắt mọi bản phần mềm này đang chạy (bản cũ, bản chạy trùng), kể cả bản không giữ cổng."""
+    """Tắt mọi bản phần mềm này đang chạy (bản cũ, bản chạy trùng), kể cả bản không giữ cổng.
+    Không tắt tiến trình khởi chạy của chính mình: trên Windows, .venv\\Scripts\\python.exe chỉ là trình khởi chạy,
+    nó mở Python thật thành tiến trình con và tắt nó là tắt luôn bản đang khởi động."""
     try:
         import psutil
     except ImportError:
         return
     me = os.getpid()
+    try:
+        ancestors = {a.pid for a in psutil.Process(me).parents()}
+    except Exception:
+        ancestors = set()
     for p in psutil.process_iter(["name"]):
         if p.pid == me:
             continue
+        if p.pid in ancestors and not _listening(p):
+            continue  # trình khởi chạy của chính mình (hoặc cửa sổ run.bat): giữ nguyên
         if _is_this_app(p):
             print(f"[!] Phát hiện phần mềm đang chạy sẵn (PID {p.pid}, có thể là bản cũ). Đang tắt để chạy bản này...")
             _kill_tree(p)
