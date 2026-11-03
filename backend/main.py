@@ -1424,6 +1424,10 @@ def _kill_other_instances():
             continue  # trình khởi chạy của chính mình (hoặc cửa sổ run.bat): giữ nguyên
         if _is_this_app(p):
             print(f"[!] Phát hiện phần mềm đang chạy sẵn (PID {p.pid}, có thể là bản cũ). Đang tắt để chạy bản này...")
+            try:
+                REPLACED_FLAG.write_text(str(p.pid))  # cửa sổ run.bat của bản cũ thấy cờ này thì tự đóng, không báo lỗi
+            except Exception:
+                pass
             _kill_tree(p)
 
 
@@ -1462,9 +1466,130 @@ def _bind(host: str, port: int):
     sys.exit(1)
 
 
+# ------------------------------------------------------------------ tắt êm, nhường chỗ cho bản mới
+INSTANCE_FILE = db.DATA_DIR / "instance.json"
+REPLACED_FLAG = db.DATA_DIR / "replaced.flag"
+_server = {"obj": None, "replaced": False, "token": None}
+
+
+class Quit(BaseModel):
+    token: str
+
+
+@app.post("/api/admin/quit")
+def admin_quit(q: Quit, request: Request):
+    """Bản mới khởi động gọi vào đây để bản đang chạy tự tắt êm (không phải bị buộc tắt)."""
+    if not _server["token"] or q.token != _server["token"] or (request.client and request.client.host not in ("127.0.0.1", "::1", "localhost")):
+        raise HTTPException(403, "Không có quyền")
+    _server["replaced"] = True
+    if _server["obj"]:
+        _server["obj"].should_exit = True
+    return {"ok": True, "pid": os.getpid()}
+
+
+def _ask_old_to_quit():
+    """Nhờ bản đang chạy (bản có hỗ trợ) tự tắt êm, chờ tối đa 20 giây."""
+    try:
+        info = json.loads(INSTANCE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    pid = info.get("pid")
+    if not pid or pid == os.getpid():
+        return
+    try:
+        import psutil
+        if not psutil.pid_exists(pid):
+            return
+    except ImportError:
+        return
+    try:
+        import httpx
+        httpx.post(f"http://127.0.0.1:{info.get('port', 8000)}/api/admin/quit", json={"token": info.get("token", "")}, timeout=5)
+        print(f"[!] Đang nhờ bản phần mềm đang chạy (PID {pid}) tự tắt để chạy bản này...")
+    except Exception:
+        return
+    end = time.time() + 20
+    while time.time() < end and psutil.pid_exists(pid):
+        try:
+            if psutil.Process(pid).status() == psutil.STATUS_ZOMBIE:
+                break
+        except Exception:
+            break
+        time.sleep(0.5)
+
+
+def _quiet_console():
+    """Windows: tắt chế độ chọn chữ (QuickEdit) của cửa sổ đen. Khi đang chọn chữ, Windows dừng mọi chữ in ra
+    nên phần mềm bị treo cho tới khi bấm Esc."""
+    if os.name != "nt":
+        return
+    try:
+        import ctypes
+        k = ctypes.windll.kernel32
+        h = k.GetStdHandle(-10)
+        mode = ctypes.c_uint32()
+        if k.GetConsoleMode(h, ctypes.byref(mode)):
+            k.SetConsoleMode(h, (mode.value & ~0x0040) | 0x0080)  # bỏ ENABLE_QUICK_EDIT_MODE, giữ EXTENDED_FLAGS
+    except Exception:
+        pass
+
+
+def _cleanup_children():
+    """Tắt Chrome và các tiến trình con còn lại để không giữ hồ sơ của sale sau khi phần mềm tắt."""
+    try:
+        import psutil
+        for ch in psutil.Process(os.getpid()).children(recursive=True):
+            try:
+                name = ch.name().lower()
+                # chỉ tắt Chrome và trình điều khiển trình duyệt; không đụng bản phần mềm mới vừa được mở để thay bản này
+                if any(k in name for k in ("chrom", "node", "playwright", "headless_shell", "msedge")) and not _is_this_app(ch):
+                    ch.kill()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
 if __name__ == "__main__":
+    import secrets
     host, port = os.getenv("HOST", "127.0.0.1"), int(os.getenv("PORT", 8000))
+    _quiet_console()
+    try:  # cờ "đã bị thay" còn sót từ lâu (cửa sổ cũ không đọc tới): bỏ đi
+        if REPLACED_FLAG.exists() and time.time() - REPLACED_FLAG.stat().st_mtime > 120:
+            REPLACED_FLAG.unlink()
+    except Exception:
+        pass
+    _ask_old_to_quit()
     _kill_other_instances()
     sock = _bind(host, port)
-    print(f"Phần mềm đang chạy: http://localhost:{port}  (đóng cửa sổ này để tắt)")
-    uvicorn.Server(uvicorn.Config(app, host=host, port=port, reload=False)).run(sockets=[sock])
+    _server["token"] = secrets.token_hex(16)
+    try:
+        INSTANCE_FILE.write_text(json.dumps({"pid": os.getpid(), "port": port, "token": _server["token"]}), encoding="utf-8")
+    except Exception:
+        pass
+    print(f"Phần mềm đang chạy: http://localhost:{port}  (để tắt: đóng cửa sổ này, hoặc bấm Ctrl+C)")
+    server = uvicorn.Server(uvicorn.Config(app, host=host, port=port, reload=False))
+    _server["obj"] = server
+    code = 0
+    try:
+        server.run(sockets=[sock])
+    except KeyboardInterrupt:
+        pass  # bấm Ctrl+C: tắt bình thường, không phải lỗi
+    except SystemExit as e:
+        code = e.code if isinstance(e.code, int) else 1
+    finally:
+        _cleanup_children()
+        try:
+            if json.loads(INSTANCE_FILE.read_text(encoding="utf-8")).get("pid") == os.getpid():
+                INSTANCE_FILE.unlink()
+        except Exception:
+            pass
+    if _server["replaced"]:
+        try:
+            REPLACED_FLAG.write_text(str(os.getpid()))
+        except Exception:
+            pass
+        print("Đã chuyển sang bản mới ở cửa sổ khác. Cửa sổ này tự đóng.")
+    else:
+        print("Đã tắt phần mềm.")
+    sys.exit(code)

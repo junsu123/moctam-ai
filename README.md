@@ -63,6 +63,7 @@ rồi bấm **Bật tự đăng**. Phần mềm không giải captcha và không
 | Nick chưa là thành viên nhóm / đang chờ duyệt vào nhóm | Mở Chrome của sale, tham gia nhóm, chờ quản trị viên duyệt |
 | Hồ sơ Chrome của nick đang mở ở cửa sổ khác | Đóng cửa sổ Chrome của sale (cửa sổ mở bằng nút "Mở Chrome") rồi bấm đăng lại. Chrome cũ còn treo chạy ẩn (do phần mềm từng tắt đột ngột) được phần mềm tự đóng |
 | Thông báo đỏ "Đang có 2 phần mềm chạy cùng lúc" / log báo `404` liên tục | Chạy lại run.bat: bản mới tự tìm và tắt mọi bản phần mềm đang chạy trước đó (kể cả bản cũ và Chrome của nó) rồi mới chạy |
+| Cửa sổ đen hiện chữ đỏ `KeyboardInterrupt` | Không phải lỗi: phần mềm nhận lệnh dừng (bấm Ctrl+C trong cửa sổ đen). Từ bản này Ctrl+C chỉ hiện "Đã tắt phần mềm."; bấm chuột vào cửa sổ đen không còn làm phần mềm bị treo. Chạy lại run.bat để bật phần mềm |
 | Thông báo "Đã có bản mới trên máy" | Không cần làm gì: phần mềm tự khởi động lại bằng bản mới khi các sale làm xong việc đang dở, trang tự tải lại. Muốn ngay thì bấm **Khởi động lại ngay** |
 | Chrome của sale tự đóng ngay khi mở ("Target page, context or browser has been closed") | Phần mềm tự thử lại một lần. Nếu vẫn lỗi: đóng hết cửa sổ Chrome của sale, cập nhật Google Chrome lên bản mới nhất, tạm tắt phần mềm diệt virus đang chặn Chrome. Màn hình Lỗi nêu rõ nguyên nhân đoán được (ví dụ hồ sơ tạo bằng bản Chrome mới hơn bản trên máy) |
 | Cửa sổ Chrome bị đóng khi sale đang làm | Không tắt cửa sổ Chrome lúc sale đang đăng bài; muốn không thấy cửa sổ thì bật "Ẩn cửa sổ Chrome khi sale đăng bài" trong Cài đặt |

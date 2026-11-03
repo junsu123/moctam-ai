@@ -30,6 +30,10 @@ if /I "%1"=="restart" (
   start http://localhost:8000
 )
 python main.py
+if exist "%~dp0data\replaced.flag" (
+  del "%~dp0data\replaced.flag" >nul 2>nul
+  exit
+)
 if errorlevel 1 (
   echo.
   echo ============================================================
