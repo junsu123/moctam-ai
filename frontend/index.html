@@ -214,6 +214,7 @@ label.row.small input{margin-top:3px;flex:none}
 .closed h2{margin-bottom:6px}
 .risk-safe{color:var(--accent)} .risk-warn{color:var(--honey)} .risk-danger{color:var(--danger)}
 .phone{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.offline.stale{top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px));max-width:min(640px,calc(100% - 32px));line-height:1.45}
 .offline{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:50;background:var(--danger);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .reset-list{margin:0;padding-left:18px;columns:2;column-gap:20px;font-size:12.5px}
 .alert{background:var(--danger-soft);border:1px solid var(--danger);border-radius:var(--r);padding:10px 14px;font-size:13px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
@@ -764,6 +765,7 @@ tbody tr.sel td{background:var(--accent-soft)}
 </div>
 <aside class="drawer" id="drawer" hidden></aside>
 <div class="toast" id="toast" hidden></div>
+<div class="offline stale" id="staleBanner" hidden role="alert"></div>
 <div class="offline" id="offline" hidden role="alert"><b>Mất kết nối với phần mềm trên máy.</b> Kiểm tra cửa sổ run.bat còn mở không. Trang sẽ tự kết nối lại.</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -1113,11 +1115,13 @@ function reportUi(title,message,detail="",action=""){
   const key=title+"|"+message; if(ERR.seen[key]&&Date.now()-ERR.seen[key]<10000) return; ERR.seen[key]=Date.now(); ERR.lastAt=Date.now();
   const e={title:String(title).slice(0,200),message:String(message||"").slice(0,1000),detail:String(detail||"").slice(0,4000),screen:ST.view||"",action:String(action).slice(0,200)};
   if(DEMO){ Demo.handle("POST","/api/errors",e); return errBadge(); }
-  ERR.queue.push(e); if(ERR.queue.length>30) ERR.queue.shift(); flushErr();
+  if(ERR.off) return; ERR.queue.push(e); if(ERR.queue.length>30) ERR.queue.shift(); flushErr();
 }
 async function flushErr(){
   while(ERR.queue.length){ const e=ERR.queue[0];
-    try{ const r=await fetch("/api/errors",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(e)}); if(!r.ok) break; ERR.queue.shift(); }
+    try{ const r=await fetch("/api/errors",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(e)});
+      if(r.status===404){ ERR.queue=[]; ERR.off=true; pollHealth(); return; }   // phần mềm đang chạy bản cũ chưa có sổ lỗi: không gửi lặp lại
+      if(!r.ok) break; ERR.queue.shift(); }
     catch(x){ break; } }
   errBadge();
 }
@@ -1750,12 +1754,15 @@ $("#coBody").addEventListener("change",async e=>{ if(e.target.dataset.ceo==="pot
 const ESRC_ICON={ui:"🖱",api:"⚙️",post:"📝",bump:"🔁",scan:"💬",browser:"🌐",nick:"🔒",telegram:"✈️",ai:"🤖",fanpage:"📣",scheduler:"⏰"};
 const EST={status:"open",source:""};
 function setErrBadge(n){ const b=$("#errBadge"); b.hidden=!n; b.textContent=n>99?"99+":n; }
-async function errBadge(){ try{ const r=await api("/errors?status=new"); setErrBadge(r.new); if(ST.view==="errors") loadErrors(); }catch(e){} }
+async function errBadge(){ if(ERR.off) return; if(ERR.badgeAt&&Date.now()-ERR.badgeAt<3000) return; ERR.badgeAt=Date.now();
+  try{ const r=await api("/errors?status=new"); setErrBadge(r.new); if(ST.view==="errors") loadErrors(); }catch(e){} }
 function errText(e){ return `[Lỗi #${e.id}] ${e.last_at} · ${e.source_label}${e.screen?` · màn hình ${VIEW_NAME[e.screen]||e.screen}`:""}${e.count>1?` · lặp ${e.count} lần`:""}
 ${e.title}
 ${e.message||""}${e.action?`\nThao tác: ${decodeURIComponent(e.action)}`:""}${e.detail?`\n--- chi tiết ---\n${e.detail}`:""}`; }
 async function loadErrors(){
-  const r=await api(`/errors?status=${EST.status}&source=${encodeURIComponent(EST.source)}`); ST.errors=r.items; setErrBadge(r.new);
+  let r; try{ r=await api(`/errors?status=${EST.status}&source=${encodeURIComponent(EST.source)}`); }
+  catch(e){ $("#errList").innerHTML=`<div class="err">Không tải được danh sách lỗi: ${esc(e.message)}. ${HEALTH.bad?"Xem thông báo đỏ phía dưới màn hình.":"Phần mềm trên máy có thể đang chạy bản cũ: đóng cửa sổ run.bat rồi chạy lại."}</div>`; pollHealth(); return; }
+  ST.errors=r.items; setErrBadge(r.new);
   const sel=$("#errSrc"); if(sel.options.length<2) sel.insertAdjacentHTML("beforeend",Object.entries(r.sources).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join(""));
   $("#errSum").textContent=`${r.open} lỗi chưa xử lý · ${r.new} lỗi mới`;
   $("#errList").innerHTML=r.items.length?r.items.map(e=>`<article class="ecard ${e.status}" data-e="${e.id}">
@@ -2055,9 +2062,23 @@ async function loadSettings(){
 }
 $("#setForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{company_name:$("#sName").value,brand_voice:$("#sVoice").value,contact_info:$("#sContact").value,meeting_time:$("#sTime").value,posts_per_day:$("#sPer").value,auto_meeting:$("#sAutoM").checked?"1":"0",auto_daily_work:$("#sAutoW").checked?"1":"0",fb_page_id:$("#sPage").value,fb_page_token:$("#sToken").value,attach_images:$("#sImg").checked?"1":"0",images_min:$("#sImgMin").value,images_max:String(Math.max(+$("#sImgMax").value||1,+$("#sImgMin").value||1)),image_reuse_days:$("#sImgDays").value,browser_headless:$("#sHeadless").checked?"1":"0"}); $("#coName").textContent=$("#sName").value; toast("Đã lưu cài đặt"); });
 
+/* Phát hiện phần mềm trên máy đang chạy bản cũ, chưa khởi động lại sau khi cập nhật, hoặc chạy 2 bản cùng lúc */
+const HEALTH={pids:{},bad:""};
+function staleBanner(msg){ const b=$("#staleBanner"); if(!b) return; b.hidden=!msg; if(msg) b.innerHTML=msg; HEALTH.bad=msg; }
+function checkHealth(h){
+  if(DEMO||!h) return; const now=Date.now();
+  if(h.pid) HEALTH.pids[h.pid]=now; else HEALTH.pids["cu"]=now;
+  const recent=Object.entries(HEALTH.pids).filter(([,t])=>now-t<180000).map(([p])=>p);
+  if(recent.length>1||!h.build) staleBanner(`<b>Đang có 2 phần mềm chạy cùng lúc${!h.build?" (một bản cũ)":""}.</b> Hai bản giành nhau việc nên sẽ lỗi: Chrome của sale tự đóng, mục Lỗi không hoạt động. Đóng <b>tất cả</b> cửa sổ đen run.bat (hoặc Task Manager → tắt python.exe), rồi chạy lại run.bat <b>một lần</b>.`);
+  else if(h.stale) staleBanner(`<b>Phần mềm vừa được cập nhật nhưng chưa khởi động lại.</b> Đóng cửa sổ đen run.bat rồi chạy lại run.bat để dùng bản mới.`);
+  else staleBanner("");
+}
+async function pollHealth(){ try{ const r=await fetch("/api/health",{cache:"no-store"}); if(r.ok) checkHealth(await r.json()); }catch(e){} }
+
 /* --------------------------------------------- khởi động */
 (async()=>{
   const h=await detect();
+  if(!DEMO){ checkHealth(h); setInterval(pollHealth,20000); [1500,4000,8000].forEach(t=>setTimeout(pollHealth,t)); }
   $("#demoBanner").hidden=!DEMO;
   $("#modeBox").innerHTML = DEMO ? `<span class="dot sim"></span><b>Bản xem trước</b><br>Dữ liệu mẫu, không lưu lại.` : h.ai_live ? `<span class="dot live"></span><b>AI đang hoạt động</b><br>${esc(h.model)}` : `<span class="dot sim"></span><b>Chế độ mô phỏng</b><br><a href="#setup">Nhập khóa API Claude</a>`;
   try{ const s=await api("/settings"); $("#coName").textContent=s.company_name; }catch(e){}

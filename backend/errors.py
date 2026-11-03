@@ -58,6 +58,8 @@ HINTS = [
      "dán khóa mới và bấm Kiểm tra và lưu.", "setup"),
     (r"credit balance|billing|insufficient_quota|Error code: 402", "Tài khoản Anthropic hết tín dụng. Nạp thêm ở console.anthropic.com → Billing.", "setup"),
     (r"rate_limit|Error code: 429|overloaded|Error code: 529", "Máy chủ AI đang quá tải. Phần mềm tự dùng nội dung mô phỏng và thử lại sau.", None),
+    (r"Conflict: terminated by other getUpdates|Error code: 409|409 Conflict", "Có 2 phần mềm đang chạy cùng lúc (cùng một bot "
+     "Telegram). Đóng hết các cửa sổ run.bat rồi chỉ chạy lại một lần.", None),
     (r"chat not found|bot was blocked|Unauthorized|bot token", "Kết nối Telegram bị lỗi. Vào KPI & Báo cáo, kiểm tra token "
      "và ghép nối lại bot.", "kpi"),
     (r"OAuthException|Page Access Token|\(#200\)|\(#190\)", "Token Fanpage sai hoặc hết hạn. Vào Cài đặt, nhập Page Access "

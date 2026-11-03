@@ -3,6 +3,7 @@ Chạy:  python main.py   rồi mở http://localhost:8000
 """
 import json
 import os
+import sys
 import time
 from pathlib import Path
 
@@ -54,9 +55,27 @@ def startup():
 
 
 # ------------------------------------------------------------------ chung
+def _code_stamp() -> str:
+    """Dấu vân tay của mã nguồn trên đĩa: đổi khi tải bản mới về mà chưa khởi động lại phần mềm."""
+    import hashlib
+    h = hashlib.md5()
+    for f in sorted(Path(__file__).resolve().parent.glob("*.py")) + [FRONTEND / "index.html"]:
+        try:
+            st = f.stat()
+            h.update(f"{f.name}:{st.st_mtime_ns}:{st.st_size}".encode())
+        except OSError:
+            pass
+    return h.hexdigest()[:12]
+
+
+STARTED_STAMP = _code_stamp()
+STARTED_AT = time.strftime("%Y-%m-%d %H:%M:%S")
+
+
 @app.get("/api/health")
 def health():
-    return {"ok": True, "ai_live": llm.live, "model": llm_mod.model_for("posts") if llm.live else "mô phỏng"}
+    return {"ok": True, "ai_live": llm.live, "model": llm_mod.model_for("posts") if llm.live else "mô phỏng",
+            "build": STARTED_STAMP, "stale": _code_stamp() != STARTED_STAMP, "pid": os.getpid(), "started_at": STARTED_AT}
 
 
 @app.get("/api/agents")
@@ -1141,5 +1160,92 @@ app.mount("/static", StaticFiles(directory=FRONTEND), name="static")
 app.mount("/media", StaticFiles(directory=db.MEDIA_DIR), name="media")   # chỉ ảnh sản phẩm
 app.mount("/shots", StaticFiles(directory=db.SHOTS_DIR), name="shots")   # ảnh chụp kết quả đăng bài
 
+# ------------------------------------------------------------------ chỉ cho chạy 1 bản phần mềm
+def _port_owners(port: int) -> list:
+    try:
+        import psutil
+    except ImportError:
+        return []
+    pids = set()
+    try:
+        for c in psutil.net_connections(kind="tcp"):
+            if c.laddr and c.laddr.port == port and c.status == psutil.CONN_LISTEN and c.pid and c.pid != os.getpid():
+                pids.add(c.pid)
+    except Exception:
+        pass
+    out = []
+    for pid in pids:
+        try:
+            out.append(psutil.Process(pid))
+        except Exception:
+            pass
+    return out
+
+
+def _is_this_app(p) -> bool:
+    try:
+        cmd = " ".join(p.cmdline()).lower()
+        here = str(Path(__file__).resolve().parent).lower()
+        cwd = ""
+        try:
+            cwd = p.cwd().lower()
+        except Exception:
+            pass
+        return "python" in p.name().lower() and "main.py" in cmd and (cwd == here or here in cmd)
+    except Exception:
+        return False
+
+
+def _kill_tree(p):
+    try:
+        for ch in p.children(recursive=True):
+            try:
+                ch.kill()
+            except Exception:
+                pass
+        p.kill()
+        p.wait(10)
+    except Exception:
+        pass
+
+
+def _bind(host: str, port: int):
+    """Mở cổng độc quyền. Trên Windows, uvicorn mặc định cho 2 phần mềm dùng chung 1 cổng (SO_REUSEADDR):
+    bản cũ và bản mới cùng chạy, giành nhau yêu cầu và cùng mở Chrome của sale. Ở đây chỉ cho 1 bản chạy:
+    gặp bản cũ của chính phần mềm này thì tắt nó, gặp chương trình khác thì báo rõ."""
+    import socket
+    for attempt in range(4):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if os.name == "nt":
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        else:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            s.bind((host, port))
+            return s
+        except OSError:
+            s.close()
+        owners = _port_owners(port)
+        ours = [p for p in owners if _is_this_app(p)]
+        if ours:
+            for p in ours:
+                print(f"[!] Phần mềm đang chạy sẵn một bản khác (PID {p.pid}, có thể là bản cũ). Đang tắt bản đó để chạy bản này...")
+                _kill_tree(p)
+            time.sleep(2)
+            continue
+        if owners:
+            names = ", ".join(f"{p.name()} (PID {p.pid})" for p in owners)
+            print(f"[x] Cổng {port} đang bị chương trình khác dùng: {names}.\n"
+                  f"    Tắt chương trình đó, hoặc đặt PORT=8010 trong file .env rồi chạy lại.")
+            sys.exit(1)
+        time.sleep(2)  # cổng vừa được giải phóng, chờ hệ điều hành nhả hẳn
+    print(f"[x] Không mở được cổng {port}. Có thể phần mềm đang chạy ở một cửa sổ khác: đóng hết các cửa sổ run.bat "
+          f"(hoặc Task Manager → tắt python.exe) rồi chạy lại.")
+    sys.exit(1)
+
+
 if __name__ == "__main__":
-    uvicorn.run("main:app", host=os.getenv("HOST", "127.0.0.1"), port=int(os.getenv("PORT", 8000)), reload=False)
+    host, port = os.getenv("HOST", "127.0.0.1"), int(os.getenv("PORT", 8000))
+    sock = _bind(host, port)
+    print(f"Phần mềm đang chạy: http://localhost:{port}  (đóng cửa sổ này để tắt)")
+    uvicorn.Server(uvicorn.Config(app, host=host, port=port, reload=False)).run(sockets=[sock])
