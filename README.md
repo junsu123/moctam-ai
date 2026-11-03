@@ -62,8 +62,8 @@ rồi bấm **Bật tự đăng**. Phần mềm không giải captcha và không
 | Nhóm chưa có link | Hội nhóm → bấm **Thêm link** ở dòng nhóm đó, dán link nhóm (link điện thoại hay link chia sẻ đều được). Bài từng lỗi vì thiếu link tự về hàng chờ để Tuấn xếp lại. Nhóm mẫu cài sẵn không có link |
 | Nick chưa là thành viên nhóm / đang chờ duyệt vào nhóm | Mở Chrome của sale, tham gia nhóm, chờ quản trị viên duyệt |
 | Hồ sơ Chrome của nick đang mở ở cửa sổ khác | Đóng cửa sổ Chrome của sale (cửa sổ mở bằng nút "Mở Chrome") rồi bấm đăng lại. Chrome cũ còn treo chạy ẩn (do phần mềm từng tắt đột ngột) được phần mềm tự đóng |
-| Thông báo đỏ "Đang có 2 phần mềm chạy cùng lúc" / log báo `404` liên tục | Đã chạy run.bat lần nữa khi bản cũ chưa tắt. Đóng **tất cả** cửa sổ đen run.bat (hoặc Task Manager → tắt `python.exe`), rồi chạy run.bat một lần. Từ bản này, chạy run.bat lần nữa sẽ tự tắt bản đang chạy trước đó |
-| Thông báo "Phần mềm vừa được cập nhật nhưng chưa khởi động lại" | Đóng cửa sổ run.bat rồi chạy lại để dùng bản mới |
+| Thông báo đỏ "Đang có 2 phần mềm chạy cùng lúc" / log báo `404` liên tục | Chạy lại run.bat: bản mới tự tìm và tắt mọi bản phần mềm đang chạy trước đó (kể cả bản cũ và Chrome của nó) rồi mới chạy |
+| Thông báo "Đã có bản mới trên máy" | Không cần làm gì: phần mềm tự khởi động lại bằng bản mới khi các sale làm xong việc đang dở, trang tự tải lại. Muốn ngay thì bấm **Khởi động lại ngay** |
 | Chrome của sale tự đóng ngay khi mở ("Target page, context or browser has been closed") | Phần mềm tự thử lại một lần. Nếu vẫn lỗi: đóng hết cửa sổ Chrome của sale, cập nhật Google Chrome lên bản mới nhất, tạm tắt phần mềm diệt virus đang chặn Chrome. Màn hình Lỗi nêu rõ nguyên nhân đoán được (ví dụ hồ sơ tạo bằng bản Chrome mới hơn bản trên máy) |
 | Cửa sổ Chrome bị đóng khi sale đang làm | Không tắt cửa sổ Chrome lúc sale đang đăng bài; muốn không thấy cửa sổ thì bật "Ẩn cửa sổ Chrome khi sale đăng bài" trong Cài đặt |
 | Nick chưa đăng nhập | Nhân viên sale → Mở Chrome để đăng nhập |
@@ -344,6 +344,10 @@ sale sẽ dùng Chrome thật.
 
 Phần mềm mặc định chỉ mở cho chính máy này (127.0.0.1) vì nó điều khiển được các nick Facebook.
 Muốn mở từ máy khác trong mạng nội bộ, đặt `HOST=0.0.0.0` trong `.env` và chỉ làm vậy trong mạng tin cậy.
+
+**Cập nhật bản mới:** tải code mới về (`git pull`) ngay cả khi phần mềm đang chạy. Phần mềm tự nhận ra có bản mới, chờ
+lúc các sale không có việc dở, rồi tự chạy lại `run.bat` (cài thêm thư viện nếu cần) và trang tự tải lại. Chạy `run.bat`
+khi đang có bản khác chạy cũng không sao: bản mới tự tắt bản cũ. Phần mềm luôn chỉ chạy một bản.
 
 ### Bật bộ não Claude
 

@@ -2070,9 +2070,17 @@ function checkHealth(h){
   if(h.pid) HEALTH.pids[h.pid]=now; else HEALTH.pids["cu"]=now;
   const recent=Object.entries(HEALTH.pids).filter(([,t])=>now-t<180000).map(([p])=>p);
   if(recent.length>1||!h.build) staleBanner(`<b>Đang có 2 phần mềm chạy cùng lúc${!h.build?" (một bản cũ)":""}.</b> Hai bản giành nhau việc nên sẽ lỗi: Chrome của sale tự đóng, mục Lỗi không hoạt động. Đóng <b>tất cả</b> cửa sổ đen run.bat (hoặc Task Manager → tắt python.exe), rồi chạy lại run.bat <b>một lần</b>.`);
-  else if(h.stale) staleBanner(`<b>Phần mềm vừa được cập nhật nhưng chưa khởi động lại.</b> Đóng cửa sổ đen run.bat rồi chạy lại run.bat để dùng bản mới.`);
+  else if(h.restarting) staleBanner(`<b>Đang khởi động lại phần mềm với bản mới…</b> Trang sẽ tự tải lại khi xong (khoảng 10–60 giây).`);
+  else if(h.stale) staleBanner(`<b>Đã có bản mới trên máy.</b> Phần mềm sẽ tự khởi động lại khi các sale làm xong việc đang dở${h.idle?"":" (đang có việc chạy)"}. <button type="button" class="btn sm" id="btnRestart" style="margin-left:6px">Khởi động lại ngay</button>`);
   else staleBanner("");
+  // phần mềm đã chạy bản mới (khởi động lại xong): tải lại trang để dùng giao diện mới
+  if(h.build){ if(!HEALTH.build0) HEALTH.build0=h.build;
+    else if(h.build!==HEALTH.build0){ HEALTH.newSeen=(HEALTH.newSeen||0)+1; if(HEALTH.newSeen>=2) location.reload(); } }
 }
+document.addEventListener("click",async e=>{ if(!e.target.closest("#btnRestart")) return;
+  const b=e.target.closest("#btnRestart"); b.disabled=true; b.textContent="Đang khởi động lại…";
+  try{ await api("/admin/restart","POST"); }catch(err){ toast(err.message); b.disabled=false; b.textContent="Khởi động lại ngay"; return; }
+  [3000,6000,10000,15000,20000,30000,45000,60000].forEach(t=>setTimeout(pollHealth,t)); });
 async function pollHealth(){ try{ const r=await fetch("/api/health",{cache:"no-store"}); if(r.ok) checkHealth(await r.json()); }catch(e){} }
 
 /* --------------------------------------------- khởi động */

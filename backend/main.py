@@ -3,7 +3,9 @@ Chạy:  python main.py   rồi mở http://localhost:8000
 """
 import json
 import os
+import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -52,6 +54,7 @@ def startup():
     llm.reload()  # khóa API nhập trong phần mềm (nếu có) được ưu tiên hơn file .env
     scheduler.start()
     telegram_bot.start()
+    threading.Thread(target=_update_watcher, daemon=True).start()
 
 
 # ------------------------------------------------------------------ chung
@@ -72,10 +75,78 @@ STARTED_STAMP = _code_stamp()
 STARTED_AT = time.strftime("%Y-%m-%d %H:%M:%S")
 
 
+# ------------------------------------------------------------------ tự khởi động lại khi có bản mới
+ROOT = Path(__file__).resolve().parent.parent
+_restart = {"tried": None, "at": None, "reason": ""}
+
+
+def _idle() -> bool:
+    """Không có việc đang dở: sale không mở Chrome, không họp, không tự học."""
+    try:
+        if browser_poster._busy or any(q.qsize() for q in browser_poster._queues.values()):
+            return False
+        if meeting.is_running():
+            return False
+        if learning._running.get("on"):
+            return False
+    except Exception:
+        return False
+    return True
+
+
+def restart_self(reason: str) -> bool:
+    """Chạy lại phần mềm bằng run.bat / run.sh (cài thêm thư viện mới nếu có). Bản mới khởi động sẽ tự tắt bản này.
+    Nếu bản mới lỗi không chạy được, bản này vẫn tiếp tục chạy."""
+    stamp = _code_stamp()
+    if _restart["tried"] == stamp and reason != "manual":
+        return False
+    _restart.update(tried=stamp, at=time.strftime("%H:%M:%S"), reason=reason)
+    db.log("minh", "Khởi động lại phần mềm", "Có bản mới trên máy, chạy lại để dùng bản mới" if reason == "update"
+           else "Sếp bấm khởi động lại")
+    try:
+        if os.name == "nt" and (ROOT / "run.bat").exists():
+            subprocess.Popen(["cmd", "/c", "start", "Moc Tam AI", str(ROOT / "run.bat"), "restart"], cwd=str(ROOT))
+        elif (ROOT / "run.sh").exists() and os.getenv("RESTART_WITH_SCRIPT", "1") == "1":
+            log = open(db.DATA_DIR / "app.log", "ab")
+            subprocess.Popen(["bash", str(ROOT / "run.sh"), "restart"], cwd=str(ROOT), stdout=log, stderr=log,
+                             start_new_session=True)
+        else:
+            log = open(db.DATA_DIR / "app.log", "ab")
+            subprocess.Popen([sys.executable, str(Path(__file__).resolve())], cwd=str(Path(__file__).resolve().parent),
+                             stdout=log, stderr=log, start_new_session=True)
+        return True
+    except Exception as e:
+        errors.report_exc("api", "Không tự khởi động lại được phần mềm", e)
+        return False
+
+
+def _update_watcher():
+    """Mỗi 30 giây xem mã nguồn trên máy có đổi không (vừa tải bản mới). Đổi và ổn định (đã tải xong) thì chờ lúc rảnh
+    rồi tự khởi động lại bằng bản mới."""
+    prev = None
+    while True:
+        time.sleep(30)
+        try:
+            cur = _code_stamp()
+            if cur != STARTED_STAMP and cur == prev and _idle():
+                restart_self("update")
+            prev = cur
+        except Exception as e:
+            print("[update]", e)
+
+
+@app.post("/api/admin/restart")
+def admin_restart():
+    if not restart_self("manual"):
+        raise HTTPException(500, "Không khởi động lại được, hãy đóng cửa sổ run.bat rồi chạy lại")
+    return {"ok": True, "pid": os.getpid()}
+
+
 @app.get("/api/health")
 def health():
     return {"ok": True, "ai_live": llm.live, "model": llm_mod.model_for("posts") if llm.live else "mô phỏng",
-            "build": STARTED_STAMP, "stale": _code_stamp() != STARTED_STAMP, "pid": os.getpid(), "started_at": STARTED_AT}
+            "build": STARTED_STAMP, "stale": _code_stamp() != STARTED_STAMP, "pid": os.getpid(), "started_at": STARTED_AT,
+            "restarting": _restart["at"], "idle": _idle()}
 
 
 @app.get("/api/agents")
@@ -1197,8 +1268,13 @@ def _is_this_app(p) -> bool:
 
 
 def _kill_tree(p):
+    """Tắt một bản phần mềm cùng Chrome nó mở. Không tắt chính mình (bản mới có thể là tiến trình con của bản cũ
+    khi bản cũ tự khởi động lại)."""
+    me = os.getpid()
     try:
         for ch in p.children(recursive=True):
+            if ch.pid == me:
+                continue
             try:
                 ch.kill()
             except Exception:
@@ -1207,6 +1283,21 @@ def _kill_tree(p):
         p.wait(10)
     except Exception:
         pass
+
+
+def _kill_other_instances():
+    """Tắt mọi bản phần mềm này đang chạy (bản cũ, bản chạy trùng), kể cả bản không giữ cổng."""
+    try:
+        import psutil
+    except ImportError:
+        return
+    me = os.getpid()
+    for p in psutil.process_iter(["name"]):
+        if p.pid == me:
+            continue
+        if _is_this_app(p):
+            print(f"[!] Phát hiện phần mềm đang chạy sẵn (PID {p.pid}, có thể là bản cũ). Đang tắt để chạy bản này...")
+            _kill_tree(p)
 
 
 def _bind(host: str, port: int):
@@ -1246,6 +1337,7 @@ def _bind(host: str, port: int):
 
 if __name__ == "__main__":
     host, port = os.getenv("HOST", "127.0.0.1"), int(os.getenv("PORT", 8000))
+    _kill_other_instances()
     sock = _bind(host, port)
     print(f"Phần mềm đang chạy: http://localhost:{port}  (đóng cửa sổ này để tắt)")
     uvicorn.Server(uvicorn.Config(app, host=host, port=port, reload=False)).run(sockets=[sock])

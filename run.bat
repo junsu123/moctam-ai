@@ -12,6 +12,10 @@ if not exist .venv\.pw_ok (
   python -m playwright install chromium && echo ok> .venv\.pw_ok
 )
 cd backend
-echo Mo trinh duyet: http://localhost:8000
-start http://localhost:8000
+if /I "%1"=="restart" (
+  echo Dang khoi dong lai phan mem voi ban moi...
+) else (
+  echo Mo trinh duyet: http://localhost:8000
+  start http://localhost:8000
+)
 python main.py
