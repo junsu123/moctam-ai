@@ -89,7 +89,7 @@ def pace(st: dict | None = None) -> dict:
 
 def per_sale(day: str | None = None) -> list[dict]:
     d = (day or _today()) + "%"
-    sales = db.q("SELECT id, name, fb_name, login_status, auto_post FROM sales ORDER BY id")
+    sales = db.q("SELECT id, name, fb_name, login_status, auto_post FROM sales WHERE COALESCE(status,'active')!='fired' ORDER BY id")
     active = [s for s in sales if s["login_status"] == "ok" and s["auto_post"]] or sales
     mn, mx = targets()
     share = lambda t: max(1, round(t / max(1, len(active))))

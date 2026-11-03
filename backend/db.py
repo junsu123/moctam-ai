@@ -152,6 +152,15 @@ CREATE TABLE IF NOT EXISTS image_usage (
   sale_id INTEGER, group_id INTEGER, kind TEXT, used_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_image_usage_path ON image_usage(path);
+CREATE TABLE IF NOT EXISTS orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, lead_id INTEGER, amount INTEGER, note TEXT, via TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS expenses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, category TEXT, amount INTEGER, note TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS sale_days (
+  sale_id INTEGER, date TEXT, target INTEGER, PRIMARY KEY (sale_id, date)
+);
 CREATE TABLE IF NOT EXISTS sales (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL, fb_name TEXT, profile_dir TEXT, look TEXT,
@@ -173,7 +182,10 @@ MIGRATIONS = [
     ("leads", "escalated_at", "TEXT"), ("leads", "escalate_reason", "TEXT"), ("leads", "consult_note", "TEXT"),
     ("posts", "last_scan_at", "TEXT"),
     ("products", "image_folder", "TEXT DEFAULT ''"), ("posts", "images_used", "TEXT"),
-    ("sales", "is_sample", "INTEGER DEFAULT 0"), ("leads", "is_sample", "INTEGER DEFAULT 0"),
+    ("sales", "is_sample", "INTEGER DEFAULT 0"),
+    ("sales", "status", "TEXT DEFAULT 'active'"), ("sales", "fired_at", "TEXT"), ("sales", "fire_reason", "TEXT"),
+    ("sales", "kpi_period_start", "TEXT"), ("sales", "kpi_warned", "TEXT"), ("sales", "replaced_by", "INTEGER"),
+    ("sales", "fired_gen", "TEXT"), ("leads", "is_sample", "INTEGER DEFAULT 0"),
     ("groups", "is_sample", "INTEGER DEFAULT 0"), ("products", "is_sample", "INTEGER DEFAULT 0"),
     ("leads", "phone_at", "TEXT"), ("leads", "boss_status", "TEXT"), ("leads", "remind_at", "TEXT"),
 ]
@@ -211,6 +223,17 @@ DEFAULT_SETTINGS = {
     "learn_explore": "0.25",
     "model_learning": "claude-haiku-5-5",
     "anthropic_api_key": "",
+    "company_status": "setup",
+    "company_founded_at": "",
+    "company_founded_ts": "",
+    "company_gen": "0",
+    "capital_vnd": "10000000",
+    "usd_vnd": "25800",
+    "trial_days": "60",
+    "dissolved_at": "",
+    "dissolved_reason": "",
+    "trial_warned": "",
+    "capital_warned": "",
     "images_min": "2",
     "images_max": "4",
     "image_reuse_days": "14",
@@ -330,8 +353,10 @@ RESET_TABLES = {  # bảng: mô tả cho sếp
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",
     "kpi_daily": "lịch sử KPI", "ai_batches": "lô viết bài đang chờ",
+    "orders": "đơn hàng", "expenses": "chi phí đã ghi", "sale_days": "ngày công của sale",
 }
-RUN_STATE_KEYS = ["bump_planned_date", "learn_last_date", "scan_last", "tg_sent_log"]
+RUN_STATE_KEYS = ["bump_planned_date", "learn_last_date", "scan_last", "tg_sent_log", "company_founded_at", "company_founded_ts",
+                  "dissolved_at", "dissolved_reason", "trial_warned", "capital_warned"]
 
 
 def reset_preview() -> dict:
@@ -377,6 +402,8 @@ def reset_test_data(products: bool = False, groups: bool = False) -> dict:
             c.execute("UPDATE groups SET last_posted_at=NULL, leads_count=0")
         for k in RUN_STATE_KEYS:
             c.execute("UPDATE settings SET value=? WHERE key=?", ("{}" if k == "tg_sent_log" else "", k))
+        c.execute("UPDATE settings SET value='setup' WHERE key='company_status'")
+        c.execute("UPDATE sales SET kpi_period_start=NULL, kpi_warned=NULL")
         tables = list(RESET_TABLES) + (["products"] if products else []) + (["groups"] if groups else [])
         c.execute("DELETE FROM sqlite_sequence WHERE name IN (%s)" % ",".join("?" * len(tables)), tables)
         c.commit()

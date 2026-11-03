@@ -21,7 +21,9 @@ import db
 
 API = os.getenv("TELEGRAM_API", "https://api.telegram.org").rstrip("/")
 _state = {"bot": None, "error": None, "started": False}
-HELP = ("Các lệnh:\n/baocao — báo cáo hôm nay\n/kpi — tiến độ KPI\n/khach — khách đang chờ sếp tư vấn\n"
+_pending_order: dict[str, int] = {}  # chat -> khách vừa chốt, chờ sếp nhập giá trị đơn
+HELP = ("Các lệnh:\n/baocao — báo cáo hôm nay\n/kpi — tiến độ KPI\n/congty — vốn, doanh thu, sale có nguy cơ bị sa thải\n"
+        "/khach — khách đang chờ sếp tư vấn\n"
         "/hop [chủ đề] — triệu tập họp\n/tamdung — tạm dừng mọi nick tự đăng\n/tieptuc — bật lại tự đăng\n/help — xem lệnh")
 
 
@@ -125,6 +127,9 @@ def morning_text() -> str:
     lines = [f"☀️ <b>Chào sếp, kế hoạch {datetime.now().strftime('%d/%m')}</b>",
              f"Hôm qua: {ys['leads_phone']}/{ys['target_min']} khách có SĐT {'✅' if ys['achieved'] else '❌'} · chuỗi đạt KPI: {kpi.streak()} ngày",
              f"Hôm nay cần: tối thiểu <b>{kpi.targets()[0]}</b>, phấn đấu <b>{kpi.targets()[1]}</b> khách để lại SĐT."]
+    import company
+    if company.brief_text():
+        lines.append(e(company.brief_text()))
     sched = db.one("SELECT COUNT(*) n FROM posts WHERE status='scheduled' AND scheduled_for LIKE ?", (db.today() + "%",))["n"]
     lines.append(f"• Lịch đăng hôm nay: {sched} bài · Quét bình luận lúc {db.get_settings().get('scan_times')}")
     m = db.one("SELECT * FROM meetings WHERE date=? AND status='done' ORDER BY id DESC LIMIT 1", (db.today(),))
@@ -144,7 +149,10 @@ def evening_text() -> str:
     import kpi
     import llm
     st = kpi.snapshot()
+    import company
     lines = [f"🌙 <b>Báo cáo cuối ngày {datetime.now().strftime('%d/%m')}</b>", kpi_text()]
+    if company.brief_text():
+        lines.append("\n" + e(company.brief_text()))
     pend = db.q("""SELECT name, phone FROM leads WHERE escalated_at IS NOT NULL AND COALESCE(boss_status,'') IN ('','remind')
                    AND status NOT IN ('ordered','lost') ORDER BY escalated_at LIMIT 8""")
     if pend:
@@ -294,8 +302,40 @@ def handle_message(msg: dict):
         else:
             _reply(chat_id, "Xin chào! Để nhận báo cáo, hãy gửi <b>mã ghép nối 6 số</b> hiển thị trong phần mềm (trang KPI & Báo cáo).")
         return
+    if chat_id in _pending_order and not text.startswith("/"):
+        import company
+        amount = company.parse_vnd(text)
+        if amount:
+            lid = _pending_order.pop(chat_id)
+            company.add_order(lid, amount, "Sếp nhập qua Telegram", via="telegram")
+            fin = company.finance()
+            _reply(chat_id, f"💰 Đã ghi đơn {company.fmt_vnd(amount)}. Doanh thu từ khi thành lập: <b>{company.fmt_vnd(fin['revenue'])}</b> ({fin['orders']} đơn).")
+            return
+        if text.lower() in ("bỏ qua", "bo qua", "skip"):
+            _pending_order.pop(chat_id, None)
+            _reply(chat_id, "Đã bỏ qua. Sếp có thể ghi giá trị đơn sau trong phần mềm (mục Khách hàng).")
+            return
     cmd = text.split()[0].split("@")[0].lower() if text else ""
     arg = text[len(text.split()[0]):].strip() if text else ""
+    if cmd in ("/congty", "công ty", "congty"):
+        import company
+        fin = company.finance()
+        ov = company.overview()
+        if ov["status"] == "setup":
+            _reply(chat_id, "Công ty chưa thành lập. Vào phần mềm → trang Công ty → Thành lập công ty.")
+            return
+        lines = [f"🏢 <b>Công ty</b> · {'ĐÃ GIẢI THỂ' if ov['status'] == 'dissolved' else 'ngày ' + str(ov['day']) + '/' + str(ov['trial_days'])}",
+                 f"Vốn {company.fmt_vnd(fin['capital'])} · đã chi {company.fmt_vnd(fin['spent'])} (AI {company.fmt_vnd(fin['ai_vnd'])}) · còn <b>{company.fmt_vnd(fin['left'])}</b>",
+                 f"Doanh thu <b>{company.fmt_vnd(fin['revenue'])}</b> · {fin['orders']} đơn · {fin['customers']} khách mua"]
+        for r in ov["sales"]:
+            if r["status"] == "fired":
+                lines.append(f"🚪 {e(r['name'])}: đã nghỉ việc")
+            else:
+                rv = r["review"]
+                mark = {"safe": "✅", "warn": "⚠️", "danger": "🔴", "idle": "⏸", "extend": "⏸", "pass": "✅", "fail": "🔴", "new": "🆕"}[rv["risk"]]
+                lines.append(f"{mark} {e(r['name'])}: {rv['leads_phone']}/{rv['target_so_far']} SĐT · ngày {rv['day']}/30 của kỳ")
+        _reply(chat_id, "\n".join(lines))
+        return
     if cmd in ("/start", "/help", "help", "lệnh"):
         _reply(chat_id, HELP)
     elif cmd in ("/baocao", "báo cáo", "baocao"):
@@ -362,6 +402,10 @@ def handle_callback(cb: dict):
         db.run("UPDATE leads SET boss_status='won', status='ordered', updated_at=? WHERE id=?", (db.now(), lid))
         learning.on_lead_status(lid, "ordered")
         note, toast = f"✅ Chốt đơn lúc {hm}", "Tuyệt vời! Đã ghi chốt đơn"
+        _pending_order[chat_id] = lid
+        threading.Timer(1.0, lambda: _reply(chat_id, f"💰 Đơn của <b>{e(lead['name'])}</b> bao nhiêu tiền? "
+                                                    "Trả lời bằng số, ví dụ <b>2500000</b>, <b>2,5tr</b> hoặc <b>800k</b>. "
+                                                    "Gõ <i>bỏ qua</i> nếu chưa rõ.")).start()
     elif act == "lost":
         db.run("UPDATE leads SET boss_status='lost', status='lost', updated_at=? WHERE id=?", (db.now(), lid))
         learning.on_lead_status(lid, "lost")

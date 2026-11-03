@@ -121,7 +121,7 @@ def _learned(agent_id: str) -> str:
 
 def sales_rows() -> list[dict]:
     import db
-    rows = db.q("SELECT * FROM sales ORDER BY id LIMIT ?", (MAX_SALES,))
+    rows = db.q("SELECT * FROM sales WHERE COALESCE(status,'active')!='fired' ORDER BY id LIMIT ?", (MAX_SALES,))
     for i, r in enumerate(rows):
         r["_slot"] = i
     return rows

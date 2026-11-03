@@ -152,7 +152,7 @@ Bot chạy ngay trên máy của bạn (không cần tên miền hay mở cổng
 | Khi đạt | Chúc mừng đạt KPI tối thiểu, vượt KPI |
 | 21:30 | KPI cả ngày theo từng nick, khách còn chờ sếp gọi, đơn đã chốt, bài học mới, chi phí AI |
 
-**Lệnh Telegram:** `/baocao` báo cáo nhanh · `/kpi` tiến độ · `/khach` khách đang chờ sếp · `/hop [chủ đề]` triệu tập họp
+**Lệnh Telegram:** `/baocao` báo cáo nhanh · `/kpi` tiến độ · `/khach` khách đang chờ sếp · `/congty` vốn, doanh thu, tình trạng sale · `/hop [chủ đề]` triệu tập họp
 (gửi kết luận khi họp xong) · `/tamdung` tạm dừng mọi nick · `/tieptuc` bật lại.
 
 Hôm trước chưa đạt KPI thì cuộc họp sáng tự lấy chủ đề "làm gì để đạt KPI hôm nay".
@@ -194,6 +194,36 @@ rút ra bài học… Cấp độ hiện trên nhân vật 3D. Trang Đào tạo
 **Ranh giới:** bài học chỉ thay đổi cách viết và cách chọn góc, sản phẩm, nhóm, giờ đăng. Giới hạn bài/ngày, giãn cách,
 luật nhóm và việc dừng khi checkpoint là do sếp đặt; bài học đề xuất tăng tần suất, lách luật hay hứa công dụng chữa
 bệnh bị tự động loại.
+
+## Công ty: vốn, sa thải, giải thể
+
+Trang **Công ty** quản lý vốn, chi phí, doanh thu và luật sống còn. Bấm **Thành lập công ty** (mặc định vốn 10.000.000đ)
+để bắt đầu tính luật; nên chạy **Bắt đầu chạy thật** trước (có ô "thành lập công ty ngay sau khi dọn").
+
+**Luật:**
+
+1. **Sa thải sale theo KPI tháng.** Mỗi nhân viên sale giữ nick có kỳ đánh giá 30 ngày. Chỉ tiêu kỳ = tổng chỉ tiêu
+   các ngày nick thật sự làm việc (đã đăng nhập, không bị sếp tạm dừng); mỗi ngày chỉ tiêu của một nick bằng KPI tối thiểu
+   của phòng chia đều cho số nick đang chạy. Cuối kỳ, số **khách để lại SĐT** từ bài của nick phải đạt chỉ tiêu, không thì
+   bị **sa thải**: nick dừng đăng, bài trong lịch trả về hàng chờ. Kỳ có dưới 15 ngày làm việc (nick lỗi, sếp tạm dừng) thì
+   được kéo dài thay vì đánh giá. 7 ngày đầu kỳ là thời gian làm quen. Đạt thì sang kỳ mới và được +100 kinh nghiệm.
+   Ngày 20 của kỳ, nếu đang dưới chỉ tiêu, Telegram báo trước cho sếp.
+2. **Sa thải hết sale → giải thể.**
+3. **60 ngày không có khách chốt đơn và doanh thu → giải thể.** Telegram nhắc ở giữa kỳ, còn 15 ngày và còn 5 ngày.
+   Chỉ cần 1 đơn có doanh thu là qua luật này.
+4. **Vốn** trả chi phí AI (quy đổi từ USD theo tỷ giá nhập lúc thành lập, mặc định 25.800đ/USD) và các khoản sếp ghi
+   (mua nick, mẫu thử…). Còn 20% vốn Telegram báo; hết vốn thì mọi việc gọi AI dừng tới khi **bơm thêm vốn**.
+5. **Đội lõi** (Minh, Lan, Tuấn, Hà, Khoa) không bị sa thải theo KPI; chỉ giải tán khi công ty giải thể.
+
+**Ghi doanh thu:** ở trang **Khách hàng** chọn trạng thái "Đã nhập hàng" và nhập số tiền, hoặc bấm **Chốt đơn** trên phiếu
+khách trong Telegram rồi trả lời số tiền (`2500000`, `2,5tr`, `2tr5`, `800k` đều được). Lệnh `/congty` xem nhanh vốn,
+doanh thu và tình trạng từng sale.
+
+**Sale bị sa thải:** nick và phiên đăng nhập vẫn giữ. Ở trang Công ty, nhập tên người thay → **Tuyển thay, giữ nick**:
+sale mới nhận nick, hội nhóm của nick cũ và bắt đầu kỳ KPI mới.
+
+**Sau khi giải thể:** sale dừng đăng, AI dừng, văn phòng 3D đóng cửa. Dữ liệu vẫn còn để xem lại; có thể **Thành lập lại**
+với vốn mới.
 
 ## Bắt đầu chạy thật
 
@@ -268,6 +298,7 @@ backend/
   facebook.py    Đăng Fanpage qua Graph API
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, đăng bài, lấy link bài, up bài
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
+  company.py     Công ty: vốn, chi phí, doanh thu, đánh giá KPI tháng, sa thải, giải thể
   kpi.py         KPI: nhận diện SĐT, tiến độ, chia theo nick, lịch sử; chuyển khách cho sếp, kịch bản tư vấn
   telegram_bot.py  Bot Telegram: ghép nối, báo cáo, phiếu khách có nút bấm, lệnh /baocao /kpi /khach /hop
   learning.py    Tự học: thống kê hiệu quả, chọn góc/sản phẩm/giờ, sổ tay bài học, cấp độ, phản tỉnh mỗi đêm

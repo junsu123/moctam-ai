@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 
 import browser_poster
+import company
 import db
 import facebook
 import meeting
@@ -19,6 +20,8 @@ def _tick():
     _n["tick"] += 1
     if _n["tick"] % 4 == 1:  # khoảng 2 phút một lần: lô viết bài nào xong thì nhập bài nháp
         workflows.poll_batches()
+    if company.tick() == "dissolved":
+        return  # công ty đã giải thể: không họp, không đăng, không quét, không gọi AI
     s = db.get_settings()
     now = datetime.now()
     stamp = now.strftime("%Y-%m-%d %H:%M")

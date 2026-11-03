@@ -19,6 +19,7 @@ import agents
 import browser_poster
 import db
 import facebook
+import company
 import kpi
 import learning
 import telegram_bot
@@ -537,12 +538,15 @@ def sales():
 
 @app.post("/api/sales")
 def add_sale(s: Sale):
-    if db.one("SELECT COUNT(*) n FROM sales")["n"] >= agents.MAX_SALES:
+    if company.status() == "dissolved":
+        raise HTTPException(400, "Công ty đã giải thể. Thành lập lại ở trang Công ty trước khi tuyển.")
+    if db.one("SELECT COUNT(*) n FROM sales WHERE COALESCE(status,'active')!='fired'")["n"] >= agents.MAX_SALES:
         raise HTTPException(400, f"Văn phòng tối đa {agents.MAX_SALES} nhân viên sale")
     removed = db.clear_samples(("sales",))  # tuyển người thật -> sale mẫu rời văn phòng
     if removed:
         db.log("minh", "Dọn sale mẫu", f"Đã cho {removed['sales']} sale mẫu rời văn phòng")
-    sid = db.run("INSERT INTO sales(name, fb_name, created_at) VALUES (?,?,?)", (s.name.strip(), s.fb_name.strip(), db.now()))
+    sid = db.run("INSERT INTO sales(name, fb_name, created_at, kpi_period_start) VALUES (?,?,?,?)",
+                 (s.name.strip(), s.fb_name.strip(), db.now(), db.today()))
     db.run("UPDATE sales SET profile_dir=? WHERE id=?", (str(browser_poster.profile_dir(sid)), sid))
     db.log("minh", "Tuyển sale", f"{s.name} nhận quản lý nick {s.fb_name or s.name}")
     return _sale_out(db.one("SELECT * FROM sales WHERE id=?", (sid,)))
@@ -550,6 +554,11 @@ def add_sale(s: Sale):
 
 @app.patch("/api/sales/{sid}")
 def patch_sale(sid: int, p: SalePatch):
+    row = db.one("SELECT status FROM sales WHERE id=?", (sid,))
+    if p.auto_post == 1 and (row or {}).get("status") == "fired":
+        raise HTTPException(400, "Sale này đã nghỉ việc. Tuyển người thay để dùng tiếp nick.")
+    if p.auto_post == 1 and company.status() == "dissolved":
+        raise HTTPException(400, "Công ty đã giải thể.")
     fields = {k: v for k, v in p.model_dump().items() if v is not None}
     for k in ("active_from", "active_to"):
         if k in fields and not re.fullmatch(r"\d{2}:\d{2}", fields[k]):
@@ -657,11 +666,115 @@ def del_image(pid: int, path: str):
     return {"images": imgs}
 
 
+# ------------------------------------------------------------------ công ty: vốn, doanh thu, sa thải, giải thể
+@app.get("/api/company")
+def company_overview():
+    return company.overview()
+
+
+class Found(BaseModel):
+    capital: int = 10_000_000
+    usd_vnd: float | None = None
+
+
+@app.post("/api/company/found")
+def company_found(f: Found):
+    if f.capital < 0:
+        raise HTTPException(400, "Vốn không hợp lệ")
+    if company.status() == "active":
+        raise HTTPException(400, "Công ty đang hoạt động")
+    company.found(f.capital, f.usd_vnd)
+    return company.overview()
+
+
+class Money(BaseModel):
+    amount: int
+    note: str = ""
+    category: str = "Khác"
+    date: str = ""
+
+
+@app.post("/api/company/capital")
+def company_capital(m: Money):
+    if m.amount <= 0:
+        raise HTTPException(400, "Số tiền phải lớn hơn 0")
+    company.add_capital(m.amount, m.note)
+    return company.overview()
+
+
+@app.post("/api/expenses")
+def add_expense(m: Money):
+    if m.amount <= 0:
+        raise HTTPException(400, "Số tiền phải lớn hơn 0")
+    d = m.date or db.today()
+    db.run("INSERT INTO expenses(date, category, amount, note, created_at) VALUES (?,?,?,?,?)",
+           (d, m.category, m.amount, m.note[:200], db.now()))
+    db.log("minh", "Ghi chi phí", f"{m.category}: {company.fmt_vnd(m.amount)} {m.note}".strip())
+    return company.overview()
+
+
+@app.delete("/api/expenses/{eid}")
+def del_expense(eid: int):
+    db.run("DELETE FROM expenses WHERE id=?", (eid,))
+    return company.overview()
+
+
+class OrderReq(BaseModel):
+    amount: int
+    note: str = ""
+
+
+@app.post("/api/leads/{lid}/order")
+def lead_order(lid: int, o: OrderReq):
+    if o.amount <= 0:
+        raise HTTPException(400, "Nhập giá trị đơn lớn hơn 0")
+    try:
+        return company.add_order(lid, o.amount, o.note)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+
+
+@app.delete("/api/orders/{oid}")
+def del_order(oid: int):
+    db.run("DELETE FROM orders WHERE id=?", (oid,))
+    return company.overview()
+
+
+class Replace(BaseModel):
+    name: str
+
+
+@app.post("/api/sales/{sid}/replace")
+def replace_sale(sid: int, r: Replace):
+    """Tuyển người thay cho sale đã nghỉ: dùng tiếp nick (hồ sơ Chrome đã đăng nhập) của người cũ."""
+    import shutil
+    old = db.one("SELECT * FROM sales WHERE id=?", (sid,))
+    if not old or old.get("status") != "fired":
+        raise HTTPException(400, "Chỉ tuyển thay cho sale đã nghỉ việc")
+    if company.status() == "dissolved":
+        raise HTTPException(400, "Công ty đã giải thể. Thành lập lại trước khi tuyển.")
+    new_id = db.run("""INSERT INTO sales(name, fb_name, login_status, created_at, kpi_period_start, max_posts_per_day,
+                       min_gap_minutes, active_from, active_to) VALUES (?,?,?,?,?,?,?,?,?)""",
+                    (r.name.strip(), old["fb_name"], old["login_status"], db.now(), db.today(), old["max_posts_per_day"],
+                     old["min_gap_minutes"], old["active_from"], old["active_to"]))
+    src, dst = db.PROFILES_DIR / f"sale-{sid}", db.PROFILES_DIR / f"sale-{new_id}"
+    if src.exists() and not dst.exists():
+        shutil.move(str(src), str(dst))
+    db.run("UPDATE sales SET profile_dir=? WHERE id=?", (str(dst), new_id))
+    db.run("UPDATE sales SET replaced_by=? WHERE id=?", (new_id, sid))
+    db.run("UPDATE groups SET member_sale_ids=REPLACE(','||member_sale_ids||',', ?, ?) WHERE member_sale_ids!=''",
+           (f",{sid},", f",{new_id},"))
+    db.run("UPDATE groups SET member_sale_ids=TRIM(member_sale_ids, ',')")
+    db.log("minh", "Tuyển người thay", f"{r.name} tiếp quản nick {old['fb_name'] or old['name']} của {old['name']}")
+    return _sale_out(db.one("SELECT * FROM sales WHERE id=?", (new_id,)))
+
+
 # ------------------------------------------------------------------ bắt đầu chạy thật
 class ResetReq(BaseModel):
     confirm: str = ""
     products: bool = False
     groups: bool = False
+    found_capital: int = 0  # > 0: thành lập công ty ngay sau khi xóa
 
 
 @app.get("/api/reset")
@@ -677,6 +790,9 @@ def reset(r: ResetReq):
     if busy or meeting.is_running():
         raise HTTPException(409, "Đang có " + (f"nick {', '.join(busy)} làm việc" if busy else "cuộc họp") + ". Chờ xong rồi thử lại.")
     res = db.reset_test_data(r.products, r.groups)
+    if r.found_capital > 0:
+        company.found(r.found_capital)
+        res["founded"] = True
     for k in list(workflows.STATUS):
         workflows.STATUS[k] = {"state": "idle", "text": "Sẵn sàng làm việc thật"}
     return res

@@ -159,6 +159,16 @@ label.row.small input{margin-top:3px;flex:none}
 .imgfolder .meter i.low{background:var(--honey)}
 .post .thumbs img{width:52px;height:52px}
 .fname{font-size:11px;background:var(--panel-2);border-radius:6px;padding:2px 6px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+#coBody{display:flex;flex-direction:column;gap:16px}
+.co-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.co-tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.co-tile .v{font:800 24px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.co-tile .l{font-size:12px;color:var(--muted)}
+.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:13px}
+.closed{position:absolute;inset:0;z-index:3;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(2px);text-align:center;padding:16px}
+.closed div{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 22px;max-width:420px;box-shadow:var(--shadow)}
+.closed h2{margin-bottom:6px}
+.risk-safe{color:var(--accent)} .risk-warn{color:var(--honey)} .risk-danger{color:var(--danger)}
 .phone{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .offline{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:50;background:var(--danger);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .reset-list{margin:0;padding-left:18px;columns:2;column-gap:20px;font-size:12.5px}
@@ -273,6 +283,7 @@ tbody tr.sel td{background:var(--accent-soft)}
 
 @media (max-width:1180px){.split{grid-template-columns:minmax(0,1fr)}.board{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:760px){
+  .co-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
   .kpi-hero{grid-template-columns:minmax(0,1fr)}
   .learn-top{grid-template-columns:minmax(0,1fr)} .agents-learn{grid-template-columns:minmax(0,1fr)}
   .cost-top,.presets{grid-template-columns:minmax(0,1fr)}
@@ -298,6 +309,7 @@ tbody tr.sel td{background:var(--accent-soft)}
   <aside class="side">
     <div class="brand"><div class="brand-mark">T</div><div><b id="coName">Xưởng Trà &amp; Bột</b><span>Phòng Kinh doanh AI</span></div></div>
     <nav class="nav" id="nav">
+      <button data-v="company"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M10 21v-4h4v4"/></svg>Công ty<span class="badge" id="coBadge" hidden>!</span></button>
       <button data-v="office"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Văn phòng</button>
       <button data-v="meeting"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="3.5" r="1.5"/><circle cx="12" cy="20.5" r="1.5"/><circle cx="3.5" cy="12" r="1.5"/><circle cx="20.5" cy="12" r="1.5"/></svg>Phòng họp<span class="badge" id="liveBadge" hidden>LIVE</span></button>
       <button data-v="posts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Bài đăng<span class="badge" id="draftBadge" hidden></span></button>
@@ -315,6 +327,7 @@ tbody tr.sel td{background:var(--accent-soft)}
   <main class="main">
     <!-- VĂN PHÒNG -->
     <section class="view" id="v-office">
+      <div class="banner" id="coBanner" hidden></div>
       <div class="banner" id="demoBanner" hidden>Bạn đang xem <b>bản xem trước với dữ liệu mẫu</b>. Mọi thao tác đều chạy được nhưng không lưu lại. Chạy backend Python (hướng dẫn trong README) để dùng thật.</div>
       <div class="vh">
         <div><h1>Văn phòng</h1><p>Đội 5 nhân viên AI đang làm việc. Bấm vào một nhân vật để xem việc của họ.</p></div>
@@ -333,6 +346,13 @@ tbody tr.sel td{background:var(--accent-soft)}
           <div class="card"><h3>Nhật ký hoạt động</h3><ol class="feed" id="feed"></ol></div>
         </div>
       </div>
+    </section>
+
+    <!-- CÔNG TY -->
+    <section class="view" id="v-company" hidden>
+      <div class="vh"><div><h1>Công ty</h1><p>Vốn, chi phí, doanh thu và luật sống còn của công ty. Mỗi nhân viên sale phải tìm được khách: không đạt KPI tháng sẽ bị sa thải. Sa thải hết nhân viên, hoặc sau 60 ngày chưa có khách chốt đơn và doanh thu, công ty giải thể.</p></div>
+        <span class="chip" id="coState">—</span></div>
+      <div id="coBody"></div>
     </section>
 
     <!-- PHÒNG HỌP -->
@@ -622,6 +642,7 @@ tbody tr.sel td{background:var(--accent-soft)}
             <div id="resetPreview" class="note"></div>
             <label class="row small"><input type="checkbox" id="rsProd"> Xóa cả sản phẩm đã nhập (thư mục ảnh trên máy không bị đụng tới)</label>
             <label class="row small"><input type="checkbox" id="rsGroup"> Xóa cả hội nhóm đã nhập</label>
+            <label class="row small"><input type="checkbox" id="rsFound" checked> Thành lập công ty ngay sau khi xóa, vốn <input type="text" id="rsCap" value="10.000.000" inputmode="numeric" style="width:120px;padding:3px 7px" aria-label="Vốn ban đầu"> đồng</label>
             <label class="f" for="rsConfirm"><span>Gõ <b>CHAY THAT</b> để xác nhận</span><input type="text" id="rsConfirm" autocomplete="off" placeholder="CHAY THAT"></label>
             <div><button class="btn primary" type="submit" id="rsBtn" disabled>Xóa dữ liệu thử nghiệm</button></div>
           </form>
@@ -677,6 +698,7 @@ tbody tr.sel td{background:var(--accent-soft)}
   <div class="overlay" id="overlay"></div>
   <div class="cam"><button class="btn sm" id="camOffice">Khu làm việc</button><button class="btn sm" id="camMeet">Phòng họp</button></div>
   <div class="stage-hint">Kéo để xoay · cuộn để phóng to</div>
+  <div class="closed" id="closedOverlay" hidden><div><h2>Công ty đã giải thể</h2><p class="small muted" id="closedReason"></p><a class="btn primary" href="#company" style="margin-top:10px">Xem và thành lập lại</a></div></div>
 </div>
 <aside class="drawer" id="drawer" hidden></aside>
 <div class="toast" id="toast" hidden></div>
@@ -783,6 +805,17 @@ const Demo = (() => {
     khoa:[{label:"Bài có số liệu kết quả",unit:"%",now:40,prev:35},{label:"Bài học mới",unit:"",now:1,prev:1}]};
   const lvl=xp=>1+Math.floor(Math.sqrt(xp/50)), lxp=l=>50*(l-1)**2;
   function demoFolder(p){ if(!p.image_folder) return {exists:false,source:"",count:0,fresh:0,samples:[]}; const n=[24,18,9,15,6,12][(p.id-1)%6]||10, fr=[17,11,2,9,4,7][(p.id-1)%6]||5; return {path:p.image_folder,exists:true,source:"product",count:n,fresh:fr,posts_left:Math.floor(fr/2),samples:[],error:null}; }
+  S.co={status:"active",founded_at:"2026-10-12",day:23,trial_days:60,capital:10000000,other:450000,orders:[{id:1,lead_name:"Nguyễn Thu Hà",amount:2850000,via:"telegram",created_at:"2026-10-29 15:20:00"},{id:2,lead_name:"Shop Mộc An",amount:4200000,via:"app",created_at:"2026-11-02 10:05:00",note:"Ngũ cốc 50 hũ"}],
+    expenses:[{id:1,date:"2026-10-12",category:"Nick Facebook",amount:300000,note:"2 nick dự phòng"},{id:2,date:"2026-10-20",category:"Mẫu thử gửi khách",amount:150000,note:""}]};
+  function demoCompany(){
+    const c=S.co; const ai=Math.round(0.42*25800); const revenue=c.orders.reduce((a,o)=>a+o.amount,0); const spent=ai+c.other;
+    const rv=(sid,got,tgt,day,wd)=>({period_start:"2026-10-12",day,work_days:wd,target_so_far:tgt,target_month:Math.round(tgt/wd*30),leads_phone:got,pct:Math.round(got/tgt*100),risk:got/tgt>=.9?"safe":got/tgt>=.6?"warn":"danger",days_left:30-day});
+    const sales=S.sales.filter(x=>!x.is_sample).map((r,i)=>({...r,status:r.status||"active",review:rv(r.id,[38,21,9][i%3],44,23,22)}));
+    if(!sales.length){ sales.push({id:1,name:"Linh",fb_name:"Linh Nguyễn",status:"active",review:rv(1,38,44,23,22)},{id:2,name:"Phương",fb_name:"Phương Sỉ Tận Gốc",status:"active",review:rv(2,26,44,23,22)},{id:9,name:"Quân",fb_name:"Quân Đặc Sản Quê",status:"fired",fire_reason:"Kỳ 12/09 → 11/10: 19/52 khách có SĐT (26 ngày làm việc), không đạt KPI tháng."}); }
+    return {status:c.status,founded_at:c.founded_at,day:c.day,trial_days:c.trial_days,dissolved_at:c.dissolved_at,dissolved_reason:c.dissolved_reason,
+      finance:{capital:c.capital,ai_vnd:ai,ai_usd:0.42,other:c.other,spent,left:c.capital-spent,revenue,orders:c.orders.length,customers:c.orders.length,profit:revenue-spent,rate:25800},
+      sales,expenses:c.expenses,orders:c.orders};
+  }
   function demoKpi(){
     const d=new Date(); const mn=+S.settings.kpi_min||5, mx=+S.settings.kpi_max||10; const ph=S.kpiPhone??3;
     const history=[...Array(14)].map((_,i)=>{ const x=new Date(d-(13-i)*864e5); const v=i===13?ph:[4,6,5,7,3,8,6,5,9,6,11,7,8][i]; const p2=n=>String(n).padStart(2,"0"); return {date:`${x.getFullYear()}-${p2(x.getMonth()+1)}-${p2(x.getDate())}`,target_min:mn,target_max:mx,leads_phone:v,leads_total:v+3,achieved:+(v>=mn)}; });
@@ -813,7 +846,7 @@ const Demo = (() => {
     return {drafts:c(p=>p.status==="draft"),approved:c(p=>["approved","scheduled"].includes(p.status)),posted_total:c(p=>p.status==="posted"),posted_today:c(p=>p.status==="posted"),
       groups:S.groups.length,groups_ready:S.groups.filter(ready).length,leads:S.leads.length,leads_new:S.leads.filter(l=>l.status==="new").length,
       leads_hot:S.leads.filter(l=>l.score>=75&&!["ordered","lost"].includes(l.status)).length,leads_ordered:S.leads.filter(l=>l.status==="ordered").length,
-      tasks_open:S.tasks.filter(t=>t.status!=="done").length,ai_live:false,failed:c(p=>p.status==="failed"),kpi:demoKpi().today,bumps_today:S.posts.reduce((n,p)=>n+(p.bump_count||0),0),sales_total:S.sales.length,sales_ok:S.sales.filter(x=>x.login_status==="ok"&&x.auto_post).length,sales_problem:S.sales.filter(x=>x.login_status!=="ok").length,best_group:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",lead_per_post:0};
+      tasks_open:S.tasks.filter(t=>t.status!=="done").length,ai_live:false,failed:c(p=>p.status==="failed"),kpi:demoKpi().today,company:S.co.status==="setup"?null:{status:S.co.status,day:S.co.day,trial_days:S.co.trial_days,capital:S.co.capital,capital_left:demoCompany().finance.left,revenue:demoCompany().finance.revenue,orders:S.co.orders.length,at_risk:demoCompany().sales.filter(r=>r.review&&["warn","danger"].includes(r.review.risk)).map(r=>`${r.name} (${r.review.leads_phone}/${r.review.target_so_far})`)},bumps_today:S.posts.reduce((n,p)=>n+(p.bump_count||0),0),sales_total:S.sales.length,sales_ok:S.sales.filter(x=>x.login_status==="ok"&&x.auto_post).length,sales_problem:S.sales.filter(x=>x.login_status!=="ok").length,best_group:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",lead_per_post:0};
   }
   const TOPICS=["Tuần này nên tập trung đẩy sản phẩm nào cho khách sỉ?","Đăng nhiều bài mỗi ngày hay ít bài nhưng chất lượng hơn?","Có nên công khai giá sỉ ngay trong bài đăng hội nhóm không?","Gửi mẫu thử miễn phí cho khách sỉ mới: có đáng chi phí không?","Nên ưu tiên tệp khách livestream hay tệp khách chạy quảng cáo?","Có nên đẩy dịch vụ in nhãn riêng (OEM) cho shop online không?"];
   const DEB={lan:["Em nghĩ phải mạnh dạn hơn: nội dung có video thật, câu chuyện xưởng sẽ khác biệt so với bài nguồn hàng đăng tràn lan.","Em đồng ý cần số liệu với anh Khoa, nhưng không thử nội dung mới thì lấy đâu ra số liệu để so ạ?"],
@@ -862,6 +895,7 @@ const Demo = (() => {
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products.map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g)}));
       if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,tg_token:S.settings.tg_token?"••••••":"",models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
+      if(P==="/company") return demoCompany();
       if(P==="/reset"){ const c=(n,l)=>n?[{label:l,count:n}]:[]; return {delete:[...c(S.posts.length,"bài đăng"),...c(S.leads.length,"khách hàng"),...c(S.meetings.length,"cuộc họp"),...c(S.activity.length,"nhật ký hoạt động"),...c(S.lessons.length,"bài học của agent"),...c(S.tasks.length,"việc được giao")],keep:{sales:S.sales.filter(x=>!x.is_sample).length,products:0,groups:0},samples:{products:S.products.length,groups:S.groups.length,sales:S.sales.filter(x=>x.is_sample).length},shots:0}; }
       if(P==="/sample-data") return {sales:S.sales.filter(x=>x.is_sample).length,leads:S.leads.filter(x=>x.is_sample).length,groups:S.groups.length,products:S.products.length};
       if(P==="/learning") return demoLearning();
@@ -934,6 +968,12 @@ const Demo = (() => {
     if(method==="POST"&&P==="/ai-key") throw new Error("Bản xem trước không lưu khóa. Chạy phần mềm trên máy bạn để nhập khóa API.");
     if(method==="PUT"&&P==="/settings"){ if(body.tg_token==="••••••") delete body.tg_token; Object.assign(S.settings,body); return S.settings; }
     if(method==="DELETE"&&(m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const path=new URLSearchParams(qs).get("path"); pr.images=JSON.stringify(JSON.parse(pr.images||"[]").filter(x=>x!==path)); return {ok:true}; }
+    if(method==="POST"&&P==="/company/found"){ Object.assign(S.co,{status:"active",day:1,capital:body.capital,other:0,orders:[],expenses:[],founded_at:today()}); log("minh","Thành lập công ty",`Vốn ${body.capital}`); return demoCompany(); }
+    if(method==="POST"&&P==="/company/capital"){ S.co.capital+=body.amount; return demoCompany(); }
+    if(method==="POST"&&P==="/expenses"){ S.co.other+=body.amount; S.co.expenses.unshift({id:id(),date:today(),category:body.category,amount:body.amount,note:body.note}); return demoCompany(); }
+    if(method==="DELETE"&&(m=P.match(/^\/expenses\/(\d+)$/))){ const x=S.co.expenses.find(e=>e.id==m[1]); if(x){ S.co.other-=x.amount; S.co.expenses=S.co.expenses.filter(e=>e!==x); } return demoCompany(); }
+    if(method==="POST"&&(m=P.match(/^\/leads\/(\d+)\/order$/))){ const l=S.leads.find(x=>x.id==m[1]); l.status="ordered"; S.co.orders.unshift({id:id(),lead_name:l.name,amount:body.amount,via:"app",created_at:now()}); log("ha","Có đơn hàng",`${l.name}: ${body.amount}`); return {ok:true}; }
+    if(method==="POST"&&(m=P.match(/^\/sales\/(\d+)\/replace$/))) throw new Error("Bản xem trước không tuyển thay được. Chạy phần mềm trên máy để dùng.");
     if(method==="POST"&&P==="/reset"){ if(String(body.confirm).trim().toUpperCase()!=="CHAY THAT") throw new Error('Gõ đúng "CHAY THAT" để xác nhận');
       S.posts=[]; S.leads=[]; S.meetings=[]; S.msgs=[]; S.tasks=[]; S.activity=[]; S.lessons=[]; S.xp={}; S.goals={}; S.kpiPhone=0; S.sales=S.sales.filter(x=>!x.is_sample);
       if(body.products) S.products=[]; if(body.groups) S.groups=[]; log("minh","Bắt đầu chạy thật","Đã xóa dữ liệu thử nghiệm, giữ nhân viên sale và cài đặt"); return {deleted:[],backup:"data/backups/truoc-khi-chay-that.db"}; }
@@ -1220,7 +1260,7 @@ function show(v){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
   if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
-  if(v==="posts") loadPosts(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
 $("#nav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) location.hash=b.dataset.v; });
@@ -1240,6 +1280,7 @@ async function refresh(){
     const db=$("#draftBadge"); db.hidden=!s.drafts; db.textContent=s.drafts;
     if(!DEMO&&s.ai_live) $("#modeBox").innerHTML=`<span class="dot live"></span><b>AI đang hoạt động</b><br>Chi phí tháng này: <b>${usd(s.ai_cost_month||0)}</b>`;
     if($("#bumpToday")) $("#bumpToday").textContent=`Hôm nay đã up ${s.bumps_today||0} lượt`;
+    companyBanner(s.company);
     if(s.kpi){ $("#officeKpi").innerHTML=kpiHero(s.kpi,null,`<span class="small muted" style="display:block;margin-top:6px">Xem KPI →</span>`); const bb=$("#bossBadge"); bb.hidden=!s.kpi.boss_pending; bb.textContent=s.kpi.boss_pending; }
     const prob=(s.sales_problem||0)+(s.failed||0); $("#saleBadge").hidden=!s.sales_problem; $("#saleAlert").hidden=!prob;
     $("#saleAlertTxt").textContent=[s.sales_problem?`${s.sales_problem} nick cần sếp đăng nhập lại hoặc xử lý checkpoint`:"",s.failed?`${s.failed} bài đăng lỗi`:""].filter(Boolean).join(" · ");
@@ -1400,6 +1441,8 @@ async function loadSales(){
     ST.sales=await api("/sales"); const grid=$("#salesGrid");
     if(document.activeElement && grid.contains(document.activeElement)) return; // đang gõ trong form giới hạn
     grid.innerHTML=ST.sales.length?ST.sales.map(s=>{ const [lc,lt]=LOGIN[s.login_status]||["",s.login_status];
+      if(s.status==="fired") return `<div class="card" style="opacity:.75"><div class="card-h"><div class="row">${avaHtml(s.agent_id)}<div><h3>${esc(s.name)}</h3><span class="small muted">Nick: ${esc(s.fb_name||s.name)}</span></div></div><span class="chip bad">Đã nghỉ việc</span></div>
+        <p class="small muted">${esc(s.fire_reason||"")}</p>${s.replaced_by?'<p class="small">Đã có người thay, nick vẫn hoạt động.</p>':'<a class="btn sm" href="#company">Tuyển người thay, giữ nick</a>'}</div>`;
       return `<div class="card" data-sale="${s.id}">
       <div class="card-h"><div class="row">${avaHtml(s.agent_id)}<div><h3>${esc(s.name)} ${s.is_sample?'<span class="chip warn">Sale mẫu</span>':""}</h3><span class="small muted">Nick: ${esc(s.fb_name||s.name)}</span></div></div><span class="chip ${lc}">${lt}</span></div>
       ${s.is_sample?'<p class="small muted">Sale mẫu để xem thử. Khi bạn tuyển sale đầu tiên, các sale mẫu tự rời văn phòng.</p>':""}
@@ -1434,6 +1477,92 @@ $("#saleForm").addEventListener("submit",async e=>{ e.preventDefault();
   const hadSample=(ST.sales||[]).some(x=>x.is_sample);
   try{ await api("/sales","POST",{name:$("#saName").value,fb_name:$("#saFb").value}); e.target.reset(); toast(hadSample?"Đã tuyển sale mới. Các sale mẫu đã rời văn phòng. Bấm Mở Chrome để đăng nhập nick.":"Đã tuyển sale mới. Bấm Mở Chrome để đăng nhập nick."); }catch(err){ toast(err.message); }
   loadSales(); refresh(); });
+
+/* --------------------------------------------- công ty */
+const vnd=n=>`${Math.round(n||0).toLocaleString("vi-VN")}đ`;
+const parseVnd=t=>{ t=String(t||"").toLowerCase().replace(/\s|đ|vnd/g,""); let m;
+  if((m=t.match(/^(\d+)(tr|triệu|trieu)(\d{1,3})?$/))) return +m[1]*1e6+(m[3]?+m[3].padEnd(3,"0")*1000:0);
+  if((m=t.match(/^(\d+(?:[.,]\d+)?)(tr|triệu|trieu|m)$/))) return Math.round(parseFloat(m[1].replace(",","."))*1e6);
+  if((m=t.match(/^(\d+(?:[.,]\d+)?)(k|nghìn|ngàn)$/))) return Math.round(parseFloat(m[1].replace(",","."))*1000);
+  const d=t.replace(/[.,]/g,""); return /^\d+$/.test(d)&&+d>0?+d:null; };
+const RISK={new:["","Mới vào kỳ (7 ngày đầu)"],safe:["risk-safe","An toàn"],warn:["risk-warn","Cần cố gắng"],danger:["risk-danger","Nguy cơ bị sa thải"],idle:["","Chưa có ngày làm việc"],extend:["","Kéo dài kỳ (thiếu ngày làm việc)"],pass:["risk-safe","Đạt, chờ đánh giá"],fail:["risk-danger","Sẽ bị sa thải"]};
+const RULES=`<ol class="rules"><li>Mỗi nhân viên sale giữ nick phải tìm được khách. Mỗi kỳ 30 ngày phải đạt chỉ tiêu <b>khách có SĐT</b> từ bài của nick mình, không đạt thì bị <b>sa thải</b>.</li>
+  <li>Chỉ tiêu tháng = tổng chỉ tiêu của những ngày nick làm việc được. Ngày nick bị lỗi đăng nhập hay sếp tạm dừng không bị tính; kỳ có dưới 15 ngày làm việc được kéo dài.</li>
+  <li>Toàn bộ nhân viên sale bị sa thải thì công ty <b>giải thể</b>.</li>
+  <li>Sau <b>60 ngày</b> chưa có khách chốt đơn và chưa có doanh thu thì công ty <b>giải thể</b>.</li>
+  <li>Vốn trả chi phí AI (quy đổi từ USD) và các khoản sếp ghi. Hết vốn thì việc gọi AI tạm dừng tới khi bơm thêm.</li>
+  <li>Đội lõi (Minh, Lan, Tuấn, Hà, Khoa) không bị sa thải theo KPI, chỉ giải tán khi công ty giải thể.</li></ol>`;
+async function loadCompany(){
+  const c=await api("/company"); ST.company=c; const f=c.finance; const body=$("#coBody");
+  const chip={setup:["warn","Chưa thành lập"],active:["ok",`Đang hoạt động · ngày ${c.day}/${c.trial_days}`],dissolved:["bad","Đã giải thể"]}[c.status];
+  $("#coState").className="chip "+chip[0]; $("#coState").textContent=chip[1];
+  if(document.activeElement&&body.contains(document.activeElement)&&document.activeElement.tagName==="INPUT") return;
+  if(c.status!=="active"){
+    body.innerHTML=`<div class="learn-top"><form class="card" id="foundForm">
+        ${c.status==="dissolved"?`<div class="err"><b>Công ty đã giải thể</b> ${c.dissolved_at?`ngày ${fmtDate(c.dissolved_at)}`:""}: ${esc(c.dissolved_reason||"")}</div>
+          <p class="small muted">Kết quả: vốn ${vnd(f.capital)}, đã chi ${vnd(f.spent)}, doanh thu ${vnd(f.revenue)} (${f.orders} đơn).</p>`:""}
+        <h3>${c.status==="dissolved"?"Thành lập lại công ty":"Thành lập công ty"}</h3>
+        <p class="small muted">Từ ngày thành lập, luật KPI và thời hạn 60 ngày bắt đầu tính. Nên dọn dữ liệu thử nghiệm trước (Cài đặt → Bắt đầu chạy thật).</p>
+        <div class="grid2"><label class="f" for="coCap">Vốn ban đầu (đồng)<input type="text" id="coCap" value="10.000.000" inputmode="numeric"></label>
+          <label class="f" for="coRate">Tỷ giá USD → VND (để quy đổi chi phí AI)<input type="number" id="coRate" value="${f.rate||25800}" min="1"></label></div>
+        <div><button class="btn primary" type="submit">${c.status==="dissolved"?"Thành lập lại":"Thành lập công ty"}</button></div>
+      </form><div class="card"><h3>Luật của công ty</h3>${RULES}</div></div>`;
+    $("#foundForm").addEventListener("submit",async e=>{ e.preventDefault(); const cap=parseVnd($("#coCap").value);
+      if(cap===null){ toast("Nhập vốn bằng số, ví dụ 10.000.000 hoặc 10tr"); return; }
+      try{ await api("/company/found","POST",{capital:cap,usd_vnd:+$("#coRate").value||null}); toast(`Công ty đã thành lập với vốn ${vnd(cap)}`); }catch(err){ toast(err.message); }
+      loadCompany(); refresh(); });
+    return;
+  }
+  const leftPct=f.capital?Math.max(0,Math.min(100,f.left/f.capital*100)):0;
+  const dleft=Math.max(0,c.trial_days-c.day+1);
+  body.innerHTML=`<div class="co-tiles">
+      <div class="co-tile"><span class="l">Vốn còn lại</span><span class="v" style="color:${f.left<=0?"var(--danger)":leftPct<20?"var(--honey)":"inherit"}">${vnd(f.left)}</span><div class="bar"><i class="${leftPct<20?"bad":leftPct<50?"warn":""}" style="width:${leftPct}%"></i></div><span class="l">trên ${vnd(f.capital)} vốn</span></div>
+      <div class="co-tile"><span class="l">Đã chi</span><span class="v">${vnd(f.spent)}</span><span class="l">AI ${vnd(f.ai_vnd)} ($${f.ai_usd}) · khác ${vnd(f.other)}</span></div>
+      <div class="co-tile"><span class="l">Doanh thu</span><span class="v" style="color:${f.revenue?"var(--accent)":"inherit"}">${vnd(f.revenue)}</span><span class="l">${f.orders} đơn · ${f.customers} khách mua · lãi/lỗ ${vnd(f.profit)}</span></div>
+      <div class="co-tile"><span class="l">Thời hạn 60 ngày</span><span class="v">${f.orders?"Đã đạt":`Còn ${dleft} ngày`}</span><span class="l">${f.orders?"Đã có khách chốt đơn, không bị giải thể vì thời hạn":"Cần ít nhất 1 khách chốt đơn có doanh thu"}</span></div>
+    </div>
+    <div class="learn-top">
+      <div class="sidecol">
+        <div class="tbl-wrap"><table style="min-width:560px"><thead><tr><th>Nhân viên sale</th><th>Kỳ đánh giá</th><th class="num">Khách có SĐT / chỉ tiêu</th><th>Tình trạng</th></tr></thead><tbody>
+          ${c.sales.length?c.sales.map(r=>{ if(r.status==="fired") return `<tr><td><b>${esc(r.name)}</b><div class="small muted">${esc(r.fb_name||"")}</div></td><td colspan="2" class="small muted">${esc(r.fire_reason||"")}</td><td><span class="chip bad">Đã nghỉ việc</span><div class="row" style="margin-top:6px"><input type="text" id="rp-${r.id}" placeholder="Tên người thay" style="padding:4px 8px;font-size:12.5px;width:130px"><button class="btn sm" type="button" data-replace="${r.id}">Tuyển thay, giữ nick</button></div></td></tr>`;
+            const v=r.review; const [cls,txt]=RISK[v.risk]||["",v.risk];
+            return `<tr><td><b>${esc(r.name)}</b><div class="small muted">${esc(r.fb_name||"")}</div></td><td>Ngày ${Math.min(v.day,30)}/30<div class="small muted">${v.work_days} ngày làm việc</div></td><td class="num"><b>${v.leads_phone}</b> / ${v.target_so_far}<div class="small muted">dự kiến cả tháng ~${v.target_month}</div></td><td><b class="${cls}">${txt}</b>${v.target_so_far?`<div class="small muted">${v.pct}% chỉ tiêu tới hôm nay</div>`:""}</td></tr>`; }).join(""):'<tr><td colspan="4" class="muted">Chưa có nhân viên sale. Tuyển ở trang Nhân viên sale.</td></tr>'}
+        </tbody></table></div>
+        <div class="card"><div class="card-h"><h3>Đơn hàng</h3><span class="small muted">Ghi đơn ở trang Khách hàng hoặc trả lời số tiền trên Telegram</span></div>
+          <ul class="recent">${c.orders.length?c.orders.map(o=>`<li><b class="num">${vnd(o.amount)}</b><span>${esc(o.lead_name||"")}</span><span class="muted small">${fmtDate(o.created_at)}${o.via==="telegram"?" · Telegram":""}</span>${o.note?`<span class="muted small">${esc(o.note)}</span>`:""}</li>`).join(""):'<li class="muted">Chưa có đơn hàng nào.</li>'}</ul></div>
+      </div>
+      <div class="sidecol">
+        <form class="card" id="expForm"><h3>Ghi chi phí</h3>
+          <div class="grid3"><label class="f" for="exAmt">Số tiền<input type="text" id="exAmt" inputmode="numeric" placeholder="VD 300k"></label>
+            <label class="f" for="exCat">Loại<select id="exCat"><option>Nick Facebook</option><option>Điện, Internet</option><option>Quảng cáo</option><option>Mẫu thử gửi khách</option><option>Lương người thật</option><option>Khác</option></select></label>
+            <label class="f" for="exNote">Ghi chú<input type="text" id="exNote"></label></div>
+          <div><button class="btn" type="submit">Ghi chi phí</button></div>
+          <ul class="recent">${c.expenses.slice(0,8).map(x=>`<li><b class="num">${vnd(x.amount)}</b><span>${esc(x.category)}</span><span class="muted small">${fmtDate(x.date)} ${esc(x.note||"")}</span><button type="button" class="btn sm ghost danger" data-delexp="${x.id}" aria-label="Xóa khoản chi">Xóa</button></li>`).join("")||'<li class="muted small">Chi phí AI được tính tự động.</li>'}</ul>
+        </form>
+        <form class="card" id="capForm"><h3>Bơm thêm vốn</h3><div class="row"><input type="text" class="grow" id="capAmt" inputmode="numeric" placeholder="VD 5tr" aria-label="Số vốn bơm thêm"><button class="btn" type="submit">Bơm vốn</button></div></form>
+        <div class="card"><h3>Luật của công ty</h3>${RULES}</div>
+      </div>
+    </div>`;
+  $("#expForm").addEventListener("submit",async e=>{ e.preventDefault(); const a=parseVnd($("#exAmt").value); if(a===null){ toast("Nhập số tiền, ví dụ 300000 hoặc 300k"); return; }
+    await api("/expenses","POST",{amount:a,category:$("#exCat").value,note:$("#exNote").value}); toast(`Đã ghi chi phí ${vnd(a)}`); loadCompany(); });
+  $("#capForm").addEventListener("submit",async e=>{ e.preventDefault(); const a=parseVnd($("#capAmt").value); if(a===null){ toast("Nhập số tiền, ví dụ 5000000 hoặc 5tr"); return; }
+    await api("/company/capital","POST",{amount:a}); toast(`Đã bơm thêm ${vnd(a)}`); loadCompany(); refresh(); });
+}
+$("#coBody").addEventListener("click",async e=>{
+  const d=e.target.closest("[data-delexp]"); if(d){ await api(`/expenses/${d.dataset.delexp}`,"DELETE"); return loadCompany(); }
+  const r=e.target.closest("[data-replace]"); if(r){ const id=r.dataset.replace; const name=$(`#rp-${id}`).value.trim(); if(!name){ toast("Nhập tên người thay"); return; }
+    try{ await api(`/sales/${id}/replace`,"POST",{name}); toast(`${name} đã tiếp quản nick, không cần đăng nhập lại`); }catch(err){ toast(err.message); } loadCompany(); refresh(); }
+});
+function companyBanner(co){
+  const b=$("#coBanner"), ov=$("#closedOverlay"), badge=$("#coBadge");
+  ov.hidden=!(co&&co.status==="dissolved"); if(co&&co.status==="dissolved") $("#closedReason").textContent="";
+  if(!co){ b.hidden=false; b.innerHTML='Công ty <b>chưa thành lập</b>: luật KPI tháng và thời hạn 60 ngày chưa áp dụng. <a href="#company">Thành lập công ty</a>'; badge.hidden=false; return; }
+  badge.hidden=!(co.status==="dissolved"||(co.at_risk&&co.at_risk.length)||co.capital_left<=0);
+  if(co.status==="dissolved"){ b.hidden=false; b.innerHTML='<b>Công ty đã giải thể.</b> Mọi hoạt động tự động đã dừng. <a href="#company">Xem lý do và thành lập lại</a>'; return; }
+  const parts=[`Ngày ${co.day}/${co.trial_days}`,`vốn còn ${vnd(co.capital_left)}`,`doanh thu ${vnd(co.revenue)} (${co.orders} đơn)`];
+  const warn=[]; if(!co.orders) warn.push(`còn ${Math.max(0,co.trial_days-co.day+1)} ngày để có đơn đầu tiên`); if(co.at_risk.length) warn.push(`nguy cơ sa thải: ${co.at_risk.map(esc).join(", ")}`); if(co.capital_left<=0) warn.push("hết vốn, AI đã tạm dừng");
+  b.hidden=false; b.innerHTML=`🏢 ${parts.join(" · ")}${warn.length?` · <b>${warn.join(" · ")}</b>`:""}`;
+}
 
 /* --------------------------------------------- KPI & Telegram */
 function kpiHero(k,pace,extra=""){
@@ -1543,12 +1672,15 @@ function renderLead(){
   $("#leadDetail").innerHTML=`<div class="card-h"><h3>${esc(l.name)}</h3><span class="chip">${l.score} điểm</span></div>
    ${l.escalated_at?`<div class="note"><b>Đã chuyển cho sếp</b> ${fmtTime(l.escalated_at)} ${fmtDate(l.escalated_at)}: ${esc(l.escalate_reason||"")}${l.consult_note?`<br><br><b>Kịch bản Hà gợi ý:</b> ${esc(l.consult_note)}`:""}</div>`:""}
    <dl class="kv"><dt>Số điện thoại</dt><dd>${l.phone?`<span class="phone">${esc(fmtPhone(l.phone))}</span>`:"Chưa có"}</dd><dt>Liên hệ</dt><dd>${esc(l.contact)}</dd><dt>Kinh doanh</dt><dd>${esc(l.business_type)}</dd><dt>Nguồn</dt><dd>${esc(l.source)}</dd><dt>Nhu cầu</dt><dd>${esc(l.need)}</dd></dl>
+   <form class="row" id="lOrder"><input type="text" class="grow" id="lAmt" inputmode="numeric" placeholder="Giá trị đơn, VD 2,5tr" aria-label="Giá trị đơn hàng"><button class="btn primary" type="submit">Ghi đơn hàng</button></form>
    <label class="f" for="lStatus">Trạng thái<select id="lStatus">${Object.entries(LEAD_ST).map(([k,v])=>`<option value="${k}" ${k===l.status?"selected":""}>${v}</option>`).join("")}</select></label>
    <label class="f" for="lMsg">Khách vừa nhắn gì?<textarea id="lMsg" rows="3" placeholder="Dán tin nhắn của khách, để trống nếu muốn Hà nhắn chủ động"></textarea></label>
    <div class="actions"><button class="btn primary" id="lDraft">Hà soạn tin trả lời</button>${l.escalated_at?"":`<button class="btn" id="lEsc">Chuyển cho sếp qua Telegram</button>`}</div>
    <div id="lReply"></div>`;
   const esc2=$("#lEsc"); if(esc2) esc2.onclick=async()=>{ esc2.disabled=true; const r=await api(`/leads/${l.id}/escalate`,"POST"); toast(r.telegram?"Đã gửi phiếu khách kèm kịch bản tư vấn qua Telegram":"Đã chuyển cho sếp. Kết nối Telegram ở trang KPI & Báo cáo để nhận phiếu trên điện thoại."); loadLeads(); };
-  $("#lStatus").onchange=async e=>{ await api(`/leads/${l.id}`,"PATCH",{status:e.target.value}); toast("Đã cập nhật trạng thái"); loadLeads(); };
+  $("#lOrder").addEventListener("submit",async ev=>{ ev.preventDefault(); const a=parseVnd($("#lAmt").value); if(a===null){ toast("Nhập giá trị đơn, ví dụ 2500000 hoặc 2,5tr"); return; }
+    try{ await api(`/leads/${l.id}/order`,"POST",{amount:a}); toast(`Đã ghi đơn ${vnd(a)} cho ${l.name}`); }catch(err){ toast(err.message); } loadLeads(); refresh(); });
+  $("#lStatus").onchange=async e=>{ if(e.target.value==="ordered"){ e.target.value=l.status; $("#lAmt").focus(); toast("Nhập giá trị đơn rồi bấm Ghi đơn hàng để tính doanh thu"); return; } await api(`/leads/${l.id}`,"PATCH",{status:e.target.value}); toast("Đã cập nhật trạng thái"); loadLeads(); };
   $("#lDraft").onclick=async e=>{ e.target.disabled=true; e.target.textContent="Hà đang soạn…"; const r=await api(`/leads/${l.id}/reply`,"POST",{message:$("#lMsg").value});
     $("#lReply").innerHTML=`<label class="f" for="lReplyTxt">Tin nhắn đề xuất (sửa được)<textarea id="lReplyTxt" rows="7">${esc(r.reply)}</textarea></label><div class="actions"><button class="btn" id="lCopy">Sao chép</button><button class="btn primary" id="lSent">Đã gửi cho khách</button></div>`;
     $("#lCopy").onclick=()=>copyText($("#lReplyTxt").value);
@@ -1666,7 +1798,7 @@ async function loadReset(){
 }
 $("#rsConfirm").addEventListener("input",e=>{ $("#rsBtn").disabled=e.target.value.trim().toUpperCase()!=="CHAY THAT"; });
 $("#resetForm").addEventListener("submit",async e=>{ e.preventDefault(); const b=$("#rsBtn"); b.disabled=true; b.textContent="Đang sao lưu và xóa…";
-  try{ const r=await api("/reset","POST",{confirm:$("#rsConfirm").value,products:$("#rsProd").checked,groups:$("#rsGroup").checked});
+  try{ const r=await api("/reset","POST",{confirm:$("#rsConfirm").value,products:$("#rsProd").checked,groups:$("#rsGroup").checked,found_capital:$("#rsFound").checked?(parseVnd($("#rsCap").value)||0):0});
     toast("Đã xóa dữ liệu thử nghiệm. Đội sẵn sàng làm việc thật."); $("#rsConfirm").value=""; $("#rsProd").checked=false; $("#rsGroup").checked=false;
     if(r.backup) $("#resetPreview").insertAdjacentHTML("beforeend",`<br><span class="small">Bản sao lưu: ${esc(r.backup)}</span>`); }
   catch(err){ toast(err.message); }
@@ -1691,7 +1823,7 @@ $("#setForm").addEventListener("submit",async e=>{ e.preventDefault(); await api
   show(location.hash.slice(1)||"office");
   await refresh();
   setInterval(refresh,3000);
-  setInterval(()=>{ if(ST.view==="kpi") loadKpi(); if(ST.view==="sales") loadSales(); if(ST.view==="posts"&&!ST.editPost&&!ST.postedForm&&ST.posts.some(p=>p.status==="posting")) loadPosts(); },4000);
+  setInterval(()=>{ if(ST.view==="company") loadCompany(); if(ST.view==="kpi") loadKpi(); if(ST.view==="sales") loadSales(); if(ST.view==="posts"&&!ST.editPost&&!ST.postedForm&&ST.posts.some(p=>p.status==="posting")) loadPosts(); },4000);
   setInterval(()=>{ if(ST.dash?.meeting_running||ST.view==="meeting") pollMeeting(); },1500);
   const tick=()=>{ const d=new Date(); $("#clock").textContent=d.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}); }; tick(); setInterval(tick,30000);
 })();

@@ -46,6 +46,7 @@ def stats() -> dict:
         "failed": c("SELECT COUNT(*) n FROM posts WHERE status='failed'"),
         "bumps_today": c("SELECT COUNT(*) n FROM bumps WHERE status='done' AND done_at LIKE ?", (db.today() + "%",)),
         "kpi": __import__("kpi").day_stats(),
+        "company": __import__("company").brief(),
         "sales_total": c("SELECT COUNT(*) n FROM sales"),
         "sales_ok": c("SELECT COUNT(*) n FROM sales WHERE login_status='ok' AND auto_post=1"),
         "sales_problem": c("SELECT COUNT(*) n FROM sales WHERE login_status IN ('checkpoint','not_logged_in')"),

@@ -87,10 +87,10 @@ def _run(mid: int, topic: str):
         time.sleep(3)  # thời gian các nhân vật đi vào phòng họp
         # 1. Mở đầu
         _say(mid, "minh", "open", llm.chat(system_prompt("minh", s),
-             f"Mở đầu cuộc họp giao ban sáng ngày {db.today()} (1-2 câu). Nhắc KPI phòng: mỗi ngày tối thiểu "
+             f"Mở đầu cuộc họp giao ban sáng ngày {db.today()} (1-2 câu). Tình hình công ty: {__import__('company').brief_text() or 'chưa thành lập'}. Nhắc KPI phòng: mỗi ngày tối thiểu "
              f"{st.get('kpi', {}).get('target_min', 5)} khách để lại SĐT (hôm nay đang có {st.get('kpi', {}).get('leads_phone', 0)}). "
              f"Chủ đề tranh luận hôm nay: \"{topic}\".",
-             mock=lambda: mock_brain.meeting_open(topic) + (f" KPI phòng mình: mỗi ngày tối thiểu {st['kpi']['target_min']} khách để lại SĐT, phấn đấu {st['kpi']['target_max']}." if st.get("kpi") else ""), max_tokens=200, task="meeting"))
+             mock=lambda: mock_brain.meeting_open(topic) + (" " + __import__("company").brief_text().replace("\n", " ") if __import__("company").brief() else "") + (f" KPI phòng mình: mỗi ngày tối thiểu {st['kpi']['target_min']} khách để lại SĐT, phấn đấu {st['kpi']['target_max']}." if st.get("kpi") else ""), max_tokens=200, task="meeting"))
         # 2. Báo cáo
         for a in DEBATERS:
             _boss_check(mid)

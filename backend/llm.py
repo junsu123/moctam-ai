@@ -69,6 +69,12 @@ def month_spent() -> float:
 
 
 def budget_state() -> str:
+    try:
+        import company
+        if company.active() and company.finance()["capital"] and company.capital_left() <= 0:
+            return "stop"  # hết vốn công ty
+    except Exception as e:
+        print("[llm] company", e)
     budget = float(db.get_settings().get("monthly_budget_usd") or 0)
     if budget <= 0:
         return "ok"
