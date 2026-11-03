@@ -158,6 +158,12 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS expenses (
   id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, category TEXT, amount INTEGER, note TEXT, created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS ceo_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT, text TEXT, actions TEXT, via TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS ceo_orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, agent TEXT, text TEXT, active INTEGER DEFAULT 1, source TEXT, created_at TEXT
+);
 CREATE TABLE IF NOT EXISTS group_candidates (
   id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE, name TEXT, members INTEGER DEFAULT 0, posts_per_day REAL DEFAULT 0,
   privacy TEXT, joined INTEGER DEFAULT 0, keyword TEXT, relevance REAL DEFAULT 0, score REAL DEFAULT 0, found_by INTEGER,
@@ -255,6 +261,7 @@ DEFAULT_SETTINGS = {
     "company_founded_ts": "",
     "company_gen": "0",
     "capital_vnd": "10000000",
+    "ceo_autopilot": "1",
     "discover_enabled": "1", "discover_time": "10:30", "discover_keywords_per_day": "3", "discover_add_per_day": "5",
     "join_enabled": "1", "join_per_nick_day": "2", "browse_minutes": "2", "group_keywords": "", "ceo_kw_today": "",
     "discover_last": "", "join_last": "", "discover_last_sale": "", "discover_last_result": "",
@@ -385,7 +392,7 @@ RESET_TABLES = {  # bảng: mô tả cho sếp
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",
     "kpi_daily": "lịch sử KPI", "ai_batches": "lô viết bài đang chờ",
-    "orders": "doanh thu đã nhập", "ceo_decisions": "quyết định của CEO", "errors": "sổ lỗi", "group_candidates": "nhóm tìm được chưa thêm", "group_searches": "lượt tìm nhóm", "group_joins": "trạng thái xin vào nhóm", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
+    "orders": "doanh thu đã nhập", "ceo_decisions": "quyết định của CEO", "errors": "sổ lỗi", "ceo_messages": "trao đổi sếp – CEO", "group_candidates": "nhóm tìm được chưa thêm", "group_searches": "lượt tìm nhóm", "group_joins": "trạng thái xin vào nhóm", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
 }
 RUN_STATE_KEYS = ["bump_planned_date", "learn_last_date", "scan_last", "tg_sent_log", "company_founded_at", "company_founded_ts",
                   "dissolved_at", "dissolved_reason", "trial_warned", "capital_warned",

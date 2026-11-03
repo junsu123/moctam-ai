@@ -118,7 +118,16 @@ def system_prompt(agent_id: str, settings: dict | None = None, with_learning: bo
             f"Giọng thương hiệu: {s.get('brand_voice', '')}\n\n"
             f"Bạn tên là {a['name']}, vị trí: {a['role']} ({a['short']}).\n"
             f"Tính cách: {a['personality']}\n"
-            "Luôn trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, đúng vai." + (_learned(agent_id) if with_learning else ""))
+            "Luôn trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, đúng vai." + (_learned(agent_id) if with_learning else "")
+            + _orders(agent_id))
+
+
+def _orders(agent_id: str) -> str:
+    try:
+        import ceo_orders
+        return ceo_orders.prompt_block(agent_id)
+    except Exception:
+        return ""
 
 
 def _learned(agent_id: str) -> str:

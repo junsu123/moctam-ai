@@ -188,7 +188,7 @@ Bot chạy ngay trên máy của bạn (không cần tên miền hay mở cổng
 | Khi đạt | Chúc mừng đạt KPI tối thiểu, vượt KPI |
 | 21:30 | KPI cả ngày theo từng nick, khách còn chờ sếp gọi, đơn đã chốt, bài học mới, chi phí AI |
 
-**Lệnh Telegram:** `/baocao` báo cáo nhanh · `/kpi` tiến độ · `/khach` khách đang chờ sếp · `/congty` vốn, chi phí nuôi agent, doanh thu, tình trạng sale · `/doanhthu 2tr5 Tên khách` nhập doanh thu · `/ceo` nhân sự, mốc doanh thu, tiềm năng · `/hop [chủ đề]` triệu tập họp
+**Lệnh Telegram:** `/baocao` báo cáo nhanh · `/kpi` tiến độ · `/khach` khách đang chờ sếp · `/congty` vốn, chi phí nuôi agent, doanh thu, tình trạng sale · `/doanhthu 2tr5 Tên khách` nhập doanh thu · `/ceo` nhân sự, mốc doanh thu, tiềm năng · nhắn tin thường = giao việc cho CEO · `/hop [chủ đề]` triệu tập họp
 (gửi kết luận khi họp xong) · `/tamdung` tạm dừng mọi nick · `/tieptuc` bật lại.
 
 Hôm trước chưa đạt KPI thì cuộc họp sáng tự lấy chủ đề "làm gì để đạt KPI hôm nay".
@@ -268,6 +268,29 @@ sale mới nhận nick, hội nhóm của nick cũ và bắt đầu kỳ KPI m�
 
 **Sau khi giải thể:** sale dừng đăng, AI dừng, văn phòng 3D đóng cửa. Dữ liệu vẫn còn để xem lại; có thể **Thành lập lại**
 với vốn mới.
+
+## Luật: sếp chỉ giao việc cho CEO
+
+Mặc định bật (tắt/bật ở trang Công ty → khung CEO). Sếp không giao việc trực tiếp cho Minh, Lan, Tuấn, Hà, Khoa hay các
+sale nữa: các nút giao việc trực tiếp được ẩn, thay bằng khung **Giao việc cho CEO Đức** ở Văn phòng. Trên Telegram, nhắn
+tin bình thường (không cần lệnh) là giao việc cho CEO.
+
+**CEO tự làm:**
+
+- Hiểu lời sếp và chia việc: viết bài (Lan), xếp lịch (Tuấn), họp, tìm nhóm và xin vào nhóm, quét bình luận, tạm dừng/bật
+  lại nick, đổi một số cài đặt (số bài/ngày, KPI, giờ quét, giờ họp…), tuyển thêm hoặc cho sale nghỉ khi sếp nói rõ,
+  báo cáo tình hình. Mỗi lần CEO trả lời rõ đã làm những gì.
+- **Sửa agent làm sai:** sếp nói "Lan viết bài dài quá, viết dưới 150 chữ" → CEO ghi thành bài học bắt buộc (ghim) trong sổ
+  tay của Lan, áp dụng từ bài tiếp theo.
+- **Chỉ đạo lâu dài:** "Từ nay bài nào cũng nhắc giao hàng toàn quốc" → CEO ghi thành chỉ đạo, đưa vào lời dặn của cả đội ở
+  mọi lần làm việc. Xem và bỏ chỉ đạo ở khung CEO. Chỉ đạo ảnh hưởng nội dung agent viết và trao đổi; các giới hạn an
+  toàn (số bài/ngày, giãn cách, luật nhóm) vẫn theo cài đặt.
+- **Tự duyệt bài nháp** của Lan: loại bài hứa công dụng chữa bệnh, quá ngắn, quá dài hoặc trùng bài 30 ngày qua (lý do
+  được ghi để Lan rút kinh nghiệm), duyệt bài đạt rồi cho Tuấn xếp lịch. Sau họp sáng, cả đội luôn vào việc hằng ngày.
+
+Có khóa API Claude thì CEO dùng AI để hiểu lệnh (Haiku, rất rẻ); chưa có khóa thì CEO hiểu các mẫu câu thường gặp
+("Viết 3 bài về…", "Xếp lịch", "Họp về…", "Tìm nhóm theo chủ đề “…”", "Tạm dừng Linh", "<Tên agent> … sai/dài quá/đừng…",
+"Từ nay …", "Tình hình hôm nay thế nào?").
 
 ## CEO: tuyển dụng và sa thải
 
@@ -399,6 +422,7 @@ backend/
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
   errors.py      Sổ lỗi: ghi lỗi từ mọi màn hình và việc tự động, gộp lỗi trùng, gợi ý cách xử lý
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, chấm điểm, thêm nhóm, xin vào nhóm
+  ceo_orders.py  Sếp giao việc cho CEO: hiểu lệnh, chia việc cho agent, sửa agent, chỉ đạo lâu dài, CEO tự duyệt bài
   ceo.py         CEO: sa thải theo luật, tuyển người thay, tăng người theo mốc doanh thu và tiềm năng Facebook
   company.py     Công ty: vốn, chi phí, doanh thu, đánh giá KPI tháng, sa thải, giải thể
   kpi.py         KPI: nhận diện SĐT, tiến độ, chia theo nick, lịch sử; chuyển khách cho sếp, kịch bản tư vấn

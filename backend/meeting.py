@@ -154,7 +154,8 @@ def _run(mid: int, topic: str):
         for a in [x["id"] for x in public_list()]:
             workflows.set_status(a, "idle", "Quay về bàn làm việc")
         _running["id"] = None
-    if s.get("auto_daily_work") == "1":
+    import ceo_orders
+    if s.get("auto_daily_work") == "1" or ceo_orders.autopilot():  # CEO tự vận hành: họp xong là cả đội vào việc
         workflows.daily_work()
 
 

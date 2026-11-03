@@ -30,7 +30,7 @@ def stats() -> dict:
     best = db.one("""SELECT g.name, SUM(p.leads) l FROM posts p JOIN groups g ON g.id=p.group_id
                      WHERE p.status='posted' GROUP BY g.id ORDER BY l DESC LIMIT 1""")
     groups = db.q("SELECT * FROM groups")
-    return {"errors_new": _err_new,
+    return {"errors_new": _err_new, "autopilot": db.get_settings().get("ceo_autopilot", "1") == "1",
         "drafts": c("SELECT COUNT(*) n FROM posts WHERE status='draft'"),
         "approved": c("SELECT COUNT(*) n FROM posts WHERE status IN ('approved','scheduled')"),
         "posted_total": posted,

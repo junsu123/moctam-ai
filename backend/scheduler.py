@@ -69,6 +69,9 @@ def _tick():
             if s.get("scan_last") != key:
                 db.set_setting("scan_last", key)
                 telegram_bot.start_scan_round(force=False)
+    # CEO tự vận hành: duyệt bài nháp của Lan rồi cho Tuấn xếp lịch
+    import ceo_orders
+    ceo_orders.tick()
     # Tìm hội nhóm mới theo chủ đề CEO chọn, xin vào nhóm
     import group_finder
     group_finder.tick(now)

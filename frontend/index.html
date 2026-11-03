@@ -160,6 +160,17 @@ label.row.small input{margin-top:3px;flex:none}
 .post .thumbs img{width:52px;height:52px}
 .fname{font-size:11px;background:var(--panel-2);border-radius:6px;padding:2px 6px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
 #coBody{display:flex;flex-direction:column;gap:16px}
+.ap-note{display:none;background:var(--honey-soft);border-radius:var(--r);padding:8px 12px;font-size:13px;margin:0}
+.autopilot .ap-note{display:block}
+.autopilot [data-direct]{display:none!important}
+.ceo-chat{border-top:3px solid #d4af37;margin-bottom:12px}
+.chatlog{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto;padding:2px}
+.chatlog .b{align-self:flex-end;background:var(--accent);color:#fff;border-radius:12px 12px 4px 12px;padding:7px 11px;max-width:80%;font-size:13.5px}
+.chatlog .c{align-self:flex-start;background:var(--panel-2);border-radius:12px 12px 12px 4px;padding:7px 11px;max-width:88%;font-size:13.5px;white-space:pre-wrap}
+.chatlog time{display:block;font-size:10.5px;opacity:.7;margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chips button{border:1px solid var(--line);background:var(--panel);border-radius:20px;padding:3px 10px;font-size:12px;color:var(--muted);cursor:pointer}
+.chips button:hover{color:var(--ink);border-color:var(--accent)}
 .gf{border-top:3px solid #d4af37}
 .stack{display:flex;flex-direction:column;gap:8px}
 .gf .card-h{flex-wrap:wrap}
@@ -395,11 +406,17 @@ tbody tr.sel td{background:var(--accent-soft)}
       <div class="vh">
         <div><h1>Văn phòng</h1><p>CEO và đội 5 nhân viên AI đang làm việc. Bấm vào một nhân vật để xem việc của họ.</p></div>
         <div class="actions">
-          <button class="btn" id="btnDaily">Giao việc hằng ngày</button>
-          <button class="btn primary" id="btnCall">Triệu tập họp</button>
+          <button class="btn" id="btnDaily" data-direct>Giao việc hằng ngày</button>
+          <button class="btn primary" id="btnCall" data-direct>Triệu tập họp</button>
         </div>
       </div>
       <div class="alert" id="saleAlert" hidden><span id="saleAlertTxt"></span><a class="btn sm" href="#sales">Xử lý</a></div>
+      <section class="card ceo-chat" id="ceoChat">
+        <div class="card-h"><h3>Giao việc cho CEO Đức</h3><span class="small muted" id="ceoChatMode"></span></div>
+        <div class="chatlog" id="ceoLog" aria-live="polite"></div>
+        <div class="chips" id="ceoSugg"></div>
+        <form class="row" id="ceoForm"><input type="text" class="grow" id="ceoIn" placeholder="Nhắn việc cho CEO, ví dụ: Viết 3 bài về trà gừng · Lan viết dài quá, viết ngắn lại" aria-label="Việc giao cho CEO" autocomplete="off"><button class="btn primary" type="submit">Giao việc</button></form>
+      </section>
       <a class="kpi-hero" id="officeKpi" href="#kpi" style="text-decoration:none;color:inherit"></a>
       <div class="kpis" id="kpis"></div>
       <div class="split">
@@ -426,7 +443,8 @@ tbody tr.sel td{background:var(--accent-soft)}
       <div class="split">
         <div class="stage-slot" id="slot-meeting"></div>
         <div class="sidecol">
-          <div class="card" id="startCard">
+          <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. Muốn họp về một chủ đề, nhắn CEO ở <a href="#office">Văn phòng</a>, ví dụ “Họp về giá sỉ mùa Tết”. Sếp vẫn chen vào cuộc họp được.</p>
+          <div class="card" id="startCard" data-direct>
             <h3>Mở cuộc họp mới</h3>
             <label class="f" for="topicSel">Chủ đề tranh luận
               <select id="topicSel"></select></label>
@@ -454,10 +472,11 @@ tbody tr.sel td{background:var(--accent-soft)}
     <!-- BÀI ĐĂNG -->
     <section class="view" id="v-posts" hidden>
       <div class="vh">
-        <div><h1>Bài đăng</h1><p>Lan viết bài, sếp duyệt, Tuấn xếp lịch theo nhóm và nick. Đến giờ, nhân viên sale AI tự mở Chrome của nick mình và đăng. Bài Fanpage đăng qua API chính thức.</p></div>
-        <div class="actions"><button class="btn" id="btnPlan">Tuấn xếp lịch đăng nhóm</button></div>
+        <div><h1>Bài đăng</h1><p>Lan viết bài, CEO duyệt (sếp vẫn sửa hoặc duyệt thay được), Tuấn xếp lịch theo nhóm và nick. Đến giờ, nhân viên sale AI tự mở Chrome của nick mình và đăng. Bài Fanpage đăng qua API chính thức.</p></div>
+        <div class="actions"><button class="btn" id="btnPlan" data-direct>Tuấn xếp lịch đăng nhóm</button></div>
       </div>
-      <form class="card" id="genForm">
+      <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. CEO tự giao Lan viết bài, tự duyệt bài nháp và cho Tuấn xếp lịch. Muốn viết thêm hay sửa cách viết, nhắn CEO ở <a href="#office">Văn phòng</a> hoặc Telegram.</p>
+      <form class="card" id="genForm" data-direct>
         <h3>Giao Lan viết bài</h3>
         <div class="grid3">
           <label class="f" for="gCount">Số bài<input type="number" id="gCount" min="1" max="10" value="3"></label>
@@ -622,7 +641,7 @@ tbody tr.sel td{background:var(--accent-soft)}
     <!-- ĐÀO TẠO -->
     <section class="view" id="v-learn" hidden>
       <div class="vh"><div><h1>Đào tạo</h1><p>Mỗi đêm, các agent tự xem lại kết quả thật (khách, bình luận, bài sếp sửa hoặc loại, tin nhắn chốt đơn) rồi ghi bài học vào sổ tay, đặt mục tiêu cho ngày mai và dùng những bài học đó khi làm việc. Sếp xem, sửa, ghim hoặc xóa bất kỳ bài học nào.</p></div>
-        <div class="actions"><button class="btn primary" id="btnLearn">Cho cả đội học ngay</button></div></div>
+        <div class="actions" data-direct><button class="btn primary" id="btnLearn">Cho cả đội học ngay</button></div></div>
       <div class="learn-top">
         <div class="card"><div class="card-h"><h3>Lan đang chọn góc viết như thế nào</h3><span class="small muted" id="explTxt"></span></div>
           <p class="small muted">Cơ hội được chọn của mỗi góc, tính từ số khách và bình luận thật của bài đã đăng, nhân với mức sếp duyệt bài góc đó.</p>
@@ -639,6 +658,7 @@ tbody tr.sel td{background:var(--accent-soft)}
           </form>
         </div>
       </div>
+      <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. Agent nào làm chưa đúng, nhắn CEO ở <a href="#office">Văn phòng</a> (ví dụ “Lan viết dài quá, viết dưới 150 chữ”), CEO sẽ ghi thành bài học bắt buộc cho agent đó.</p>
       <div class="agents-learn" id="learnGrid"></div>
     </section>
 
@@ -937,6 +957,19 @@ const Demo = (() => {
   const gfToday=g=>S.gf.today.includes(g.keyword)||S.gf.today.some(k=>k.split(" ").filter(w=>w.length>3).some(w=>(g.name+" "+(g.topic||"")).toLowerCase().includes(w)));
   function demoGF(){ const st=S.gf; return {today:st.today,today_by:st.by,pool:st.pool,settings:st.settings,last:st.last,candidates:st.candidates.filter(c=>!c.status),pending_answers:st.pending,
     stats:st.pool.map((k,i)=>({keyword:k,groups:S.groups.filter(g=>g.keyword===k).length,leads:[4,2,3,1,0,0,0,0,0,0][i]||0,found:0,last_searched:i<3?"2026-11-03 10:40:00":null}))}; }
+  S.chat=[]; S.orders=[];
+  setInterval(()=>{ if(S.settings.ceo_autopilot==="0") return; const d=S.posts.filter(p=>p.status==="draft"); if(d.length){ d.forEach(p=>p.status="approved"); log("ceo","Duyệt bài",`Duyệt ${d.length} bài`); } },15000);
+  function demoChat(){ return {autopilot:S.settings.ceo_autopilot!=="0",history:S.chat,orders:S.orders.filter(o=>o.active),suggestions:["Tình hình hôm nay thế nào?","Viết 3 bài về trà gừng mật ong","Xếp lịch đăng nhóm","Tìm nhóm theo chủ đề “hội chạy quảng cáo facebook”","Lan viết bài dài quá, viết dưới 150 chữ","Từ nay bài nào cũng nhắc giao hàng toàn quốc"]}; }
+  function demoCeoDo(t){ const low=t.toLowerCase(); const ag=[["lan","Lan"],["tuấn","Tuấn"],["hà","Hà"],["khoa","Khoa"],["minh","Minh"]].find(([k])=>new RegExp(`(^|\\s)${k}(\\s|$|,)`).test(low));
+    const crit=/(sai|không đúng|dài quá|quá dài|ngắn quá|kém|đừng|không được|phải|nên|cấm|nhầm|chán|nhạt|sửa)/.test(low); let m;
+    if(/tình hình|thế nào|báo cáo/.test(low)&&!crit){ const st=stats(); return ["Dạ sếp, tình hình hôm nay:",`Hôm nay ${S.kpiPhone||3}/5 khách có SĐT; ${st.drafts} bài nháp; ${st.approved} bài đã duyệt/lên lịch; ${st.posted_total} bài đã đăng.`]; }
+    if(ag&&crit){ const aid=ag[0]==="tuấn"?"tuan":ag[0]==="hà"?"ha":ag[0]; S.lessons.push({id:id(),agent_id:aid,text:t,evidence:"Sếp nhắc qua CEO",source:"boss",confidence:1,pinned:1}); log(aid,"CEO yêu cầu sửa",t); return ["Dạ em nhận việc.",`Yêu cầu ${ag[1]} sửa: “${t}” (đã ghim vào sổ tay, áp dụng từ việc tiếp theo)`]; }
+    if((m=low.match(/viết\s*(\d+)?\s*bài/))){ const n=+(m[1]||3); S.status.lan={state:"working",text:`Đang viết ${n} bài`}; setTimeout(()=>{ genPosts(n,null,"group"); S.status.lan={state:"idle",text:`Vừa viết xong ${n} bài`}; },5000); return ["Dạ em nhận việc.",`Giao Lan viết ${n} bài đăng nhóm (CEO sẽ duyệt rồi cho Tuấn xếp lịch)`]; }
+    if(/xếp lịch|lên lịch/.test(low)){ const pl=plan(); return ["Dạ em nhận việc.",`Giao Tuấn xếp lịch: ${pl.length} bài đã có giờ đăng`]; }
+    if(/tìm (hội )?nhóm/.test(low)){ const kws=(t.match(/[“"']([^”"']{3,60})[”"']/g)||[]).map(x=>x.slice(1,-1)); if(kws.length){ S.gf.today=kws; S.gf.by="boss"; } return ["Dạ em nhận việc.",`Giao sale Linh lướt Facebook rồi tìm nhóm: ${S.gf.today.join(", ")}`]; }
+    if(/\bhọp\b/.test(low)){ const topic=t.replace(/.*?họp\s*(về|bàn)?\s*/i,""); startMeeting(topic||null); return ["Dạ em nhận việc.",`Triệu tập họp${topic?": "+topic:""}`]; }
+    if(/từ nay|từ giờ|luôn luôn|không được|cấm|bắt buộc/.test(low)){ const o={id:id(),agent:"all",text:t,active:1,created_at:now()}; S.orders.unshift(o); return ["Dạ em nhận việc.",`Ghi chỉ đạo lâu dài #${o.id} cho cả đội: “${t}”`]; }
+    return ["Dạ em chưa hiểu rõ việc này. Sếp nói cụ thể hơn giúp em, ví dụ: “Viết 3 bài về trà gừng”, “Tìm nhóm theo chủ đề hội chạy quảng cáo facebook”, “Lan viết dài quá, viết ngắn lại”.",null]; }
   function demoCompany(){
     const c=S.co; const ai=Math.round(0.42*25800); const revenue=c.orders.reduce((a,o)=>a+o.amount,0); const spent=ai;
     const by_task=[["posts","Viết bài đăng (Lan)",.19,96],["meeting","Họp giao ban (cả đội)",.11,230],["replies","Tư vấn, trả lời khách (Hà, sale)",.08,61],["learning","Tự học mỗi đêm (cả đội)",.04,23]].map(([task,label,usd,calls])=>({task,label,usd,calls,vnd:Math.round(usd*25800)}));
@@ -979,7 +1012,7 @@ const Demo = (() => {
     return {drafts:c(p=>p.status==="draft"),approved:c(p=>["approved","scheduled"].includes(p.status)),posted_total:c(p=>p.status==="posted"),posted_today:c(p=>p.status==="posted"),
       groups:S.groups.length,groups_ready:S.groups.filter(ready).length,leads:S.leads.length,leads_new:S.leads.filter(l=>l.status==="new").length,
       leads_hot:S.leads.filter(l=>l.score>=75&&!["ordered","lost"].includes(l.status)).length,leads_ordered:S.leads.filter(l=>l.status==="ordered").length,
-      errors_new:S.errors.filter(e=>e.status==="new").length,tasks_open:S.tasks.filter(t=>t.status!=="done").length,ai_live:false,failed:c(p=>p.status==="failed"),kpi:demoKpi().today,company:S.co.status==="setup"?null:{status:S.co.status,day:S.co.day,trial_days:S.co.trial_days,capital:S.co.capital,capital_left:demoCompany().finance.left,revenue:demoCompany().finance.revenue,orders:S.co.orders.length,at_risk:demoCompany().sales.filter(r=>r.review&&["warn","danger"].includes(r.review.risk)).map(r=>`${r.name} (${r.review.leads_phone}/${r.review.target_so_far})`)},bumps_today:S.posts.reduce((n,p)=>n+(p.bump_count||0),0),sales_total:S.sales.length,sales_ok:S.sales.filter(x=>x.login_status==="ok"&&x.auto_post).length,sales_problem:S.sales.filter(x=>x.login_status!=="ok").length,best_group:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",lead_per_post:0};
+      errors_new:S.errors.filter(e=>e.status==="new").length,autopilot:S.settings.ceo_autopilot!=="0",tasks_open:S.tasks.filter(t=>t.status!=="done").length,ai_live:false,failed:c(p=>p.status==="failed"),kpi:demoKpi().today,company:S.co.status==="setup"?null:{status:S.co.status,day:S.co.day,trial_days:S.co.trial_days,capital:S.co.capital,capital_left:demoCompany().finance.left,revenue:demoCompany().finance.revenue,orders:S.co.orders.length,at_risk:demoCompany().sales.filter(r=>r.review&&["warn","danger"].includes(r.review.risk)).map(r=>`${r.name} (${r.review.leads_phone}/${r.review.target_so_far})`)},bumps_today:S.posts.reduce((n,p)=>n+(p.bump_count||0),0),sales_total:S.sales.length,sales_ok:S.sales.filter(x=>x.login_status==="ok"&&x.auto_post).length,sales_problem:S.sales.filter(x=>x.login_status!=="ok").length,best_group:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",lead_per_post:0};
   }
   const TOPICS=["Tuần này nên tập trung đẩy sản phẩm nào cho khách sỉ?","Đăng nhiều bài mỗi ngày hay ít bài nhưng chất lượng hơn?","Có nên công khai giá sỉ ngay trong bài đăng hội nhóm không?","Gửi mẫu thử miễn phí cho khách sỉ mới: có đáng chi phí không?","Nên ưu tiên tệp khách livestream hay tệp khách chạy quảng cáo?","Có nên đẩy dịch vụ in nhãn riêng (OEM) cho shop online không?"];
   const DEB={lan:["Em nghĩ phải mạnh dạn hơn: nội dung có video thật, câu chuyện xưởng sẽ khác biệt so với bài nguồn hàng đăng tràn lan.","Em đồng ý cần số liệu với anh Khoa, nhưng không thử nội dung mới thì lấy đâu ra số liệu để so ạ?"],
@@ -1033,6 +1066,7 @@ const Demo = (() => {
       if(P==="/errors") return demoErrors(qs);
       if(P==="/ceo") return {...demoCeo(),group_keywords:S.gf.today};
       if(P==="/group-finder") return demoGF();
+      if(P==="/ceo/chat") return demoChat();
       if(P==="/reset"){ const c=(n,l)=>n?[{label:l,count:n}]:[]; return {delete:[...c(S.posts.length,"bài đăng"),...c(S.leads.length,"khách hàng"),...c(S.meetings.length,"cuộc họp"),...c(S.activity.length,"nhật ký hoạt động"),...c(S.lessons.length,"bài học của agent"),...c(S.tasks.length,"việc được giao")],keep:{sales:S.sales.filter(x=>!x.is_sample).length,products:0,groups:0},samples:{products:S.products.length,groups:S.groups.length,sales:S.sales.filter(x=>x.is_sample).length},shots:0}; }
       if(P==="/sample-data") return {sales:S.sales.filter(x=>x.is_sample).length,leads:S.leads.filter(x=>x.is_sample).length,groups:S.groups.length,products:S.products.length};
       if(P==="/learning") return demoLearning();
@@ -1085,7 +1119,7 @@ const Demo = (() => {
       if((m=P.match(/^\/posts\/(\d+)\/retry$/))){ const po=S.posts.find(x=>x.id==m[1]); Object.assign(po,{status:"approved",error:null,sale_id:null,sale_name:null,scheduled_for:null}); return po; }
       if((m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const im=JSON.parse(pr.images||"[]"); im.push(body.data); pr.images=JSON.stringify(im); return {images:im}; }
       if((m=P.match(/^\/posts\/(\d+)\/publish-page$/))) return {ok:false,error:"Bản xem trước không kết nối Facebook. Chạy backend và nhập Page Access Token trong Cài đặt."};
-      if((m=P.match(/^\/leads\/(\d+)\/reply$/))){ S.status.ha={state:"working",text:"Đang soạn tin nhắn"}; await wait(900); S.status.ha={state:"idle",text:"Chờ sếp duyệt tin"}; return {reply:reply(S.leads.find(l=>l.id==m[1]),body.message)}; }
+      if((m=P.match(/^\/leads\/(\d+)\/reply$/))){ S.status.ha={state:"working",text:"Đang soạn tin nhắn"}; await wait(900); S.status.ha={state:"idle",text:"Chờ duyệt tin"}; return {reply:reply(S.leads.find(l=>l.id==m[1]),body.message)}; }
       if(P==="/leads"){ const l={id:id(),...body,score:60,status:"new",created_at:now()}; S.leads.unshift(l); log("ha","Khách mới",l.name); return l; }
       if(P==="/products"){ const x={id:id(),...body}; S.products.push(x); return x; }
       if(P==="/groups"){ const u=demoGroupUrl(body.url); if(u.err) throw new Error(u.err); const x={id:id(),...body,url:u.url,leads_count:0,last_posted_at:null}; S.groups.push(x); log("tuan","Thêm nhóm",x.name); return x; }
@@ -1116,6 +1150,10 @@ const Demo = (() => {
     if(method==="POST"&&P==="/errors/resolve-all"){ S.errors.forEach(e=>e.status="resolved"); return {ok:true}; }
     if(method==="PATCH"&&(m=P.match(/^\/errors\/(\d+)$/))){ const e=S.errors.find(x=>x.id==m[1]); if(e) e.status=body.status; return {ok:true}; }
     if(method==="DELETE"&&P==="/errors/resolved"){ S.errors=S.errors.filter(e=>e.status!=="resolved"); return {ok:true}; }
+    if(method==="POST"&&P==="/ceo/chat"){ S.chat.push({id:id(),role:"boss",text:body.text,via:"web",created_at:now()}); await wait(700); const [r,x]=demoCeoDo(body.text);
+      S.chat.push({id:id(),role:"ceo",text:x?`${r}\n• ${x}`:r,via:"web",created_at:now()}); log("ceo","Nhận việc từ sếp",body.text); return demoChat(); }
+    if(method==="PUT"&&P==="/ceo/autopilot"){ S.settings.ceo_autopilot=body.on?"1":"0"; return demoChat(); }
+    if(method==="DELETE"&&(m=P.match(/^\/ceo\/orders\/(\d+)$/))){ const o=S.orders.find(x=>x.id==m[1]); if(o) o.active=0; return demoChat(); }
     if(P==="/group-finder"&&method==="PUT"){ const st=S.gf; if(body.pool) st.pool=body.pool.map(x=>x.trim()).filter(Boolean);
       Object.entries({discover_time:body.discover_time,discover_keywords_per_day:body.discover_keywords_per_day,discover_add_per_day:body.discover_add_per_day,join_per_nick_day:body.join_per_nick_day,browse_minutes:body.browse_minutes}).forEach(([k,v])=>{ if(v!=null) st.settings[k]=String(v); });
       if(body.discover_enabled!=null) st.settings.discover_enabled=body.discover_enabled?"1":"0"; if(body.join_enabled!=null) st.settings.join_enabled=body.join_enabled?"1":"0"; return demoGF(); }
@@ -1457,7 +1495,7 @@ function show(v){
   if(!document.getElementById("v-"+v)) v="office";
   ST.view=v; document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!=="v-"+v);
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
-  if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
+  if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); loadCeoChat(true); }
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
   if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
@@ -1472,11 +1510,12 @@ async function refresh(){
     const [agents,dash]=await Promise.all([api("/agents"),api("/dashboard")]); ST.agents=agents; ST.dash=dash;
     World.sync(agents, !!dash.meeting_running);
     const s=dash.stats;
-    $("#kpis").innerHTML=[["Bài chờ sếp duyệt",s.drafts,s.drafts>0],["Bài đã duyệt / lên lịch",s.approved],["Bài đã đăng",s.posted_total],["Khách nóng",s.leads_hot,s.leads_hot>0],["Khách mới chưa liên hệ",s.leads_new,s.leads_new>0],["Nick sale đang chạy",`${s.sales_ok||0}/${s.sales_total||0}`,!!s.sales_problem]]
+    $("#kpis").innerHTML=[["Bài chờ duyệt",s.drafts,s.drafts>0],["Bài đã duyệt / lên lịch",s.approved],["Bài đã đăng",s.posted_total],["Khách nóng",s.leads_hot,s.leads_hot>0],["Khách mới chưa liên hệ",s.leads_new,s.leads_new>0],["Nick sale đang chạy",`${s.sales_ok||0}/${s.sales_total||0}`,!!s.sales_problem]]
       .map(([l,v,w])=>`<div class="kpi${w?" warn":""}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
     $("#team").innerHTML=agents.map(a=>`<button class="member" data-a="${a.id}">${avaHtml(a.id)}<span class="who"><b>${esc(a.name)} ${a.level?`<span class="lv">Cấp ${a.level}</span>`:""} <span class="muted" style="display:inline;font-weight:500">${esc(a.role)}</span></b><span>${esc(a.status?.text||"")}</span></span><span class="chip ${a.status?.state||""}">${STATUS_TXT[a.status?.state]||"Rảnh"}</span></button>`).join("");
     $("#feed").innerHTML=dash.activity.length?dash.activity.map(x=>`<li>${avaHtml(x.agent_id)}<div><b>${esc(x.action)}</b> · ${esc(x.detail)}<time>${esc(AGENT[x.agent_id]?.name||"")} · ${fmtTime(x.created_at)} ${fmtDate(x.created_at)}</time></div></li>`).join(""):`<li class="muted">Chưa có hoạt động.</li>`;
     const db=$("#draftBadge"); db.hidden=!s.drafts; db.textContent=s.drafts; setErrBadge(s.errors_new||0);
+    document.body.classList.toggle("autopilot",!!s.autopilot);
     if(!DEMO&&s.ai_live) $("#modeBox").innerHTML=`<span class="dot live"></span><b>AI đang hoạt động</b><br>Chi phí tháng này: <b>${usd(s.ai_cost_month||0)}</b>`;
     if($("#bumpToday")) $("#bumpToday").textContent=`Hôm nay đã up ${s.bumps_today||0} lượt`;
     companyBanner(s.company);
@@ -1496,7 +1535,8 @@ function openAgent(id){
    <div><h3>Tính cách</h3><p class="muted" style="margin-top:4px">${esc(a.personality)}</p></div>
    <div id="dLearn"></div>
    <div><h3>Việc đang mở</h3><ul class="tasks" style="margin-top:6px">${(a.tasks||[]).length?a.tasks.map(t=>`<li>· ${esc(t.title)}</li>`).join(""):'<li class="muted small">Không có việc tồn.</li>'}</ul></div>
-   <div class="actions">${{lan:'<a class="btn primary" href="#posts">Giao Lan viết bài</a>',tuan:'<button class="btn primary" id="dPlan">Xếp lịch đăng nhóm</button>',ha:'<a class="btn primary" href="#leads">Mở danh sách khách</a>',khoa:'<a class="btn primary" href="#office">Xem số liệu</a>',minh:'<a class="btn primary" href="#meeting">Vào phòng họp</a>'}[id]||'<a class="btn primary" href="#sales">Quản lý nick</a>'}</div>`;
+   ${id!=="ceo"&&!String(id).startsWith("sale-")?`<div class="ap-note">Luật: sếp chỉ giao việc cho CEO. <button type="button" class="btn sm" data-askceo="${esc(a.name)}">Nhắn CEO về ${esc(a.name)}</button></div>`:""}
+   <div class="actions" data-direct>${{lan:'<a class="btn primary" href="#posts">Giao Lan viết bài</a>',tuan:'<button class="btn primary" id="dPlan">Xếp lịch đăng nhóm</button>',ha:'<a class="btn primary" href="#leads">Mở danh sách khách</a>',khoa:'<a class="btn primary" href="#office">Xem số liệu</a>',minh:'<a class="btn primary" href="#meeting">Vào phòng họp</a>'}[id]||'<a class="btn primary" href="#sales">Quản lý nick</a>'}</div>`;
   d.hidden=false; $("#dClose").onclick=()=>d.hidden=true; d.querySelectorAll("a").forEach(x=>x.addEventListener("click",()=>d.hidden=true));
   api("/learning").then(L=>{ const x=L.agents.find(z=>z.id===id); if(!x||!$("#dLearn")) return; const pg=x.progress;
     $("#dLearn").innerHTML=`<h3>Phát triển <span class="lv">Cấp ${pg.level}</span></h3>${pg.goal?`<p class="goal" style="margin-top:6px">${esc(pg.goal)}</p>`:""}
@@ -1597,7 +1637,7 @@ function postImgs(p){
   return `<div><span class="small muted">${label}</span><div class="thumbs" style="margin-top:4px">${DEMO?imgs.map(n=>`<span class="fname" title="${esc(n)}">${esc(base(n))}</span>`).join(""):imgs.map(n=>`<figure><img src="/api/image?path=${encodeURIComponent(n)}" alt="${esc(base(n))}" title="${esc(base(n))}" loading="lazy"></figure>`).join("")}</div></div>`;
 }
 function renderBoard(){
-  const cols=[["draft","Chờ sếp duyệt"],["approved","Đã duyệt"],["scheduled","Lịch đăng hôm nay"],["posted","Đã đăng"]];
+  const cols=[["draft","Chờ duyệt"],["approved","Đã duyệt"],["scheduled","Lịch đăng hôm nay"],["posted","Đã đăng"]];
   const inCol=(p,s)=>s==="scheduled"?["scheduled","posting","failed"].includes(p.status):p.status===s;
   $("#board").innerHTML=cols.map(([s,l])=>{ const list=ST.posts.filter(p=>inCol(p,s)); return `<div class="col"><header><b>${l}</b><span class="chip num">${list.length}</span></header>${list.map(postCard).join("")||`<div class="empty">Trống</div>`}</div>`; }).join("");
 }
@@ -1692,6 +1732,7 @@ const RULES=`<ol class="rules"><li>Mỗi nhân viên sale giữ nick phải tìm
   <li>Sau <b>60 ngày</b> chưa có khách chốt đơn và chưa có doanh thu thì công ty <b>giải thể</b>.</li>
   <li>Vốn chỉ dùng để <b>nuôi các agent</b>: chi phí gọi API Claude (viết bài, họp, tư vấn, tự học), quy đổi từ USD. Chi phí hàng hóa, giao hàng của đơn không tính ở đây. Hết vốn thì việc gọi AI tạm dừng tới khi bơm thêm.</li>
   <li><b>Doanh thu do sếp nhập</b>, vì sếp là người chốt và làm việc với khách.</li>
+  <li><b>Sếp chỉ giao việc cho CEO</b>: CEO tự chia việc cho các agent, tự duyệt bài nháp, tự xếp lịch và báo lại. Agent nào làm chưa đúng, sếp nói CEO sửa. Bật/tắt luật này ở khung CEO.</li>
   <li><b>CEO Đức điều hành nhân sự</b>: thực hiện sa thải theo luật, quyết định có tuyển người thay vào nick cũ, tăng sale khi doanh thu chạm mốc hoặc khi tìm khách trên Facebook cho thấy còn tiềm năng. Sale mới cần sếp đăng nhập một nick Facebook; kỳ KPI tính từ ngày nick chạy.</li>
   <li>Đội lõi (CEO Đức, Minh, Lan, Tuấn, Hà, Khoa) không bị sa thải theo KPI, chỉ giải tán khi công ty giải thể.</li></ol>`;
 async function loadCompany(){
@@ -1749,6 +1790,7 @@ async function loadCompany(){
         <div class="card"><h3>Luật của công ty</h3>${RULES}</div>
       </div>
     </div>`;
+  renderOrders();
   $("#revForm").addEventListener("submit",async e=>{ e.preventDefault(); const a=parseVnd($("#rvAmt").value); if(a===null){ toast("Nhập số tiền, ví dụ 2500000 hoặc 2tr5"); return; }
     try{ await api("/company/revenue","POST",{amount:a,customer:$("#rvCus").value,note:$("#rvNote").value}); toast(`Đã ghi doanh thu ${vnd(a)}`); }catch(err){ toast(err.message); } loadCompany(); refresh(); });
   $("#capForm").addEventListener("submit",async e=>{ e.preventDefault(); const a=parseVnd($("#capAmt").value); if(a===null){ toast("Nhập số tiền, ví dụ 5000000 hoặc 5tr"); return; }
@@ -1768,8 +1810,10 @@ function ceoBlock(o){
   const chk=x=>`<li class="${x.ok?"ok":"no"}"><span aria-hidden="true">${x.ok?"✓":"✗"}</span><div>${esc(x.label)}<div class="small muted">${esc(x.value)}</div></div></li>`;
   return `<section class="card ceo">
     <div class="ceo-h"><div class="row">${avaHtml("ceo")}<div><h3>CEO ${esc(o.name)} · điều hành nhân sự</h3><span class="small muted">${hc.working} nick đang chạy · ${hc.waiting_nick} chờ nick · ${hc.total}/${hc.max} chỗ trong văn phòng</span></div></div>
-      <div class="row wrap"><div class="seg" role="group" aria-label="Quyền quyết định của CEO"><button type="button" data-ceomode="auto" class="${o.mode==="auto"?"on":""}">CEO tự quyết</button><button type="button" data-ceomode="approve" class="${o.mode==="approve"?"on":""}">Chờ sếp duyệt</button></div>
+      <div class="row wrap"><div class="seg" role="group" aria-label="Quyền quyết định của CEO"><button type="button" data-ceomode="auto" class="${o.mode==="auto"?"on":""}">CEO tự quyết</button><button type="button" data-ceomode="approve" class="${o.mode==="approve"?"on":""}">Chờ duyệt</button></div>
         <button class="btn sm" type="button" data-ceo="review">Đánh giá ngay</button></div></div>
+    <div class="row wrap small" style="gap:10px"><label class="row" style="gap:6px"><input type="checkbox" id="apToggle" ${document.body.classList.contains("autopilot")?"checked":""}> <b>Luật: sếp chỉ giao việc cho CEO</b> (CEO tự giao việc cho các agent, tự duyệt bài, tự xếp lịch)</label><a href="#office">Giao việc cho CEO →</a></div>
+    <div id="ceoOrders"></div>
     ${o.group_keywords&&o.group_keywords.length?`<div class="gf-today small"><b>Hôm nay sale tìm và ưu tiên đăng nhóm chủ đề:</b>${o.group_keywords.map(k=>`<span class="kw">${esc(k)}</span>`).join("")}<a href="#groups">Xem nhóm tìm được →</a></div>`:""}
     ${o.proposed.length?`<div class="ceo-prop">${o.proposed.map(d=>`<div><b>${esc(d.title)}</b><span class="small">${esc(d.reason)}</span><div class="row"><button class="btn sm primary" type="button" data-ceook="${d.id}">Duyệt</button><button class="btn sm ghost" type="button" data-ceono="${d.id}">Không</button></div></div>`).join("")}</div>`:""}
     <div class="ceo-grid">
@@ -1797,7 +1841,8 @@ $("#coBody").addEventListener("click",async e=>{
       if(ms.some(m=>!m.amount)){ toast("Nhập số tiền cho mỗi mốc, ví dụ 50tr"); return; } await api("/ceo","PUT",{milestones:ms}); toast("Đã lưu mốc tăng người"); return loadCompany(); }
   }catch(err){ toast(err.message); }
 });
-$("#coBody").addEventListener("change",async e=>{ if(e.target.dataset.ceo==="pot"){ await api("/ceo","PUT",{potential:e.target.checked}); toast(e.target.checked?"CEO sẽ tự tuyển thêm khi thấy tiềm năng":"Tắt tuyển thêm theo tiềm năng"); loadCompany(); } });
+$("#coBody").addEventListener("change",async e=>{ if(e.target.id==="apToggle"){ await api("/ceo/autopilot","PUT",{on:e.target.checked}); document.body.classList.toggle("autopilot",e.target.checked); toast(e.target.checked?"Từ giờ sếp chỉ giao việc cho CEO, CEO tự vận hành":"Sếp giao việc trực tiếp cho từng agent"); return; }
+  if(e.target.dataset.ceo==="pot"){ await api("/ceo","PUT",{potential:e.target.checked}); toast(e.target.checked?"CEO sẽ tự tuyển thêm khi thấy tiềm năng":"Tắt tuyển thêm theo tiềm năng"); loadCompany(); } });
 /* --------------------------------------------- lỗi */
 const ESRC_ICON={ui:"🖱",api:"⚙️",post:"📝",bump:"🔁",scan:"💬",browser:"🌐",nick:"🔒",telegram:"✈️",ai:"🤖",fanpage:"📣",scheduler:"⏰"};
 const EST={status:"open",source:""};
@@ -1915,7 +1960,7 @@ async function loadLearn(){
       <div><b class="small">Sổ tay kinh nghiệm (${a.lessons.length})</b>${a.retired?` <span class="small muted">· đã bỏ ${a.retired} bài học cũ</span>`:""}
         <ul class="lessons" style="margin-top:6px">${a.lessons.length?a.lessons.map(l=>`<li class="${l.pinned?"pin":""}" data-l="${l.id}"><span class="src">${SRC[l.source]||l.source}</span><span>${esc(l.text)}${l.evidence?`<span class="ev">${esc(l.evidence)}</span>`:""}</span>
           <span class="ops"><button type="button" data-op="pin" title="${l.pinned?"Bỏ ghim":"Ghim: luôn dùng"}" aria-label="${l.pinned?"Bỏ ghim":"Ghim"}">${l.pinned?"★":"☆"}</button><button type="button" data-op="del" title="Bỏ bài học này" aria-label="Bỏ bài học">✕</button></span></li>`).join(""):'<li class="muted" style="display:block">Chưa có bài học. Cần thêm bài đã đăng có số khách/bình luận, hoặc sếp dạy trực tiếp bên dưới.</li>'}</ul></div>
-      <form class="row" data-teach="${a.id}"><input type="text" class="grow" id="teach-${a.id}" placeholder="Dạy ${esc(a.name)} một điều…" aria-label="Dạy ${esc(a.name)}"><button class="btn sm primary" type="submit">Dạy</button></form>
+      <form class="row" data-teach="${a.id}" data-direct><input type="text" class="grow" id="teach-${a.id}" placeholder="Dạy ${esc(a.name)} một điều…" aria-label="Dạy ${esc(a.name)}"><button class="btn sm primary" type="submit">Dạy</button></form>
     </div>`; }).join("");
 }
 $("#learnGrid").addEventListener("click",async e=>{ const b=e.target.closest("[data-op]"); if(!b) return; const id=+b.closest("[data-l]").dataset.l;
@@ -1956,6 +2001,31 @@ $("#groupRows").addEventListener("submit",async e=>{ e.preventDefault(); const f
   try{ await api(`/groups/${gid}`,"PATCH",{url:f.querySelector("input").value}); toast("Đã lưu link nhóm. Bài từng lỗi vì thiếu link đã về hàng chờ để Tuấn xếp lại"); loadGroups(); }
   catch(err){ toast(err.message); } });
 $("#groupForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/groups","POST",{name:$("#grName").value,url:$("#grUrl").value,topic:$("#grTopic").value,members:+$("#grMembers").value||0,rules:$("#grRules").value,min_days_between_posts:+$("#grDays").value||3}); e.target.reset(); toast("Đã thêm nhóm"); loadGroups(); }catch(err){ toast(err.message); } });
+
+/* --------------------------------------------- sếp giao việc cho CEO */
+async function renderOrders(){ const box=$("#ceoOrders"); if(!box) return; let d; try{ d=await api("/ceo/chat"); }catch(e){ return; }
+  const AG={all:"Cả đội",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",ceo:"CEO"};
+  box.innerHTML=d.orders.length?`<h4 style="margin:4px 0 6px;font-size:13px">Chỉ đạo lâu dài của sếp (CEO đưa vào lời dặn của agent)</h4><ul class="recent">${d.orders.map(o=>`<li><b>${esc(AG[o.agent]||o.agent)}</b><span>${esc(o.text)}</span><span class="muted small">${fmtDate(o.created_at)}</span><button type="button" class="btn sm ghost danger" data-orderoff="${o.id}">Bỏ</button></li>`).join("")}</ul>`:""; }
+document.addEventListener("click",async e=>{ const b=e.target.closest("[data-orderoff]"); if(!b) return; await api(`/ceo/orders/${b.dataset.orderoff}`,"DELETE"); toast("Đã bỏ chỉ đạo"); renderOrders(); });
+async function loadCeoChat(force){
+  if(!force&&document.activeElement===$("#ceoIn")&&ST.ceoChat) return;
+  let d; try{ d=await api("/ceo/chat"); }catch(e){ return; }
+  const n=(d.history||[]).length, changed=!ST.ceoChat||ST.ceoChat.history.length!==n; ST.ceoChat=d;
+  $("#ceoChatMode").textContent=d.autopilot?"Luật: sếp chỉ giao việc cho CEO, CEO tự vận hành":"Sếp đang giao việc trực tiếp cho từng agent";
+  if(changed){ const log=$("#ceoLog");
+    log.innerHTML=n?d.history.slice(-12).map(m=>`<div class="${m.role==="boss"?"b":"c"}">${esc(m.text)}<time>${m.role==="boss"?"Sếp":"CEO Đức"}${m.via==="telegram"?" · Telegram":""} · ${fmtTime(m.created_at)}</time></div>`).join("")
+      :'<div class="c">Dạ, sếp cứ giao việc cho em. Em sẽ tự chia việc cho Lan, Tuấn, Hà, Khoa và các bạn sale, rồi báo lại sếp. Agent nào làm chưa đúng, sếp nói em sửa.</div>';
+    log.scrollTop=log.scrollHeight; }
+  if(!$("#ceoSugg").children.length) $("#ceoSugg").innerHTML=(d.suggestions||[]).map(t=>`<button type="button" data-sugg="${esc(t)}">${esc(t)}</button>`).join("");
+}
+$("#ceoForm").addEventListener("submit",async e=>{ e.preventDefault(); const v=$("#ceoIn").value.trim(); if(!v) return;
+  const btn=e.target.querySelector("button"); btn.disabled=true; btn.textContent="CEO đang xử lý…";
+  $("#ceoLog").insertAdjacentHTML("beforeend",`<div class="b">${esc(v)}<time>Sếp · vừa xong</time></div>`); $("#ceoLog").scrollTop=1e6;
+  try{ await api("/ceo/chat","POST",{text:v}); $("#ceoIn").value=""; }catch(err){ toast(err.message); }
+  btn.disabled=false; btn.textContent="Giao việc"; ST.ceoChat=null; loadCeoChat(true); refresh(); });
+$("#ceoSugg").addEventListener("click",e=>{ const b=e.target.closest("[data-sugg]"); if(!b) return; $("#ceoIn").value=b.dataset.sugg; $("#ceoIn").focus(); });
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-askceo]"); if(!b) return; $("#drawer").hidden=true; location.hash="office";
+  setTimeout(()=>{ $("#ceoIn").value=`${b.dataset.askceo} `; $("#ceoIn").focus(); },300); });
 
 /* --------------------------------------------- tìm nhóm mới */
 const num=n=>(+n||0).toLocaleString("vi-VN");
@@ -2192,6 +2262,7 @@ async function pollHealth(){ try{ const r=await fetch("/api/health",{cache:"no-s
   show(location.hash.slice(1)||"office");
   await refresh();
   setInterval(refresh,3000);
+  setInterval(()=>{ if(ST.view==="office") loadCeoChat(); },6000);
   setInterval(()=>{ if(ST.view==="company") loadCompany(); if(ST.view==="kpi") loadKpi(); if(ST.view==="sales") loadSales(); if(ST.view==="posts"&&!ST.editPost&&!ST.postedForm&&ST.posts.some(p=>p.status==="posting")) loadPosts(); },4000);
   setInterval(()=>{ if(ST.dash?.meeting_running||ST.view==="meeting") pollMeeting(); },1500);
   const tick=()=>{ const d=new Date(); $("#clock").textContent=d.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}); }; tick(); setInterval(tick,30000);

@@ -22,7 +22,7 @@ import db
 API = os.getenv("TELEGRAM_API", "https://api.telegram.org").rstrip("/")
 _state = {"bot": None, "error": None, "started": False}
 _pending_order: dict[str, int] = {}  # chat -> khách vừa chốt, chờ sếp nhập giá trị đơn
-HELP = ("Các lệnh:\n/baocao — báo cáo hôm nay\n/kpi — tiến độ KPI\n/congty — vốn, chi phí nuôi agent, doanh thu, sale có nguy cơ bị sa thải\n"
+HELP = ("Nhắn tin bình thường là giao việc cho CEO Đức, ví dụ: Viết 3 bài về trà gừng · Lan viết dài quá, viết ngắn lại\n\nCác lệnh:\n/baocao — báo cáo hôm nay\n/kpi — tiến độ KPI\n/congty — vốn, chi phí nuôi agent, doanh thu, sale có nguy cơ bị sa thải\n"
         "/doanhthu [số tiền] [tên khách] — nhập doanh thu, VD: /doanhthu 2tr5 Shop Mộc An\n"
         "/ceo — CEO đánh giá nhân sự, mốc doanh thu, tiềm năng tuyển thêm\n"
         "/khach — khách đang chờ sếp tư vấn\n"
@@ -385,6 +385,9 @@ def handle_message(msg: dict):
         _reply(chat_id, f"💰 Đã ghi doanh thu {company.fmt_vnd(amount)} · {e(o['customer'])}. "
                         f"Tổng từ khi thành lập: <b>{company.fmt_vnd(fin['revenue'])}</b> ({fin['orders']} đơn).")
         return
+    if cmd in ("/giao",):
+        _ceo_reply(chat_id, arg) if arg else _reply(chat_id, "Gõ: /giao [việc cho CEO], hoặc nhắn thẳng việc không cần lệnh.")
+        return
     if cmd in ("/start", "/help", "help", "lệnh"):
         _reply(chat_id, HELP)
     elif cmd in ("/baocao", "báo cáo", "baocao"):
@@ -413,7 +416,7 @@ def handle_message(msg: dict):
         db.log("minh", "Tiếp tục", "Sếp bật lại tự đăng qua Telegram")
         _reply(chat_id, "▶️ Đã bật lại tự đăng cho các nick đang đăng nhập bình thường.")
     else:
-        _reply(chat_id, "Em chưa hiểu lệnh này ạ.\n\n" + HELP)
+        _ceo_reply(chat_id, text)
 
 
 def _send_meeting_when_done(mid: int, chat_id: str):
@@ -426,6 +429,19 @@ def _send_meeting_when_done(mid: int, chat_id: str):
             _reply(chat_id, f"✅ <b>Họp xong</b>: {e(m['topic'])}\n{e(m['summary'] or '')}\n"
                    + "\n".join(f"– {e(agents.name_of(i['agent_id']))}: {e(i['title'])}" for i in items))
             return
+
+
+def _ceo_reply(chat_id: str, text: str):
+    """Tin nhắn thường của sếp = giao việc cho CEO."""
+    import ceo_orders
+    if text.startswith("/"):
+        _reply(chat_id, "Em chưa hiểu lệnh này ạ.\n\n" + HELP)
+        return
+    try:
+        r = ceo_orders.handle(text, via="telegram")
+        _reply(chat_id, "👔 <b>CEO Đức:</b> " + e(r["reply"]))
+    except Exception as ex:
+        _reply(chat_id, f"CEO chưa nhận được việc: {e(str(ex)[:200])}")
 
 
 def handle_callback(cb: dict):
