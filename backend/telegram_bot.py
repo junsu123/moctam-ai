@@ -24,6 +24,7 @@ _state = {"bot": None, "error": None, "started": False}
 _pending_order: dict[str, int] = {}  # chat -> khách vừa chốt, chờ sếp nhập giá trị đơn
 HELP = ("Các lệnh:\n/baocao — báo cáo hôm nay\n/kpi — tiến độ KPI\n/congty — vốn, chi phí nuôi agent, doanh thu, sale có nguy cơ bị sa thải\n"
         "/doanhthu [số tiền] [tên khách] — nhập doanh thu, VD: /doanhthu 2tr5 Shop Mộc An\n"
+        "/ceo — CEO đánh giá nhân sự, mốc doanh thu, tiềm năng tuyển thêm\n"
         "/khach — khách đang chờ sếp tư vấn\n"
         "/hop [chủ đề] — triệu tập họp\n/tamdung — tạm dừng mọi nick tự đăng\n/tieptuc — bật lại tự đăng\n/help — xem lệnh")
 
@@ -334,8 +335,29 @@ def handle_message(msg: dict):
                 lines.append(f"🚪 {e(r['name'])}: đã nghỉ việc")
             else:
                 rv = r["review"]
-                mark = {"safe": "✅", "warn": "⚠️", "danger": "🔴", "idle": "⏸", "extend": "⏸", "pass": "✅", "fail": "🔴", "new": "🆕"}[rv["risk"]]
-                lines.append(f"{mark} {e(r['name'])}: {rv['leads_phone']}/{rv['target_so_far']} SĐT · ngày {rv['day']}/30 của kỳ")
+                mark = {"safe": "✅", "warn": "⚠️", "danger": "🔴", "idle": "⏸", "extend": "⏸", "pass": "✅", "fail": "🔴", "new": "🆕", "waiting": "⏳"}[rv["risk"]]
+                lines.append(f"{mark} {e(r['name'])}: chờ sếp đăng nhập nick" if rv["risk"] == "waiting" else
+                             f"{mark} {e(r['name'])}: {rv['leads_phone']}/{rv['target_so_far']} SĐT · ngày {rv['day']}/30 của kỳ")
+        _reply(chat_id, "\n".join(lines))
+        return
+    if cmd in ("/ceo", "ceo"):
+        import ceo
+        import company
+        if not company.active():
+            _reply(chat_id, "Công ty chưa hoạt động.")
+            return
+        o = ceo.overview()
+        hc, p = o["headcount"], o["potential"]
+        lines = [f"👔 <b>CEO {ceo.NAME}</b> · chế độ {'tự quyết' if o['mode'] == 'auto' else 'chờ sếp duyệt'}",
+                 f"Nhân sự: {hc['working']} nick đang chạy · {hc['waiting_nick']} chờ nick · {hc['total']}/{hc['max']} chỗ"]
+        for m in o["milestones"]:
+            lines.append(f"{'✅' if m['done'] else '🎯'} Mốc {company.fmt_vnd(m['amount'])}: tuyển thêm {m['hires']} sale"
+                         + ("" if m["done"] else f" (đang {company.fmt_vnd(o['revenue'])})"))
+        lines.append(f"\n📈 Tiềm năng Facebook 14 ngày: {p['per_day']} khách/ngày · {p['quota_pct']}% chỉ tiêu · "
+                     f"7 ngày gần nhất {p['last7']} so với {p['prev7']}")
+        lines.append(e(p["verdict"]))
+        for d in o["proposed"]:
+            send(f"👔 Đề xuất đang chờ sếp: <b>{e(d['title'])}</b>\n{e(d['reason'])}", buttons=ceo._buttons(d["id"]), chat_ids=[chat_id])
         _reply(chat_id, "\n".join(lines))
         return
     if cmd in ("/doanhthu", "doanh thu", "doanhthu"):
@@ -397,6 +419,21 @@ def handle_callback(cb: dict):
     import learning
     chat_id = str(cb["message"]["chat"]["id"])
     if chat_id not in chats():
+        return
+    if cb.get("data", "").startswith("c:"):  # duyệt đề xuất của CEO
+        import ceo
+        try:
+            _, did, act = cb["data"].split(":")
+            res = ceo.resolve(int(did), act == "ok")
+            note = (f"✅ Sếp đã duyệt: {res.get('sale', '')} vào làm" if res["status"] == "done" else "✖️ Sếp không duyệt")
+        except Exception as ex:
+            note = str(ex)
+        call("answerCallbackQuery", callback_query_id=cb["id"], text=note[:190])
+        try:
+            call("editMessageText", chat_id=chat_id, message_id=cb["message"]["message_id"], parse_mode="HTML",
+                 text=e(cb["message"].get("text") or "")[:3500] + f"\n\n<b>{e(note)}</b>")
+        except Exception as ex:
+            print("[telegram] sửa tin lỗi:", ex)
         return
     try:
         _, lid, act = cb["data"].split(":")

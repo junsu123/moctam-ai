@@ -7,6 +7,7 @@ Một "công ty" gồm 5 nhân viên AI làm thay phần việc của đội sal
 
 | Agent | Vị trí | Việc làm hằng ngày |
 |---|---|---|
+| **Đức** | CEO | Điều hành nhân sự: thực hiện sa thải theo luật KPI, quyết định tuyển người thay vào nick cũ, tăng sale khi doanh thu chạm mốc hoặc khi tìm khách trên Facebook có tiềm năng; chỉ đạo đầu mỗi cuộc họp |
 | **Minh** | Trưởng phòng | Chủ trì họp giao ban, chốt quyết định, giao việc cho từng người |
 | **Lan** | Content | Viết bài đăng theo sản phẩm, góc tiếp cận, nơi đăng; gợi ý ảnh/video cần chụp |
 | **Tuấn** | Hội nhóm | Ghép bài đã duyệt với nhóm phù hợp, tôn trọng luật nhóm và số ngày giãn cách, xếp giờ đăng |
@@ -152,7 +153,7 @@ Bot chạy ngay trên máy của bạn (không cần tên miền hay mở cổng
 | Khi đạt | Chúc mừng đạt KPI tối thiểu, vượt KPI |
 | 21:30 | KPI cả ngày theo từng nick, khách còn chờ sếp gọi, đơn đã chốt, bài học mới, chi phí AI |
 
-**Lệnh Telegram:** `/baocao` báo cáo nhanh · `/kpi` tiến độ · `/khach` khách đang chờ sếp · `/congty` vốn, chi phí nuôi agent, doanh thu, tình trạng sale · `/doanhthu 2tr5 Tên khách` nhập doanh thu · `/hop [chủ đề]` triệu tập họp
+**Lệnh Telegram:** `/baocao` báo cáo nhanh · `/kpi` tiến độ · `/khach` khách đang chờ sếp · `/congty` vốn, chi phí nuôi agent, doanh thu, tình trạng sale · `/doanhthu 2tr5 Tên khách` nhập doanh thu · `/ceo` nhân sự, mốc doanh thu, tiềm năng · `/hop [chủ đề]` triệu tập họp
 (gửi kết luận khi họp xong) · `/tamdung` tạm dừng mọi nick · `/tieptuc` bật lại.
 
 Hôm trước chưa đạt KPI thì cuộc họp sáng tự lấy chủ đề "làm gì để đạt KPI hôm nay".
@@ -216,7 +217,7 @@ Trang **Công ty** quản lý vốn, chi phí nuôi agent, doanh thu và luật 
    hóa, giao hàng của đơn không tính ở đây. Ảnh sản phẩm lấy từ thư mục ảnh của sếp nên không tốn phí (phần mềm không gọi
    API tạo ảnh). Trang Công ty chia chi phí theo từng việc, biểu đồ 7 ngày và dự báo vốn còn đủ bao lâu. Còn 20% vốn
    Telegram báo; hết vốn thì mọi việc gọi AI dừng tới khi **bơm thêm vốn**.
-5. **Đội lõi** (Minh, Lan, Tuấn, Hà, Khoa) không bị sa thải theo KPI; chỉ giải tán khi công ty giải thể.
+5. **Đội lõi** (CEO Đức, Minh, Lan, Tuấn, Hà, Khoa) không bị sa thải theo KPI; chỉ giải tán khi công ty giải thể.
 
 **Doanh thu do sếp nhập** (sếp là người chốt và làm việc với khách), ở một trong các chỗ:
 
@@ -232,6 +233,44 @@ sale mới nhận nick, hội nhóm của nick cũ và bắt đầu kỳ KPI m�
 
 **Sau khi giải thể:** sale dừng đăng, AI dừng, văn phòng 3D đóng cửa. Dữ liệu vẫn còn để xem lại; có thể **Thành lập lại**
 với vốn mới.
+
+## CEO: tuyển dụng và sa thải
+
+CEO **Đức** điều hành nhân sự phòng kinh doanh (khung **CEO** trên trang Công ty, lệnh `/ceo` trên Telegram). Mọi quyết
+định dựa trên luật và số liệu thật, không gọi AI nên không tốn tiền.
+
+**Sa thải và tuyển người thay.** Cuối kỳ KPI, CEO thực hiện sa thải sale không đạt rồi xét nick của người đó:
+
+| Tình huống | CEO quyết định |
+|---|---|
+| Nick vẫn đăng nhập tốt, đạt từ 30% chỉ tiêu trở lên | Tuyển người mới tiếp quản nick (giữ phiên đăng nhập, hội nhóm), chạy kỳ KPI mới |
+| Nick đạt dưới 30% chỉ tiêu | Không tuyển thay: vấn đề nằm ở nick hoặc các nhóm, báo sếp kiểm tra |
+| Người thay cũng trượt (lần 2 liên tiếp trên cùng nick) | Dừng nick, đề nghị sếp đổi nick hoặc bổ sung hội nhóm |
+| Nick đang lỗi đăng nhập | Chờ sếp xử lý nick rồi mới tuyển thay |
+
+Nếu tất cả sale bị sa thải cùng lúc, công ty giải thể trước khi CEO kịp tuyển thay (đúng luật giải thể).
+
+**Tăng người theo doanh thu.** Mặc định doanh thu (từ khi thành lập) chạm **50 triệu** thì tuyển thêm 1 sale, chạm
+**100 triệu** thêm 1 sale nữa. Sửa mốc và số người mỗi mốc ở khung CEO → **Sửa mốc**. Doanh thu sếp vừa nhập chạm mốc là
+CEO tuyển ngay.
+
+**Tăng người theo tiềm năng Facebook.** Mỗi sáng CEO xem số liệu 14 ngày gần nhất. Cần ít nhất một tín hiệu:
+
+- cả phòng trung bình đạt mức KPI vượt (mặc định 10 khách có SĐT/ngày), hoặc
+- các nick vượt 120% chỉ tiêu của mình;
+
+và đủ các điều kiện an toàn: có đủ 14 ngày dữ liệu, số khách tuần này không giảm, không còn sale mới đang chờ nick,
+văn phòng còn chỗ (tối đa 8 sale), vốn đủ nuôi agent ít nhất 60 ngày, lần tuyển vì tiềm năng trước đã cách 14 ngày.
+Bấm **Đánh giá ngay** để CEO xem lại lập tức; tắt "Tự tuyển thêm khi thấy tiềm năng" nếu chỉ muốn tăng người theo mốc doanh thu.
+
+**Việc của sếp khi có sale mới:** mỗi sale cần một tài khoản Facebook. CEO tạo chỗ làm và hồ sơ Chrome, Telegram báo
+sếp; sếp vào **Nhân viên sale** → **Mở Chrome để đăng nhập** và đăng nhập nick. Kỳ KPI của sale mới chỉ bắt đầu từ ngày
+nick chạy được, nên chờ nick không bị tính là trượt KPI. CEO nhắc lại mỗi 3 ngày nếu chưa có nick; chưa có nick thì
+cho nghỉ việc để hủy tuyển.
+
+**Quyền của CEO:** chế độ **CEO tự quyết** (mặc định) hoặc **Chờ sếp duyệt**. Ở chế độ chờ duyệt, mọi việc tuyển thêm
+và tuyển thay hiện thành đề xuất có nút **Duyệt / Không** trong phần mềm và trên Telegram. Sa thải theo luật KPI luôn
+được thực hiện.
 
 ## Bắt đầu chạy thật
 
@@ -306,6 +345,7 @@ backend/
   facebook.py    Đăng Fanpage qua Graph API
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, đăng bài, lấy link bài, up bài
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
+  ceo.py         CEO: sa thải theo luật, tuyển người thay, tăng người theo mốc doanh thu và tiềm năng Facebook
   company.py     Công ty: vốn, chi phí, doanh thu, đánh giá KPI tháng, sa thải, giải thể
   kpi.py         KPI: nhận diện SĐT, tiến độ, chia theo nick, lịch sử; chuyển khách cho sếp, kịch bản tư vấn
   telegram_bot.py  Bot Telegram: ghép nối, báo cáo, phiếu khách có nút bấm, lệnh /baocao /kpi /khach /hop

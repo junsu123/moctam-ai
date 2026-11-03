@@ -91,6 +91,13 @@ def _run(mid: int, topic: str):
              f"{st.get('kpi', {}).get('target_min', 5)} khách để lại SĐT (hôm nay đang có {st.get('kpi', {}).get('leads_phone', 0)}). "
              f"Chủ đề tranh luận hôm nay: \"{topic}\".",
              mock=lambda: mock_brain.meeting_open(topic) + (" " + __import__("company").brief_text().replace("\n", " ") if __import__("company").brief() else "") + (f" KPI phòng mình: mỗi ngày tối thiểu {st['kpi']['target_min']} khách để lại SĐT, phấn đấu {st['kpi']['target_max']}." if st.get("kpi") else ""), max_tokens=200, task="meeting"))
+        # 1b. CEO chỉ đạo về nhân sự và mục tiêu (số liệu thật)
+        import ceo
+        ceo_txt = ceo.brief_text()
+        if ceo_txt:
+            _say(mid, "ceo", "open", llm.chat(system_prompt("ceo", s),
+                 f"Bạn là CEO, nói 1-2 câu chỉ đạo đầu cuộc họp dựa đúng trên tình hình nhân sự sau: {ceo_txt}",
+                 mock=lambda: "Chỉ đạo của tôi: " + ceo_txt, max_tokens=160, task="meeting"))
         # 2. Báo cáo
         for a in DEBATERS:
             _boss_check(mid)

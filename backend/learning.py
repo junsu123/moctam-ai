@@ -25,7 +25,7 @@ import mock_brain
 LEAD_W = 5                 # 1 khách = 5 bình luận
 MAX_ACTIVE = 10            # số bài học tối đa đang dùng của mỗi agent (bài ghim không tính)
 PROMPT_LESSONS = 6         # số bài học đưa vào prompt (giữ chi phí thấp)
-CORE = ["minh", "lan", "tuan", "ha", "khoa"]
+CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa"]
 BANNED = re.compile(r"(tăng|nâng).{0,20}(số bài|tần suất|giới hạn)|bỏ qua luật|lách|spam|chữa (khỏi|bệnh)|trị bệnh", re.I)
 _running = {"on": False}
 
@@ -243,6 +243,11 @@ def skills(agent_id: str) -> list[dict]:
                           FROM posts WHERE status='posted' AND posted_at BETWEEN ? AND ?""", (a, b))
             return _pct(r["d"] or 0, r["n"])
         out.append({"label": "Bài có số liệu kết quả", "unit": "%", "now_prev": win(cover)})
+    if agent_id == "ceo":
+        out.append({"label": "Khách có SĐT của cả phòng", "unit": "", "now_prev": win(lambda a, b: one(
+            "SELECT COUNT(*) n FROM leads WHERE phone IS NOT NULL AND phone!='' AND COALESCE(phone_at, created_at) BETWEEN ? AND ?", (a, b)))})
+        out.append({"label": "Doanh thu (triệu đồng)", "unit": "", "now_prev": win(lambda a, b: round(one(
+            "SELECT COALESCE(SUM(amount),0) n FROM orders WHERE created_at BETWEEN ? AND ?", (a, b)) / 1_000_000, 1))})
     if agent_id == "minh":
         def done(a, b):
             r = db.q("SELECT status, COUNT(*) n FROM tasks WHERE created_at BETWEEN ? AND ? GROUP BY status", (a, b))
@@ -371,6 +376,13 @@ def evidence(agent_id: str) -> dict:
         e["cuoc_hop"] = [{"chu_de": r["topic"], "ket_luan": (r["summary"] or "")[:260]} for r in
                          db.q("SELECT topic, summary FROM meetings WHERE status='done' ORDER BY id DESC LIMIT 3")]
         e["viec"] = db.q("SELECT status, COUNT(*) n FROM tasks WHERE created_at>=? GROUP BY status", (_ago(14),))
+    elif agent_id == "ceo":
+        import ceo
+        p = ceo.potential()
+        e["tiem_nang"] = {k: p[k] for k in ("per_day", "quota_pct", "last7", "prev7", "verdict")}
+        e["quyet_dinh_gan_day"] = [{"loai": r["kind"], "noi_dung": r["title"], "ly_do": (r["reason"] or "")[:200]}
+                                   for r in db.q("SELECT kind, title, reason FROM ceo_decisions ORDER BY id DESC LIMIT 5")]
+        e["sale_bi_sa_thai"] = db.q("SELECT name, fire_reason FROM sales WHERE status='fired' ORDER BY fired_at DESC LIMIT 3")
     return e
 
 
@@ -505,6 +517,16 @@ def default_goal(agent_id: str) -> str | None:
         return "Đảm bảo bài đăng hôm qua đều có số bình luận và số khách."
     if agent_id == "minh":
         return "Theo dõi để các việc giao trong cuộc họp được hoàn thành trong ngày."
+    if agent_id == "ceo":
+        try:
+            import ceo, company
+            o = ceo.overview()
+            if o["next_milestone"]:
+                gap = o["next_milestone"]["amount"] - o["revenue"]
+                return f"Đưa doanh thu tới mốc {company.fmt_vnd(o['next_milestone']['amount'])} (còn thiếu {company.fmt_vnd(gap)}) để tăng người."
+            return "Giữ mọi nick đạt KPI tháng, không để ai bị sa thải."
+        except Exception:
+            return None
     return None
 
 

@@ -127,6 +127,11 @@ def add_order(lead_id: int | None, amount: int, note: str = "", via: str = "app"
     if first and active():
         _tg(f"🎉 <b>Doanh thu đầu tiên của công ty!</b> {html.escape(name)}: {fmt_vnd(amount)}. "
             "Điều kiện 'có khách hàng và doanh thu trong 60 ngày' đã đạt.")
+    try:
+        import ceo
+        ceo.check_milestones()  # chạm mốc doanh thu -> CEO tăng người ngay
+    except Exception as e:
+        print("[ceo]", e)
     return db.one("SELECT * FROM orders WHERE id=?", (oid,))
 
 
@@ -146,11 +151,15 @@ def record_work_day():
     share = _share(len(act))
     for r in act:
         db.run("INSERT OR IGNORE INTO sale_days(sale_id, date, target) VALUES (?,?,?)", (r["id"], today, share))
+        db.run("UPDATE sales SET kpi_period_start=? WHERE id=? AND kpi_period_start IS NULL", (today, r["id"]))
 
 
 def sale_review(sale: dict) -> dict:
     """Tiến độ kỳ KPI hiện tại của một sale."""
-    start = sale.get("kpi_period_start") or founded() or db.today()
+    start = sale.get("kpi_period_start")
+    if not start:  # chưa có ngày làm việc nào (sale mới chờ sếp đăng nhập nick): kỳ KPI chưa bắt đầu
+        return {"period_start": None, "day": 0, "work_days": 0, "target_so_far": 0, "target_month": _share(1) * 30,
+                "leads_phone": 0, "pct": 0, "risk": "waiting", "days_left": 30}
     days = (date.today() - date.fromisoformat(start)).days + 1
     w = db.one("SELECT COUNT(*) n, COALESCE(SUM(target),0) t FROM sale_days WHERE sale_id=? AND date >= ?", (sale["id"], start))
     got = db.one("""SELECT COUNT(*) n FROM leads l JOIN posts p ON p.id=l.post_id WHERE p.sale_id=?
@@ -174,17 +183,19 @@ def sale_review(sale: dict) -> dict:
             "days_left": max(0, 30 - days)}
 
 
-def fire(sale_id: int, reason: str):
+def fire(sale_id: int, reason: str, review: dict | None = None):
     sale = db.one("SELECT * FROM sales WHERE id=?", (sale_id,))
     if not sale or sale.get("status") == "fired":
         return
-    db.run("UPDATE sales SET status='fired', auto_post=0, fired_at=?, fire_reason=?, fired_gen=? WHERE id=?",
-           (db.now(), reason, s().get("company_gen") or "0", sale_id))
+    db.run("UPDATE sales SET status='fired', auto_post=0, fired_at=?, fire_reason=?, fired_gen=?, fire_review=? WHERE id=?",
+           (db.now(), reason, s().get("company_gen") or "0", json.dumps(review or {}), sale_id))
     db.run("UPDATE posts SET status='approved', sale_id=NULL, scheduled_for=NULL WHERE sale_id=? AND status='scheduled'", (sale_id,))
     db.run("UPDATE bumps SET status='skipped', error='Sale đã nghỉ việc' WHERE sale_id=? AND status='scheduled'", (sale_id,))
-    db.log("minh", "Sa thải", f"{sale['name']} (nick {sale['fb_name'] or sale['name']}): {reason}")
-    _tg(f"🚪 <b>Sa thải {html.escape(sale['name'])}</b> (nick {html.escape(sale['fb_name'] or sale['name'])})\n{html.escape(reason)}\n"
-        "Nick vẫn giữ nguyên phiên đăng nhập. Sếp có thể tuyển người thay để dùng tiếp nick này.")
+    db.log("ceo", "Sa thải", f"{sale['name']} (nick {sale['fb_name'] or sale['name']}): {reason}")
+    db.run("""INSERT INTO ceo_decisions(kind, status, sale_id, title, reason, data, created_at, decided_at)
+              VALUES ('fire','done',?,?,?,'{}',?,?)""", (sale_id, f"Sa thải {sale['name']}", reason, db.now(), db.now()))
+    _tg(f"🚪 <b>CEO Đức sa thải {html.escape(sale['name'])}</b> (nick {html.escape(sale['fb_name'] or sale['name'])})\n{html.escape(reason)}\n"
+        "Nick vẫn giữ nguyên phiên đăng nhập. CEO sẽ quyết định có tuyển người thay vào nick này hay không.")
 
 
 def review_sales():
@@ -194,7 +205,7 @@ def review_sales():
         r = sale_review(sale)
         if r["risk"] == "fail":
             fire(sale["id"], f"Kỳ {r['period_start']} → hôm nay: {r['leads_phone']}/{r['target_so_far']} khách có SĐT "
-                             f"({r['work_days']} ngày làm việc), không đạt KPI tháng.")
+                             f"({r['work_days']} ngày làm việc), không đạt KPI tháng.", r)
         elif r["risk"] == "pass":
             import learning
             db.run("UPDATE sales SET kpi_period_start=?, kpi_warned=NULL WHERE id=?", (db.today(), sale["id"]))
@@ -205,7 +216,7 @@ def review_sales():
             db.run("UPDATE sales SET kpi_warned=? WHERE id=?", (r["period_start"], sale["id"]))
             msg = (f"{sale['name']}: {r['leads_phone']}/{r['target_so_far']} khách có SĐT ({r['pct']}%), "
                    f"còn {r['days_left']} ngày trước kỳ đánh giá.")
-            db.log("minh", "Cảnh báo KPI tháng", msg)
+            db.log("ceo", "Cảnh báo KPI tháng", msg)
             _tg(f"⚠️ <b>Nguy cơ sa thải</b>\n{html.escape(msg)}")
 
 
@@ -263,6 +274,9 @@ def tick() -> str:
         record_work_day()
         review_sales()
         check_dissolution()
+        if active():
+            import ceo
+            ceo.tick()  # CEO quyết định tuyển người thay, tăng người theo mốc doanh thu / tiềm năng
     return status()
 
 
@@ -277,7 +291,10 @@ def found(capital: int, rate: float | None = None):
         db.set_setting("usd_vnd", str(rate))
     for k in ("dissolved_at", "dissolved_reason", "trial_warned", "capital_warned"):
         db.set_setting(k, "")
-    db.run("UPDATE sales SET kpi_period_start=?, kpi_warned=NULL WHERE COALESCE(status,'active')='active'", (db.today(),))
+    db.run("""UPDATE sales SET kpi_period_start=CASE WHEN login_status='ok' THEN ? ELSE NULL END, kpi_warned=NULL
+              WHERE COALESCE(status,'active')='active'""", (db.today(),))
+    for k in ("ceo_milestones_done", "ceo_last_potential_hire", "ceo_last_review", "ceo_last_daily"):
+        db.set_setting(k, "")
     db.run("UPDATE sales SET auto_post=1 WHERE COALESCE(status,'active')='active' AND login_status='ok'")
     db.log("minh", "Thành lập công ty", f"Vốn {fmt_vnd(capital)}. Luật KPI và thời hạn 60 ngày bắt đầu tính từ hôm nay.")
     _tg(f"🏢 <b>Công ty chính thức hoạt động</b> với vốn {fmt_vnd(capital)}.\n"
@@ -294,7 +311,8 @@ def add_capital(amount: int, note: str = ""):
 def overview() -> dict:
     sales = []
     for r in db.q("SELECT * FROM sales WHERE COALESCE(is_sample,0)=0 ORDER BY id"):
-        item = {k: r[k] for k in ("id", "name", "fb_name", "login_status", "auto_post", "status", "fired_at", "fire_reason")}
+        item = {k: r.get(k) for k in ("id", "name", "fb_name", "login_status", "auto_post", "status", "fired_at", "fire_reason",
+                                      "hired_by", "hire_reason", "replaced_by")}
         item["status"] = r.get("status") or "active"
         if item["status"] == "active":
             item["review"] = sale_review(r)

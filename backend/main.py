@@ -19,6 +19,7 @@ import agents
 import browser_poster
 import db
 import facebook
+import ceo
 import company
 import kpi
 import learning
@@ -545,8 +546,9 @@ def add_sale(s: Sale):
     removed = db.clear_samples(("sales",))  # tuyển người thật -> sale mẫu rời văn phòng
     if removed:
         db.log("minh", "Dọn sale mẫu", f"Đã cho {removed['sales']} sale mẫu rời văn phòng")
-    sid = db.run("INSERT INTO sales(name, fb_name, created_at, kpi_period_start) VALUES (?,?,?,?)",
-                 (s.name.strip(), s.fb_name.strip(), db.now(), db.today()))
+    # kỳ KPI bắt đầu từ ngày đầu tiên nick chạy được (sau khi sếp đăng nhập), không tính ngày chờ nick
+    sid = db.run("INSERT INTO sales(name, fb_name, created_at, hired_by) VALUES (?,?,?,'boss')",
+                 (s.name.strip(), s.fb_name.strip(), db.now()))
     db.run("UPDATE sales SET profile_dir=? WHERE id=?", (str(browser_poster.profile_dir(sid)), sid))
     db.log("minh", "Tuyển sale", f"{s.name} nhận quản lý nick {s.fb_name or s.name}")
     return _sale_out(db.one("SELECT * FROM sales WHERE id=?", (sid,)))
@@ -743,32 +745,71 @@ def del_order(oid: int):
 
 
 class Replace(BaseModel):
-    name: str
+    name: str = ""
 
 
 @app.post("/api/sales/{sid}/replace")
 def replace_sale(sid: int, r: Replace):
     """Tuyển người thay cho sale đã nghỉ: dùng tiếp nick (hồ sơ Chrome đã đăng nhập) của người cũ."""
-    import shutil
-    old = db.one("SELECT * FROM sales WHERE id=?", (sid,))
-    if not old or old.get("status") != "fired":
-        raise HTTPException(400, "Chỉ tuyển thay cho sale đã nghỉ việc")
-    if company.status() == "dissolved":
-        raise HTTPException(400, "Công ty đã giải thể. Thành lập lại trước khi tuyển.")
-    new_id = db.run("""INSERT INTO sales(name, fb_name, login_status, created_at, kpi_period_start, max_posts_per_day,
-                       min_gap_minutes, active_from, active_to) VALUES (?,?,?,?,?,?,?,?,?)""",
-                    (r.name.strip(), old["fb_name"], old["login_status"], db.now(), db.today(), old["max_posts_per_day"],
-                     old["min_gap_minutes"], old["active_from"], old["active_to"]))
-    src, dst = db.PROFILES_DIR / f"sale-{sid}", db.PROFILES_DIR / f"sale-{new_id}"
-    if src.exists() and not dst.exists():
-        shutil.move(str(src), str(dst))
-    db.run("UPDATE sales SET profile_dir=? WHERE id=?", (str(dst), new_id))
-    db.run("UPDATE sales SET replaced_by=? WHERE id=?", (new_id, sid))
-    db.run("UPDATE groups SET member_sale_ids=REPLACE(','||member_sale_ids||',', ?, ?) WHERE member_sale_ids!=''",
-           (f",{sid},", f",{new_id},"))
-    db.run("UPDATE groups SET member_sale_ids=TRIM(member_sale_ids, ',')")
-    db.log("minh", "Tuyển người thay", f"{r.name} tiếp quản nick {old['fb_name'] or old['name']} của {old['name']}")
-    return _sale_out(db.one("SELECT * FROM sales WHERE id=?", (new_id,)))
+    try:
+        return _sale_out(ceo.replace(sid, r.name, by="boss"))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+# ------------------------------------------------------------------ CEO
+@app.get("/api/ceo")
+def ceo_get():
+    return ceo.overview()
+
+
+class CeoSettings(BaseModel):
+    mode: str | None = None
+    enabled: bool | None = None
+    potential: bool | None = None
+    milestones: list[dict] | None = None  # [{"amount": 50000000, "hires": 1}]
+
+
+@app.put("/api/ceo")
+def ceo_put(c: CeoSettings):
+    if c.mode in ("auto", "approve"):
+        db.set_setting("ceo_mode", c.mode)
+    if c.enabled is not None:
+        db.set_setting("ceo_enabled", "1" if c.enabled else "0")
+    if c.potential is not None:
+        db.set_setting("ceo_potential", "1" if c.potential else "0")
+    if c.milestones is not None:
+        ms = []
+        for m in c.milestones:
+            amt, n = int(m.get("amount") or 0), int(m.get("hires") or 0)
+            if amt <= 0 or not 1 <= n <= 4:
+                raise HTTPException(400, "Mỗi mốc cần số tiền lớn hơn 0 và tuyển 1-4 người")
+            ms.append((amt, n))
+        db.set_setting("ceo_milestones", ",".join(f"{a}:{n}" for a, n in sorted(set(ms))))
+    return ceo.overview()
+
+
+class Approve(BaseModel):
+    approve: bool
+
+
+@app.post("/api/ceo/decisions/{did}")
+def ceo_resolve(did: int, a: Approve):
+    try:
+        ceo.resolve(did, a.approve)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return ceo.overview()
+
+
+@app.post("/api/ceo/review")
+def ceo_review_now():
+    """Sếp bấm 'CEO đánh giá ngay': chạy đánh giá tiềm năng và mốc doanh thu ngay lập tức."""
+    if not company.active():
+        raise HTTPException(400, "Công ty chưa hoạt động")
+    ceo.check_milestones()
+    ceo.check_potential()
+    return ceo.overview()
 
 
 # ------------------------------------------------------------------ bắt đầu chạy thật

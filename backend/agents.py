@@ -1,6 +1,17 @@
 """Định nghĩa đội ngũ Agent AI: vai trò, tính cách, ngoại hình 3D."""
 
 AGENTS = {
+    "ceo": {
+        "id": "ceo",
+        "name": "Đức",
+        "role": "CEO",
+        "short": "Điều hành công ty: sa thải, tuyển dụng, tăng người theo doanh thu và tiềm năng",
+        "personality": "Nhìn xa, kỷ luật, công bằng. Chỉ tăng người khi doanh thu hoặc số liệu chứng minh được; "
+                       "sa thải đúng luật nhưng luôn hỏi nick hay người mới là vấn đề.",
+        "look": {"skin": "#efc39c", "shirt": "#1f2a3a", "pants": "#1a2029", "hair": "#2a2a2a",
+                 "hairStyle": "side", "accessory": "none", "tie": "#c0392b", "accent": "#d4af37"},
+        "desk": 13,
+    },
     "minh": {
         "id": "minh",
         "name": "Minh",
@@ -53,7 +64,7 @@ AGENTS = {
     },
 }
 
-ORDER = ["minh", "lan", "tuan", "ha", "khoa"]
+ORDER = ["ceo", "minh", "lan", "tuan", "ha", "khoa"]
 
 COMPANY_CONTEXT = """Bạn là nhân viên của một xưởng sản xuất thực phẩm thường tại Việt Nam
 (trà túi lọc, bột ngũ cốc, bột thiên nhiên sấy lạnh, cà phê hòa tan...).

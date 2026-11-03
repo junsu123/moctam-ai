@@ -158,6 +158,10 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS expenses (
   id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, category TEXT, amount INTEGER, note TEXT, created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS ceo_decisions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, status TEXT, sale_id INTEGER, title TEXT, reason TEXT,
+  data TEXT, created_at TEXT, decided_at TEXT
+);
 CREATE TABLE IF NOT EXISTS sale_days (
   sale_id INTEGER, date TEXT, target INTEGER, PRIMARY KEY (sale_id, date)
 );
@@ -174,6 +178,8 @@ CREATE TABLE IF NOT EXISTS sales (
 # Cột thêm cho cơ sở dữ liệu tạo từ phiên bản trước
 MIGRATIONS = [
     ("orders", "customer", "TEXT"),
+    ("sales", "hired_by", "TEXT"), ("sales", "hire_reason", "TEXT"), ("sales", "ceo_reminded_at", "TEXT"),
+    ("sales", "ceo_handled", "INTEGER"), ("sales", "fire_review", "TEXT"),
     ("posts", "sale_id", "INTEGER"), ("posts", "error", "TEXT"), ("posts", "screenshot", "TEXT"),
     ("groups", "member_sale_ids", "TEXT DEFAULT ''"), ("products", "images", "TEXT DEFAULT '[]'"),
     ("posts", "permalink_status", "TEXT"), ("posts", "bump_enabled", "INTEGER DEFAULT 1"),
@@ -229,6 +235,8 @@ DEFAULT_SETTINGS = {
     "company_founded_ts": "",
     "company_gen": "0",
     "capital_vnd": "10000000",
+    "ceo_enabled": "1", "ceo_mode": "auto", "ceo_milestones": "50000000:1,100000000:1", "ceo_milestones_done": "",
+    "ceo_potential": "1", "ceo_hire_cooldown_days": "14", "ceo_last_potential_hire": "", "ceo_last_daily": "", "ceo_last_review": "",
     "usd_vnd": "25800",
     "trial_days": "60",
     "dissolved_at": "",
@@ -354,10 +362,11 @@ RESET_TABLES = {  # bảng: mô tả cho sếp
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",
     "kpi_daily": "lịch sử KPI", "ai_batches": "lô viết bài đang chờ",
-    "orders": "doanh thu đã nhập", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
+    "orders": "doanh thu đã nhập", "ceo_decisions": "quyết định của CEO", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
 }
 RUN_STATE_KEYS = ["bump_planned_date", "learn_last_date", "scan_last", "tg_sent_log", "company_founded_at", "company_founded_ts",
-                  "dissolved_at", "dissolved_reason", "trial_warned", "capital_warned"]
+                  "dissolved_at", "dissolved_reason", "trial_warned", "capital_warned",
+                  "ceo_milestones_done", "ceo_last_potential_hire", "ceo_last_daily", "ceo_last_review"]
 
 
 def reset_preview() -> dict:
