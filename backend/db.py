@@ -167,6 +167,8 @@ MIGRATIONS = [
     ("leads", "phone", "TEXT"), ("leads", "origin", "TEXT DEFAULT 'manual'"), ("leads", "fb_author", "TEXT"),
     ("leads", "escalated_at", "TEXT"), ("leads", "escalate_reason", "TEXT"), ("leads", "consult_note", "TEXT"),
     ("posts", "last_scan_at", "TEXT"),
+    ("sales", "is_sample", "INTEGER DEFAULT 0"), ("leads", "is_sample", "INTEGER DEFAULT 0"),
+    ("groups", "is_sample", "INTEGER DEFAULT 0"), ("products", "is_sample", "INTEGER DEFAULT 0"),
     ("leads", "phone_at", "TEXT"), ("leads", "boss_status", "TEXT"), ("leads", "remind_at", "TEXT"),
 ]
 
@@ -292,14 +294,43 @@ def init():
     if not one("SELECT id FROM products LIMIT 1"):
         for p in SEED_PRODUCTS:
             run("""INSERT INTO products(name, category, description, wholesale_price, retail_price,
-                   moq, selling_points, created_at) VALUES (?,?,?,?,?,?,?,?)""", (*p, now()))
+                   moq, selling_points, created_at, is_sample) VALUES (?,?,?,?,?,?,?,?,1)""", (*p, now()))
         for g in SEED_GROUPS:
-            run("""INSERT INTO groups(name, url, topic, members, rules, min_days_between_posts, created_at)
-                   VALUES (?,?,?,?,?,?,?)""", (*g, now()))
+            run("""INSERT INTO groups(name, url, topic, members, rules, min_days_between_posts, created_at, is_sample)
+                   VALUES (?,?,?,?,?,?,?,1)""", (*g, now()))
         for l in SEED_LEADS:
             run("""INSERT INTO leads(name, contact, channel, source, business_type, need, score, status,
-                   last_contact_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                   last_contact_at, created_at, updated_at, is_sample) VALUES (?,?,?,?,?,?,?,?,?,?,?,1)""",
                 (*l, now(), now(), now()))
+    # Máy đã cài bản cũ: đánh dấu dữ liệu mẫu theo đúng tên đã gieo (1 lần)
+    if not one("SELECT value FROM settings WHERE key='sample_marked'"):
+        for name, *_ in SEED_LEADS:
+            run("UPDATE leads SET is_sample=1 WHERE name=? AND COALESCE(origin,'manual')='manual' AND post_id IS NULL", (name,))
+        for name, url, *_ in SEED_GROUPS:
+            run("UPDATE groups SET is_sample=1 WHERE name=? AND COALESCE(url,'')=''", (name,))
+        for name, *_ in SEED_PRODUCTS:
+            run("UPDATE products SET is_sample=1 WHERE name=? AND COALESCE(images,'[]')='[]'", (name,))
+        run("INSERT OR REPLACE INTO settings(key, value) VALUES ('sample_marked','1')")
+
+
+def sample_counts() -> dict:
+    return {t: one(f"SELECT COUNT(*) n FROM {t} WHERE is_sample=1")["n"] for t in ("sales", "leads", "groups", "products")}
+
+
+def clear_samples(tables=("sales", "leads", "groups", "products")) -> dict:
+    """Xóa dữ liệu mẫu. Khách mẫu: xóa cả tin nhắn đã soạn; sản phẩm/nhóm mẫu: bài đăng cũ vẫn giữ."""
+    done = {}
+    for t in tables:
+        n = one(f"SELECT COUNT(*) n FROM {t} WHERE is_sample=1")["n"]
+        if not n:
+            continue
+        if t == "leads":
+            run("DELETE FROM replies WHERE lead_id IN (SELECT id FROM leads WHERE is_sample=1)")
+        if t == "sales":
+            run("UPDATE posts SET sale_id=NULL, status='approved', scheduled_for=NULL WHERE status='scheduled' AND sale_id IN (SELECT id FROM sales WHERE is_sample=1)")
+        run(f"DELETE FROM {t} WHERE is_sample=1")
+        done[t] = n
+    return done
 
 
 def get_settings() -> dict:

@@ -34,6 +34,7 @@ tách biệt với Chrome bạn dùng hằng ngày.
 **Lần đầu cho mỗi nick:**
 
 1. Vào **Nhân viên sale** → *Tuyển sale* (tối đa 8 người, mỗi người có bàn riêng trong văn phòng 3D).
+   Sale mẫu (nếu có) tự rời văn phòng ngay khi bạn tuyển người đầu tiên.
 2. Bấm **Mở Chrome**. Một cửa sổ Chrome của nick đó hiện lên trên máy đang chạy phần mềm.
    Đăng nhập Facebook (kể cả mã xác thực 2 lớp nếu có), vào sẵn các nhóm cần đăng, rồi **đóng cửa sổ**.
    Phiên đăng nhập được giữ lại trong hồ sơ; phần mềm không lưu mật khẩu.
@@ -174,6 +175,14 @@ rút ra bài học… Cấp độ hiện trên nhân vật 3D. Trang Đào tạo
 **Ranh giới:** bài học chỉ thay đổi cách viết và cách chọn góc, sản phẩm, nhóm, giờ đăng. Giới hạn bài/ngày, giãn cách,
 luật nhóm và việc dừng khi checkpoint là do sếp đặt; bài học đề xuất tăng tần suất, lách luật hay hứa công dụng chữa
 bệnh bị tự động loại.
+
+## Dữ liệu mẫu
+
+Lần đầu chạy, phần mềm tạo sẵn vài sản phẩm, hội nhóm và khách hàng **mẫu** để bạn xem thử. Chúng được đánh dấu riêng:
+
+- Khách mẫu không bao giờ được chuyển sang Telegram và tự bị xóa khi có khách thật đầu tiên.
+- Sale mẫu tự rời văn phòng 3D khi bạn tuyển sale đầu tiên.
+- Sản phẩm và hội nhóm mẫu: thay bằng thông tin thật, hoặc vào **Cài đặt → Dữ liệu mẫu → Xóa toàn bộ dữ liệu mẫu**.
 
 ## Cài đặt và chạy
 

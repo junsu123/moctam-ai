@@ -601,6 +601,12 @@ tbody tr.sel td{background:var(--accent-soft)}
           <div><button class="btn primary" type="submit">Lưu cài đặt</button></div>
         </form>
         <div class="sidecol">
+          <div class="card" id="sampleCard" hidden>
+            <div class="card-h"><h3>Dữ liệu mẫu</h3><span class="chip warn" id="sampleChip"></span></div>
+            <p class="small muted" id="sampleTxt"></p>
+            <p class="small muted">Sale mẫu tự rời văn phòng khi bạn tuyển sale đầu tiên. Khách mẫu tự được xóa khi có khách thật đầu tiên và không bao giờ được chuyển sang Telegram. Sản phẩm và hội nhóm mẫu nên thay bằng thông tin thật của xưởng.</p>
+            <div><button type="button" class="btn ghost danger" id="sampleDel">Xóa toàn bộ dữ liệu mẫu</button></div>
+          </div>
           <form class="card" id="aiForm">
             <div class="card-h"><h3>Khóa API Claude</h3><span class="chip" id="aiState">—</span></div>
             <p class="small muted">Khóa API giúp các agent thực sự suy nghĩ, viết bài, họp và tư vấn bằng Claude. Không có khóa, phần mềm vẫn chạy bằng nội dung mẫu.</p>
@@ -706,9 +712,9 @@ const Demo = (() => {
       {id:4,name:"Mẹ Bin Store",contact:"fb.com/mebin",channel:"Facebook",source:"Hội mẹ bỉm kinh doanh online",business_type:"Bán đa kênh",need:"Hỏi bột diếp cá có giấy kiểm nghiệm không",score:72,status:"new",note:""}],
     posts:[], meetings:[], msgs:[], tasks:[], activity:[],
     status:Object.fromEntries(AGENT_DEFS.map(a=>[a.id,{state:"idle",text:"Đang sẵn sàng"}])), running:null, busy:{},
-    sales:[{id:1,name:"Linh",fb_name:"Linh Nguyễn",login_status:"ok",auto_post:1,max_posts_per_day:5,min_gap_minutes:40,active_from:"08:00",active_to:"22:00",last_error:null},
-      {id:2,name:"Phương",fb_name:"Phương Sỉ Tận Gốc",login_status:"ok",auto_post:1,max_posts_per_day:4,min_gap_minutes:45,active_from:"08:30",active_to:"21:30",last_error:null},
-      {id:3,name:"Nam",fb_name:"Nam Nguồn Hàng",login_status:"not_logged_in",auto_post:1,max_posts_per_day:5,min_gap_minutes:40,active_from:"08:00",active_to:"22:00",last_error:"Chưa đăng nhập Facebook trong hồ sơ này"}],
+    sales:[{id:1,name:"Linh",fb_name:"Linh Nguyễn",login_status:"ok",auto_post:1,max_posts_per_day:5,min_gap_minutes:40,active_from:"08:00",active_to:"22:00",last_error:null,is_sample:1},
+      {id:2,name:"Phương",fb_name:"Phương Sỉ Tận Gốc",login_status:"ok",auto_post:1,max_posts_per_day:4,min_gap_minutes:45,active_from:"08:30",active_to:"21:30",last_error:null,is_sample:1},
+      {id:3,name:"Nam",fb_name:"Nam Nguồn Hàng",login_status:"not_logged_in",auto_post:1,max_posts_per_day:5,min_gap_minutes:40,active_from:"08:00",active_to:"22:00",last_error:"Chưa đăng nhập Facebook trong hồ sơ này",is_sample:1}],
   };
   const log=(a,action,detail)=>S.activity.unshift({id:id(),agent_id:a,action,detail,created_at:now()});
   const ANG={nguon_hang:"📦 TÌM ĐẦU MỐI {cat} TẬN XƯỞNG — KHÔNG QUA TRUNG GIAN",loi_nhuan:"💰 Nhập {wp}, bán lẻ {rp}: bài toán lời lãi cho shop online",livestream:"🎥 Sản phẩm 'lên hình là bán': {name}",ads:"📈 Tìm sản phẩm test ads chi phí thấp? Thử {name}",oem:"🏷️ Muốn có thương hiệu {cat} riêng? Xưởng nhận in nhãn từ số lượng nhỏ",cau_chuyen:"☕ Một ngày ở xưởng: từ nguyên liệu tới hộp {name}"};
@@ -729,7 +735,7 @@ const Demo = (() => {
     mk(S.posts[2],3,"failed",{error:"Không tìm thấy ô viết bài. Kiểm tra nick đã vào nhóm chưa, hoặc thêm chữ hiển thị mới vào fb_selectors.json"}); }
   const ready=g=>!g.last_posted_at;
   const SALE_LOOKS=[{skin:"#f3cfae",shirt:"#d64545",pants:"#2d2d3a",hair:"#2a1810",hairStyle:"long",accessory:"none"},{skin:"#e8b88f",shirt:"#2f86c9",pants:"#25303a",hair:"#1d1d1d",hairStyle:"spiky",accessory:"glasses"},{skin:"#f6d2b3",shirt:"#e0a12a",pants:"#3a2d2a",hair:"#5a3520",hairStyle:"bun",accessory:"none"},{skin:"#eec29b",shirt:"#1f9a8a",pants:"#22332f",hair:"#2b2018",hairStyle:"side",accessory:"headset"},{skin:"#f2c9a0",shirt:"#a24fb5",pants:"#2c2236",hair:"#3b2414",hairStyle:"long",accessory:"beret"},{skin:"#e9bd96",shirt:"#5b7f2a",pants:"#2a3020",hair:"#141414",hairStyle:"cap",accessory:"cap"},{skin:"#f3d0b0",shirt:"#c4572b",pants:"#30262a",hair:"#4a2a1a",hairStyle:"bun",accessory:"glasses"},{skin:"#e6b48a",shirt:"#3b5bb5",pants:"#232a3a",hair:"#2a1d14",hairStyle:"spiky",accessory:"none"}];
-  const saleAgents=()=>S.sales.map((r,i)=>({id:`sale-${r.id}`,sale_id:r.id,kind:"sale",name:r.name,role:`Sale · nick ${r.fb_name||r.name}`,short:"Đăng bài lên trang cá nhân và hội nhóm bằng tài khoản Facebook mình quản lý",personality:"Chăm chỉ, đúng giờ, báo ngay khi tài khoản gặp sự cố.",look:SALE_LOOKS[(r.id-1)%8],desk:5+i,login_status:r.login_status,
+  const saleAgents=()=>S.sales.map((r,i)=>({id:`sale-${r.id}`,sale_id:r.id,kind:"sale",name:r.name,role:`Sale · nick ${r.fb_name||r.name}`,short:"Đăng bài lên trang cá nhân và hội nhóm bằng tài khoản Facebook mình quản lý",personality:"Chăm chỉ, đúng giờ, báo ngay khi tài khoản gặp sự cố.",look:SALE_LOOKS[(r.id-1)%8],desk:5+i,login_status:r.login_status,sample:!!r.is_sample,
     status:(S.status[`sale-${r.id}`]&&S.status[`sale-${r.id}`].state!=="idle")?S.status[`sale-${r.id}`]:{state:"idle",text:{ok:"Nick sẵn sàng",not_logged_in:"Chờ sếp đăng nhập Facebook",checkpoint:"Nick bị checkpoint, đã dừng"}[r.login_status]}}));
   S.xp={minh:140,lan:310,tuan:230,ha:180,khoa:95,"sale-1":120,"sale-2":75,"sale-3":20}; S.learnRunning=false;
   S.goals={minh:"Theo dõi để 4 việc giao trong cuộc họp được hoàn thành trong ngày.",lan:"Viết ít nhất 2 bài góc 'Sản phẩm dễ livestream' và thử 1 bài góc OEM để so sánh.",tuan:"Xếp ít nhất một nửa số bài vào giờ vàng 20h, 11h.",ha:"Liên hệ hết 2 khách mới trước 11h.",khoa:"Đảm bảo bài đăng hôm qua đều có số bình luận và số khách."};
@@ -830,6 +836,7 @@ const Demo = (() => {
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products; if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g)}));
       if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,tg_token:S.settings.tg_token?"••••••":"",models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
+      if(P==="/sample-data") return {sales:S.sales.filter(x=>x.is_sample).length,leads:S.leads.filter(x=>x.is_sample).length,groups:S.groups.length,products:S.products.length};
       if(P==="/learning") return demoLearning();
       if(P==="/kpi") return demoKpi();
       if(P==="/telegram") return {has_token:!!S.settings.tg_token,bot:S.settings.tg_token?"moctam_sales_bot":null,chats:S.tgChats||0,pair_code:S.pairCode||"",error:null};
@@ -859,7 +866,10 @@ const Demo = (() => {
       if(P==="/meetings") return {id:startMeeting(body.topic)};
       if((m=P.match(/^\/meetings\/(\d+)\/say$/))){ S.msgs.push({id:id(),meeting_id:+m[1],agent_id:"boss",phase:"boss",content:body.text,created_at:now()}); (S.bossQ=S.bossQ||[]).push(body.text); return {ok:true}; }
       if((m=P.match(/^\/posts\/(\d+)\/posted$/))){ const po=S.posts.find(x=>x.id==m[1]); Object.assign(po,{status:"posted",posted_at:now(),posted_url:body.posted_url,poster:body.poster}); const g=S.groups.find(g=>g.id===po.group_id); if(g) g.last_posted_at=now(); log("tuan","Đã đăng",`Bài #${po.id} đã đăng`); return po; }
-      if(P==="/sales"){ if(S.sales.length>=8) throw new Error("Văn phòng tối đa 8 nhân viên sale"); const r={id:id(),name:body.name,fb_name:body.fb_name,login_status:"not_logged_in",auto_post:1,max_posts_per_day:5,min_gap_minutes:40,active_from:"08:00",active_to:"22:00",last_error:null}; r.id=S.sales.reduce((a,x)=>Math.max(a,x.id),0)+1; S.sales.push(r); log("minh","Tuyển sale",`${r.name} nhận quản lý nick ${r.fb_name||r.name}`); return saleOut(r); }
+      if(P==="/sales"){ if(S.sales.length>=8) throw new Error("Văn phòng tối đa 8 nhân viên sale"); const samples=S.sales.filter(x=>x.is_sample); if(samples.length){ const ids=samples.map(x=>x.id); S.sales=S.sales.filter(x=>!x.is_sample);
+          S.posts.forEach(p=>{ if(ids.includes(p.sale_id)&&p.status==="scheduled") Object.assign(p,{status:"approved",sale_id:null,sale_name:null,scheduled_for:null}); });
+          log("minh","Dọn sale mẫu",`Đã cho ${samples.length} sale mẫu rời văn phòng`); }
+        const r={id:id(),name:body.name,fb_name:body.fb_name,login_status:"not_logged_in",auto_post:1,max_posts_per_day:5,min_gap_minutes:40,active_from:"08:00",active_to:"22:00",last_error:null,is_sample:0}; S.sales.push(r); log("minh","Tuyển sale",`${r.name} nhận quản lý nick ${r.fb_name||r.name}`); return saleOut(r); }
       if((m=P.match(/^\/sales\/(\d+)\/(open|check)$/))){ const r=S.sales.find(x=>x.id==m[1]); S.busy[r.id]=m[2]; setTimeout(()=>{ delete S.busy[r.id]; r.login_status="ok"; r.last_error=null; },m[2]==="open"?6000:2000); return {ok:true}; }
       if((m=P.match(/^\/posts\/(\d+)\/run$/))){ const po=S.posts.find(x=>x.id==m[1]); const r=S.sales.find(x=>x.id==body.sale_id); if(!r) throw new Error("Chọn nick sale để đăng bài này");
         if(r.login_status!=="ok") throw new Error("Nick chưa đăng nhập. Vào Nhân viên sale → Mở Chrome để đăng nhập lại");
@@ -896,6 +906,7 @@ const Demo = (() => {
     if(method==="POST"&&P==="/ai-key") throw new Error("Bản xem trước không lưu khóa. Chạy phần mềm trên máy bạn để nhập khóa API.");
     if(method==="PUT"&&P==="/settings"){ if(body.tg_token==="••••••") delete body.tg_token; Object.assign(S.settings,body); return S.settings; }
     if(method==="DELETE"&&(m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const path=new URLSearchParams(qs).get("path"); pr.images=JSON.stringify(JSON.parse(pr.images||"[]").filter(x=>x!==path)); return {ok:true}; }
+    if(method==="DELETE"&&P==="/sample-data"){ S.sales=S.sales.filter(x=>!x.is_sample); S.leads=S.leads.filter(x=>!x.is_sample); S.groups=[]; S.products=[]; log("minh","Dọn dữ liệu mẫu","Đã xóa dữ liệu mẫu"); return {deleted:{}}; }
     if(method==="DELETE"&&(m=P.match(/^\/sales\/(\d+)$/))){ S.sales=S.sales.filter(x=>x.id!=m[1]); return {ok:true}; }
     if(method==="DELETE"){ if((m=P.match(/^\/products\/(\d+)$/))) S.products=S.products.filter(x=>x.id!=m[1]); if((m=P.match(/^\/groups\/(\d+)$/))) S.groups=S.groups.filter(x=>x.id!=m[1]); return {ok:true}; }
     throw new Error("Không hỗ trợ trong bản xem trước: "+path);
@@ -1346,7 +1357,8 @@ async function loadSales(){
     if(document.activeElement && grid.contains(document.activeElement)) return; // đang gõ trong form giới hạn
     grid.innerHTML=ST.sales.length?ST.sales.map(s=>{ const [lc,lt]=LOGIN[s.login_status]||["",s.login_status];
       return `<div class="card" data-sale="${s.id}">
-      <div class="card-h"><div class="row">${avaHtml(s.agent_id)}<div><h3>${esc(s.name)}</h3><span class="small muted">Nick: ${esc(s.fb_name||s.name)}</span></div></div><span class="chip ${lc}">${lt}</span></div>
+      <div class="card-h"><div class="row">${avaHtml(s.agent_id)}<div><h3>${esc(s.name)} ${s.is_sample?'<span class="chip warn">Sale mẫu</span>':""}</h3><span class="small muted">Nick: ${esc(s.fb_name||s.name)}</span></div></div><span class="chip ${lc}">${lt}</span></div>
+      ${s.is_sample?'<p class="small muted">Sale mẫu để xem thử. Khi bạn tuyển sale đầu tiên, các sale mẫu tự rời văn phòng.</p>':""}
       ${s.busy?`<span class="chip talking" style="align-self:flex-start">${s.busy==="open"?"Cửa sổ Chrome đang mở trên máy chủ":s.busy==="post"?"Đang đăng bài":"Đang kiểm tra phiên"}</span>`:""}
       <div class="sale-stats"><div><b>${s.posted_today}/${s.max_posts_per_day}</b><span>Đã đăng hôm nay</span></div><div><b>${s.scheduled_today}</b><span>Trong lịch</span></div><div><b>${s.failed}</b><span>Bài lỗi</span></div></div>
       ${s.last_error&&s.login_status!=="ok"?`<div class="err">${esc(s.last_error)}</div>`:""}
@@ -1375,7 +1387,8 @@ $("#salesGrid").addEventListener("click",async e=>{
   loadSales(); refresh();
 });
 $("#saleForm").addEventListener("submit",async e=>{ e.preventDefault();
-  try{ await api("/sales","POST",{name:$("#saName").value,fb_name:$("#saFb").value}); e.target.reset(); toast("Đã tuyển sale mới. Bấm Mở Chrome để đăng nhập nick."); }catch(err){ toast(err.message); }
+  const hadSample=(ST.sales||[]).some(x=>x.is_sample);
+  try{ await api("/sales","POST",{name:$("#saName").value,fb_name:$("#saFb").value}); e.target.reset(); toast(hadSample?"Đã tuyển sale mới. Các sale mẫu đã rời văn phòng. Bấm Mở Chrome để đăng nhập nick.":"Đã tuyển sale mới. Bấm Mở Chrome để đăng nhập nick."); }catch(err){ toast(err.message); }
   loadSales(); refresh(); });
 
 /* --------------------------------------------- KPI & Telegram */
@@ -1578,7 +1591,15 @@ $("#aiForm").addEventListener("submit",async e=>{ e.preventDefault(); const k=$(
 $("#aiTest").onclick=async e=>{ e.target.disabled=true; try{ const r=await api("/ai-key/test","POST"); toast(r.warning||"Khóa đang hoạt động tốt"); }catch(err){ toast(err.message); } e.target.disabled=false; };
 $("#aiDel").onclick=async e=>{ const b=e.target; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } b.dataset.confirm=""; b.textContent="Xóa khóa";
   const r=await api("/ai-key","DELETE"); toast(r.live?"Đã xóa khóa trong phần mềm, đang dùng khóa từ file .env":"Đã xóa khóa. Các agent chuyển về nội dung mẫu."); showAi(await api("/settings")); };
+const SAMPLE_NAME={sales:"sale",leads:"khách",groups:"hội nhóm",products:"sản phẩm"};
+async function loadSamples(){
+  const c=await api("/sample-data"); const parts=Object.entries(c).filter(([k,v])=>v).map(([k,v])=>`${v} ${SAMPLE_NAME[k]}`);
+  $("#sampleCard").hidden=!parts.length; $("#sampleChip").textContent=parts.length?"Còn dữ liệu mẫu":""; $("#sampleTxt").textContent=parts.length?`Đang có ${parts.join(", ")} mẫu do phần mềm tạo sẵn để bạn xem thử.`:"";
+}
+$("#sampleDel").onclick=async e=>{ const b=e.target; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa vĩnh viễn"; return; }
+  b.dataset.confirm=""; b.textContent="Xóa toàn bộ dữ liệu mẫu"; await api("/sample-data","DELETE"); toast("Đã xóa dữ liệu mẫu"); loadSamples(); refresh(); };
 async function loadSettings(){
+  loadSamples();
   loadCosts();
   const s=await api("/settings");
   $("#sName").value=s.company_name||""; $("#sVoice").value=s.brand_voice||""; $("#sContact").value=s.contact_info||""; $("#sTime").value=s.meeting_time||"08:30";

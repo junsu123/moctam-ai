@@ -68,7 +68,7 @@ def day_stats(day: str | None = None) -> dict:
         "posts": one("SELECT COUNT(*) n FROM posts WHERE status='posted' AND posted_at LIKE ?", (d,)),
         "bumps": one("SELECT COUNT(*) n FROM bumps WHERE status='done' AND done_at LIKE ?", (d,)),
         "escalated": one("SELECT COUNT(*) n FROM leads WHERE escalated_at LIKE ?", (d,)),
-        "boss_pending": one("SELECT COUNT(*) n FROM leads WHERE escalated_at IS NOT NULL AND COALESCE(boss_status,'') IN ('','remind') AND status NOT IN ('ordered','lost')"),
+        "boss_pending": one("SELECT COUNT(*) n FROM leads WHERE COALESCE(is_sample,0)=0 AND escalated_at IS NOT NULL AND COALESCE(boss_status,'') IN ('','remind') AND status NOT IN ('ordered','lost')"),
         "ordered": one("SELECT COUNT(*) n FROM leads WHERE status='ordered' AND updated_at LIKE ?", (d,)),
     }
     st["achieved"] = phone >= mn
@@ -145,9 +145,17 @@ def streak() -> int:
 
 
 # ---------------------------------------------------------------- khách hàng
+def clear_sample_leads():
+    """Có khách thật đầu tiên -> xóa khách mẫu để không lẫn vào KPI, báo cáo, Telegram."""
+    done = db.clear_samples(("leads",))
+    if done:
+        db.log("ha", "Dọn khách mẫu", f"Đã xóa {done['leads']} khách mẫu khi có khách thật đầu tiên")
+
+
 def upsert_lead(name: str, text: str, post_id: int | None, author: str | None = None, origin: str = "comment",
                 phone: str | None = None) -> tuple[int, bool, bool]:
     """Tạo hoặc cập nhật khách từ bình luận. Trả về (lead_id, mới_tạo, vừa_có_SĐT)."""
+    clear_sample_leads()
     import learning
     import workflows
     phone = phone or norm_phone(text)
@@ -222,7 +230,8 @@ Sản phẩm: {products}"""
 
 def escalate(lead_id: int, reason: str | None = None, force: bool = False) -> bool:
     lead = db.one("SELECT * FROM leads WHERE id=?", (lead_id,))
-    if not lead or (lead.get("escalated_at") and not force) or lead["status"] in ("ordered", "lost"):
+    if not lead or (lead.get("escalated_at") and not force) or lead["status"] in ("ordered", "lost") \
+            or (lead.get("is_sample") and not force):
         return False
     reason = reason or escalate_reason(lead)
     if not reason and not force:
@@ -241,7 +250,8 @@ def escalate(lead_id: int, reason: str | None = None, force: bool = False) -> bo
 
 def check_escalations():
     """Gọi định kỳ: khách nào cần sếp thì chuyển, khách hẹn nhắc lại thì nhắc."""
-    for l in db.q("SELECT * FROM leads WHERE escalated_at IS NULL AND status NOT IN ('ordered','lost') AND created_at >= ?",
+    for l in db.q("""SELECT * FROM leads WHERE escalated_at IS NULL AND COALESCE(is_sample,0)=0
+                     AND status NOT IN ('ordered','lost') AND created_at >= ?""",
                   ((datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d %H:%M:%S"),)):
         r = escalate_reason(l)
         if r:

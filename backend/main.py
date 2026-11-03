@@ -260,6 +260,7 @@ def leads():
 
 @app.post("/api/leads")
 def add_lead(l: Lead):
+    kpi.clear_sample_leads()
     data = l.model_dump()
     score = workflows.score_lead(data)
     src = l.source
@@ -485,6 +486,9 @@ def sales():
 def add_sale(s: Sale):
     if db.one("SELECT COUNT(*) n FROM sales")["n"] >= agents.MAX_SALES:
         raise HTTPException(400, f"Văn phòng tối đa {agents.MAX_SALES} nhân viên sale")
+    removed = db.clear_samples(("sales",))  # tuyển người thật -> sale mẫu rời văn phòng
+    if removed:
+        db.log("minh", "Dọn sale mẫu", f"Đã cho {removed['sales']} sale mẫu rời văn phòng")
     sid = db.run("INSERT INTO sales(name, fb_name, created_at) VALUES (?,?,?)", (s.name.strip(), s.fb_name.strip(), db.now()))
     db.run("UPDATE sales SET profile_dir=? WHERE id=?", (str(browser_poster.profile_dir(sid)), sid))
     db.log("minh", "Tuyển sale", f"{s.name} nhận quản lý nick {s.fb_name or s.name}")
@@ -598,6 +602,20 @@ def del_image(pid: int, path: str):
     imgs = [i for i in json.loads((p or {}).get("images") or "[]") if i != path]
     db.run("UPDATE products SET images=? WHERE id=?", (json.dumps(imgs), pid))
     return {"images": imgs}
+
+
+# ------------------------------------------------------------------ dữ liệu mẫu
+@app.get("/api/sample-data")
+def sample_data():
+    return db.sample_counts()
+
+
+@app.delete("/api/sample-data")
+def delete_sample_data():
+    done = db.clear_samples()
+    if done:
+        db.log("minh", "Dọn dữ liệu mẫu", ", ".join(f"{v} {k}" for k, v in done.items()))
+    return {"deleted": done, "left": db.sample_counts()}
 
 
 # ------------------------------------------------------------------ khóa API Claude

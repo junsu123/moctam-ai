@@ -86,7 +86,7 @@ def sale_agent(row: dict) -> dict:
         "name": row["name"], "role": f"Sale · nick {row.get('fb_name') or row['name']}",
         "short": "Đăng bài lên trang cá nhân và hội nhóm bằng tài khoản Facebook mình quản lý",
         "personality": "Chăm chỉ, đúng giờ, làm đúng lịch được giao, báo ngay khi tài khoản gặp sự cố.",
-        "look": look, "desk": 5 + (row.get("_slot") or 0),
+        "look": look, "desk": 5 + (row.get("_slot") or 0), "sample": bool(row.get("is_sample")),
     }
 
 
