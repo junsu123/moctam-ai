@@ -83,6 +83,150 @@ def _launch(pw, sale_id: int, headless: bool | None = None):
         return pw.chromium.launch_persistent_context(**kw)  # máy chưa cài Chrome: dùng Chromium của Playwright
 
 
+IN_USE_MSG = ("Hồ sơ Chrome của nick này đang được mở ở một cửa sổ Chrome khác (thường là cửa sổ mở bằng nút “Mở Chrome”). "
+              "Đóng hết cửa sổ Chrome của sale này rồi thử lại")
+CLOSED_RX = re.compile(r"Target page, context or browser has been closed|Browser closed|browser has disconnected|"
+                       r"Target closed|has been closed", re.I)
+
+
+def is_closed_error(e) -> bool:
+    return bool(CLOSED_RX.search(str(e)))
+
+
+def profile_in_use(sale_id: int) -> bool:
+    """Có tiến trình Chrome khác đang giữ hồ sơ này không (mở cùng hồ sơ thì Chrome mới tự đóng ngay)."""
+    d = profile_dir(sale_id)
+    try:
+        if os.name == "nt":
+            lf = d / "lockfile"
+            if lf.exists():
+                try:
+                    lf.unlink()  # khóa cũ còn sót: xóa được nghĩa là không ai đang dùng
+                except PermissionError:
+                    return True
+            return False
+        lk = d / "SingletonLock"
+        if lk.is_symlink():
+            pid = int(os.readlink(lk).rsplit("-", 1)[-1])
+            try:
+                os.kill(pid, 0)
+                return True
+            except ProcessLookupError:
+                lk.unlink(missing_ok=True)  # Chrome cũ đã tắt, khóa còn sót
+            except PermissionError:
+                return True
+    except Exception:
+        return False
+    return False
+
+
+def release_profile(sale_id: int) -> int:
+    """Đóng các tiến trình Chrome còn treo đang giữ hồ sơ của sale (chỉ những tiến trình mở đúng thư mục hồ sơ này,
+    không đụng tới Chrome cá nhân của sếp). Trả về số tiến trình đã đóng."""
+    target = str(profile_dir(sale_id).resolve()).lower().replace("\\", "/")
+    killed = 0
+    try:
+        import psutil
+    except ImportError:
+        return 0
+    for p in psutil.process_iter(["name", "cmdline"]):
+        try:
+            name = (p.info["name"] or "").lower()
+            if "chrom" not in name:
+                continue
+            cmd = " ".join(p.info["cmdline"] or []).lower().replace("\\", "/")
+            if f"--user-data-dir={target}" in cmd or f'--user-data-dir="{target}"' in cmd:
+                p.kill()
+                killed += 1
+        except Exception:
+            continue
+    if killed:
+        time.sleep(2)
+        db.log(f"sale-{sale_id}", "Đóng Chrome bị treo", f"Đã đóng {killed} tiến trình Chrome cũ còn giữ hồ sơ của nick")
+    return killed
+
+
+def _chrome_version() -> str | None:
+    """Phiên bản Google Chrome cài trên máy (Windows), để so với hồ sơ."""
+    if os.name != "nt":
+        return None
+    try:
+        import winreg
+        for root in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+            try:
+                with winreg.OpenKey(root, r"Software\Google\Chrome\BLBeacon") as k:
+                    return winreg.QueryValueEx(k, "version")[0]
+            except OSError:
+                continue
+    except Exception:
+        pass
+    return None
+
+
+def diagnose_closed(sale_id: int) -> str:
+    """Giải thích vì sao Chrome của sale tự đóng ngay khi mở."""
+    if profile_in_use(sale_id):
+        return IN_USE_MSG
+    try:
+        prof = (profile_dir(sale_id) / "Last Version").read_text().strip()
+    except Exception:
+        prof = ""
+    cur = _chrome_version()
+    major = lambda v: int(v.split(".")[0]) if v and v.split(".")[0].isdigit() else 0
+    if prof and cur and major(prof) > major(cur):
+        return (f"Hồ sơ Chrome của nick được tạo bằng trình duyệt bản {major(prof)}, mới hơn Google Chrome trên máy (bản "
+                f"{major(cur)}), nên Chrome từ chối mở và tự đóng. Cập nhật Google Chrome (menu ⋮ → Trợ giúp → Giới thiệu "
+                "về Google Chrome), khởi động lại máy rồi thử lại")
+    return ("Chrome của sale tự đóng ngay khi vừa mở. Thử lần lượt: đóng hết cửa sổ Chrome của sale này; cập nhật Google "
+            "Chrome; tạm tắt phần mềm diệt virus đang chặn Chrome; bấm “Mở Chrome” ở trang Nhân viên sale xem Chrome báo gì")
+
+
+CLOSED_MID = ("Cửa sổ Chrome của sale bị đóng khi sale đang làm việc (cửa sổ vừa bị tắt tay, hoặc Chrome bị lỗi). "
+              "Không tắt cửa sổ Chrome khi sale đang làm; muốn không thấy cửa sổ thì bật “Ẩn cửa sổ Chrome khi sale đăng bài” "
+              "trong Cài đặt. Việc này sẽ được làm lại ở lượt sau")
+
+
+def friendly(e) -> str:
+    """Thông báo lỗi dễ hiểu cho các lỗi kỹ thuật của trình duyệt."""
+    first = str(e).strip().splitlines()[0] if str(e).strip() else e.__class__.__name__
+    return CLOSED_MID if is_closed_error(first) else first
+
+
+def _open(pw, sale_id: int, headless: bool | None = None):
+    """Mở Chrome của sale và một tab mới để làm việc. Tự thử lại 1 lần nếu Chrome bị đóng ngay khi mở."""
+    if profile_in_use(sale_id):
+        # việc của một sale chạy lần lượt, nên lúc này phần mềm không mở Chrome nào cho sale này:
+        # hồ sơ bị giữ là do Chrome cũ còn treo (phần mềm từng tắt đột ngột) hoặc cửa sổ sếp tự mở -> đóng Chrome treo
+        release_profile(sale_id)
+        if profile_in_use(sale_id):
+            raise RuntimeError(IN_USE_MSG)
+    last = None
+    for attempt in range(2):
+        ctx = _launch(pw, sale_id, headless)
+        try:
+            # luôn mở tab mới: tab đầu tiên có thể bị Chrome đóng khi khôi phục phiên trước
+            page = ctx.new_page()
+            page.evaluate("1")
+            for other in list(ctx.pages):
+                if other is not page and other.url in ("about:blank", "", "chrome://newtab/", "chrome://new-tab-page/"):
+                    try:
+                        other.close()
+                    except Exception:
+                        pass
+            return ctx, page
+        except Exception as e:
+            last = e
+            try:
+                ctx.close()
+            except Exception:
+                pass
+            if not is_closed_error(e):
+                raise
+            release_profile(sale_id)
+            time.sleep(4)
+    raise RuntimeError(diagnose_closed(sale_id)) from last
+
+
 def fb_url(u: str) -> str:
     """Chuẩn hóa link nhóm sếp dán: thêm https://, đổi link điện thoại (m., mbasic., web.) sang giao diện máy tính."""
     u = (u or "").strip()
@@ -389,9 +533,12 @@ def _set_login(sale_id: int, status: str, err: str = ""):
 
 def _job_open(pw, sale_id: int, minutes: int = 30):
     """Mở Chrome để sếp đăng nhập / vào nhóm; đóng cửa sổ là xong."""
-    ctx = _launch(pw, sale_id, headless=False)
-    page = ctx.pages[0] if ctx.pages else ctx.new_page()
-    page.goto(FB_BASE, wait_until="domcontentloaded")
+    ctx, page = _open(pw, sale_id, headless=False)
+    try:
+        page.goto(FB_BASE, wait_until="domcontentloaded")
+    except Exception as e:
+        if not is_closed_error(e):  # sếp tự đóng cửa sổ ngay: không phải lỗi
+            raise
     end = time.time() + minutes * 60
     was = None
     while time.time() < end:
@@ -416,12 +563,11 @@ def _job_open(pw, sale_id: int, minutes: int = 30):
 
 
 def _job_check(pw, sale_id: int):
-    ctx = _launch(pw, sale_id)
+    ctx, page = _open(pw, sale_id)
     try:
         if not _logged_in(ctx):
             _set_login(sale_id, "not_logged_in", "Chưa đăng nhập Facebook trong hồ sơ này")
             return
-        page = ctx.pages[0] if ctx.pages else ctx.new_page()
         page.goto(FB_BASE, wait_until="domcontentloaded", timeout=60000)
         page.wait_for_timeout(3000)
         _check_blocked(page)
@@ -460,8 +606,7 @@ def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
     workflows.set_status(aid, "working", f"{'Đăng thử' if dry_run else 'Đang đăng'} bài vào {where}")
     if not dry_run:
         db.run("UPDATE posts SET status='posting', error=NULL WHERE id=?", (post_id,))
-    ctx = _launch(pw, sale_id)
-    page = ctx.pages[0] if ctx.pages else ctx.new_page()
+    ctx, page = _open(pw, sale_id)
     try:
         if not _logged_in(ctx):
             _set_login(sale_id, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
@@ -501,7 +646,7 @@ def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
         _fail(page, post_id, str(e), dry_run)
         _block(sale_id, str(e))
     except Exception as e:
-        _fail(page, post_id, str(e).split("\n")[0][:300], dry_run)
+        _fail(page, post_id, friendly(e)[:300], dry_run)
         db.log(aid, "Lỗi đăng bài", f"Bài #{post_id}: {str(e).splitlines()[0][:200]}")
     finally:
         try:
@@ -692,8 +837,7 @@ def _job_scan(pw, sale_id: int, post_ids: list[int]):
         return
     aid = f"sale-{sale_id}"
     workflows.set_status(aid, "working", f"Đang đọc bình luận {len(post_ids)} bài để tìm khách")
-    ctx = _launch(pw, sale_id)
-    page = ctx.pages[0] if ctx.pages else ctx.new_page()
+    ctx, page = _open(pw, sale_id)
     total = {"leads": 0, "phones": 0, "asked": 0}
     try:
         if not _logged_in(ctx):
@@ -752,8 +896,7 @@ def _job_bump(pw, sale_id: int, bump_id: int):
         _bump_done(bump_id, "failed", "Thư mục ảnh trống hoặc chưa cài. Vào Cài đặt → Up bài để chọn thư mục")
         return
     workflows.set_status(aid, "working", f"Đang up bài ở {where}")
-    ctx = _launch(pw, sale_id)
-    page = ctx.pages[0] if ctx.pages else ctx.new_page()
+    ctx, page = _open(pw, sale_id)
     shot = db.SHOTS_DIR / f"bump-{bump_id}.png"
     try:
         if not _logged_in(ctx):
@@ -891,16 +1034,24 @@ def _worker(sale_id: int, q: Queue):
                     _job_scan(pw, sale_id, job["post_ids"])
         except Exception as e:
             traceback.print_exc()
-            db.log(f"sale-{sale_id}", "Lỗi trình duyệt", str(e).splitlines()[0][:200])
+            msg = friendly(e)
+            if job["kind"] == "open" and is_closed_error(e):
+                continue  # sếp tự đóng cửa sổ Chrome vừa mở: không phải lỗi
+            db.log(f"sale-{sale_id}", "Lỗi trình duyệt", msg[:200])
             import errors
-            errors.report_exc("browser", f"Chrome của sale #{sale_id} lỗi khi {JOB_NAME.get(job['kind'], job['kind'])}", e,
-                              screen="sales", ref_type="sale", ref_id=sale_id)
+            s = db.one("SELECT name FROM sales WHERE id=?", (sale_id,)) or {}
+            eid = errors.report_exc("browser", f"Chrome của sale {s.get('name') or '#' + str(sale_id)} lỗi khi "
+                                    f"{JOB_NAME.get(job['kind'], job['kind'])}", e, screen="sales", ref_type="sale", ref_id=sale_id)
+            if eid and msg != str(e).strip().splitlines()[0]:
+                db.run("UPDATE errors SET message=? WHERE id=?", (msg[:1000], eid))
+            if job["kind"] == "check":
+                db.run("UPDATE sales SET last_error=? WHERE id=?", (msg[:300], sale_id))
             if job["kind"] == "bump":
                 db.run("UPDATE bumps SET status='failed', error=? WHERE id=? AND status='running'",
-                       (str(e).splitlines()[0][:300], job["bump_id"]))
+                       (msg[:300], job["bump_id"]))
             if job["kind"] == "post" and not job.get("dry_run"):
                 db.run("UPDATE posts SET status='failed', error=? WHERE id=? AND status='posting'",
-                       (str(e).splitlines()[0][:300], job["post_id"]))
+                       (msg[:300], job["post_id"]))
         finally:
             _busy.pop(sale_id, None)
             q.task_done()

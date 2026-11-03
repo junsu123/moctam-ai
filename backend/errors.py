@@ -24,8 +24,16 @@ HINTS = [
     (r"chưa là thành viên nhóm|Tham gia nhóm", "Vào Nhân viên sale → Mở Chrome của sale đó, vào nhóm bấm Tham gia, "
      "chờ quản trị viên duyệt rồi đăng lại.", "sales"),
     (r"chờ quản trị viên duyệt vào nhóm", "Nick đã xin vào nhóm, đang chờ duyệt. Đăng lại sau khi được duyệt.", "groups"),
-    (r"đang mở ở một cửa sổ khác|already in use|ProcessSingleton|SingletonLock",
+    (r"đang (được )?mở ở một cửa sổ|already in use|ProcessSingleton|SingletonLock",
      "Đóng cửa sổ Chrome của sale (cửa sổ mở bằng nút Mở Chrome) rồi thử lại.", "sales"),
+    (r"Hồ sơ Chrome của nick được tạo bằng trình duyệt bản", "Cập nhật Google Chrome trên máy lên bản mới nhất "
+     "(menu ⋮ → Trợ giúp → Giới thiệu về Google Chrome), khởi động lại máy rồi bấm Kiểm tra phiên ở trang Nhân viên sale.", "sales"),
+    (r"bị đóng khi sale đang làm việc", "Để yên cửa sổ Chrome khi sale đang làm. Muốn không thấy cửa sổ: Cài đặt → bật “Ẩn cửa sổ "
+     "Chrome khi sale đăng bài”.", "setup"),
+    (r"Target page, context or browser has been closed|Browser closed|browser has disconnected|tự đóng ngay khi vừa mở",
+     "Chrome của sale bị đóng ngay khi mở. Thường do: (1) hồ sơ Chrome của nick đang mở ở cửa sổ khác: đóng hết cửa sổ Chrome "
+     "của sale này; (2) Google Chrome trên máy quá cũ: cập nhật Chrome; (3) phần mềm diệt virus chặn Chrome. Sau đó bấm "
+     "Kiểm tra phiên ở trang Nhân viên sale.", "sales"),
     (r"checkpoint|bị khóa|tạm khóa|Temporarily Blocked|suspended|Xác nhận danh tính",
      "Facebook đang kiểm tra nick. Vào Nhân viên sale → Mở Chrome, tự xử lý xác minh trên Facebook, "
      "xong bấm Bật tự đăng. Nên giảm số bài/ngày của nick này.", "sales"),

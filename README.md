@@ -61,7 +61,9 @@ rồi bấm **Bật tự đăng**. Phần mềm không giải captcha và không
 |---|---|
 | Nhóm chưa có link | Hội nhóm → bấm **Thêm link** ở dòng nhóm đó, dán link nhóm (link điện thoại hay link chia sẻ đều được). Bài từng lỗi vì thiếu link tự về hàng chờ để Tuấn xếp lại. Nhóm mẫu cài sẵn không có link |
 | Nick chưa là thành viên nhóm / đang chờ duyệt vào nhóm | Mở Chrome của sale, tham gia nhóm, chờ quản trị viên duyệt |
-| Hồ sơ Chrome của nick đang mở ở cửa sổ khác | Đóng cửa sổ Chrome của sale (cửa sổ mở bằng nút "Mở Chrome") rồi bấm đăng lại |
+| Hồ sơ Chrome của nick đang mở ở cửa sổ khác | Đóng cửa sổ Chrome của sale (cửa sổ mở bằng nút "Mở Chrome") rồi bấm đăng lại. Chrome cũ còn treo chạy ẩn (do phần mềm từng tắt đột ngột) được phần mềm tự đóng |
+| Chrome của sale tự đóng ngay khi mở ("Target page, context or browser has been closed") | Phần mềm tự thử lại một lần. Nếu vẫn lỗi: đóng hết cửa sổ Chrome của sale, cập nhật Google Chrome lên bản mới nhất, tạm tắt phần mềm diệt virus đang chặn Chrome. Màn hình Lỗi nêu rõ nguyên nhân đoán được (ví dụ hồ sơ tạo bằng bản Chrome mới hơn bản trên máy) |
+| Cửa sổ Chrome bị đóng khi sale đang làm | Không tắt cửa sổ Chrome lúc sale đang đăng bài; muốn không thấy cửa sổ thì bật "Ẩn cửa sổ Chrome khi sale đăng bài" trong Cài đặt |
 | Nick chưa đăng nhập | Nhân viên sale → Mở Chrome để đăng nhập |
 | Không tìm thấy ô viết bài / nút Đăng | Facebook đổi chữ trên nút. Lỗi ghi sẵn tên các nút đang thấy; thêm đúng chữ đó vào `backend/fb_selectors.json` (`group_composer`, `profile_composer`, `post_button`, `next_button`) |
 
