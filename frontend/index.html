@@ -160,6 +160,9 @@ label.row.small input{margin-top:3px;flex:none}
 .post .thumbs img{width:52px;height:52px}
 .fname{font-size:11px;background:var(--panel-2);border-radius:6px;padding:2px 6px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
 #coBody{display:flex;flex-direction:column;gap:16px}
+.glink{margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:300px}
+.glink a{word-break:break-all}
+.glink-f{gap:6px;flex-wrap:nowrap}.glink-f input{min-width:220px;padding:4px 8px;font-size:12.5px}
 .ceo{border-top:3px solid #d4af37}
 .ceo-h{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .ceo-h h3{margin:0}
@@ -459,17 +462,19 @@ tbody tr.sel td{background:var(--accent-soft)}
     <!-- HỘI NHÓM -->
     <section class="view" id="v-groups" hidden>
       <div class="vh"><div><h1>Hội nhóm</h1><p>Danh sách nhóm Tuấn theo dõi. Ghi rõ luật nhóm và số ngày giãn cách để không bị báo spam hay chặn nick. Ở cột "Nick đã vào nhóm", bấm tên nick để đánh dấu; nhóm chưa đánh dấu nick nào thì coi như mọi nick đều đã vào.</p></div></div>
+      <div class="err" id="groupWarn" hidden></div>
       <div class="tbl-wrap"><table><thead><tr><th>Nhóm</th><th>Chủ đề</th><th class="num">Thành viên</th><th>Luật nhóm</th><th>Giãn cách</th><th>Đăng gần nhất</th><th>Trạng thái</th><th class="num">Khách</th><th>Nick đã vào nhóm</th><th></th></tr></thead><tbody id="groupRows"></tbody></table></div>
       <form class="card" id="groupForm">
         <h3>Thêm nhóm</h3>
         <div class="grid3">
           <label class="f" for="grName">Tên nhóm<input type="text" id="grName" required></label>
-          <label class="f" for="grUrl">Đường dẫn<input type="url" id="grUrl" placeholder="https://facebook.com/groups/…"></label>
+          <label class="f" for="grUrl">Link nhóm (bắt buộc)<input type="text" id="grUrl" required inputmode="url" placeholder="https://www.facebook.com/groups/…"></label>
           <label class="f" for="grTopic">Chủ đề<input type="text" id="grTopic" placeholder="Nguồn hàng, Livestream…"></label>
           <label class="f" for="grMembers">Thành viên<input type="number" id="grMembers" value="0"></label>
           <label class="f" for="grDays">Giãn cách (ngày)<input type="number" id="grDays" value="3" min="1"></label>
           <label class="f" for="grRules">Luật nhóm<input type="text" id="grRules"></label>
         </div>
+        <p class="small muted">Lấy link: mở nhóm trên Facebook bằng máy tính, copy địa chỉ trên thanh trình duyệt. Link từ điện thoại hay link chia sẻ cũng được, phần mềm tự đổi.</p>
         <div><button class="btn primary" type="submit">Thêm nhóm</button></div>
       </form>
     </section>
@@ -852,6 +857,10 @@ const Demo = (() => {
   function demoHire(reason){ const names=["Hương","Đạt","Trang","Phúc"]; const used=S.sales.map(x=>x.name); const name=names.find(n=>!used.includes(n))||"Ngọc";
     const r={id:id(),name,fb_name:"",login_status:"not_logged_in",auto_post:1,max_posts_per_day:5,min_gap_minutes:40,active_from:"08:00",active_to:"22:00",hired_by:"ceo",hire_reason:reason,status:"active"};
     S.sales.push(r); S.ceoSt.decisions.unshift({id:id(),kind:"hire",status:"done",title:`Tuyển sale mới: ${name}`,reason,created_at:now()}); log("ceo","Tuyển sale mới",`${name}: ${reason}`); return r; }
+  function demoGroupUrl(u){ u=(u||"").trim(); if(!u) return {err:"Dán link nhóm Facebook, ví dụ https://www.facebook.com/groups/tennhom"};
+    if(!/^https?:\/\//i.test(u)) u="https://"+u.replace(/^\/+/,""); u=u.replace(/^https?:\/\/(m|mbasic|web|touch|mobile)\.facebook\.com/i,"https://www.facebook.com").replace(/^https?:\/\/(facebook\.com|fb\.com|www\.fb\.com)/i,"https://www.facebook.com");
+    const g=u.match(/^(https:\/\/www\.facebook\.com\/groups\/[^/?#]+)/i); if(g) return {url:g[1]}; if(/^https:\/\/www\.facebook\.com\/share\/g\/[^/?#]+/i.test(u)) return {url:u};
+    return {err:"Link này không phải link nhóm. Mở nhóm trên Facebook (máy tính), copy link trên thanh địa chỉ, có dạng https://www.facebook.com/groups/…"}; }
   function demoCompany(){
     const c=S.co; const ai=Math.round(0.42*25800); const revenue=c.orders.reduce((a,o)=>a+o.amount,0); const spent=ai;
     const by_task=[["posts","Viết bài đăng (Lan)",.19,96],["meeting","Họp giao ban (cả đội)",.11,230],["replies","Tư vấn, trả lời khách (Hà, sale)",.08,61],["learning","Tự học mỗi đêm (cả đội)",.04,23]].map(([task,label,usd,calls])=>({task,label,usd,calls,vnd:Math.round(usd*25800)}));
@@ -1001,7 +1010,7 @@ const Demo = (() => {
       if((m=P.match(/^\/leads\/(\d+)\/reply$/))){ S.status.ha={state:"working",text:"Đang soạn tin nhắn"}; await wait(900); S.status.ha={state:"idle",text:"Chờ sếp duyệt tin"}; return {reply:reply(S.leads.find(l=>l.id==m[1]),body.message)}; }
       if(P==="/leads"){ const l={id:id(),...body,score:60,status:"new",created_at:now()}; S.leads.unshift(l); log("ha","Khách mới",l.name); return l; }
       if(P==="/products"){ const x={id:id(),...body}; S.products.push(x); return x; }
-      if(P==="/groups"){ const x={id:id(),...body,leads_count:0,last_posted_at:null}; S.groups.push(x); log("tuan","Thêm nhóm",x.name); return x; }
+      if(P==="/groups"){ const u=demoGroupUrl(body.url); if(u.err) throw new Error(u.err); const x={id:id(),...body,url:u.url,leads_count:0,last_posted_at:null}; S.groups.push(x); log("tuan","Thêm nhóm",x.name); return x; }
       if(P==="/run/daily-work"){ genPosts(3,null,"group"); const pl=plan(); return {drafts:3,scheduled:pl.length,follow_ups:S.leads.filter(l=>l.status==="new").length}; }
     }
     if(method==="PATCH"){
@@ -1009,6 +1018,8 @@ const Demo = (() => {
       if((m=P.match(/^\/leads\/(\d+)$/))){ const l=S.leads.find(x=>x.id==m[1]); const {contacted,...rest}=body; Object.assign(l,rest); if(contacted) l.last_contact_at=now(); return l; }
       if((m=P.match(/^\/tasks\/(\d+)$/))){ S.tasks.find(x=>x.id==m[1]).status=body.status; return {ok:true}; }
     }
+    if(method==="PATCH"&&(m=P.match(/^\/groups\/(\d+)$/))){ const g=S.groups.find(x=>x.id==m[1]); if(body.url!=null){ const u=demoGroupUrl(body.url); if(u.err) throw new Error(u.err); body.url=u.url; }
+      const had=!!g.url; Object.assign(g,body); if(!had&&g.url) S.posts.filter(p=>p.group_id===g.id&&p.status==="failed").forEach(p=>Object.assign(p,{status:"approved",error:null,sale_id:null,scheduled_for:null})); return {...g,ready:ready(g)}; }
     if(method==="PATCH"&&(m=P.match(/^\/products\/(\d+)$/))){ const pr=S.products.find(x=>x.id==m[1]); Object.assign(pr,body); return {...pr,folder:pr.image_folder?{...demoFolder(pr),count:20,fresh:20,posts_left:10}:demoFolder(pr)}; }
     if(method==="PATCH"&&(m=P.match(/^\/lessons\/(\d+)$/))){ const l=S.lessons.find(x=>x.id==m[1]); if(body.status==="retired") S.lessons=S.lessons.filter(x=>x!==l); else Object.assign(l,body); return l||{}; }
     if(method==="PATCH"&&(m=P.match(/^\/sales\/(\d+)$/))){ const r=S.sales.find(x=>x.id==m[1]); Object.assign(r,body); if(body.auto_post===0) S.posts.filter(p=>p.sale_id===r.id&&p.status==="scheduled").forEach(p=>Object.assign(p,{status:"approved",sale_id:null,sale_name:null,scheduled_for:null})); return saleOut(r); }
@@ -1759,13 +1770,25 @@ async function loadGroups(){
   [ST.groups,ST.sales]=await Promise.all([api("/groups"),api("/sales")]);
   const chips=g=>{ const mem=(g.member_sale_ids||"").split(",").filter(Boolean).map(Number); if(!ST.sales.length) return '<span class="small muted">Chưa có sale</span>';
     return `<div class="member-chips">${ST.sales.map(s=>`<button type="button" data-gm="${g.id}" data-s="${s.id}" class="${mem.includes(s.id)?"on":""}">${esc(s.name)}</button>`).join("")}</div>`; };
-  $("#groupRows").innerHTML=ST.groups.map(g=>`<tr><td><b>${g.url?`<a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.name)}</a>`:esc(g.name)}</b></td><td>${esc(g.topic)}</td><td class="num">${(+g.members||0).toLocaleString("vi-VN")}</td><td class="small">${esc(g.rules)}</td><td class="num">${g.min_days_between_posts} ngày</td><td>${g.last_posted_at?fmtDate(g.last_posted_at):"Chưa đăng"}</td><td><span class="chip ${g.ready?"ok":"warn"}">${g.ready?"Đăng được":"Đang giãn cách"}</span></td><td class="num">${g.leads_count||0}</td><td>${chips(g)}</td><td><button class="btn sm ghost danger" data-g="${g.id}">Xóa</button></td></tr>`).join("");
+  const missing=ST.groups.filter(g=>!g.url).length;
+  $("#groupWarn").hidden=!missing; $("#groupWarn").innerHTML=`<b>${missing} nhóm chưa có link</b>: sale không đăng được vào các nhóm này và Tuấn sẽ không xếp bài vào đó. Bấm “Thêm link” ở từng dòng.`;
+  const linkCell=g=>`<div class="glink" data-gid="${g.id}">${g.url?`<a class="small" href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.url.replace(/^https:\/\/www\.facebook\.com/,""))}</a> <button type="button" class="btn sm ghost" data-gedit="${g.id}">Sửa link</button>`:`<span class="chip bad">Chưa có link</span> <button type="button" class="btn sm" data-gedit="${g.id}">Thêm link</button>`}</div>`;
+  $("#groupRows").innerHTML=ST.groups.map(g=>`<tr><td><b>${esc(g.name)}</b>${linkCell(g)}</td><td>${esc(g.topic)}</td><td class="num">${(+g.members||0).toLocaleString("vi-VN")}</td><td class="small">${esc(g.rules)}</td><td class="num">${g.min_days_between_posts} ngày</td><td>${g.last_posted_at?fmtDate(g.last_posted_at):"Chưa đăng"}</td><td>${g.url?`<span class="chip ${g.ready?"ok":"warn"}">${g.ready?"Đăng được":"Đang giãn cách"}</span>`:'<span class="chip bad">Thiếu link</span>'}</td><td class="num">${g.leads_count||0}</td><td>${chips(g)}</td><td><button class="btn sm ghost danger" data-g="${g.id}">Xóa</button></td></tr>`).join("");
 }
-$("#groupRows").addEventListener("click",async e=>{ const m=e.target.closest("[data-gm]");
+$("#groupRows").addEventListener("click",async e=>{
+  const ed=e.target.closest("[data-gedit]");
+  if(ed){ const g=ST.groups.find(x=>x.id==ed.dataset.gedit); const box=ed.closest(".glink");
+    box.innerHTML=`<form class="row glink-f"><input type="text" inputmode="url" value="${esc(g.url||"")}" placeholder="https://www.facebook.com/groups/…" aria-label="Link nhóm ${esc(g.name)}" required><button class="btn sm primary" type="submit">Lưu</button><button class="btn sm ghost" type="button" data-gcancel>Hủy</button></form>`;
+    box.querySelector("input").focus(); return; }
+  if(e.target.closest("[data-gcancel]")) return loadGroups();
+  const m=e.target.closest("[data-gm]");
   if(m){ const g=ST.groups.find(x=>x.id==m.dataset.gm); let mem=(g.member_sale_ids||"").split(",").filter(Boolean).map(Number); const sid=+m.dataset.s;
     mem=mem.includes(sid)?mem.filter(x=>x!==sid):[...mem,sid]; await api(`/groups/${g.id}/members`,"PUT",{sale_ids:mem}); return loadGroups(); }
   const b=e.target.closest("[data-g]"); if(!b) return; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } await api(`/groups/${b.dataset.g}`,"DELETE"); loadGroups(); });
-$("#groupForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/groups","POST",{name:$("#grName").value,url:$("#grUrl").value,topic:$("#grTopic").value,members:+$("#grMembers").value||0,rules:$("#grRules").value,min_days_between_posts:+$("#grDays").value||3}); e.target.reset(); toast("Đã thêm nhóm"); loadGroups(); });
+$("#groupRows").addEventListener("submit",async e=>{ e.preventDefault(); const f=e.target; const gid=f.closest(".glink").dataset.gid;
+  try{ await api(`/groups/${gid}`,"PATCH",{url:f.querySelector("input").value}); toast("Đã lưu link nhóm. Bài từng lỗi vì thiếu link đã về hàng chờ để Tuấn xếp lại"); loadGroups(); }
+  catch(err){ toast(err.message); } });
+$("#groupForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/groups","POST",{name:$("#grName").value,url:$("#grUrl").value,topic:$("#grTopic").value,members:+$("#grMembers").value||0,rules:$("#grRules").value,min_days_between_posts:+$("#grDays").value||3}); e.target.reset(); toast("Đã thêm nhóm"); loadGroups(); }catch(err){ toast(err.message); } });
 
 /* --------------------------------------------- khách hàng */
 async function loadLeads(){

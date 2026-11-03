@@ -95,6 +95,20 @@ def fb_url(u: str) -> str:
     return u
 
 
+def check_group_url(u: str) -> tuple[str, str | None]:
+    """Chuẩn hóa và kiểm tra link nhóm. Trả về (link, lỗi hoặc None)."""
+    url = fb_url(u)
+    if not url:
+        return "", "Dán link nhóm Facebook, ví dụ https://www.facebook.com/groups/tennhom"
+    if FB_BASE != "https://www.facebook.com" and url.startswith(FB_BASE):
+        return url, None  # Facebook giả lập khi kiểm thử
+    if not re.match(r"^https://www\.facebook\.com/(groups/[^/?#]+|share/g/[^/?#]+)", url, re.I):
+        return url, ("Link này không phải link nhóm. Mở nhóm trên Facebook (máy tính), copy link trên thanh địa chỉ, "
+                     "có dạng https://www.facebook.com/groups/…")
+    m = re.match(r"^(https://www\.facebook\.com/groups/[^/?#]+)", url, re.I)
+    return (m.group(1) if m else url), None
+
+
 def _logged_in(ctx) -> bool:
     return any(c["name"] == "c_user" and c["value"] for c in ctx.cookies())
 
@@ -450,7 +464,8 @@ def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
             raise RuntimeError("Nick chưa đăng nhập. Vào Nhân viên sale → Mở Chrome để đăng nhập lại")
         if post["target_type"] == "group":
             if not post.get("group_url"):
-                raise RuntimeError("Nhóm chưa có đường dẫn. Vào mục Hội nhóm để thêm link nhóm")
+                raise RuntimeError(f"Nhóm “{post.get('group_name') or ''}” chưa có link. Vào Hội nhóm, bấm “Thêm link” ở dòng nhóm này "
+                                   "rồi bấm Đăng lại")
             url, labels = fb_url(post["group_url"]), selectors()["group_composer"]
         else:
             url, labels = f"{FB_BASE}/me", selectors()["profile_composer"]
@@ -458,6 +473,10 @@ def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
         if warn:
             db.log("tuan", "Thiếu ảnh mới", f"Bài #{post_id}: {warn}")
         shot, attached = _publish(page, post, url, labels, dry_run, imgs)
+        if post["target_type"] == "group" and "/share/" in url:  # link chia sẻ: lưu lại link nhóm thật sau khi mở
+            real, err = check_group_url(page.url)
+            if not err and "/groups/" in real:
+                db.run("UPDATE groups SET url=? WHERE id=?", (real, post["group_id"]))
         imgs = [i for i in imgs if str(i) in attached]
         used = json.dumps([str(i) for i in imgs], ensure_ascii=False)
         if dry_run:

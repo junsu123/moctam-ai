@@ -59,6 +59,7 @@ rồi bấm **Bật tự đăng**. Phần mềm không giải captcha và không
 
 | Lỗi | Cách xử lý |
 |---|---|
+| Nhóm chưa có link | Hội nhóm → bấm **Thêm link** ở dòng nhóm đó, dán link nhóm (link điện thoại hay link chia sẻ đều được). Bài từng lỗi vì thiếu link tự về hàng chờ để Tuấn xếp lại. Nhóm mẫu cài sẵn không có link |
 | Nick chưa là thành viên nhóm / đang chờ duyệt vào nhóm | Mở Chrome của sale, tham gia nhóm, chờ quản trị viên duyệt |
 | Hồ sơ Chrome của nick đang mở ở cửa sổ khác | Đóng cửa sổ Chrome của sale (cửa sổ mở bằng nút "Mở Chrome") rồi bấm đăng lại |
 | Nick chưa đăng nhập | Nhân viên sale → Mở Chrome để đăng nhập |

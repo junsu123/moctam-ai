@@ -228,7 +228,7 @@ def plan_distribution() -> list[dict]:
                          "profile": sum(r["target_type"] == "profile" for r in rows)}
     taken = {r["group_id"] for r in db.q("SELECT group_id FROM posts WHERE status IN ('scheduled','posting') AND group_id IS NOT NULL")}
     groups = [g for g in db.q("SELECT * FROM groups ORDER BY leads_count DESC, members DESC")
-              if group_ready(g) and g["id"] not in taken]
+              if group_ready(g) and g["id"] not in taken and (g.get("url") or "").strip()]  # nhóm chưa có link: không xếp
     plan = []
 
     import learning

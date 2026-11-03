@@ -176,11 +176,47 @@ def groups():
 
 @app.post("/api/groups")
 def add_group(g: Group):
+    url, err = browser_poster.check_group_url(g.url)
+    if err:
+        raise HTTPException(400, err)
     gid = db.run("""INSERT INTO groups(name, url, topic, members, rules, min_days_between_posts, note, created_at)
                     VALUES (?,?,?,?,?,?,?,?)""",
-                 (g.name, browser_poster.fb_url(g.url), g.topic, g.members, g.rules, g.min_days_between_posts, g.note, db.now()))
+                 (g.name, url, g.topic, g.members, g.rules, g.min_days_between_posts, g.note, db.now()))
     db.log("tuan", "Thêm nhóm", g.name)
     return db.one("SELECT * FROM groups WHERE id=?", (gid,))
+
+
+class GroupPatch(BaseModel):
+    name: str | None = None
+    url: str | None = None
+    topic: str | None = None
+    members: int | None = None
+    rules: str | None = None
+    min_days_between_posts: int | None = None
+    note: str | None = None
+
+
+@app.patch("/api/groups/{gid}")
+def patch_group(gid: int, p: GroupPatch):
+    g = db.one("SELECT * FROM groups WHERE id=?", (gid,))
+    if not g:
+        raise HTTPException(404)
+    fields = {k: v for k, v in p.model_dump().items() if v is not None}
+    if "url" in fields:
+        fields["url"], err = browser_poster.check_group_url(fields["url"])
+        if err:
+            raise HTTPException(400, err)
+    if fields:
+        db.run(f"UPDATE groups SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), gid))
+    if fields.get("url") and not g.get("url"):
+        # bài từng lỗi vì nhóm chưa có link: đưa về hàng chờ để Tuấn xếp lại
+        db.run("""UPDATE posts SET status='approved', error=NULL, sale_id=NULL, scheduled_for=NULL
+                  WHERE group_id=? AND status='failed' AND (error LIKE '%chưa có link%' OR error LIKE '%chưa có đường dẫn%')""",
+               (gid,))
+        db.log("tuan", "Thêm link nhóm", f"{g['name']}: {fields['url']}")
+    out = db.one("SELECT * FROM groups WHERE id=?", (gid,))
+    out["ready"] = workflows.group_ready(out)
+    return out
 
 
 @app.delete("/api/groups/{gid}")
