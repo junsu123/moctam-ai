@@ -173,6 +173,7 @@ CREATE TABLE IF NOT EXISTS sales (
 
 # Cột thêm cho cơ sở dữ liệu tạo từ phiên bản trước
 MIGRATIONS = [
+    ("orders", "customer", "TEXT"),
     ("posts", "sale_id", "INTEGER"), ("posts", "error", "TEXT"), ("posts", "screenshot", "TEXT"),
     ("groups", "member_sale_ids", "TEXT DEFAULT ''"), ("products", "images", "TEXT DEFAULT '[]'"),
     ("posts", "permalink_status", "TEXT"), ("posts", "bump_enabled", "INTEGER DEFAULT 1"),
@@ -353,7 +354,7 @@ RESET_TABLES = {  # bảng: mô tả cho sếp
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",
     "kpi_daily": "lịch sử KPI", "ai_batches": "lô viết bài đang chờ",
-    "orders": "đơn hàng", "expenses": "chi phí đã ghi", "sale_days": "ngày công của sale",
+    "orders": "doanh thu đã nhập", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
 }
 RUN_STATE_KEYS = ["bump_planned_date", "learn_last_date", "scan_last", "tg_sent_log", "company_founded_at", "company_founded_ts",
                   "dissolved_at", "dissolved_reason", "trial_warned", "capital_warned"]

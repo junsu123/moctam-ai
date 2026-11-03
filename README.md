@@ -152,7 +152,7 @@ Bot chạy ngay trên máy của bạn (không cần tên miền hay mở cổng
 | Khi đạt | Chúc mừng đạt KPI tối thiểu, vượt KPI |
 | 21:30 | KPI cả ngày theo từng nick, khách còn chờ sếp gọi, đơn đã chốt, bài học mới, chi phí AI |
 
-**Lệnh Telegram:** `/baocao` báo cáo nhanh · `/kpi` tiến độ · `/khach` khách đang chờ sếp · `/congty` vốn, doanh thu, tình trạng sale · `/hop [chủ đề]` triệu tập họp
+**Lệnh Telegram:** `/baocao` báo cáo nhanh · `/kpi` tiến độ · `/khach` khách đang chờ sếp · `/congty` vốn, chi phí nuôi agent, doanh thu, tình trạng sale · `/doanhthu 2tr5 Tên khách` nhập doanh thu · `/hop [chủ đề]` triệu tập họp
 (gửi kết luận khi họp xong) · `/tamdung` tạm dừng mọi nick · `/tieptuc` bật lại.
 
 Hôm trước chưa đạt KPI thì cuộc họp sáng tự lấy chủ đề "làm gì để đạt KPI hôm nay".
@@ -197,7 +197,7 @@ bệnh bị tự động loại.
 
 ## Công ty: vốn, sa thải, giải thể
 
-Trang **Công ty** quản lý vốn, chi phí, doanh thu và luật sống còn. Bấm **Thành lập công ty** (mặc định vốn 10.000.000đ)
+Trang **Công ty** quản lý vốn, chi phí nuôi agent, doanh thu và luật sống còn. Bấm **Thành lập công ty** (mặc định vốn 10.000.000đ)
 để bắt đầu tính luật; nên chạy **Bắt đầu chạy thật** trước (có ô "thành lập công ty ngay sau khi dọn").
 
 **Luật:**
@@ -211,13 +211,21 @@ Trang **Công ty** quản lý vốn, chi phí, doanh thu và luật sống còn.
 2. **Sa thải hết sale → giải thể.**
 3. **60 ngày không có khách chốt đơn và doanh thu → giải thể.** Telegram nhắc ở giữa kỳ, còn 15 ngày và còn 5 ngày.
    Chỉ cần 1 đơn có doanh thu là qua luật này.
-4. **Vốn** trả chi phí AI (quy đổi từ USD theo tỷ giá nhập lúc thành lập, mặc định 25.800đ/USD) và các khoản sếp ghi
-   (mua nick, mẫu thử…). Còn 20% vốn Telegram báo; hết vốn thì mọi việc gọi AI dừng tới khi **bơm thêm vốn**.
+4. **Vốn chỉ dùng để nuôi các agent:** chi phí gọi API Claude khi agent viết bài, họp, tư vấn, trả lời khách, tự học.
+   Phần mềm tự tính từ mỗi lần gọi API và quy đổi từ USD (tỷ giá nhập lúc thành lập, mặc định 25.800đ/USD). Chi phí hàng
+   hóa, giao hàng của đơn không tính ở đây. Ảnh sản phẩm lấy từ thư mục ảnh của sếp nên không tốn phí (phần mềm không gọi
+   API tạo ảnh). Trang Công ty chia chi phí theo từng việc, biểu đồ 7 ngày và dự báo vốn còn đủ bao lâu. Còn 20% vốn
+   Telegram báo; hết vốn thì mọi việc gọi AI dừng tới khi **bơm thêm vốn**.
 5. **Đội lõi** (Minh, Lan, Tuấn, Hà, Khoa) không bị sa thải theo KPI; chỉ giải tán khi công ty giải thể.
 
-**Ghi doanh thu:** ở trang **Khách hàng** chọn trạng thái "Đã nhập hàng" và nhập số tiền, hoặc bấm **Chốt đơn** trên phiếu
-khách trong Telegram rồi trả lời số tiền (`2500000`, `2,5tr`, `2tr5`, `800k` đều được). Lệnh `/congty` xem nhanh vốn,
-doanh thu và tình trạng từng sale.
+**Doanh thu do sếp nhập** (sếp là người chốt và làm việc với khách), ở một trong các chỗ:
+
+- Trang **Công ty → Nhập doanh thu**: số tiền, tên hoặc SĐT khách (không bắt buộc; trùng khách trong danh sách thì tự gắn).
+- Telegram: `/doanhthu 2tr5 Shop Mộc An`, hoặc bấm **Chốt đơn** trên phiếu khách rồi trả lời số tiền.
+- Trang **Khách hàng**: chọn trạng thái "Đã nhập hàng" và nhập số tiền.
+
+Số tiền viết kiểu `2500000`, `2.500.000`, `2,5tr`, `2tr5`, `800k` đều được. Nhập nhầm thì bấm **Xóa** hai lần. Lệnh `/congty` xem nhanh vốn,
+chi phí nuôi agent, doanh thu và tình trạng từng sale.
 
 **Sale bị sa thải:** nick và phiên đăng nhập vẫn giữ. Ở trang Công ty, nhập tên người thay → **Tuyển thay, giữ nick**:
 sale mới nhận nick, hội nhóm của nick cũ và bắt đầu kỳ KPI mới.

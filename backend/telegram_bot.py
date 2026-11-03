@@ -22,7 +22,8 @@ import db
 API = os.getenv("TELEGRAM_API", "https://api.telegram.org").rstrip("/")
 _state = {"bot": None, "error": None, "started": False}
 _pending_order: dict[str, int] = {}  # chat -> khách vừa chốt, chờ sếp nhập giá trị đơn
-HELP = ("Các lệnh:\n/baocao — báo cáo hôm nay\n/kpi — tiến độ KPI\n/congty — vốn, doanh thu, sale có nguy cơ bị sa thải\n"
+HELP = ("Các lệnh:\n/baocao — báo cáo hôm nay\n/kpi — tiến độ KPI\n/congty — vốn, chi phí nuôi agent, doanh thu, sale có nguy cơ bị sa thải\n"
+        "/doanhthu [số tiền] [tên khách] — nhập doanh thu, VD: /doanhthu 2tr5 Shop Mộc An\n"
         "/khach — khách đang chờ sếp tư vấn\n"
         "/hop [chủ đề] — triệu tập họp\n/tamdung — tạm dừng mọi nick tự đăng\n/tieptuc — bật lại tự đăng\n/help — xem lệnh")
 
@@ -309,7 +310,7 @@ def handle_message(msg: dict):
             lid = _pending_order.pop(chat_id)
             company.add_order(lid, amount, "Sếp nhập qua Telegram", via="telegram")
             fin = company.finance()
-            _reply(chat_id, f"💰 Đã ghi đơn {company.fmt_vnd(amount)}. Doanh thu từ khi thành lập: <b>{company.fmt_vnd(fin['revenue'])}</b> ({fin['orders']} đơn).")
+            _reply(chat_id, f"💰 Đã ghi doanh thu {company.fmt_vnd(amount)}. Doanh thu từ khi thành lập: <b>{company.fmt_vnd(fin['revenue'])}</b> ({fin['orders']} đơn).")
             return
         if text.lower() in ("bỏ qua", "bo qua", "skip"):
             _pending_order.pop(chat_id, None)
@@ -325,7 +326,8 @@ def handle_message(msg: dict):
             _reply(chat_id, "Công ty chưa thành lập. Vào phần mềm → trang Công ty → Thành lập công ty.")
             return
         lines = [f"🏢 <b>Công ty</b> · {'ĐÃ GIẢI THỂ' if ov['status'] == 'dissolved' else 'ngày ' + str(ov['day']) + '/' + str(ov['trial_days'])}",
-                 f"Vốn {company.fmt_vnd(fin['capital'])} · đã chi {company.fmt_vnd(fin['spent'])} (AI {company.fmt_vnd(fin['ai_vnd'])}) · còn <b>{company.fmt_vnd(fin['left'])}</b>",
+                 f"Vốn {company.fmt_vnd(fin['capital'])} · chi phí nuôi agent {company.fmt_vnd(fin['spent'])} · còn <b>{company.fmt_vnd(fin['left'])}</b>"
+                 + (f" (đủ ~{fin['runway_days']} ngày nữa)" if fin.get("runway_days") is not None else ""),
                  f"Doanh thu <b>{company.fmt_vnd(fin['revenue'])}</b> · {fin['orders']} đơn · {fin['customers']} khách mua"]
         for r in ov["sales"]:
             if r["status"] == "fired":
@@ -335,6 +337,18 @@ def handle_message(msg: dict):
                 mark = {"safe": "✅", "warn": "⚠️", "danger": "🔴", "idle": "⏸", "extend": "⏸", "pass": "✅", "fail": "🔴", "new": "🆕"}[rv["risk"]]
                 lines.append(f"{mark} {e(r['name'])}: {rv['leads_phone']}/{rv['target_so_far']} SĐT · ngày {rv['day']}/30 của kỳ")
         _reply(chat_id, "\n".join(lines))
+        return
+    if cmd in ("/doanhthu", "doanh thu", "doanhthu"):
+        import company
+        parts = arg.split(maxsplit=1)
+        amount = company.parse_vnd(parts[0]) if parts else None
+        if not amount:
+            _reply(chat_id, "Gõ: <code>/doanhthu 2tr5 Shop Mộc An</code> (số tiền trước, tên hoặc SĐT khách sau).")
+            return
+        o = company.add_order(None, amount, "Sếp nhập qua Telegram", via="telegram", customer=parts[1] if len(parts) > 1 else "")
+        fin = company.finance()
+        _reply(chat_id, f"💰 Đã ghi doanh thu {company.fmt_vnd(amount)} · {e(o['customer'])}. "
+                        f"Tổng từ khi thành lập: <b>{company.fmt_vnd(fin['revenue'])}</b> ({fin['orders']} đơn).")
         return
     if cmd in ("/start", "/help", "help", "lệnh"):
         _reply(chat_id, HELP)

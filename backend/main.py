@@ -702,20 +702,22 @@ def company_capital(m: Money):
     return company.overview()
 
 
-@app.post("/api/expenses")
-def add_expense(m: Money):
-    if m.amount <= 0:
-        raise HTTPException(400, "Số tiền phải lớn hơn 0")
-    d = m.date or db.today()
-    db.run("INSERT INTO expenses(date, category, amount, note, created_at) VALUES (?,?,?,?,?)",
-           (d, m.category, m.amount, m.note[:200], db.now()))
-    db.log("minh", "Ghi chi phí", f"{m.category}: {company.fmt_vnd(m.amount)} {m.note}".strip())
-    return company.overview()
+class Revenue(BaseModel):
+    amount: int
+    customer: str = ""
+    note: str = ""
+    lead_id: int | None = None
 
 
-@app.delete("/api/expenses/{eid}")
-def del_expense(eid: int):
-    db.run("DELETE FROM expenses WHERE id=?", (eid,))
+@app.post("/api/company/revenue")
+def company_revenue(r: Revenue):
+    """Sếp tự nhập doanh thu (sếp chốt và làm việc với khách)."""
+    if r.amount <= 0:
+        raise HTTPException(400, "Nhập doanh thu lớn hơn 0")
+    try:
+        company.add_order(r.lead_id, r.amount, r.note, via="app", customer=r.customer)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
     return company.overview()
 
 

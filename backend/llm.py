@@ -34,7 +34,7 @@ PRICES = {
     OPUS: (4.00, 20.00),
 }
 BATCH_DISCOUNT = 0.5
-TASKS = {"posts": "Viết bài đăng", "replies": "Tin nhắn khách", "meeting": "Cuộc họp", "learning": "Tự học mỗi đêm", "other": "Khác"}
+TASKS = {"posts": "Viết bài đăng", "replies": "Tin nhắn khách", "meeting": "Cuộc họp", "learning": "Tự học mỗi đêm", "images": "Tạo ảnh", "other": "Khác"}
 
 PRESETS = {  # gói cấu hình sẵn trong Cài đặt
     "tiet_kiem": {"model_posts": HAIKU, "model_replies": HAIKU, "model_meeting": HAIKU, "model_learning": HAIKU, "use_batch": "1"},

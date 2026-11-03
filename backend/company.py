@@ -8,7 +8,8 @@ Luật (sếp đặt):
    Kỳ có dưới 15 ngày làm việc thì kéo dài tới khi đủ, rồi mới đánh giá.
 2. Tất cả nhân viên sale đều bị sa thải -> công ty giải thể.
 3. Sau 60 ngày kể từ khi thành lập mà chưa có khách hàng nào chốt đơn và chưa có doanh thu -> công ty giải thể.
-Vốn ban đầu (mặc định 10.000.000đ) dùng để trả chi phí: AI (quy đổi từ USD) và các khoản sếp ghi thêm.
+Vốn ban đầu (mặc định 10.000.000đ) chỉ dùng để nuôi các agent: chi phí gọi API Claude (viết bài, họp, tư vấn,
+tự học…), quy đổi từ USD. Chi phí hàng hóa, giao hàng của đơn không tính ở đây. Doanh thu do sếp tự nhập.
 Hết vốn thì mọi việc tốn tiền (gọi AI) tạm dừng cho tới khi sếp bơm thêm vốn.
 Đội lõi (Minh, Lan, Tuấn, Hà, Khoa) không bị sa thải theo KPI; chỉ giải tán khi công ty giải thể.
 """
@@ -65,40 +66,66 @@ def parse_vnd(text: str) -> int | None:
 
 
 # ---------------------------------------------------------------- tiền
+TASK_LABEL = {"posts": "Viết bài đăng (Lan)", "replies": "Tư vấn, trả lời khách (Hà, sale)",
+              "meeting": "Họp giao ban (cả đội)", "learning": "Tự học mỗi đêm (cả đội)", "images": "Tạo ảnh",
+              "other": "Việc khác"}
+
+
 def finance() -> dict:
+    """Vốn chỉ trừ chi phí nuôi agent (API). Doanh thu do sếp nhập."""
     f = founded()
     since = f or "0000"
     rate = float(s().get("usd_vnd") or 25800)
-    ai_usd = db.one("SELECT COALESCE(SUM(cost_usd),0) c FROM usage WHERE created_at >= ?", (since,))["c"]
-    other = db.one("SELECT COALESCE(SUM(amount),0) c FROM expenses WHERE date >= ?", (since,))["c"]
+    by = db.q("""SELECT task, COALESCE(SUM(cost_usd),0) usd, COUNT(*) calls FROM usage WHERE created_at >= ?
+                 GROUP BY task ORDER BY usd DESC""", (since,))
+    ai_usd = sum(r["usd"] for r in by)
+    by_task = [{"task": r["task"] or "other", "label": TASK_LABEL.get(r["task"] or "other", r["task"]),
+                "vnd": round(r["usd"] * rate), "usd": round(r["usd"], 4), "calls": r["calls"]} for r in by]
+    d7 = (date.today() - timedelta(days=6)).isoformat()
+    daily = {r["d"]: r["usd"] for r in db.q("""SELECT substr(created_at,1,10) d, SUM(cost_usd) usd FROM usage
+                                               WHERE created_at >= ? GROUP BY d""", (max(since, d7),))}
+    last7 = [{"date": (date.today() - timedelta(days=i)).isoformat(),
+              "vnd": round(daily.get((date.today() - timedelta(days=i)).isoformat(), 0) * rate)} for i in range(6, -1, -1)]
     revenue = db.one("SELECT COALESCE(SUM(amount),0) c FROM orders WHERE created_at >= ?", (since,))["c"]
     orders = db.one("SELECT COUNT(*) n FROM orders WHERE created_at >= ?", (since,))["n"]
-    customers = db.one("SELECT COUNT(DISTINCT lead_id) n FROM orders WHERE created_at >= ?", (since,))["n"]
+    customers = db.one("""SELECT COUNT(DISTINCT COALESCE('l' || lead_id, 'c' || LOWER(TRIM(customer)), 'o' || id)) n
+                          FROM orders WHERE created_at >= ?""", (since,))["n"]
     capital = float(s().get("capital_vnd") or 0)
-    spent = ai_usd * rate + other
-    return {"capital": capital, "ai_vnd": round(ai_usd * rate), "ai_usd": round(ai_usd, 4), "other": other,
-            "spent": round(spent), "left": round(capital - spent), "revenue": revenue, "orders": orders,
-            "customers": customers, "profit": round(revenue - spent), "rate": rate}
+    spent = round(ai_usd * rate)
+    days = max(1, day_no()) if f else 1
+    avg = sum(d["vnd"] for d in last7) / min(7, days)  # mức chi gần đây, dùng để dự báo vốn còn đủ bao lâu
+    left = round(capital - spent)
+    return {"capital": capital, "ai_vnd": spent, "ai_usd": round(ai_usd, 4), "spent": spent, "left": left,
+            "by_task": by_task, "last7": last7, "avg_day": round(avg),
+            "runway_days": int(left / avg) if avg > 0 and left > 0 else None,
+            "revenue": revenue, "orders": orders, "customers": customers, "profit": round(revenue - spent), "rate": rate}
 
 
 def capital_left() -> float:
     return finance()["left"] if active() else 1
 
 
-def add_order(lead_id: int, amount: int, note: str = "", via: str = "app") -> dict:
+def add_order(lead_id: int | None, amount: int, note: str = "", via: str = "app", customer: str = "") -> dict:
+    """Sếp ghi doanh thu. Gắn với khách trong danh sách nếu có, không thì chỉ cần tên khách."""
     import learning
-    lead = db.one("SELECT * FROM leads WHERE id=?", (lead_id,))
-    if not lead:
+    lead = db.one("SELECT * FROM leads WHERE id=?", (lead_id,)) if lead_id else None
+    if lead_id and not lead:
         raise ValueError("Không tìm thấy khách")
-    oid = db.run("INSERT INTO orders(lead_id, amount, note, via, created_at) VALUES (?,?,?,?,?)",
-                 (lead_id, int(amount), note[:200], via, db.now()))
-    if lead["status"] != "ordered":
-        db.run("UPDATE leads SET status='ordered', boss_status='won', updated_at=? WHERE id=?", (db.now(), lead_id))
-        learning.on_lead_status(lead_id, "ordered")
-    db.log("ha", "Có đơn hàng", f"{lead['name']}: {fmt_vnd(amount)}")
+    if not lead and customer.strip():  # tên hoặc SĐT trùng với khách đã có thì gắn luôn
+        key = customer.strip().lower()
+        digits = re.sub(r"\D", "", key)
+        lead = db.one("SELECT * FROM leads WHERE LOWER(name)=? OR (? != '' AND REPLACE(REPLACE(phone,' ',''),'.','')=?) ORDER BY id DESC LIMIT 1",
+                      (key, digits if len(digits) >= 9 else "", digits))
+    name = lead["name"] if lead else (customer.strip() or "Khách lẻ")
+    oid = db.run("INSERT INTO orders(lead_id, customer, amount, note, via, created_at) VALUES (?,?,?,?,?,?)",
+                 (lead["id"] if lead else None, name[:120], int(amount), note[:200], via, db.now()))
+    if lead and lead["status"] != "ordered":
+        db.run("UPDATE leads SET status='ordered', boss_status='won', updated_at=? WHERE id=?", (db.now(), lead["id"]))
+        learning.on_lead_status(lead["id"], "ordered")
+    db.log("minh", "Sếp nhập doanh thu", f"{name}: {fmt_vnd(amount)}")
     first = db.one("SELECT COUNT(*) n FROM orders WHERE created_at >= ?", (founded() or "0000",))["n"] == 1
     if first and active():
-        _tg(f"🎉 <b>Đơn hàng đầu tiên của công ty!</b> {html.escape(lead['name'])}: {fmt_vnd(amount)}. "
+        _tg(f"🎉 <b>Doanh thu đầu tiên của công ty!</b> {html.escape(name)}: {fmt_vnd(amount)}. "
             "Điều kiện 'có khách hàng và doanh thu trong 60 ngày' đã đạt.")
     return db.one("SELECT * FROM orders WHERE id=?", (oid,))
 
@@ -276,8 +303,7 @@ def overview() -> dict:
     return {"status": status(), "founded_at": founded(), "day": day_no(), "trial_days": int(st.get("trial_days") or 60),
             "dissolved_at": st.get("dissolved_at"), "dissolved_reason": st.get("dissolved_reason"),
             "finance": finance(), "sales": sales,
-            "expenses": db.q("SELECT * FROM expenses ORDER BY date DESC, id DESC LIMIT 50"),
-            "orders": db.q("""SELECT o.*, l.name lead_name, l.phone FROM orders o LEFT JOIN leads l ON l.id=o.lead_id
+            "orders": db.q("""SELECT o.*, COALESCE(l.name, o.customer) lead_name, l.phone FROM orders o LEFT JOIN leads l ON l.id=o.lead_id
                               ORDER BY o.id DESC LIMIT 50""")}
 
 
