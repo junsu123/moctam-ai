@@ -1,19 +1,32 @@
 {
-  "_ghi_chu": "Facebook đổi giao diện thường xuyên. Nếu đăng bài báo lỗi 'không tìm thấy ô viết bài', thêm chữ hiển thị mới vào các danh sách dưới đây (không phân biệt hoa thường, so khớp một phần).",
+  "_ghi_chu": "Facebook đổi giao diện thường xuyên. Khi đăng bài lỗi, phần mềm ghi lại tên các nút đang thấy trên màn hình; thêm đúng chữ đó vào danh sách tương ứng dưới đây (không phân biệt hoa thường). post_button / next_button phải khớp nguyên chữ của nút.",
   "group_composer": [
-    "Viết gì đó",
     "Bạn viết gì đi",
+    "Viết gì đó",
     "Write something",
     "Tạo bài viết công khai",
-    "Create a public post"
-  ],
-  "profile_composer": [
+    "Create a public post",
     "Bạn đang nghĩ gì",
     "What's on your mind"
   ],
+  "profile_composer": [
+    "Bạn đang nghĩ gì",
+    "What's on your mind",
+    "Tạo bài viết",
+    "Create post"
+  ],
   "post_button": [
     "Đăng",
-    "Post"
+    "Post",
+    "Đăng bài",
+    "Chia sẻ ngay",
+    "Share now"
+  ],
+  "next_button": [
+    "Tiếp",
+    "Next",
+    "Tiếp tục",
+    "Continue"
   ],
   "photo_button": [
     "Ảnh/video",
@@ -24,6 +37,16 @@
     "Discard",
     "Rời khỏi",
     "Leave"
+  ],
+  "join_button": [
+    "Tham gia nhóm",
+    "Join group",
+    "Join Group"
+  ],
+  "pending_join": [
+    "Hủy yêu cầu",
+    "Cancel request",
+    "Đang chờ phê duyệt"
   ],
   "blocked_url_parts": [
     "checkpoint",

@@ -178,7 +178,7 @@ def groups():
 def add_group(g: Group):
     gid = db.run("""INSERT INTO groups(name, url, topic, members, rules, min_days_between_posts, note, created_at)
                     VALUES (?,?,?,?,?,?,?,?)""",
-                 (g.name, g.url, g.topic, g.members, g.rules, g.min_days_between_posts, g.note, db.now()))
+                 (g.name, browser_poster.fb_url(g.url), g.topic, g.members, g.rules, g.min_days_between_posts, g.note, db.now()))
     db.log("tuan", "Thêm nhóm", g.name)
     return db.one("SELECT * FROM groups WHERE id=?", (gid,))
 

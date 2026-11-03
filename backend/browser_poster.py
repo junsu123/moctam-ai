@@ -72,8 +72,27 @@ def _launch(pw, sale_id: int, headless: bool | None = None):
               viewport={"width": 1280, "height": 900}, args=["--disable-notifications"])
     try:
         return pw.chromium.launch_persistent_context(channel="chrome", **kw)  # Google Chrome đã cài
-    except Exception:
-        return pw.chromium.launch_persistent_context(**kw)  # Chromium của Playwright
+    except Exception as e:
+        msg = str(e)
+        if any(k in msg for k in ("ProcessSingleton", "already in use", "SingletonLock", "lock file")):
+            raise RuntimeError("Hồ sơ Chrome của nick này đang mở ở một cửa sổ khác. Đóng cửa sổ Chrome của sale rồi thử lại")
+        if "is not found" not in msg and "Executable doesn't exist" not in msg and "not installed" not in msg.lower():
+            # Chrome có trên máy nhưng mở lỗi: không chuyển sang Chromium, vì Chromium không đọc được phiên đăng nhập
+            # do Chrome mã hóa (sẽ báo sai là "chưa đăng nhập")
+            raise RuntimeError(f"Không mở được Google Chrome: {msg.splitlines()[0][:160]}")
+        return pw.chromium.launch_persistent_context(**kw)  # máy chưa cài Chrome: dùng Chromium của Playwright
+
+
+def fb_url(u: str) -> str:
+    """Chuẩn hóa link nhóm sếp dán: thêm https://, đổi link điện thoại (m., mbasic., web.) sang giao diện máy tính."""
+    u = (u or "").strip()
+    if not u:
+        return u
+    if not re.match(r"^https?://", u, re.I):
+        u = "https://" + u.lstrip("/")
+    u = re.sub(r"^https?://(m|mbasic|web|touch|mobile)\.facebook\.com", "https://www.facebook.com", u, flags=re.I)
+    u = re.sub(r"^https?://(facebook\.com|fb\.com|www\.fb\.com)", "https://www.facebook.com", u, flags=re.I)
+    return u
 
 
 def _logged_in(ctx) -> bool:
@@ -128,67 +147,224 @@ def _pause(page, a=0.6, b=1.6):
     page.wait_for_timeout(int(random.uniform(a, b) * 1000))
 
 
-def _publish(page, post: dict, target_url: str, composer_labels: list[str], dry_run: bool, imgs=None) -> str:
-    s = selectors()
-    page.goto(target_url, wait_until="domcontentloaded", timeout=60000)
-    page.wait_for_timeout(3500)
-    _check_blocked(page)
-    if not _wait_click(page, composer_labels, timeout=25):
-        raise RuntimeError("Không tìm thấy ô viết bài. Kiểm tra nick đã vào nhóm chưa, hoặc thêm chữ hiển thị mới vào fb_selectors.json")
-    page.wait_for_timeout(2000)
-    dialog = page.get_by_role("dialog").last
-    box = dialog.get_by_role("textbox").first
-    box.wait_for(state="visible", timeout=20000)
+def _labels_on(scope, limit=14) -> str:
+    """Tên các nút đang thấy (để ghi vào lỗi, giúp sửa fb_selectors.json khi Facebook đổi giao diện)."""
+    out = []
+    try:
+        for el in scope.locator('[role="button"], button').all()[:120]:
+            try:
+                if el.is_visible():
+                    t = (el.get_attribute("aria-label") or el.inner_text() or "").strip().replace("\n", " ")
+                    if t and len(t) < 40 and t not in out:
+                        out.append(t)
+            except Exception:
+                pass
+            if len(out) >= limit:
+                break
+    except Exception:
+        pass
+    return ", ".join(out)
+
+
+def _composer_dialog(page, timeout=20):
+    """Hộp soạn bài: dialog đang hiện có ô nhập (contenteditable). Bỏ qua các dialog khác như khung chat."""
+    end = time.time() + timeout
+    while time.time() < end:
+        dlgs = page.get_by_role("dialog")
+        for i in range(dlgs.count() - 1, -1, -1):
+            d = dlgs.nth(i)
+            try:
+                if not d.is_visible():
+                    continue
+                box = d.locator('[contenteditable="true"][role="textbox"], [contenteditable="true"]')
+                for j in range(box.count()):
+                    if box.nth(j).is_visible():
+                        return d, box.nth(j)
+            except Exception:
+                pass
+        page.wait_for_timeout(500)
+    return None, None
+
+
+def _exact_button(scope, labels):
+    """Nút có tên đúng bằng một trong các nhãn (VD 'Đăng', không nhầm với 'Đăng ảnh')."""
+    for lb in labels:
+        rx = re.compile(rf"^\s*{re.escape(lb)}\s*$", re.I)
+        for loc in (scope.get_by_role("button", name=rx), scope.locator(f'[role="button"][aria-label="{lb}"]')):
+            try:
+                for i in range(loc.count() - 1, -1, -1):
+                    if loc.nth(i).is_visible():
+                        return loc.nth(i)
+            except Exception:
+                pass
+    return None
+
+
+def _type_text(page, box, text: str):
     box.click()
-    _pause(page)
-    text = post["content"].rstrip() + ("\n\n" + post["hashtags"] if post.get("hashtags") else "")
+    _pause(page, 0.4, 0.9)
     lines = text.split("\n")
     for i, line in enumerate(lines):
         if line:
             page.keyboard.insert_text(line)
         if i < len(lines) - 1:
-            page.keyboard.press("Enter")
+            page.keyboard.press("Shift+Enter")
+    page.wait_for_timeout(600)
+    probe = next((l.strip() for l in lines if l.strip()), "")[:15]
+    got = ""
+    try:
+        got = box.inner_text()
+    except Exception:
+        pass
+    if probe and _norm(probe)[:10] not in _norm(got):  # trình soạn thảo không nhận insert_text -> gõ từng phím
+        box.click()
+        page.keyboard.press("Control+A")
+        page.keyboard.press("Delete")
+        for i, line in enumerate(lines):
+            if line:
+                page.keyboard.type(line, delay=15)
+            if i < len(lines) - 1:
+                page.keyboard.press("Shift+Enter")
+        page.wait_for_timeout(600)
+        if _norm(probe)[:10] not in _norm(box.inner_text()):
+            raise RuntimeError("Không điền được nội dung vào ô viết bài")
+
+
+def _attach_images(page, dialog, imgs: list[str], labels: list[str]) -> list[str]:
+    """Đính ảnh vào hộp soạn bài. Trả về danh sách ảnh đã đính (rỗng nếu không đính được: vẫn đăng chữ)."""
+    def inputs():
+        loc = dialog.locator('input[type="file"]')
+        return [loc.nth(i) for i in range(loc.count())]
+    cands = inputs()
+    if not cands:
+        el = _visible_first(dialog, labels)
+        if el:
+            el.click()
+            page.wait_for_timeout(1500)
+        cands = inputs()
+    if not cands:
+        return []
+    # ưu tiên ô nhận ảnh và chọn được nhiều tệp
+    def score(el):
+        acc = (el.get_attribute("accept") or "").lower()
+        return (("image" in acc) or acc == "") * 2 + (el.get_attribute("multiple") is not None)
+    inp = max(cands, key=score)
+    done = []
+    if inp.get_attribute("multiple") is not None:
+        inp.set_input_files(imgs)
+        done = list(imgs)
+    else:
+        for f in imgs:  # ô chỉ nhận 1 tệp: đính từng ảnh
+            cur = max(inputs() or [inp], key=score)
+            cur.set_input_files(f)
+            done.append(f)
+            page.wait_for_timeout(1500)
+    page.wait_for_timeout(2500 + 1500 * len(done))
+    return done
+
+
+def _top_dialog(page):
+    dl = page.get_by_role("dialog")
+    for i in range(dl.count() - 1, -1, -1):
+        try:
+            if dl.nth(i).is_visible():
+                return dl.nth(i)
+        except Exception:
+            pass
+    return None
+
+
+def _find_submit(page, s):
+    """Tìm nút Đăng (hoặc Tiếp) trong các hộp thoại đang hiện, ưu tiên hộp mở sau cùng."""
+    dl = page.get_by_role("dialog")
+    for i in range(dl.count() - 1, -1, -1):
+        d = dl.nth(i)
+        try:
+            if not d.is_visible():
+                continue
+        except Exception:
+            continue
+        btn = _exact_button(d, s["post_button"])
+        if btn:
+            return btn, None
+        nxt = _exact_button(d, s.get("next_button", []))
+        if nxt:
+            return None, nxt
+    return None, None
+
+
+def _publish(page, post: dict, target_url: str, composer_labels: list[str], dry_run: bool, imgs=None):
+    """Mở trang, mở hộp soạn bài, điền nội dung + ảnh, bấm Đăng (hoặc Tiếp → Đăng). Trả về (ảnh chụp, ảnh đã đính)."""
+    s = selectors()
+    page.goto(fb_url(target_url), wait_until="domcontentloaded", timeout=60000)
+    page.wait_for_timeout(3500)
+    _check_blocked(page)
+    opened = _wait_click(page, composer_labels, timeout=20)
+    if not opened and post.get("target_type") == "profile":
+        page.goto(FB_BASE, wait_until="domcontentloaded", timeout=60000)  # trang cá nhân không có ô viết: thử bảng tin
+        page.wait_for_timeout(3500)
+        opened = _wait_click(page, composer_labels, timeout=15)
+    if not opened:
+        if _visible_first(page, s.get("join_button", [])):
+            raise RuntimeError("Nick chưa là thành viên nhóm này (còn nút Tham gia nhóm). Mở Chrome của sale và tham gia nhóm trước")
+        if _visible_first(page, s.get("pending_join", [])):
+            raise RuntimeError("Nick đang chờ quản trị viên duyệt vào nhóm, chưa đăng được")
+        raise RuntimeError("Không tìm thấy ô viết bài. Nút đang thấy: " + (_labels_on(page) or "không có")
+                           + ". Thêm chữ của ô viết bài vào fb_selectors.json")
+    dialog, box = _composer_dialog(page)
+    if not dialog:
+        raise RuntimeError("Đã bấm ô viết bài nhưng không thấy hộp soạn bài hiện ra. Nút đang thấy: " + _labels_on(page))
+    text = post["content"].rstrip() + ("\n\n" + post["hashtags"] if post.get("hashtags") else "")
+    _type_text(page, box, text)
     _pause(page)
-    imgs = [str(i) for i in (imgs or [])]
+    used = []
     if imgs:
-        inp = dialog.locator('input[type="file"]')
-        if not inp.count():
-            el = _visible_first(dialog, s["photo_button"])
-            if el:
-                el.click()
-                page.wait_for_timeout(1200)
-            inp = page.locator('input[type="file"]')
-        if inp.count():
-            inp.last.set_input_files(imgs)
-            page.wait_for_timeout(2500 + 1500 * len(imgs))
+        try:
+            used = _attach_images(page, dialog, [str(i) for i in imgs], s["photo_button"])
+        except Exception as e:
+            db.log("tuan", "Không đính được ảnh", f"Bài #{post['id']}: {str(e).splitlines()[0][:150]}. Vẫn đăng phần chữ.")
+            used = []
+        if not used:
+            db.log("tuan", "Không đính được ảnh", f"Bài #{post['id']}: không thấy ô chọn ảnh trong hộp soạn bài, đăng phần chữ.")
     shot = db.SHOTS_DIR / f"post-{post['id']}.png"
     if dry_run:
         page.screenshot(path=str(shot))
         page.keyboard.press("Escape")
         page.wait_for_timeout(1200)
         _wait_click(page, s["discard_button"], timeout=4)
-        return f"/shots/{shot.name}"
-    btn = None
-    for lb in s["post_button"]:
-        loc = dialog.get_by_role("button", name=re.compile(rf"^\s*{re.escape(lb)}\s*$", re.I))
-        if loc.count():
-            btn = loc.last
+        return f"/shots/{shot.name}", used
+    # Bấm Đăng; giao diện mới có thể hiện "Tiếp" trước (chọn đối tượng, cài đặt bài viết) rồi mới tới "Đăng"
+    posted = False
+    for _step in range(3):
+        end = time.time() + 30
+        btn = nxt = None
+        while time.time() < end:
+            btn, nxt = _find_submit(page, s)
+            target = btn or nxt
+            if target and target.get_attribute("aria-disabled") != "true":
+                break
+            page.wait_for_timeout(800)
+        target = btn or nxt
+        if not target:
+            raise RuntimeError("Không tìm thấy nút Đăng trong hộp soạn bài. Nút đang thấy: " + _labels_on(_top_dialog(page) or page))
+        if target.get_attribute("aria-disabled") == "true":
+            raise RuntimeError("Nút Đăng vẫn bị mờ sau 30 giây (ảnh chưa tải xong hoặc nội dung chưa điền được)")
+        target.click()
+        if btn:
+            posted = True
             break
-    if not btn:
-        raise RuntimeError("Không tìm thấy nút Đăng trong hộp soạn bài")
-    end = time.time() + 30
-    while btn.get_attribute("aria-disabled") == "true" and time.time() < end:
-        page.wait_for_timeout(800)
-    btn.click()
+        page.wait_for_timeout(2500)  # vừa bấm Tiếp, chờ bước sau hiện ra
+    if not posted:
+        raise RuntimeError("Bấm Tiếp nhiều lần nhưng không tới được nút Đăng")
     try:
-        box.wait_for(state="hidden", timeout=90000)
+        btn.wait_for(state="hidden", timeout=90000)
     except Exception:
         page.screenshot(path=str(shot))
         raise RuntimeError("Đã bấm Đăng nhưng hộp soạn bài chưa đóng sau 90 giây (mạng chậm hoặc Facebook chặn)")
     page.wait_for_timeout(4000)
     _check_blocked(page)
     page.screenshot(path=str(shot))
-    return f"/shots/{shot.name}"
+    return f"/shots/{shot.name}", used
 
 
 # ---------------------------------------------------------------- công việc
@@ -275,13 +451,14 @@ def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
         if post["target_type"] == "group":
             if not post.get("group_url"):
                 raise RuntimeError("Nhóm chưa có đường dẫn. Vào mục Hội nhóm để thêm link nhóm")
-            url, labels = post["group_url"], selectors()["group_composer"]
+            url, labels = fb_url(post["group_url"]), selectors()["group_composer"]
         else:
             url, labels = f"{FB_BASE}/me", selectors()["profile_composer"]
         imgs, warn = media_folder.pick_for_post(post, sale_id)
         if warn:
             db.log("tuan", "Thiếu ảnh mới", f"Bài #{post_id}: {warn}")
-        shot = _publish(page, post, url, labels, dry_run, imgs)
+        shot, attached = _publish(page, post, url, labels, dry_run, imgs)
+        imgs = [i for i in imgs if str(i) in attached]
         used = json.dumps([str(i) for i in imgs], ensure_ascii=False)
         if dry_run:
             db.run("UPDATE posts SET screenshot=?, error=NULL, images_used=? WHERE id=?", (shot, used, post_id))
@@ -339,7 +516,7 @@ def _find_permalink(page, post: dict) -> tuple[str | None, str]:
     s = selectors()
     snip = _snippet(post["content"])
     if post["target_type"] == "group" and post.get("group_url"):
-        base = post["group_url"].rstrip("/")
+        base = fb_url(post["group_url"]).rstrip("/")
         pages = [base + p for p in s.get("my_posts_paths", ["/my_posted_content", ""])]
     else:
         pages = [f"{FB_BASE}/me"]
@@ -364,7 +541,7 @@ def _find_permalink(page, post: dict) -> tuple[str | None, str]:
             page.wait_for_timeout(1500)
     if post["target_type"] == "group" and post.get("group_url"):
         for pth in s.get("pending_paths", []):
-            page.goto(post["group_url"].rstrip("/") + pth, wait_until="domcontentloaded", timeout=60000)
+            page.goto(fb_url(post["group_url"]).rstrip("/") + pth, wait_until="domcontentloaded", timeout=60000)
             page.wait_for_timeout(2500)
             if snip in _norm(page.inner_text("body")):
                 return None, "pending"

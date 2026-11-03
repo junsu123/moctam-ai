@@ -55,8 +55,17 @@ tách biệt với Chrome bạn dùng hằng ngày.
 tắt tự đăng của nick đó, trả các bài chờ về hàng đợi và báo lên Văn phòng. Bạn mở Chrome của nick để xử lý,
 rồi bấm **Bật tự đăng**. Phần mềm không giải captcha và không giả mạo trình duyệt.
 
-**Khi Facebook đổi giao diện:** nếu bài báo lỗi "Không tìm thấy ô viết bài", mở `backend/fb_selectors.json`
-và thêm chữ đang hiển thị trên nút (ví dụ chữ trong ô "Viết gì đó…" của nhóm) vào danh sách tương ứng.
+**Khi sale không đăng được bài:** lỗi hiện ở thẻ bài (mục Bài đăng) và thẻ sale, kèm ảnh chụp màn hình lúc lỗi.
+
+| Lỗi | Cách xử lý |
+|---|---|
+| Nick chưa là thành viên nhóm / đang chờ duyệt vào nhóm | Mở Chrome của sale, tham gia nhóm, chờ quản trị viên duyệt |
+| Hồ sơ Chrome của nick đang mở ở cửa sổ khác | Đóng cửa sổ Chrome của sale (cửa sổ mở bằng nút "Mở Chrome") rồi bấm đăng lại |
+| Nick chưa đăng nhập | Nhân viên sale → Mở Chrome để đăng nhập |
+| Không tìm thấy ô viết bài / nút Đăng | Facebook đổi chữ trên nút. Lỗi ghi sẵn tên các nút đang thấy; thêm đúng chữ đó vào `backend/fb_selectors.json` (`group_composer`, `profile_composer`, `post_button`, `next_button`) |
+
+Sale tự xử lý bước **Tiếp** mà Facebook hay chèn trước nút **Đăng**, tự đổi link nhóm dạng điện thoại (`m.facebook.com`)
+sang giao diện máy tính. Nếu không đính được ảnh, sale vẫn đăng phần chữ và ghi chú lại để sếp biết.
 
 **Lưu ý:** Điều khoản của Facebook không cho phép tự động hóa đăng bài bằng tài khoản cá nhân. Nick vẫn có thể bị
 hạn chế dù đã giãn cách, nên giữ số bài/ngày vừa phải, nội dung có giá trị và đúng luật từng nhóm.
