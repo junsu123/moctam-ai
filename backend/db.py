@@ -158,6 +158,12 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS expenses (
   id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, category TEXT, amount INTEGER, note TEXT, created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS errors (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT, title TEXT, message TEXT, detail TEXT, hint TEXT, screen TEXT,
+  action TEXT, ref_type TEXT, ref_id TEXT, screenshot TEXT, fingerprint TEXT, count INTEGER DEFAULT 1,
+  status TEXT DEFAULT 'new', created_at TEXT, last_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_errors_fp ON errors(fingerprint);
 CREATE TABLE IF NOT EXISTS ceo_decisions (
   id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, status TEXT, sale_id INTEGER, title TEXT, reason TEXT,
   data TEXT, created_at TEXT, decided_at TEXT
@@ -362,7 +368,7 @@ RESET_TABLES = {  # bảng: mô tả cho sếp
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",
     "kpi_daily": "lịch sử KPI", "ai_batches": "lô viết bài đang chờ",
-    "orders": "doanh thu đã nhập", "ceo_decisions": "quyết định của CEO", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
+    "orders": "doanh thu đã nhập", "ceo_decisions": "quyết định của CEO", "errors": "sổ lỗi", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
 }
 RUN_STATE_KEYS = ["bump_planned_date", "learn_last_date", "scan_last", "tg_sent_log", "company_founded_at", "company_founded_ts",
                   "dissolved_at", "dissolved_reason", "trial_warned", "capital_warned",

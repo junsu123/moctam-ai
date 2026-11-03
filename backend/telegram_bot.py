@@ -67,6 +67,8 @@ def send(text: str, buttons=None, chat_ids=None) -> list:
         except Exception as ex:
             _state["error"] = str(ex)
             print("[telegram] gửi lỗi:", ex)
+            import errors
+            errors.report("telegram", "Không gửi được tin nhắn Telegram", str(ex)[:300], screen="kpi")
     return out
 
 
@@ -505,8 +507,12 @@ def _poll():
                         handle_callback(u["callback_query"])
                 except Exception as ex:
                     print("[telegram] xử lý lỗi:", ex)
+                    import errors
+                    errors.report_exc("telegram", "Bot Telegram xử lý lệnh bị lỗi", ex, screen="kpi")
         except Exception as ex:
             _state["error"] = str(ex)[:200]
+            import errors
+            errors.report("telegram", "Bot Telegram không kết nối được", str(ex)[:300], screen="kpi")
             time.sleep(8)
 
 

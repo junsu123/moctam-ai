@@ -27,6 +27,9 @@ def publish_page(message: str) -> dict:
         data = r.json()
         if r.status_code == 200 and data.get("id"):
             return {"ok": True, "id": data["id"], "url": f"https://facebook.com/{data['id']}"}
-        return {"ok": False, "error": data.get("error", {}).get("message", r.text)}
+        err = data.get("error", {}).get("message", r.text)
     except Exception as e:
-        return {"ok": False, "error": str(e)}
+        err = str(e)
+    import errors
+    errors.report("fanpage", "Đăng Fanpage bị lỗi", str(err)[:400], screen="setup")
+    return {"ok": False, "error": err}

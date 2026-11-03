@@ -7,8 +7,8 @@ import time
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -18,6 +18,7 @@ import re
 import agents
 import browser_poster
 import db
+import errors
 import facebook
 import ceo
 import company
@@ -33,6 +34,15 @@ from llm import llm, MODEL
 
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
 app = FastAPI(title="Công ty Agent AI - Phòng Kinh doanh")
+
+
+@app.exception_handler(Exception)
+async def _unhandled(request: Request, exc: Exception):
+    """Lỗi bất ngờ ở bất kỳ thao tác nào: ghi vào sổ lỗi, trả về thông báo dễ hiểu kèm mã lỗi."""
+    eid = errors.report_exc("api", f"Lỗi khi xử lý {request.method} {request.url.path}", exc,
+                            screen=request.headers.get("x-screen") or None, action=request.headers.get("x-action", ""))
+    return JSONResponse({"detail": f"Phần mềm gặp lỗi: {str(exc).splitlines()[0][:160] if str(exc) else exc.__class__.__name__}. "
+                                   f"Xem chi tiết ở màn hình Lỗi (mã #{eid}).", "error_id": eid}, status_code=500)
 
 
 @app.on_event("startup")
@@ -791,6 +801,57 @@ def replace_sale(sid: int, r: Replace):
         return _sale_out(ceo.replace(sid, r.name, by="boss"))
     except ValueError as e:
         raise HTTPException(400, str(e))
+
+
+# ------------------------------------------------------------------ sổ lỗi
+@app.get("/api/errors")
+def errors_list(status: str = "open", source: str = ""):
+    return {"items": errors.listing(status, source), "new": errors.count_new(), "sources": errors.SOURCES,
+            "open": db.one("SELECT COUNT(*) n FROM errors WHERE status!='resolved'")["n"]}
+
+
+class ErrorIn(BaseModel):
+    title: str
+    message: str = ""
+    detail: str = ""
+    screen: str = ""
+    action: str = ""
+
+
+@app.post("/api/errors")
+def errors_add(e: ErrorIn):
+    """Giao diện gửi lỗi người dùng gặp ở bất kỳ màn hình nào."""
+    return {"id": errors.report("ui", e.title, e.message, e.detail, screen=e.screen or None, action=e.action)}
+
+
+class ErrorPatch(BaseModel):
+    status: str
+
+
+@app.patch("/api/errors/{eid}")
+def errors_patch(eid: int, p: ErrorPatch):
+    if p.status not in ("new", "seen", "resolved"):
+        raise HTTPException(400, "Trạng thái không hợp lệ")
+    db.run("UPDATE errors SET status=? WHERE id=?", (p.status, eid))
+    return {"ok": True, "new": errors.count_new()}
+
+
+@app.post("/api/errors/seen")
+def errors_seen():
+    db.run("UPDATE errors SET status='seen' WHERE status='new'")
+    return {"ok": True}
+
+
+@app.post("/api/errors/resolve-all")
+def errors_resolve_all():
+    db.run("UPDATE errors SET status='resolved' WHERE status!='resolved'")
+    return {"ok": True}
+
+
+@app.delete("/api/errors/resolved")
+def errors_clear():
+    db.run("DELETE FROM errors WHERE status='resolved'")
+    return {"ok": True}
 
 
 # ------------------------------------------------------------------ CEO

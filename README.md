@@ -282,6 +282,19 @@ cho nghỉ việc để hủy tuyển.
 và tuyển thay hiện thành đề xuất có nút **Duyệt / Không** trong phần mềm và trên Telegram. Sa thải theo luật KPI luôn
 được thực hiện.
 
+## Màn hình Lỗi
+
+Mọi lỗi đều được ghi về màn hình **Lỗi** (menu trái, chấm đỏ khi có lỗi mới):
+
+- Thao tác của sếp bị lỗi ở bất kỳ màn hình nào (nhập sai, phần mềm báo từ chối, mất kết nối) và lỗi hiển thị của giao diện.
+- Lỗi trong các việc tự động: đăng bài, up bài, quét bình luận, Chrome của sale, nick bị Facebook chặn, Telegram,
+  AI Claude, Fanpage, lịch tự động. Lỗi bất ngờ của phần mềm được ghi kèm chi tiết kỹ thuật và mã lỗi.
+
+Mỗi lỗi có: màn hình xảy ra, thời gian, số lần lặp (lỗi giống nhau được gộp lại), **cách xử lý**, nút mở đúng màn hình
+cần sửa, ảnh chụp màn hình lúc lỗi (khi sale đăng bài hoặc up bài), nút **Sao chép** để gửi cho người hỗ trợ.
+Thông báo lỗi ở các màn hình khác có nút **Xem lỗi** dẫn thẳng tới đây. Sửa xong bấm **Đã xử lý**; lỗi đã xử lý mà xảy
+ra lại sẽ hiện thành lỗi mới. Lỗi đã xử lý tự xóa sau 30 ngày.
+
 ## Bắt đầu chạy thật
 
 Sau khi thử nghiệm xong: **Cài đặt → Bắt đầu chạy thật** → gõ `CHAY THAT` → **Xóa dữ liệu thử nghiệm**.
@@ -355,6 +368,7 @@ backend/
   facebook.py    Đăng Fanpage qua Graph API
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, đăng bài, lấy link bài, up bài
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
+  errors.py      Sổ lỗi: ghi lỗi từ mọi màn hình và việc tự động, gộp lỗi trùng, gợi ý cách xử lý
   ceo.py         CEO: sa thải theo luật, tuyển người thay, tăng người theo mốc doanh thu và tiềm năng Facebook
   company.py     Công ty: vốn, chi phí, doanh thu, đánh giá KPI tháng, sa thải, giải thể
   kpi.py         KPI: nhận diện SĐT, tiến độ, chia theo nick, lịch sử; chuyển khách cho sếp, kịch bản tư vấn

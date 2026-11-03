@@ -171,6 +171,9 @@ class LLM:
             return "".join(b.text for b in resp.content if getattr(b, "type", "") == "text").strip()
         except Exception as e:  # lỗi mạng/khóa -> vẫn chạy bằng mô phỏng
             print(f"[LLM] lỗi: {e}")
+            import errors
+            errors.report("ai", f"Gọi AI Claude bị lỗi ({TASKS.get(task, task)})",
+                          str(e)[:500] + " — tạm dùng nội dung mô phỏng", screen="setup")
             return self._mock(mock) if mock is not None else f"(Lỗi gọi AI: {e})"
 
     def json(self, system: str, prompt: str, mock=None, max_tokens: int = 1200, task: str = "other"):
@@ -195,6 +198,8 @@ class LLM:
             return b.id
         except Exception as e:
             print(f"[LLM] không tạo được lô: {e}")
+            import errors
+            errors.report("ai", "Không gửi được lô viết bài cho AI Claude", str(e)[:500], screen="setup")
             return None
 
     def batch_status(self, batch_id: str) -> str:

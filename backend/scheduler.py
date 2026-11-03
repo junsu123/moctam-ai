@@ -102,5 +102,7 @@ def start():
                 _tick()
             except Exception as e:
                 print("[scheduler]", e)
+                import errors
+                errors.report_exc("scheduler", "Lịch tự động gặp lỗi", e)
             time.sleep(30)
     threading.Thread(target=loop, daemon=True).start()

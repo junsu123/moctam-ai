@@ -21,6 +21,8 @@ def set_status(agent_id: str, state: str, text: str):
 
 # ---------------------------------------------------------------- Khoa: số liệu
 def stats() -> dict:
+    import errors
+    _err_new = errors.count_new()
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
     c = lambda sql, p=(): db.one(sql, p)["n"]
     posted = c("SELECT COUNT(*) n FROM posts WHERE status='posted'")
@@ -28,7 +30,7 @@ def stats() -> dict:
     best = db.one("""SELECT g.name, SUM(p.leads) l FROM posts p JOIN groups g ON g.id=p.group_id
                      WHERE p.status='posted' GROUP BY g.id ORDER BY l DESC LIMIT 1""")
     groups = db.q("SELECT * FROM groups")
-    return {
+    return {"errors_new": _err_new,
         "drafts": c("SELECT COUNT(*) n FROM posts WHERE status='draft'"),
         "approved": c("SELECT COUNT(*) n FROM posts WHERE status IN ('approved','scheduled')"),
         "posted_total": posted,

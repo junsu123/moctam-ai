@@ -160,6 +160,21 @@ label.row.small input{margin-top:3px;flex:none}
 .post .thumbs img{width:52px;height:52px}
 .fname{font-size:11px;background:var(--panel-2);border-radius:6px;padding:2px 6px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
 #coBody{display:flex;flex-direction:column;gap:16px}
+.nav .badge.err{background:var(--danger)}
+.err-tools{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.err-tools select{padding:5px 8px}
+.err-tools label{align-items:center}
+.err-list{display:flex;flex-direction:column;gap:10px}
+.ecard{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--danger);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.ecard.seen{border-left-color:var(--honey)}.ecard.resolved{border-left-color:var(--line);opacity:.75}
+.ecard-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.ecard-h h3{margin:0;font-size:15px}
+.ecard .meta{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+.ecard .emsg{font-size:13.5px;white-space:pre-wrap;word-break:break-word}
+.ecard .fix{background:var(--accent-soft);border-radius:8px;padding:8px 10px;font-size:13px}
+.ecard pre{white-space:pre-wrap;word-break:break-all;font-size:11.5px;background:var(--panel-2);padding:8px;border-radius:8px;max-height:220px;overflow:auto;margin:6px 0 0}
+.ecard .actions{display:flex;flex-wrap:wrap;gap:6px}
+.toast a{color:inherit;text-decoration:underline;margin-left:8px;font-weight:700}
 .glink{margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:300px}
 .glink a{word-break:break-all}
 .glink-f{gap:6px;flex-wrap:nowrap}.glink-f input{min-width:220px;padding:4px 8px;font-size:12.5px}
@@ -323,6 +338,8 @@ tbody tr.sel td{background:var(--accent-soft)}
   .nav{flex-direction:row;justify-content:space-between;width:100%}
   .nav button{flex-direction:column;gap:2px;font-size:10px;padding:5px 2px;flex:1;align-items:center}
   .nav .badge{display:none}
+  .nav .badge.err:not([hidden]){display:block;position:absolute;top:2px;right:calc(50% - 16px);width:8px;height:8px;padding:0;font-size:0;border-radius:50%}
+  .nav button{position:relative}
   .main{padding-bottom:90px;padding-left:max(16px,env(safe-area-inset-left,0px))}
   .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .board,.grid2,.grid3{grid-template-columns:minmax(0,1fr)}
@@ -348,6 +365,7 @@ tbody tr.sel td{background:var(--accent-soft)}
       <button data-v="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8l8-4 8 4v9l-8 4-8-4zM4 8l8 4 8-4M12 12v9"/></svg>Sản phẩm</button>
       <button data-v="kpi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>KPI & Báo cáo<span class="badge" id="bossBadge" hidden></span></button>
       <button data-v="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5M22 9v6"/></svg>Đào tạo</button>
+      <button data-v="errors"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.5"/></svg>Lỗi<span class="badge err" id="errBadge" hidden></span></button>
       <button data-v="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Cài đặt</button>
     </nav>
     <div class="mode" id="modeBox"><span class="dot"></span>Đang kết nối…</div>
@@ -605,6 +623,19 @@ tbody tr.sel td{background:var(--accent-soft)}
     </section>
 
     <!-- CÀI ĐẶT -->
+    <!-- LỖI -->
+    <section class="view" id="v-errors" hidden>
+      <div class="vh"><div><h1>Lỗi</h1><p>Mọi lỗi ở bất kỳ màn hình nào và trong các việc tự động (đăng bài, up bài, quét bình luận, Chrome, Telegram, AI, lịch) đều được ghi ở đây, kèm cách xử lý. Lỗi giống nhau được gộp lại và đếm số lần lặp.</p></div>
+        <div class="row wrap"><button class="btn" type="button" id="errCopyAll">Sao chép lỗi chưa xử lý</button><button class="btn" type="button" id="errResolveAll">Đánh dấu tất cả đã xử lý</button></div></div>
+      <div class="err-tools">
+        <div class="seg" role="group" aria-label="Lọc theo trạng thái"><button type="button" data-es="open" class="on">Chưa xử lý</button><button type="button" data-es="resolved">Đã xử lý</button><button type="button" data-es="all">Tất cả</button></div>
+        <label class="row small" for="errSrc" style="gap:6px">Nguồn<select id="errSrc"><option value="">Tất cả nguồn</option></select></label>
+        <span class="small muted" id="errSum"></span>
+      </div>
+      <div id="errList" class="err-list"></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn sm ghost danger" type="button" id="errClear">Xóa các lỗi đã xử lý</button></div>
+    </section>
+
     <section class="view" id="v-setup" hidden>
       <div class="vh"><div><h1>Cài đặt</h1><p>Chi phí AI, lịch làm việc tự động, giọng văn thương hiệu và kết nối Fanpage.</p></div></div>
       <form class="card" id="costForm">
@@ -744,7 +775,9 @@ const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmtTime = s => s ? s.slice(11, 16) : "";
 const fmtDate = s => s ? `${s.slice(8,10)}/${s.slice(5,7)}` : "—";
-function toast(t){ const el=$("#toast"); el.textContent=t; el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,2600); }
+function toast(t){ const el=$("#toast"); const isErr=Date.now()-(ERR.lastAt||0)<2500&&ST.view!=="errors";
+  el.textContent=t; if(isErr){ const a=document.createElement("a"); a.href="#errors"; a.textContent="Xem lỗi"; el.appendChild(a); }
+  el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,isErr?6000:2600); }
 async function copyText(t){ try{ await navigator.clipboard.writeText(t); toast("Đã sao chép nội dung"); }catch(e){ toast("Không sao chép được, hãy bôi đen và sao chép thủ công"); } }
 const STATUS_TXT = {idle:"Rảnh", working:"Đang làm", meeting:"Đang họp", talking:"Đang nói"};
 const LEAD_ST = {new:"Mới", contacted:"Đã liên hệ", sample:"Đã gửi mẫu", ordered:"Đã nhập hàng", lost:"Không mua"};
@@ -861,6 +894,15 @@ const Demo = (() => {
     if(!/^https?:\/\//i.test(u)) u="https://"+u.replace(/^\/+/,""); u=u.replace(/^https?:\/\/(m|mbasic|web|touch|mobile)\.facebook\.com/i,"https://www.facebook.com").replace(/^https?:\/\/(facebook\.com|fb\.com|www\.fb\.com)/i,"https://www.facebook.com");
     const g=u.match(/^(https:\/\/www\.facebook\.com\/groups\/[^/?#]+)/i); if(g) return {url:g[1]}; if(/^https:\/\/www\.facebook\.com\/share\/g\/[^/?#]+/i.test(u)) return {url:u};
     return {err:"Link này không phải link nhóm. Mở nhóm trên Facebook (máy tính), copy link trên thanh địa chỉ, có dạng https://www.facebook.com/groups/…"}; }
+  S.errors=[
+    {id:3,source:"post",title:"Đăng bài #2 vào Hội Livestream bán hàng bị lỗi",message:"Không tìm thấy nút Đăng trong hộp soạn bài. Nút đang thấy: Đóng, Ảnh/video, Gắn thẻ người khác, Cảm xúc/hoạt động, Tiếp",detail:"Nick: Phương Sỉ Tận Gốc · Bài: Combo trà túi lọc cho shop livestream",hint:"Facebook vừa đổi chữ trên nút. Lỗi có ghi tên các nút sale đang thấy: thêm đúng chữ đó vào backend/fb_selectors.json, hoặc bấm Sao chép rồi gửi cho người hỗ trợ.",screen:"posts",count:2,status:"new",created_at:"2026-11-03 09:12:00",last_at:"2026-11-03 15:40:00",screenshot:null},
+    {id:2,source:"post",title:"Đăng bài #5 vào Cộng đồng bán hàng online toàn quốc bị lỗi",message:"Nhóm “Cộng đồng bán hàng online toàn quốc” chưa có link. Vào Hội nhóm, bấm “Thêm link” ở dòng nhóm này rồi bấm Đăng lại",hint:"Vào Hội nhóm, bấm “Thêm link” ở dòng nhóm đó, dán link nhóm rồi đăng lại.",screen:"groups",count:1,status:"new",created_at:"2026-11-03 08:30:00",last_at:"2026-11-03 08:30:00"},
+    {id:1,source:"telegram",title:"Không gửi được tin nhắn Telegram",message:"Client error '400 Bad Request': chat not found",hint:"Kết nối Telegram bị lỗi. Vào KPI & Báo cáo, kiểm tra token và ghép nối lại bot.",screen:"kpi",count:3,status:"seen",created_at:"2026-11-02 21:30:00",last_at:"2026-11-03 09:00:00"}];
+  const ESRC={ui:"Giao diện",api:"Phần mềm",post:"Đăng bài",bump:"Up bài",scan:"Quét bình luận",browser:"Chrome",nick:"Nick Facebook",telegram:"Telegram",ai:"AI Claude",fanpage:"Fanpage",scheduler:"Lịch tự động"};
+  const EHINT=[[/chưa có link/i,"Vào Hội nhóm, bấm “Thêm link” ở dòng nhóm đó, dán link nhóm rồi đăng lại.","groups"],[/không phải link nhóm|Dán link nhóm/i,"Mở nhóm trên Facebook bằng máy tính, copy địa chỉ trên thanh trình duyệt (dạng https://www.facebook.com/groups/…) rồi dán lại.","groups"],[/Nhập (số tiền|vốn)|Nhập doanh thu/i,"Nhập số tiền bằng số, ví dụ 2500000, 2,5tr hoặc 800k.",null]];
+  function demoErrors(q){ const st=new URLSearchParams(q||"").get("status")||"open", src=new URLSearchParams(q||"").get("source")||"";
+    const items=S.errors.filter(e=>(st==="open"?e.status!=="resolved":st==="all"?true:e.status===st)&&(!src||e.source===src)).map(e=>({...e,source_label:ESRC[e.source]})).sort((a,b)=>b.last_at.localeCompare(a.last_at));
+    return {items,new:S.errors.filter(e=>e.status==="new").length,open:S.errors.filter(e=>e.status!=="resolved").length,sources:ESRC}; }
   function demoCompany(){
     const c=S.co; const ai=Math.round(0.42*25800); const revenue=c.orders.reduce((a,o)=>a+o.amount,0); const spent=ai;
     const by_task=[["posts","Viết bài đăng (Lan)",.19,96],["meeting","Họp giao ban (cả đội)",.11,230],["replies","Tư vấn, trả lời khách (Hà, sale)",.08,61],["learning","Tự học mỗi đêm (cả đội)",.04,23]].map(([task,label,usd,calls])=>({task,label,usd,calls,vnd:Math.round(usd*25800)}));
@@ -903,7 +945,7 @@ const Demo = (() => {
     return {drafts:c(p=>p.status==="draft"),approved:c(p=>["approved","scheduled"].includes(p.status)),posted_total:c(p=>p.status==="posted"),posted_today:c(p=>p.status==="posted"),
       groups:S.groups.length,groups_ready:S.groups.filter(ready).length,leads:S.leads.length,leads_new:S.leads.filter(l=>l.status==="new").length,
       leads_hot:S.leads.filter(l=>l.score>=75&&!["ordered","lost"].includes(l.status)).length,leads_ordered:S.leads.filter(l=>l.status==="ordered").length,
-      tasks_open:S.tasks.filter(t=>t.status!=="done").length,ai_live:false,failed:c(p=>p.status==="failed"),kpi:demoKpi().today,company:S.co.status==="setup"?null:{status:S.co.status,day:S.co.day,trial_days:S.co.trial_days,capital:S.co.capital,capital_left:demoCompany().finance.left,revenue:demoCompany().finance.revenue,orders:S.co.orders.length,at_risk:demoCompany().sales.filter(r=>r.review&&["warn","danger"].includes(r.review.risk)).map(r=>`${r.name} (${r.review.leads_phone}/${r.review.target_so_far})`)},bumps_today:S.posts.reduce((n,p)=>n+(p.bump_count||0),0),sales_total:S.sales.length,sales_ok:S.sales.filter(x=>x.login_status==="ok"&&x.auto_post).length,sales_problem:S.sales.filter(x=>x.login_status!=="ok").length,best_group:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",lead_per_post:0};
+      errors_new:S.errors.filter(e=>e.status==="new").length,tasks_open:S.tasks.filter(t=>t.status!=="done").length,ai_live:false,failed:c(p=>p.status==="failed"),kpi:demoKpi().today,company:S.co.status==="setup"?null:{status:S.co.status,day:S.co.day,trial_days:S.co.trial_days,capital:S.co.capital,capital_left:demoCompany().finance.left,revenue:demoCompany().finance.revenue,orders:S.co.orders.length,at_risk:demoCompany().sales.filter(r=>r.review&&["warn","danger"].includes(r.review.risk)).map(r=>`${r.name} (${r.review.leads_phone}/${r.review.target_so_far})`)},bumps_today:S.posts.reduce((n,p)=>n+(p.bump_count||0),0),sales_total:S.sales.length,sales_ok:S.sales.filter(x=>x.login_status==="ok"&&x.auto_post).length,sales_problem:S.sales.filter(x=>x.login_status!=="ok").length,best_group:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",lead_per_post:0};
   }
   const TOPICS=["Tuần này nên tập trung đẩy sản phẩm nào cho khách sỉ?","Đăng nhiều bài mỗi ngày hay ít bài nhưng chất lượng hơn?","Có nên công khai giá sỉ ngay trong bài đăng hội nhóm không?","Gửi mẫu thử miễn phí cho khách sỉ mới: có đáng chi phí không?","Nên ưu tiên tệp khách livestream hay tệp khách chạy quảng cáo?","Có nên đẩy dịch vụ in nhãn riêng (OEM) cho shop online không?"];
   const DEB={lan:["Em nghĩ phải mạnh dạn hơn: nội dung có video thật, câu chuyện xưởng sẽ khác biệt so với bài nguồn hàng đăng tràn lan.","Em đồng ý cần số liệu với anh Khoa, nhưng không thử nội dung mới thì lấy đâu ra số liệu để so ạ?"],
@@ -954,6 +996,7 @@ const Demo = (() => {
       if(P==="/products") return S.products.map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g)}));
       if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,tg_token:S.settings.tg_token?"••••••":"",models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
       if(P==="/company") return demoCompany();
+      if(P==="/errors") return demoErrors(qs);
       if(P==="/ceo") return demoCeo();
       if(P==="/reset"){ const c=(n,l)=>n?[{label:l,count:n}]:[]; return {delete:[...c(S.posts.length,"bài đăng"),...c(S.leads.length,"khách hàng"),...c(S.meetings.length,"cuộc họp"),...c(S.activity.length,"nhật ký hoạt động"),...c(S.lessons.length,"bài học của agent"),...c(S.tasks.length,"việc được giao")],keep:{sales:S.sales.filter(x=>!x.is_sample).length,products:0,groups:0},samples:{products:S.products.length,groups:S.groups.length,sales:S.sales.filter(x=>x.is_sample).length},shots:0}; }
       if(P==="/sample-data") return {sales:S.sales.filter(x=>x.is_sample).length,leads:S.leads.filter(x=>x.is_sample).length,groups:S.groups.length,products:S.products.length};
@@ -1031,6 +1074,13 @@ const Demo = (() => {
     if(method==="DELETE"&&(m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const path=new URLSearchParams(qs).get("path"); pr.images=JSON.stringify(JSON.parse(pr.images||"[]").filter(x=>x!==path)); return {ok:true}; }
     if(method==="POST"&&P==="/company/found"){ Object.assign(S.co,{status:"active",day:1,capital:body.capital,orders:[],founded_at:today()}); log("minh","Thành lập công ty",`Vốn ${body.capital}`); return demoCompany(); }
     if(method==="POST"&&P==="/company/capital"){ S.co.capital+=body.amount; return demoCompany(); }
+    if(method==="POST"&&P==="/errors"){ const fp=body.title+"|"+body.message; const o=S.errors.find(e=>e.status!=="resolved"&&e.title+"|"+e.message===fp);
+      if(o){ o.count++; o.last_at=now(); o.status="new"; return {id:o.id}; } const h=EHINT.find(([rx])=>rx.test(body.title+" "+body.message));
+      const e={id:id(),source:"ui",...body,hint:h?h[1]:null,screen:body.screen||(h&&h[2])||null,count:1,status:"new",created_at:now(),last_at:now()}; S.errors.unshift(e); return {id:e.id}; }
+    if(method==="POST"&&P==="/errors/seen"){ S.errors.forEach(e=>{ if(e.status==="new") e.status="seen"; }); return {ok:true}; }
+    if(method==="POST"&&P==="/errors/resolve-all"){ S.errors.forEach(e=>e.status="resolved"); return {ok:true}; }
+    if(method==="PATCH"&&(m=P.match(/^\/errors\/(\d+)$/))){ const e=S.errors.find(x=>x.id==m[1]); if(e) e.status=body.status; return {ok:true}; }
+    if(method==="DELETE"&&P==="/errors/resolved"){ S.errors=S.errors.filter(e=>e.status!=="resolved"); return {ok:true}; }
     if(P==="/ceo"&&method==="PUT"){ const st=S.ceoSt; if(body.mode) st.mode=body.mode; if(body.potential!=null) st.potential_on=body.potential; if(body.milestones) st.milestones=body.milestones.slice().sort((a,b)=>a.amount-b.amount); return demoCeo(); }
     if(method==="POST"&&(m=P.match(/^\/ceo\/decisions\/(\d+)$/))){ const d=S.ceoSt.proposed.find(x=>x.id==m[1]); S.ceoSt.proposed=S.ceoSt.proposed.filter(x=>x!==d);
       if(d&&body.approve){ demoHire(d.reason); } else if(d){ S.ceoSt.decisions.unshift({...d,status:"rejected"}); } return demoCeo(); }
@@ -1056,14 +1106,37 @@ const Demo = (() => {
 
 /* =========================================================== API */
 let DEMO = false;
+const VIEW_NAME={office:"Văn phòng",company:"Công ty",meeting:"Phòng họp",posts:"Bài đăng",sales:"Nhân viên sale",groups:"Hội nhóm",leads:"Khách hàng",products:"Sản phẩm",kpi:"KPI & Báo cáo",learn:"Đào tạo",setup:"Cài đặt",errors:"Lỗi"};
+const ERR={queue:[],seen:{},lastAt:0};
+/* Ghi lỗi người dùng gặp ở màn hình hiện tại vào sổ lỗi (gộp lỗi trùng trong 10 giây, giữ hàng đợi khi mất kết nối) */
+function reportUi(title,message,detail="",action=""){
+  const key=title+"|"+message; if(ERR.seen[key]&&Date.now()-ERR.seen[key]<10000) return; ERR.seen[key]=Date.now(); ERR.lastAt=Date.now();
+  const e={title:String(title).slice(0,200),message:String(message||"").slice(0,1000),detail:String(detail||"").slice(0,4000),screen:ST.view||"",action:String(action).slice(0,200)};
+  if(DEMO){ Demo.handle("POST","/api/errors",e); return errBadge(); }
+  ERR.queue.push(e); if(ERR.queue.length>30) ERR.queue.shift(); flushErr();
+}
+async function flushErr(){
+  while(ERR.queue.length){ const e=ERR.queue[0];
+    try{ const r=await fetch("/api/errors",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(e)}); if(!r.ok) break; ERR.queue.shift(); }
+    catch(x){ break; } }
+  errBadge();
+}
 async function api(path, method="GET", body){
-  if(DEMO) return Demo.handle(method, "/api"+path, body||{});
+  const act=`${method} ${path}`;
+  if(DEMO){ try{ return await Demo.handle(method, "/api"+path, body||{}); }
+    catch(e){ if(!path.startsWith("/errors")) reportUi(`Thao tác lỗi ở màn hình ${VIEW_NAME[ST.view]||ST.view}`,e.message,"",act); throw e; } }
   let r;
-  try{ r = await fetch("/api"+path, {method, headers:{"content-type":"application/json"}, body: body?JSON.stringify(body):undefined}); setOffline(false); }
-  catch(e){ setOffline(true); throw new Error("Mất kết nối với phần mềm trên máy"); }
-  if(!r.ok){ const t=await r.text(); let m=t; try{ m=JSON.parse(t).detail||t; }catch(e){} throw new Error(String(m).slice(0,200)); }
+  try{ r = await fetch("/api"+path, {method, headers:{"content-type":"application/json","x-screen":ST.view||"","x-action":encodeURIComponent(act)}, body: body?JSON.stringify(body):undefined}); setOffline(false); if(ERR.queue.length) flushErr(); }
+  catch(e){ setOffline(true); if(method!=="GET") reportUi("Mất kết nối với phần mềm trên máy","Mất kết nối với phần mềm trên máy khi thao tác ở màn hình "+(VIEW_NAME[ST.view]||ST.view),"",act); throw new Error("Mất kết nối với phần mềm trên máy"); }
+  if(!r.ok){ const t=await r.text(); let m=t, eid=null; try{ const j=JSON.parse(t); m=j.detail||t; eid=j.error_id; }catch(e){}
+    m=typeof m==="string"?m:JSON.stringify(m);
+    if(eid){ ERR.lastAt=Date.now(); errBadge(); }   // lỗi phần mềm: máy chủ đã ghi sẵn
+    else if(!path.startsWith("/errors")&&(method!=="GET"||r.status>=500)) reportUi(`Thao tác lỗi ở màn hình ${VIEW_NAME[ST.view]||ST.view}`,m,`${act} → HTTP ${r.status}`,act);
+    throw new Error(String(m).slice(0,300)); }
   return r.json();
 }
+addEventListener("error",e=>{ if(e.message) reportUi("Lỗi hiển thị ở màn hình "+(VIEW_NAME[ST.view]||ST.view||""),e.message,`${e.filename||""}:${e.lineno||""}:${e.colno||""}\n${e.error&&e.error.stack||""}`); });
+addEventListener("unhandledrejection",e=>{ const r=e.reason; const m=r&&r.message||String(r); if(/Mất kết nối/.test(m)) return; reportUi("Lỗi xử lý ở màn hình "+(VIEW_NAME[ST.view]||ST.view||""),m,r&&r.stack||""); });
 async function detect(){
   try{
     const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),2500);
@@ -1335,7 +1408,7 @@ function show(v){
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
   if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
-  if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
 $("#nav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) location.hash=b.dataset.v; });
@@ -1352,7 +1425,7 @@ async function refresh(){
       .map(([l,v,w])=>`<div class="kpi${w?" warn":""}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
     $("#team").innerHTML=agents.map(a=>`<button class="member" data-a="${a.id}">${avaHtml(a.id)}<span class="who"><b>${esc(a.name)} ${a.level?`<span class="lv">Cấp ${a.level}</span>`:""} <span class="muted" style="display:inline;font-weight:500">${esc(a.role)}</span></b><span>${esc(a.status?.text||"")}</span></span><span class="chip ${a.status?.state||""}">${STATUS_TXT[a.status?.state]||"Rảnh"}</span></button>`).join("");
     $("#feed").innerHTML=dash.activity.length?dash.activity.map(x=>`<li>${avaHtml(x.agent_id)}<div><b>${esc(x.action)}</b> · ${esc(x.detail)}<time>${esc(AGENT[x.agent_id]?.name||"")} · ${fmtTime(x.created_at)} ${fmtDate(x.created_at)}</time></div></li>`).join(""):`<li class="muted">Chưa có hoạt động.</li>`;
-    const db=$("#draftBadge"); db.hidden=!s.drafts; db.textContent=s.drafts;
+    const db=$("#draftBadge"); db.hidden=!s.drafts; db.textContent=s.drafts; setErrBadge(s.errors_new||0);
     if(!DEMO&&s.ai_live) $("#modeBox").innerHTML=`<span class="dot live"></span><b>AI đang hoạt động</b><br>Chi phí tháng này: <b>${usd(s.ai_cost_month||0)}</b>`;
     if($("#bumpToday")) $("#bumpToday").textContent=`Hôm nay đã up ${s.bumps_today||0} lượt`;
     companyBanner(s.company);
@@ -1673,6 +1746,42 @@ $("#coBody").addEventListener("click",async e=>{
   }catch(err){ toast(err.message); }
 });
 $("#coBody").addEventListener("change",async e=>{ if(e.target.dataset.ceo==="pot"){ await api("/ceo","PUT",{potential:e.target.checked}); toast(e.target.checked?"CEO sẽ tự tuyển thêm khi thấy tiềm năng":"Tắt tuyển thêm theo tiềm năng"); loadCompany(); } });
+/* --------------------------------------------- lỗi */
+const ESRC_ICON={ui:"🖱",api:"⚙️",post:"📝",bump:"🔁",scan:"💬",browser:"🌐",nick:"🔒",telegram:"✈️",ai:"🤖",fanpage:"📣",scheduler:"⏰"};
+const EST={status:"open",source:""};
+function setErrBadge(n){ const b=$("#errBadge"); b.hidden=!n; b.textContent=n>99?"99+":n; }
+async function errBadge(){ try{ const r=await api("/errors?status=new"); setErrBadge(r.new); if(ST.view==="errors") loadErrors(); }catch(e){} }
+function errText(e){ return `[Lỗi #${e.id}] ${e.last_at} · ${e.source_label}${e.screen?` · màn hình ${VIEW_NAME[e.screen]||e.screen}`:""}${e.count>1?` · lặp ${e.count} lần`:""}
+${e.title}
+${e.message||""}${e.action?`\nThao tác: ${decodeURIComponent(e.action)}`:""}${e.detail?`\n--- chi tiết ---\n${e.detail}`:""}`; }
+async function loadErrors(){
+  const r=await api(`/errors?status=${EST.status}&source=${encodeURIComponent(EST.source)}`); ST.errors=r.items; setErrBadge(r.new);
+  const sel=$("#errSrc"); if(sel.options.length<2) sel.insertAdjacentHTML("beforeend",Object.entries(r.sources).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join(""));
+  $("#errSum").textContent=`${r.open} lỗi chưa xử lý · ${r.new} lỗi mới`;
+  $("#errList").innerHTML=r.items.length?r.items.map(e=>`<article class="ecard ${e.status}" data-e="${e.id}">
+    <div class="ecard-h"><div><h3>${ESRC_ICON[e.source]||"⚠️"} ${esc(e.title)}</h3>
+      <div class="meta"><span>${esc(e.source_label)}</span>${e.screen?`<span>Màn hình: ${esc(VIEW_NAME[e.screen]||e.screen)}</span>`:""}<span>${fmtTime(e.last_at)} ${fmtDate(e.last_at)}</span>${e.count>1?`<span><b>Lặp ${e.count} lần</b> từ ${fmtDate(e.created_at)}</span>`:""}<span>#${e.id}</span></div></div>
+      <span class="chip ${e.status==="new"?"bad":e.status==="seen"?"warn":"ok"}">${{new:"Mới",seen:"Đã xem",resolved:"Đã xử lý"}[e.status]}</span></div>
+    ${e.message?`<div class="emsg">${esc(e.message)}</div>`:""}
+    ${e.hint?`<div class="fix"><b>Cách xử lý:</b> ${esc(e.hint)}</div>`:'<div class="fix">Chưa có hướng dẫn cho lỗi này. Bấm <b>Sao chép</b> và gửi cho người hỗ trợ.</div>'}
+    ${e.detail||e.action?`<details><summary class="small">Chi tiết kỹ thuật</summary><pre>${esc((e.action?"Thao tác: "+decodeURIComponent(e.action)+"\n":"")+(e.detail||""))}</pre></details>`:""}
+    <div class="actions">${e.screen&&e.screen!=="errors"?`<a class="btn sm primary" href="#${esc(e.screen)}">Mở màn hình ${esc(VIEW_NAME[e.screen]||e.screen)}</a>`:""}
+      ${e.screenshot?`<a class="btn sm" href="${esc(e.screenshot)}" target="_blank" rel="noopener">Ảnh chụp lúc lỗi</a>`:""}
+      <button class="btn sm" type="button" data-ecopy="${e.id}">Sao chép</button>
+      ${e.status!=="resolved"?`<button class="btn sm" type="button" data-eres="${e.id}">Đã xử lý</button>`:`<button class="btn sm ghost" type="button" data-eopen="${e.id}">Mở lại</button>`}</div>
+  </article>`).join(""):`<div class="empty">${EST.status==="open"?"Không có lỗi nào cần xử lý. Khi có lỗi ở bất kỳ màn hình nào, lỗi sẽ hiện ở đây kèm cách xử lý.":"Không có lỗi nào."}</div>`;
+  if(r.new&&EST.status!=="resolved") api("/errors/seen","POST").catch(()=>{});   // đã mở màn hình Lỗi: lỗi mới chuyển sang Đã xem
+}
+$("#errList").addEventListener("click",async ev=>{ const t=ev.target; let b;
+  if((b=t.closest("[data-ecopy]"))){ const e=ST.errors.find(x=>x.id==b.dataset.ecopy); return copyText(errText(e)); }
+  if((b=t.closest("[data-eres]"))){ await api(`/errors/${b.dataset.eres}`,"PATCH",{status:"resolved"}); toast("Đã đánh dấu đã xử lý"); return loadErrors(); }
+  if((b=t.closest("[data-eopen]"))){ await api(`/errors/${b.dataset.eopen}`,"PATCH",{status:"seen"}); return loadErrors(); }
+});
+document.querySelectorAll("[data-es]").forEach(b=>b.onclick=()=>{ EST.status=b.dataset.es; document.querySelectorAll("[data-es]").forEach(x=>x.classList.toggle("on",x===b)); loadErrors(); });
+$("#errSrc").onchange=e=>{ EST.source=e.target.value; loadErrors(); };
+$("#errCopyAll").onclick=async()=>{ const r=await api("/errors?status=open"); if(!r.items.length) return toast("Không có lỗi nào chưa xử lý"); copyText(r.items.map(errText).join("\n\n==========\n\n")); };
+$("#errResolveAll").onclick=async()=>{ await api("/errors/resolve-all","POST"); toast("Đã đánh dấu tất cả đã xử lý"); loadErrors(); };
+$("#errClear").onclick=async e=>{ const b=e.currentTarget; if(!confirmInline(b)) return; await api("/errors/resolved","DELETE"); toast("Đã xóa các lỗi đã xử lý"); loadErrors(); };
 function companyBanner(co){
   const b=$("#coBanner"), ov=$("#closedOverlay"), badge=$("#coBadge");
   ov.hidden=!(co&&co.status==="dissolved"); if(co&&co.status==="dissolved") $("#closedReason").textContent="";

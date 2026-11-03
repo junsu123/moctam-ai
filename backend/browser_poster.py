@@ -433,6 +433,10 @@ def _job_check(pw, sale_id: int):
 
 
 def _block(sale_id: int, reason: str):
+    import errors
+    s = db.one("SELECT name, fb_name FROM sales WHERE id=?", (sale_id,)) or {}
+    errors.report("nick", f"Nick {s.get('fb_name') or s.get('name') or sale_id} bị Facebook chặn hoặc kiểm tra", reason,
+                  screen="sales", ref_type="sale", ref_id=sale_id)
     _set_login(sale_id, "checkpoint", reason)
     db.run("UPDATE sales SET auto_post=0 WHERE id=?", (sale_id,))
     db.run("UPDATE posts SET status='approved', sale_id=NULL, scheduled_for=NULL WHERE sale_id=? AND status='scheduled'",
@@ -714,6 +718,8 @@ def _job_scan(pw, sale_id: int, post_ids: list[int]):
         _block(sale_id, str(e))
     except Exception as e:
         db.log(aid, "Lỗi quét bình luận", str(e).splitlines()[0][:160])
+        import errors
+        errors.report_exc("scan", f"Sale #{sale_id} quét bình luận bị lỗi", e, screen="kpi", ref_type="sale", ref_id=sale_id)
     finally:
         try:
             ctx.close()
@@ -724,6 +730,11 @@ def _job_scan(pw, sale_id: int, post_ids: list[int]):
 
 # ---------------------------------------------------------------- up bài: bình luận ảnh sản phẩm
 def _bump_done(bump_id: int, status: str, err: str | None = None, shot: str | None = None, image: str | None = None):
+    if status == "failed":
+        import errors
+        b = db.one("SELECT post_id FROM bumps WHERE id=?", (bump_id,)) or {}
+        errors.report("bump", f"Up bài #{b.get('post_id') or '?'} bị lỗi", err or "", screen="posts",
+                      ref_type="post", ref_id=b.get("post_id"), screenshot=shot)
     db.run("UPDATE bumps SET status=?, error=?, screenshot=COALESCE(?, screenshot), image=COALESCE(?, image), done_at=? WHERE id=?",
            (status, err, shot, image, db.now(), bump_id))
 
@@ -771,6 +782,8 @@ def _job_bump(pw, sale_id: int, bump_id: int):
                 raise
             except Exception as e:
                 print("[scan]", e)
+                import errors
+                errors.report_exc("scan", f"Quét bình luận bài #{post['id']} bị lỗi", e, screen="kpi")
         if any(t.lower() in body for t in s["removed_texts"]):
             db.run("UPDATE posts SET permalink_status='removed', bump_enabled=0 WHERE id=?", (post["id"],))
             _bump_done(bump_id, "skipped", "Bài đã bị xóa hoặc ẩn, đã ngừng up bài này")
@@ -845,8 +858,18 @@ def _fail(page, post_id: int, msg: str, dry_run: bool):
         rel = f"/shots/{shot.name}"
     except Exception:
         rel = None
+    import errors
+    p = db.one("SELECT p.*, g.name group_name, s.name sale_name FROM posts p LEFT JOIN groups g ON g.id=p.group_id "
+               "LEFT JOIN sales s ON s.id=p.sale_id WHERE p.id=?", (post_id,)) or {}
+    where = p.get("group_name") or {"profile": "trang cá nhân"}.get(p.get("target_type"), "")
+    errors.report("post", f"{'Đăng thử' if dry_run else 'Đăng'} bài #{post_id}{' vào ' + where if where else ''} bị lỗi",
+                  msg, f"Nick: {p.get('sale_name') or '?'} · Bài: {(p.get('title') or '')[:80]}", screen="posts",
+                  ref_type="post", ref_id=post_id, screenshot=rel)
     db.run(f"UPDATE posts SET {'status=' + repr('failed') + ',' if not dry_run else ''} error=?, screenshot=? WHERE id=?",
            (msg, rel, post_id))
+
+
+JOB_NAME = {"open": "mở Chrome", "check": "kiểm tra phiên", "post": "đăng bài", "bump": "up bài", "scan": "quét bình luận"}
 
 
 def _worker(sale_id: int, q: Queue):
@@ -869,6 +892,9 @@ def _worker(sale_id: int, q: Queue):
         except Exception as e:
             traceback.print_exc()
             db.log(f"sale-{sale_id}", "Lỗi trình duyệt", str(e).splitlines()[0][:200])
+            import errors
+            errors.report_exc("browser", f"Chrome của sale #{sale_id} lỗi khi {JOB_NAME.get(job['kind'], job['kind'])}", e,
+                              screen="sales", ref_type="sale", ref_id=sale_id)
             if job["kind"] == "bump":
                 db.run("UPDATE bumps SET status='failed', error=? WHERE id=? AND status='running'",
                        (str(e).splitlines()[0][:300], job["bump_id"]))
