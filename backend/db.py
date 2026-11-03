@@ -147,6 +147,11 @@ CREATE TABLE IF NOT EXISTS comment_seen (
   id INTEGER PRIMARY KEY AUTOINCREMENT, post_id INTEGER, author TEXT, text_hash TEXT, lead_id INTEGER,
   replied INTEGER DEFAULT 0, sale_id INTEGER, created_at TEXT, UNIQUE(post_id, author, text_hash)
 );
+CREATE TABLE IF NOT EXISTS image_usage (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT, product_id INTEGER, post_id INTEGER, bump_id INTEGER,
+  sale_id INTEGER, group_id INTEGER, kind TEXT, used_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_image_usage_path ON image_usage(path);
 CREATE TABLE IF NOT EXISTS sales (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL, fb_name TEXT, profile_dir TEXT, look TEXT,
@@ -167,6 +172,7 @@ MIGRATIONS = [
     ("leads", "phone", "TEXT"), ("leads", "origin", "TEXT DEFAULT 'manual'"), ("leads", "fb_author", "TEXT"),
     ("leads", "escalated_at", "TEXT"), ("leads", "escalate_reason", "TEXT"), ("leads", "consult_note", "TEXT"),
     ("posts", "last_scan_at", "TEXT"),
+    ("products", "image_folder", "TEXT DEFAULT ''"), ("posts", "images_used", "TEXT"),
     ("sales", "is_sample", "INTEGER DEFAULT 0"), ("leads", "is_sample", "INTEGER DEFAULT 0"),
     ("groups", "is_sample", "INTEGER DEFAULT 0"), ("products", "is_sample", "INTEGER DEFAULT 0"),
     ("leads", "phone_at", "TEXT"), ("leads", "boss_status", "TEXT"), ("leads", "remind_at", "TEXT"),
@@ -205,6 +211,9 @@ DEFAULT_SETTINGS = {
     "learn_explore": "0.25",
     "model_learning": "claude-haiku-5-5",
     "anthropic_api_key": "",
+    "images_min": "2",
+    "images_max": "4",
+    "image_reuse_days": "14",
     "kpi_min": "5",
     "kpi_max": "10",
     "kpi_check_time": "15:00",

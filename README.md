@@ -61,6 +61,25 @@ và thêm chữ đang hiển thị trên nút (ví dụ chữ trong ô "Viết g
 hạn chế dù đã giãn cách, nên giữ số bài/ngày vừa phải, nội dung có giá trị và đúng luật từng nhóm.
 Máy chạy phần mềm phải bật trong giờ đăng bài; Chrome của các nick chạy trên chính máy đó.
 
+## Ảnh sản phẩm: chọn ngẫu nhiên, không đăng trùng
+
+Mỗi sản phẩm có **một thư mục ảnh riêng** trên máy chạy phần mềm (trang **Sản phẩm** → ô *Thư mục ảnh* → **Lưu**),
+ví dụ `D:\AnhSanPham\Tra gung mat ong`. Bỏ vào đó bao nhiêu ảnh cũng được (JPG, PNG, WEBP, kể cả thư mục con).
+
+Khi đăng bài, nhân viên sale chọn **ngẫu nhiên 2–4 ảnh** (chỉnh ở **Cài đặt → Nhân viên sale đăng bài**) trong thư mục
+của đúng sản phẩm bài đó, theo thứ tự ưu tiên:
+
+1. Không dùng lại ảnh đã đăng ở **cùng nhóm** trong 14 ngày.
+2. Không dùng lại ảnh mà **cùng nick** đã đăng trong 14 ngày.
+3. Ảnh **chưa đăng lần nào** trước, rồi tới ảnh lâu chưa dùng nhất; thứ tự ảnh trong bài cũng ngẫu nhiên.
+
+Mọi lần dùng ảnh (đăng bài và up bài) đều được ghi lại. Nếu thư mục ít ảnh tới mức không còn ảnh mới, sale nới dần điều
+kiện thay vì đăng không ảnh, và nhật ký báo "Thiếu ảnh mới" để bạn bổ sung. Trang Sản phẩm cho biết mỗi thư mục còn bao
+nhiêu ảnh chưa đăng và đủ cho khoảng bao nhiêu bài nữa. Thẻ bài ở mục **Bài đăng** hiện đúng các ảnh đã đăng kèm.
+
+Sản phẩm chưa có thư mục riêng sẽ dùng thư mục chung (Cài đặt → Tự động up bài): thư mục con trùng tên sản phẩm,
+hoặc ảnh để thẳng trong thư mục chung.
+
 ## Lưu link bài và tự động up bài
 
 **Link bài:** ngay sau khi đăng, nhân viên sale mở mục "Nội dung của bạn" trong nhóm (hoặc trang cá nhân), tìm đúng bài
@@ -233,7 +252,7 @@ backend/
   scheduler.py   Lịch tự động: họp mỗi sáng, đăng Fanpage đúng giờ
   facebook.py    Đăng Fanpage qua Graph API
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, đăng bài, lấy link bài, up bài
-  media_folder.py    Đọc thư mục ảnh sản phẩm trên máy, chọn ảnh theo sản phẩm
+  media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
   kpi.py         KPI: nhận diện SĐT, tiến độ, chia theo nick, lịch sử; chuyển khách cho sếp, kịch bản tư vấn
   telegram_bot.py  Bot Telegram: ghép nối, báo cáo, phiếu khách có nút bấm, lệnh /baocao /kpi /khach /hop
   learning.py    Tự học: thống kê hiệu quả, chọn góc/sản phẩm/giờ, sổ tay bài học, cấp độ, phản tỉnh mỗi đêm

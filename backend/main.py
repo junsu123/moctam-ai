@@ -79,19 +79,72 @@ class Product(BaseModel):
     retail_price: str = ""
     moq: str = ""
     selling_points: str = ""
+    image_folder: str = ""
+
+
+class ProductPatch(BaseModel):
+    name: str | None = None
+    category: str | None = None
+    description: str | None = None
+    wholesale_price: str | None = None
+    retail_price: str | None = None
+    moq: str | None = None
+    selling_points: str | None = None
+    image_folder: str | None = None
 
 
 @app.get("/api/products")
 def products():
-    return db.q("SELECT * FROM products ORDER BY id")
+    return [{**p, "folder": media_folder.folder_info(p)} for p in db.q("SELECT * FROM products ORDER BY id")]
 
 
 @app.post("/api/products")
 def add_product(p: Product):
     pid = db.run("""INSERT INTO products(name, category, description, wholesale_price, retail_price, moq,
-                    selling_points, created_at) VALUES (?,?,?,?,?,?,?,?)""",
-                 (p.name, p.category, p.description, p.wholesale_price, p.retail_price, p.moq, p.selling_points, db.now()))
+                    selling_points, image_folder, created_at) VALUES (?,?,?,?,?,?,?,?,?)""",
+                 (p.name, p.category, p.description, p.wholesale_price, p.retail_price, p.moq, p.selling_points,
+                  p.image_folder.strip().strip('"'), db.now()))
     return db.one("SELECT * FROM products WHERE id=?", (pid,))
+
+
+@app.patch("/api/products/{pid}")
+def patch_product(pid: int, p: ProductPatch):
+    fields = {k: (v.strip().strip('"') if k == "image_folder" else v) for k, v in p.model_dump().items() if v is not None}
+    if fields:
+        fields["is_sample"] = 0  # sếp đã sửa -> thành dữ liệu thật
+        db.run(f"UPDATE products SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), pid))
+    prod = db.one("SELECT * FROM products WHERE id=?", (pid,))
+    if not prod:
+        raise HTTPException(404)
+    return {**prod, "folder": media_folder.folder_info(prod)}
+
+
+@app.get("/api/products/{pid}/folder")
+def product_folder(pid: int):
+    prod = db.one("SELECT * FROM products WHERE id=?", (pid,))
+    if not prod:
+        raise HTTPException(404)
+    return media_folder.folder_info(prod)
+
+
+@app.get("/api/products/{pid}/folder-image")
+def product_folder_image(pid: int, name: str):
+    f = media_folder.safe_file(name, db.one("SELECT * FROM products WHERE id=?", (pid,)))
+    if not f:
+        raise HTTPException(404)
+    return FileResponse(f)
+
+
+@app.get("/api/image")
+def used_image(path: str):
+    """Ảnh đã đăng (để xem lại trên thẻ bài): chỉ trả file đã ghi trong lịch sử đăng ảnh."""
+    if not db.one("SELECT id FROM image_usage WHERE path=? UNION SELECT id FROM posts WHERE images_used LIKE ?",
+                  (path, f'%{json.dumps(path, ensure_ascii=False)[1:-1]}%')):
+        raise HTTPException(404)
+    f = Path(path)
+    if not f.is_file() or f.suffix.lower() not in media_folder.IMG_EXT:
+        raise HTTPException(404)
+    return FileResponse(f)
 
 
 @app.delete("/api/products/{pid}")

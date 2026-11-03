@@ -131,15 +131,7 @@ def _pause(page, a=0.6, b=1.6):
     page.wait_for_timeout(int(random.uniform(a, b) * 1000 * (PAUSE_SCALE if b > 5 else 1)))
 
 
-def _post_images(post: dict) -> list[str]:
-    if db.get_settings().get("attach_images") != "1" or not post.get("product_id"):
-        return []
-    p = db.one("SELECT images FROM products WHERE id=?", (post["product_id"],))
-    files = [str(db.DATA_DIR / rel) for rel in json.loads((p or {}).get("images") or "[]")]
-    return [f for f in files if Path(f).exists()][:4]
-
-
-def _publish(page, post: dict, target_url: str, composer_labels: list[str], dry_run: bool) -> str:
+def _publish(page, post: dict, target_url: str, composer_labels: list[str], dry_run: bool, imgs=None) -> str:
     s = selectors()
     page.goto(target_url, wait_until="domcontentloaded", timeout=60000)
     page.wait_for_timeout(3500)
@@ -160,7 +152,7 @@ def _publish(page, post: dict, target_url: str, composer_labels: list[str], dry_
         if i < len(lines) - 1:
             page.keyboard.press("Enter")
     _pause(page)
-    imgs = _post_images(post)
+    imgs = [str(i) for i in (imgs or [])]
     if imgs:
         inp = dialog.locator('input[type="file"]')
         if not inp.count():
@@ -289,13 +281,18 @@ def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
             url, labels = post["group_url"], selectors()["group_composer"]
         else:
             url, labels = f"{FB_BASE}/me", selectors()["profile_composer"]
-        shot = _publish(page, post, url, labels, dry_run)
+        imgs, warn = media_folder.pick_for_post(post, sale_id)
+        if warn:
+            db.log("tuan", "Thiếu ảnh mới", f"Bài #{post_id}: {warn}")
+        shot = _publish(page, post, url, labels, dry_run, imgs)
+        used = json.dumps([str(i) for i in imgs], ensure_ascii=False)
         if dry_run:
-            db.run("UPDATE posts SET screenshot=?, error=NULL WHERE id=?", (shot, post_id))
+            db.run("UPDATE posts SET screenshot=?, error=NULL, images_used=? WHERE id=?", (shot, used, post_id))
             db.log(aid, "Đăng thử", f"Bài #{post_id}: điền nội dung thành công ở {where} (chưa bấm Đăng)")
         else:
             workflows.mark_posted(post_id, url, f"{sale['name']} (tự động)")
-            db.run("UPDATE posts SET screenshot=? WHERE id=?", (shot, post_id))
+            db.run("UPDATE posts SET screenshot=?, images_used=? WHERE id=?", (shot, used, post_id))
+            media_folder.record(imgs, "post", post, sale_id)
             db.run("UPDATE sales SET last_post_at=?, last_error=NULL WHERE id=?", (db.now(), sale_id))
             _set_login(sale_id, "ok")
             workflows.set_status(aid, "working", "Đang lấy link bài vừa đăng")
@@ -624,6 +621,7 @@ def _job_bump(pw, sale_id: int, bump_id: int):
         _check_blocked(page)
         page.screenshot(path=str(shot))
         _bump_done(bump_id, "done", None, f"/shots/{shot.name}", str(img))
+        media_folder.record([img], "bump", post, sale_id, bump_id)
         db.run("UPDATE posts SET bump_count=COALESCE(bump_count,0)+1, last_bump_at=? WHERE id=?", (db.now(), post["id"]))
         db.log(aid, "Up bài", f"Bình luận ảnh {img.name} vào bài #{post['id']} ở {where}")
         import learning
