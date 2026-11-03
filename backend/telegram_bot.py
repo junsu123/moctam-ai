@@ -136,6 +136,17 @@ def morning_text() -> str:
         lines.append(e(company.brief_text()))
     sched = db.one("SELECT COUNT(*) n FROM posts WHERE status='scheduled' AND scheduled_for LIKE ?", (db.today() + "%",))["n"]
     lines.append(f"• Lịch đăng hôm nay: {sched} bài · Quét bình luận lúc {db.get_settings().get('scan_times')}")
+    try:
+        import group_finder
+        st = db.get_settings()
+        if st.get("discover_enabled", "1") == "1":
+            lines.append(f"• CEO chọn chủ đề tìm nhóm hôm nay: {e(', '.join(group_finder.today_keywords()))} "
+                         f"(sale đi tìm lúc {st.get('discover_time') or '10:30'})")
+        need = group_finder.overview()["pending_answers"]
+        if need:
+            lines.append(f"• {len(need)} nhóm cần sếp tự vào vì phải trả lời câu hỏi: " + e(", ".join(g["name"] for g in need[:3])))
+    except Exception as ex:
+        print("[telegram]", ex)
     m = db.one("SELECT * FROM meetings WHERE date=? AND status='done' ORDER BY id DESC LIMIT 1", (db.today(),))
     if m:
         lines.append(f"\n🗣 <b>Họp sáng</b>: {e(m['topic'])}\n{e((m['summary'] or '')[:500])}")

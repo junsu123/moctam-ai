@@ -231,6 +231,8 @@ def plan_distribution() -> list[dict]:
     taken = {r["group_id"] for r in db.q("SELECT group_id FROM posts WHERE status IN ('scheduled','posting') AND group_id IS NOT NULL")}
     groups = [g for g in db.q("SELECT * FROM groups ORDER BY leads_count DESC, members DESC")
               if group_ready(g) and g["id"] not in taken and (g.get("url") or "").strip()]  # nhóm chưa có link: không xếp
+    import group_finder
+    groups.sort(key=lambda g: not group_finder.matches_today(g))  # ưu tiên nhóm hợp chủ đề CEO chọn hôm nay
     plan = []
 
     import learning
@@ -271,8 +273,9 @@ def plan_distribution() -> list[dict]:
         for post in approved:
             for g in list(groups):
                 members = {int(x) for x in (g.get("member_sale_ids") or "").split(",") if x.strip().isdigit()}
+                # nhóm sale tự tìm được: chỉ nick đã vào nhóm mới đăng; nhóm sếp nhập chưa đánh dấu nick: coi như mọi nick đã vào
                 cands = [(t, load[s["id"]]["count"], s) for s in sales
-                         if (not members or s["id"] in members) and (t := next_slot(s))]
+                         if ((not members and g.get("source") != "search") or s["id"] in members) and (t := next_slot(s))]
                 if cands:
                     t, _, s = min(cands, key=lambda c: (c[0], c[1]))
                     assign(post, s, t.strftime("%Y-%m-%d %H:%M"), g)

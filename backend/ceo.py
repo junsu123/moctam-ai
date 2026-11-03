@@ -348,6 +348,7 @@ def overview() -> dict:
             "milestones": ms, "next_milestone": nxt, "revenue": rev, "headcount": headcount(),
             "potential": potential(), "last_review": json.loads(s().get("ceo_last_review") or "{}"),
             "decisions": db.q("SELECT * FROM ceo_decisions ORDER BY id DESC LIMIT 40"),
+            "group_keywords": __import__("group_finder").today_keywords() if company.active() else [],
             "proposed": db.q("SELECT * FROM ceo_decisions WHERE status='proposed' ORDER BY id DESC")}
 
 
@@ -364,4 +365,11 @@ def brief_text() -> str:
     if o["next_milestone"]:
         m = o["next_milestone"]
         parts.append(f"mốc tăng người tiếp theo {company.fmt_vnd(m['amount'])} (đang {company.fmt_vnd(o['revenue'])})")
+    try:
+        import group_finder
+        kws = group_finder.today_keywords()
+        if kws:
+            parts.append("hôm nay tìm và ưu tiên đăng nhóm chủ đề: " + ", ".join(f"“{k}”" for k in kws))
+    except Exception:
+        pass
     return "; ".join(parts) + ". " + o["potential"]["verdict"]

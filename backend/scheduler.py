@@ -69,6 +69,9 @@ def _tick():
             if s.get("scan_last") != key:
                 db.set_setting("scan_last", key)
                 telegram_bot.start_scan_round(force=False)
+    # Tìm hội nhóm mới theo chủ đề CEO chọn, xin vào nhóm
+    import group_finder
+    group_finder.tick(now)
     # KPI: chuyển khách cần sếp, nhắc lại; báo cáo Telegram
     kpi.check_escalations()
     telegram_bot.tick()

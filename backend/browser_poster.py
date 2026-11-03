@@ -647,6 +647,9 @@ def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
         _block(sale_id, str(e))
     except Exception as e:
         _fail(page, post_id, friendly(e)[:300], dry_run)
+        if "chưa là thành viên" in str(e) and post.get("group_id"):
+            import group_finder
+            group_finder.mark_not_member(post["group_id"], sale_id)
         db.log(aid, "Lỗi đăng bài", f"Bài #{post_id}: {str(e).splitlines()[0][:200]}")
     finally:
         try:
@@ -1012,7 +1015,8 @@ def _fail(page, post_id: int, msg: str, dry_run: bool):
            (msg, rel, post_id))
 
 
-JOB_NAME = {"open": "mở Chrome", "check": "kiểm tra phiên", "post": "đăng bài", "bump": "up bài", "scan": "quét bình luận"}
+JOB_NAME = {"open": "mở Chrome", "check": "kiểm tra phiên", "post": "đăng bài", "bump": "up bài", "scan": "quét bình luận",
+            "discover": "tìm nhóm mới", "join": "xin vào nhóm"}
 
 
 def _worker(sale_id: int, q: Queue):
@@ -1032,6 +1036,12 @@ def _worker(sale_id: int, q: Queue):
                     _job_bump(pw, sale_id, job["bump_id"])
                 elif job["kind"] == "scan":
                     _job_scan(pw, sale_id, job["post_ids"])
+                elif job["kind"] == "discover":
+                    import group_finder
+                    group_finder.job_discover(pw, sale_id, job["keywords"])
+                elif job["kind"] == "join":
+                    import group_finder
+                    group_finder.job_join(pw, sale_id)
         except Exception as e:
             traceback.print_exc()
             msg = friendly(e)

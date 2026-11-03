@@ -158,6 +158,18 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS expenses (
   id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, category TEXT, amount INTEGER, note TEXT, created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS group_candidates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE, name TEXT, members INTEGER DEFAULT 0, posts_per_day REAL DEFAULT 0,
+  privacy TEXT, joined INTEGER DEFAULT 0, keyword TEXT, relevance REAL DEFAULT 0, score REAL DEFAULT 0, found_by INTEGER,
+  status TEXT DEFAULT 'new', group_id INTEGER, found_at TEXT, last_seen_at TEXT
+);
+CREATE TABLE IF NOT EXISTS group_searches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, keyword TEXT, sale_id INTEGER, results INTEGER, new INTEGER, searched_at TEXT
+);
+CREATE TABLE IF NOT EXISTS group_joins (
+  group_id INTEGER, sale_id INTEGER, status TEXT, note TEXT, requested_at TEXT, updated_at TEXT,
+  PRIMARY KEY (group_id, sale_id)
+);
 CREATE TABLE IF NOT EXISTS errors (
   id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT, title TEXT, message TEXT, detail TEXT, hint TEXT, screen TEXT,
   action TEXT, ref_type TEXT, ref_id TEXT, screenshot TEXT, fingerprint TEXT, count INTEGER DEFAULT 1,
@@ -183,6 +195,8 @@ CREATE TABLE IF NOT EXISTS sales (
 
 # Cột thêm cho cơ sở dữ liệu tạo từ phiên bản trước
 MIGRATIONS = [
+    ("groups", "source", "TEXT DEFAULT 'manual'"), ("groups", "keyword", "TEXT"), ("groups", "privacy", "TEXT"),
+    ("groups", "posts_per_day", "REAL"), ("groups", "score", "REAL"),
     ("orders", "customer", "TEXT"),
     ("sales", "hired_by", "TEXT"), ("sales", "hire_reason", "TEXT"), ("sales", "ceo_reminded_at", "TEXT"),
     ("sales", "ceo_handled", "INTEGER"), ("sales", "fire_review", "TEXT"),
@@ -241,6 +255,9 @@ DEFAULT_SETTINGS = {
     "company_founded_ts": "",
     "company_gen": "0",
     "capital_vnd": "10000000",
+    "discover_enabled": "1", "discover_time": "10:30", "discover_keywords_per_day": "3", "discover_add_per_day": "5",
+    "join_enabled": "1", "join_per_nick_day": "2", "browse_minutes": "2", "group_keywords": "", "ceo_kw_today": "",
+    "discover_last": "", "join_last": "", "discover_last_sale": "", "discover_last_result": "",
     "ceo_enabled": "1", "ceo_mode": "auto", "ceo_milestones": "50000000:1,100000000:1", "ceo_milestones_done": "",
     "ceo_potential": "1", "ceo_hire_cooldown_days": "14", "ceo_last_potential_hire": "", "ceo_last_daily": "", "ceo_last_review": "",
     "usd_vnd": "25800",
@@ -368,11 +385,12 @@ RESET_TABLES = {  # bảng: mô tả cho sếp
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",
     "kpi_daily": "lịch sử KPI", "ai_batches": "lô viết bài đang chờ",
-    "orders": "doanh thu đã nhập", "ceo_decisions": "quyết định của CEO", "errors": "sổ lỗi", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
+    "orders": "doanh thu đã nhập", "ceo_decisions": "quyết định của CEO", "errors": "sổ lỗi", "group_candidates": "nhóm tìm được chưa thêm", "group_searches": "lượt tìm nhóm", "group_joins": "trạng thái xin vào nhóm", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
 }
 RUN_STATE_KEYS = ["bump_planned_date", "learn_last_date", "scan_last", "tg_sent_log", "company_founded_at", "company_founded_ts",
                   "dissolved_at", "dissolved_reason", "trial_warned", "capital_warned",
-                  "ceo_milestones_done", "ceo_last_potential_hire", "ceo_last_daily", "ceo_last_review"]
+                  "ceo_milestones_done", "ceo_last_potential_hire", "ceo_last_daily", "ceo_last_review",
+                  "ceo_kw_today", "discover_last", "join_last", "discover_last_result"]
 
 
 def reset_preview() -> dict:

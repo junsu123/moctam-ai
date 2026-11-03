@@ -76,6 +76,26 @@ sang giao diện máy tính. Nếu không đính được ảnh, sale vẫn đă
 hạn chế dù đã giãn cách, nên giữ số bài/ngày vừa phải, nội dung có giá trị và đúng luật từng nhóm.
 Máy chạy phần mềm phải bật trong giờ đăng bài; Chrome của các nick chạy trên chính máy đó.
 
+## Sale tự tìm hội nhóm mới
+
+Mỗi ngày (mặc định 10:30) CEO Đức chọn 3 chủ đề tìm nhóm, ví dụ "hội chạy quảng cáo facebook", "nguồn hàng sỉ thực phẩm".
+CEO ưu tiên chủ đề từng mang về khách, xen kẽ chủ đề chưa thử, và để dành chủ đề vừa tìm hôm trước. Rồi:
+
+1. Một sale (luân phiên các nick) mở Chrome, **lướt bảng tin** vài phút (chỉ xem, không bấm thích, không bình luận),
+   rồi vào Facebook → Tìm kiếm → **Nhóm** với từng chủ đề, cuộn đọc kết quả: tên, link, số thành viên,
+   công khai/riêng tư, số bài mỗi ngày.
+2. Nhóm được chấm điểm (đúng chủ đề, đông thành viên, hoạt động nhiều). Nhóm tốt (đúng chủ đề, từ 1.000 thành viên) được
+   **tự thêm** vào danh sách Hội nhóm, tối đa 5 nhóm/ngày; nhóm còn lại nằm ở "Nhóm tìm được, chưa thêm" để sếp chọn.
+3. Mỗi nick **xin vào** tối đa 2 nhóm mới/ngày, giãn cách giữa các lần. Nhóm công khai vào ngay, nhóm riêng tư chờ
+   quản trị viên duyệt (sale tự kiểm tra lại). Nhóm bắt **trả lời câu hỏi** thì sale không tự trả lời thay sếp: phần mềm
+   và Telegram báo để sếp mở Chrome của sale tự xin vào.
+4. Tuấn **ưu tiên đăng** vào nhóm hợp chủ đề hôm nay. Nhóm sale tự tìm chỉ nhận bài từ nick đã vào nhóm.
+
+Sửa chủ đề hôm nay, kho chủ đề, giờ tìm, số nhóm thêm/xin vào mỗi ngày ở **Hội nhóm → Tìm nhóm mới**. Nút
+**Sale đi tìm ngay** / **Xin vào nhóm ngay** chạy luôn không cần chờ giờ. Báo cáo sáng trên Telegram có chủ đề hôm nay.
+
+**Lưu ý:** xin vào nhiều nhóm trong thời gian ngắn dễ bị Facebook hạn chế; nên giữ 1–2 nhóm/nick/ngày.
+
 ## Ảnh sản phẩm: chọn ngẫu nhiên, không đăng trùng
 
 Mỗi sản phẩm có **một thư mục ảnh riêng** trên máy chạy phần mềm (trang **Sản phẩm** → ô *Thư mục ảnh* → **Lưu**),
@@ -377,6 +397,7 @@ backend/
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, đăng bài, lấy link bài, up bài
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
   errors.py      Sổ lỗi: ghi lỗi từ mọi màn hình và việc tự động, gộp lỗi trùng, gợi ý cách xử lý
+  group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, chấm điểm, thêm nhóm, xin vào nhóm
   ceo.py         CEO: sa thải theo luật, tuyển người thay, tăng người theo mốc doanh thu và tiềm năng Facebook
   company.py     Công ty: vốn, chi phí, doanh thu, đánh giá KPI tháng, sa thải, giải thể
   kpi.py         KPI: nhận diện SĐT, tiến độ, chia theo nick, lịch sử; chuyển khách cho sếp, kịch bản tư vấn
