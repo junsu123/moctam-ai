@@ -73,7 +73,9 @@ def enabled() -> bool:
 
 
 def template() -> str:
-    return (s().get("post_template") or "").strip() or DEFAULT_TEMPLATE
+    """Bài mẫu đầu tiên đang bật (giữ cho chỗ cũ dùng một mẫu)."""
+    r = db.one("SELECT content FROM post_samples WHERE enabled=1 ORDER BY id LIMIT 1")
+    return r["content"] if r else ((s().get("post_template") or "").strip() or DEFAULT_TEMPLATE)
 
 
 def phone_line() -> str:
@@ -100,7 +102,7 @@ def _emo_for(l: str, rnd: random.Random) -> str:
     return ""
 
 
-def variant(seed: int | str, tpl: str | None = None) -> str:
+def variant(seed: int | str, tpl: str | None = None, extra_hooks: list[str] | None = None) -> str:
     """Một bản biến thể của mẫu (cùng seed -> cùng bài)."""
     import pricing
     rnd = random.Random(f"tpl-{seed}")
@@ -132,8 +134,11 @@ def variant(seed: int | str, tpl: str | None = None) -> str:
             bullets.append(f"{sym} {l.lstrip('•-✅✔️▪+ ').strip()}")
             continue
         flush()
-        if i == 0 and len(l) <= 40:  # tên thương hiệu
+        if i == 0 and len(l) <= 40 and not _has_emoji(l):  # tên thương hiệu / tiêu đề
             out.append(rnd.choice(["🌿 ", "✨ ", "🍃 ", "🏭 ", ""]) + l.upper() + rnd.choice(["", " 🌿", " ✨"]))
+            continue
+        if i == 0:
+            out.append(l)
             continue
         if not _has_emoji(l) and (e := _emo_for(l, rnd)) and rnd.random() < 0.85:
             if out and out[-1].startswith(e):  # không lặp emoji dòng trên
@@ -141,7 +146,10 @@ def variant(seed: int | str, tpl: str | None = None) -> str:
             l = f"{e} {l}"
         out.append(l)
     flush()
-    hook = rnd.choice(HOOKS)
+    first = next((x for x in out if x.strip()), "")
+    letters = re.sub(r"[^A-Za-zÀ-ỹ]", "", first)
+    headline = _has_emoji(first) or (letters and sum(c.isupper() for c in letters) / len(letters) > 0.7 and len(first) > 15)
+    hook = rnd.choice(HOOKS) if not headline or rnd.random() < 0.3 else ""  # bài mẫu đã có tiêu đề thì ít khi thêm câu mở
     if hook:
         out = [hook, ""] + out
     if hot and rnd.random() < 0.6:  # nhắc sản phẩm sếp đang đẩy
@@ -156,26 +164,117 @@ def variant(seed: int | str, tpl: str | None = None) -> str:
     return pricing.sanitize(text, add_contact=False)
 
 
-def _ai_variants(n: int, tpl: str) -> list[str]:
+# ---------------------------------------------------------------- thư viện bài mẫu của sếp
+def samples(enabled_only: bool = False) -> list[dict]:
+    rows = db.q("SELECT * FROM post_samples" + (" WHERE enabled=1" if enabled_only else "") + " ORDER BY id")
+    stats = {r["sample_id"]: r for r in db.q("""SELECT sample_id, COUNT(*) made, SUM(status='posted') posted,
+                                                COALESCE(SUM(comments),0) comments, COALESCE(SUM(leads),0) leads
+                                                FROM posts WHERE sample_id IS NOT NULL GROUP BY sample_id""")}
+    for r in rows:
+        st = stats.get(r["id"]) or {}
+        r.update(made=st.get("made") or 0, posted=st.get("posted") or 0, comments=st.get("comments") or 0, leads=st.get("leads") or 0)
+        r["score"] = round((r["leads"] * 5 + r["comments"] + 1) / (r["posted"] + 2), 2)  # khách, bình luận trên mỗi bài đã đăng
+    return rows
+
+
+def seed():
+    """Lần đầu: đưa mẫu sếp đã nhập (hoặc mẫu MỘC TÂM) vào thư viện."""
+    if db.one("SELECT id FROM post_samples LIMIT 1"):
+        return
+    tpl = (s().get("post_template") or "").strip() or DEFAULT_TEMPLATE
+    add_sample(tpl, "MỘC TÂM - nhận gia công & sỉ toàn quốc")
+
+
+def add_sample(content: str, title: str = "") -> dict:
+    content = "\n".join(l for l in (content or "").strip().splitlines() if not SKIP_LINE.match(l)).strip()
+    if len(content) < 40:
+        raise ValueError("Bài mẫu quá ngắn")
+    if db.one("SELECT id FROM post_samples WHERE content=?", (content,)):
+        raise ValueError("Bài mẫu này đã có trong thư viện")
+    title = (title or next((l for l in content.splitlines() if l.strip()), ""))[:80].strip()
+    sid = db.run("INSERT INTO post_samples(title, content, enabled, created_at, updated_at) VALUES (?,?,1,?,?)",
+                 (title, content, db.now(), db.now()))
+    _learn()
+    return db.one("SELECT * FROM post_samples WHERE id=?", (sid,))
+
+
+def import_many(text: str) -> int:
+    """Dán nhiều bài một lần, các bài cách nhau bằng một dòng --- (hoặc ===)."""
+    n = 0
+    for chunk in re.split(r"\n\s*(?:-{3,}|={3,})\s*\n", "\n" + (text or "") + "\n"):
+        try:
+            add_sample(chunk)
+            n += 1
+        except ValueError:
+            pass
+    return n
+
+
+def _learn():
+    """Lan ghi vào sổ kiến thức: sếp có thư viện bài mẫu, viết theo cách của các bài đó."""
+    import knowledge
+    rows = samples(True)
+    if not rows:
+        return
+    best = max(rows, key=lambda r: r["score"])
+    txt = (f"Sếp có {len(rows)} bài mẫu đăng nhóm tìm khách sỉ, gia công. Mọi bài đăng nhóm phải viết theo các bài mẫu này: giữ đúng "
+           "thông tin, không đăng bài linh tinh, không ghi giá, cuối bài là số Zalo báo giá. Mở đầu hay dùng: "
+           + "; ".join(next((l for l in r["content"].splitlines() if l.strip()), "")[:60] for r in rows[:5])
+           + (f". Bài mẫu ra nhiều khách nhất: “{best['title']}”." if best["posted"] else "."))
+    old = db.one("SELECT id FROM knowledge WHERE agent_id='lan' AND topic='Thư viện bài mẫu đăng nhóm của sếp' AND status='active'")
+    if old:
+        db.run("UPDATE knowledge SET content=?, updated_at=? WHERE id=?", (txt, db.now(), old["id"]))
+    else:
+        knowledge.save("lan", "Thư viện bài mẫu đăng nhóm của sếp", txt, question="Viết bài đăng nhóm thế nào?",
+                       keywords="bai mau dang nhom si gia cong sep", source="boss", kind="guide")
+
+
+def pick(rnd: random.Random, rows: list[dict]) -> dict:
+    """Chọn bài mẫu: mẫu ra khách nhiều được chọn nhiều hơn, vẫn thử đều các mẫu khác."""
+    if rnd.random() < 0.25:
+        return rnd.choice(rows)
+    return rnd.choices(rows, weights=[r["score"] for r in rows], k=1)[0]
+
+
+def _borrow_hooks(rows: list[dict]) -> list[str]:
+    """Câu mở đầu học từ các bài mẫu khác (dòng đầu ngắn, có tính kêu gọi)."""
+    out = []
+    for r in rows:
+        first = next((l.strip() for l in r["content"].splitlines() if l.strip()), "")
+        if 8 <= len(first) <= 70 and re.search(r"(tìm|cần|nguồn|sỉ|đại lý|gia công|hợp tác|shop)", first, re.I):
+            out.append(first)
+    return out
+
+
+def _ai_variants(n: int, rows: list[dict], rnd: random.Random) -> list[tuple[int, str]]:
+    """Có khóa Claude: Lan đọc cả thư viện bài mẫu, viết lại hay hơn (giữ đúng thông tin của bài mẫu được chọn)."""
     from llm import llm
-    if not (llm.live and s().get("template_ai", "1") == "1"):
+    if not (llm.live and s().get("template_ai", "1") == "1") or not rows:
         return []
     try:
         import pricing
         from agents import system_prompt
+        lib = "\n\n".join(f"[MẪU {r['id']}]{' (ra nhiều khách)' if r['leads'] else ''}\n{r['content'][:1500]}" for r in rows[:8])
+        picks = [pick(rnd, rows) for _ in range(n)]
         d = llm.json(system_prompt("lan", s()),
-                     f"Đây là MẪU BÀI của sếp để đăng nhóm Facebook tìm khách sỉ và khách gia công:\n\"\"\"\n{tpl}\n\"\"\"\n"
-                     f"Viết {n} bản khác nhau của mẫu này để đăng nhiều nhóm mà không bị Facebook coi là trùng lặp. GIỮ ĐÚNG mọi thông tin "
-                     "(tên thương hiệu, dòng sản phẩm, tiêu chuẩn, dịch vụ, đối tượng phù hợp); chỉ được đổi câu chữ, emoji, thứ tự gạch đầu "
-                     "dòng, câu mở đầu. Không thêm thông tin mới, không ghi giá, không hứa công dụng. Dòng liên hệ cuối ghi đúng: "
-                     f"\"{phone_line()}\". Trả JSON {{\"posts\": [\"...\"]}}.", mock=None, max_tokens=700 * n, task="posts")
+                     f"THƯ VIỆN BÀI MẪU của sếp (bài đăng nhóm Facebook tìm khách sỉ, khách gia công):\n{lib}\n\n"
+                     f"Học cách viết của các bài mẫu (mở đầu, bố cục, gạch đầu dòng, lời kêu gọi). Rồi viết {n} bài MỚI, bài thứ i viết lại "
+                     f"từ mẫu số: {[r['id'] for r in picks]}. Viết hay hơn, tự nhiên hơn, mỗi bài khác nhau để đăng nhiều nhóm không bị coi là "
+                     "trùng. GIỮ ĐÚNG thông tin của mẫu đó (thương hiệu, dòng sản phẩm, tiêu chuẩn, dịch vụ, đối tượng); không thêm thông tin "
+                     "mới, không ghi giá, không hứa công dụng chữa bệnh. Dòng liên hệ cuối ghi đúng: "
+                     f"\"{phone_line()}\". Trả JSON {{\"posts\": [{{\"sample_id\": số, \"content\": \"...\"}}]}}.",
+                     mock=None, max_tokens=800 * n, task="posts")
+        ids = {r["id"] for r in rows}
         out = []
-        for p in (d or {}).get("posts", []):
-            if isinstance(p, str) and len(p) > 120:
-                p = pricing.sanitize(PHONE_RX.sub(pricing.zalo(), p), add_contact=False)
-                if not pricing.has_contact(p):
-                    p += "\n" + phone_line()
-                out.append(p)
+        for i, it in enumerate((d or {}).get("posts", [])):
+            c = it.get("content") if isinstance(it, dict) else it if isinstance(it, str) else None
+            sid = it.get("sample_id") if isinstance(it, dict) else None
+            sid = sid if sid in ids else picks[min(i, len(picks) - 1)]["id"]
+            if c and len(c) > 120:
+                c = pricing.sanitize(PHONE_RX.sub(pricing.zalo(), c), add_contact=False)
+                if not pricing.has_contact(c):
+                    c += "\n" + phone_line()
+                out.append((sid, c))
         return out[:n]
     except Exception as e:
         print("[template ai]", e)
@@ -188,36 +287,51 @@ def _recent_keys(days: int = 14) -> set:
 
 
 def make_posts(n: int, status: str = "approved", target_type: str = "group") -> list[dict]:
-    """Lan làm n bài theo mẫu của sếp (mỗi bài một biến thể), lưu sẵn để Tuấn xếp lịch."""
+    """Lan làm n bài từ thư viện bài mẫu của sếp (mỗi bài một bản viết lại), lưu sẵn để Tuấn xếp lịch."""
     if n <= 0:
         return []
     import workflows
-    tpl = template()
-    texts = _ai_variants(n, tpl)
-    seen = _recent_keys() | {plain(t)[:160] for t in texts}
-    base = random.randint(1, 10_000_000)
+    seed()
+    rows = samples(True)
+    if not rows:
+        return []
+    rnd = random.Random()
+    out = _ai_variants(n, rows, rnd)
+    seen = _recent_keys() | {plain(c)[:160] for _, c in out}
     k = 0
-    while len(texts) < n and k < n * 20:
-        t = variant(f"{base}-{k}", tpl)
+    while len(out) < n and k < n * 20:
+        r = pick(rnd, rows)
+        c = variant(f"{rnd.random()}-{k}", r["content"])
         k += 1
-        key = plain(t)[:160]
-        if key in seen:
+        if plain(c)[:160] in seen:
             continue
-        seen.add(key)
-        texts.append(t)
+        seen.add(plain(c)[:160])
+        out.append((r["id"], c))
     made = []
-    for t in texts[:n]:
-        title = next((l for l in t.splitlines() if l.strip()), "")[:80]
+    for sid, c in out[:n]:
+        title = next((l for l in c.splitlines() if l.strip()), "")[:80]
         pid = db.run("""INSERT INTO posts(agent_id, product_id, target_type, angle, title, content, hashtags, image_idea, status,
-                        created_at, source) VALUES ('lan', NULL, ?, 'mau_sep', ?, ?, '', ?, ?, ?, 'template')""",
-                     (target_type, title, t, "Ảnh catalog / nhà máy / dây chuyền sản xuất, sản phẩm thật", status, db.now()))
+                        created_at, source, sample_id) VALUES ('lan', NULL, ?, 'mau_sep', ?, ?, '', ?, ?, ?, 'template', ?)""",
+                     (target_type, title, c, "Ảnh catalog / nhà máy / dây chuyền sản xuất, sản phẩm thật", status, db.now(), sid))
         made.append(db.one("SELECT * FROM posts WHERE id=?", (pid,)))
     if made:
-        db.log("lan", "Viết bài", f"Làm {len(made)} bài đăng nhóm theo mẫu của sếp (mỗi bài một biến thể, chỉ nội dung tìm khách sỉ, gia công)")
-        workflows.set_status("lan", "idle", f"Vừa làm {len(made)} bài theo mẫu")
+        db.log("lan", "Viết bài", f"Viết lại {len(made)} bài đăng nhóm từ thư viện {len(rows)} bài mẫu của sếp (mỗi bài một bản khác nhau)")
+        workflows.set_status("lan", "idle", f"Vừa viết {len(made)} bài từ bài mẫu")
     return made
 
 
-def preview(n: int = 2, tpl: str | None = None) -> list[str]:
-    base = random.randint(1, 10_000_000)
-    return [variant(f"{base}-{i}", tpl) for i in range(n)]
+def preview(n: int = 2, tpl: str | None = None, sample_id: int | None = None) -> list[str]:
+    rnd = random.Random()
+    if tpl:
+        return [variant(f"{rnd.random()}-{i}", tpl) for i in range(n)]
+    seed()
+    rows = samples(True)
+    if sample_id:
+        rows = [r for r in rows if r["id"] == sample_id] or rows
+    if not rows:
+        return []
+    out = []
+    for i in range(n):
+        r = rows[i % len(rows)] if sample_id else pick(rnd, rows)
+        out.append(variant(f"{rnd.random()}-{i}", r["content"]))
+    return out

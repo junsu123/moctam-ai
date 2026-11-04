@@ -508,6 +508,84 @@ def tpl_make(p: TplMake):
     return {"count": len(made)}
 
 
+# ------------------------------------------------------------------ thư viện bài mẫu sỉ của sếp
+@app.get("/api/samples")
+def smp_list():
+    import post_template as T
+    T.seed()
+    st = db.get_settings()
+    return {"items": T.samples(), "enabled": T.enabled(), "ai": st.get("template_ai", "1") == "1", "phone": T.phone_line(),
+            "stats": tpl_get()["stats"]}
+
+
+class SampleIn(BaseModel):
+    content: str
+    title: str = ""
+
+
+@app.post("/api/samples")
+def smp_add(p: SampleIn):
+    import post_template as T
+    try:
+        r = T.add_sample(p.content, p.title)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    db.log("lan", "Học kiến thức mới", f"Sếp thêm bài mẫu đăng nhóm: {r['title'][:80]}")
+    return r
+
+
+class SampleImport(BaseModel):
+    text: str
+
+
+@app.post("/api/samples/import")
+def smp_import(p: SampleImport):
+    import post_template as T
+    n = T.import_many(p.text)
+    if not n:
+        raise HTTPException(400, "Không thêm được bài nào (bài quá ngắn hoặc đã có trong thư viện)")
+    db.log("lan", "Học kiến thức mới", f"Sếp thêm {n} bài mẫu đăng nhóm vào thư viện")
+    return {"added": n}
+
+
+class SamplePatch(BaseModel):
+    content: str | None = None
+    title: str | None = None
+    enabled: bool | None = None
+
+
+@app.patch("/api/samples/{sid}")
+def smp_patch(sid: int, p: SamplePatch):
+    import post_template as T
+    if not db.one("SELECT id FROM post_samples WHERE id=?", (sid,)):
+        raise HTTPException(404, "Không tìm thấy bài mẫu")
+    if p.content is not None:
+        c = p.content.strip()
+        if len(c) < 40:
+            raise HTTPException(400, "Bài mẫu quá ngắn")
+        db.run("UPDATE post_samples SET content=?, updated_at=? WHERE id=?", (c, db.now(), sid))
+    if p.title is not None:
+        db.run("UPDATE post_samples SET title=? WHERE id=?", (p.title.strip()[:80], sid))
+    if p.enabled is not None:
+        db.run("UPDATE post_samples SET enabled=? WHERE id=?", (1 if p.enabled else 0, sid))
+    T._learn()
+    return db.one("SELECT * FROM post_samples WHERE id=?", (sid,))
+
+
+@app.delete("/api/samples/{sid}")
+def smp_del(sid: int):
+    import post_template as T
+    db.run("DELETE FROM post_samples WHERE id=?", (sid,))
+    T._learn()
+    return {"ok": True}
+
+
+@app.post("/api/samples/{sid}/preview")
+def smp_preview(sid: int):
+    import post_template as T
+    return {"preview": T.preview(2, sample_id=sid)}
+
+
 # ------------------------------------------------------------------ nhóm có sẵn trong nick (Tuấn rà soát)
 @app.get("/api/my-groups")
 def mg_get():

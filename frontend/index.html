@@ -642,6 +642,20 @@ label.f{font-weight:600;color:var(--muted)}
 .mg-prog{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:4px}
 .mg-prog .bar{width:120px;height:6px}
 @media (max-width:560px){ .mg-list li{grid-template-columns:minmax(0,1fr)} .mg .card-h{flex-direction:column} }
+/* Thư viện bài mẫu */
+.smp-add{margin-bottom:16px}
+.smp-add textarea{font-size:13px;line-height:1.5}
+.smp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:14px}
+.smp{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.smp.off{opacity:.6}
+.smp-h{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.smp-h b{font-size:14px;overflow-wrap:anywhere}
+.smp pre{margin:0;white-space:pre-wrap;font:inherit;font-size:12.5px;line-height:1.5;max-height:190px;overflow:hidden;position:relative;overflow-wrap:anywhere}
+.smp pre.open{max-height:none}
+.smp-st{display:flex;flex-wrap:wrap;gap:6px}
+.smp-prev{display:flex;flex-direction:column;gap:8px}
+.smp-prev article{background:var(--panel-2);border-radius:10px;padding:8px 10px;white-space:pre-wrap;font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
+.smp textarea{font-size:12.5px;line-height:1.5}
 /* Mẫu bài đăng nhóm */
 .tpl .card-h{align-items:flex-start;gap:12px}
 .tpl-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:10px}
@@ -751,6 +765,7 @@ label.f{font-weight:600;color:var(--muted)}
       <button data-v="groups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 2 6 5.5"/></svg>Hội nhóm</button>
       <span class="nav-g">Kho tri thức</span>
       <button data-v="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8l8-4 8 4v9l-8 4-8-4zM4 8l8 4 8-4M12 12v9"/></svg>Sản phẩm</button>
+      <button data-v="samples"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h11l3 3v13H5z"/><path d="M8 10h8M8 14h8M8 18h5"/></svg>Bài mẫu sỉ</button>
       <button data-v="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5M22 9v6"/></svg>Đào tạo</button>
       <span class="nav-g">Hệ thống</span>
       <button data-v="errors"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.5"/></svg>Lỗi<span class="badge err" id="errBadge" hidden></span></button>
@@ -855,15 +870,8 @@ label.f{font-weight:600;color:var(--muted)}
       </div>
       <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. CEO tự giao Lan viết bài, tự duyệt bài nháp và cho Tuấn xếp lịch. Muốn viết thêm hay sửa cách viết, nhắn CEO ở <a href="#ceo">Giao việc</a> hoặc Telegram.</p>
       <section class="card tpl" id="tplCard">
-        <div class="card-h"><div><h3>Mẫu bài đăng nhóm của sếp</h3><p class="small muted" style="margin:2px 0 0">Mọi bài đăng vào nhóm nick đã tham gia và nhóm nick quản lý đều theo mẫu này: chỉ nội dung tìm khách sỉ, gia công. Mỗi bài Lan làm một bản biến thể (đổi emoji, cách nói, thứ tự gạch đầu dòng, câu mở đầu, hashtag) để Facebook không coi là bài trùng. Viết <b>{số điện thoại}</b> ở chỗ cần ghi số, phần mềm thay bằng số Zalo báo giá.</p></div>
-          <label class="row small" style="white-space:nowrap"><input type="checkbox" id="tplOn"> Đăng nhóm theo mẫu</label></div>
-        <div class="tpl-grid">
-          <div class="stack"><textarea id="tplText" rows="16" aria-label="Mẫu bài đăng nhóm"></textarea>
-            <div class="row wrap"><button class="btn sm primary" type="button" id="tplSave">Lưu mẫu</button><button class="btn sm" type="button" id="tplPrev">Xem thử 2 bài</button>
-              <button class="btn sm ghost" type="button" id="tplReset">Về mẫu gốc</button><button class="btn sm ghost" type="button" id="tplMake">Làm ngay 3 bài</button></div>
-            <p class="small muted" id="tplStats" style="margin:0"></p></div>
-          <div class="tpl-prev" id="tplPreview"></div>
-        </div>
+        <div class="card-h"><div><h3>Bài đăng nhóm theo thư viện bài mẫu của sếp</h3><p class="small muted" style="margin:2px 0 0" id="tplStats">Đang tải…</p></div>
+          <div class="row wrap"><label class="row small" style="white-space:nowrap"><input type="checkbox" id="tplOn"> Đăng nhóm theo bài mẫu</label><a class="btn sm primary" href="#samples">Mở thư viện bài mẫu</a></div></div>
       </section>
       <form class="card" id="genForm" data-direct>
         <h3>Giao Lan viết bài</h3>
@@ -983,6 +991,22 @@ label.f{font-weight:600;color:var(--muted)}
       </div>
       <div id="prList" class="pr-list"><p class="muted small">Đang tải…</p></div>
       <details class="card" id="prSet"><summary><b>Cách Mai tìm và cài đặt</b></summary><div id="prSetBody"></div></details>
+    </section>
+
+    <!-- THƯ VIỆN BÀI MẪU SỈ -->
+    <section class="view" id="v-samples" hidden>
+      <div class="vh"><div><h1>Thư viện bài mẫu sỉ</h1><p>Sếp tạo danh sách các bài đăng sỉ mẫu. Lan học từ thư viện này để viết lại hay hơn: mỗi bài đăng vào nhóm là một bản viết lại của một bài mẫu (giữ đúng thông tin, đổi cách nói, emoji, thứ tự, câu mở đầu), không đăng bài linh tinh, không ghi giá. Bài mẫu ra nhiều bình luận, nhiều khách thì Lan dùng nhiều hơn.</p></div>
+        <div class="row wrap"><label class="row small" style="white-space:nowrap"><input type="checkbox" id="smpOn"> Đăng nhóm theo bài mẫu</label><button class="btn" type="button" id="smpMake">Lan viết ngay 3 bài</button></div></div>
+      <p class="small muted" id="smpStats" style="margin:-6px 0 12px"></p>
+      <form class="card smp-add" id="smpForm">
+        <h3 style="margin:0 0 6px">Thêm bài mẫu</h3>
+        <label class="f" for="smpTitle">Tên gợi nhớ (không bắt buộc)<input type="text" id="smpTitle" placeholder="VD: Tìm đại lý trà túi lọc"></label>
+        <label class="f" for="smpText"><span>Nội dung bài mẫu. Chỗ cần số điện thoại viết <b>{số điện thoại}</b>, phần mềm thay bằng số Zalo báo giá.</span><textarea id="smpText" rows="9" placeholder="Dán bài đăng sỉ mẫu vào đây…"></textarea></label>
+        <div class="row wrap"><button class="btn primary" type="submit">Thêm vào thư viện</button><button class="btn ghost" type="button" id="smpBulkBtn">Dán nhiều bài một lần</button></div>
+        <div id="smpBulk" hidden class="stack" style="margin-top:8px"><label class="f" for="smpBulkText"><span>Dán nhiều bài, các bài cách nhau bằng một dòng chỉ có <b>---</b></span><textarea id="smpBulkText" rows="10"></textarea></label>
+          <div><button class="btn sm primary" type="button" id="smpBulkGo">Thêm tất cả</button></div></div>
+      </form>
+      <div class="smp-grid" id="smpList"><p class="muted small">Đang tải…</p></div>
     </section>
 
     <!-- SẢN PHẨM -->
@@ -1533,6 +1557,9 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     flush(); const hook=R(["📣 TÌM ĐỐI TÁC SỈ & GIA CÔNG","🤝 KẾT NỐI SHOP ONLINE – ĐẠI LÝ – NHÀ PHÂN PHỐI","🔎 Shop nào đang tìm nguồn hàng tận xưởng?",""]);
     let txt=(hook?hook+"\n\n":"")+out.join("\n").trim(); if(!txt.includes(ZALO())) txt+=`\n📞 Zalo/ĐT: ${ZALO()}`;
     return txt+"\n\n"+["#nguonhangsi","#giacong","#tratuiloc","#cafehoatan","#ngucoc","#thuonghieurieng","#bansi","#OEM"].sort(()=>Math.random()-.5).slice(0,4).join(" "); }
+  S.samples=[{id:1,title:"MỘC TÂM - nhận gia công & sỉ toàn quốc",content:TPL_DEFAULT,enabled:1,made:6,posted:4,comments:9,leads:2},
+    {id:2,title:"Tìm đại lý, CTV trà túi lọc",content:"🔥 TÌM ĐẠI LÝ – CTV TRÀ TÚI LỌC TOÀN QUỐC\nXưởng Mộc Tâm cần tìm đại lý, CTV bán trà túi lọc, cafe hòa tan\n• Sản phẩm có sẵn, hàng xưởng\n• Hỗ trợ ảnh, video bán hàng\n• Không cần vốn lớn, nhập ít cũng được\nAi quan tâm ib hoặc kết bạn Zalo {số điện thoại}",enabled:1,made:3,posted:2,comments:4,leads:1}];
+  function demoSamples(){ return {items:S.samples,enabled:S.tpl.enabled,ai:true,phone:`📞 Zalo/ĐT: ${ZALO()}`,stats:demoTpl().stats}; }
   function demoTpl(){ const ps=S.posts.filter(p=>p.source==="template"); return {template:S.tpl.template,default:TPL_DEFAULT,enabled:S.tpl.enabled,ai:true,phone:`📞 Zalo/ĐT: ${ZALO()}`,preview:[tplVariant(S.tpl.template),tplVariant(S.tpl.template)],
     stats:{approved:ps.filter(p=>p.status==="approved").length,scheduled:ps.filter(p=>p.status==="scheduled").length,posted_today:ps.filter(p=>p.status==="posted").length}}; }
   function demoMG(){ return {items:S.mg,counts:{},verdicts:{},settings:S.mgSet,last:{detail:"Tuấn rà soát nhóm: nick Linh Nguyễn đang ở 4 nhóm (1 nhóm quản lý); đánh giá 4 nhóm: nên đăng 1, đăng ít 0, không đạt 1; đã thoát Quảng Cáo Facebook 2019 (nhóm gần như không còn hoạt động).",created_at:"2026-11-04 09:21:00"},
@@ -1747,6 +1774,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/prospects") return demoPR(qs);
       if(P==="/my-groups") return demoMG();
       if(P==="/post-template") return demoTpl();
+      if(P==="/samples") return demoSamples();
       if(P==="/knowledge"){ const u=new URLSearchParams(qs||""); return demoKB(u.get("agent")||"",u.get("q")||""); }
       if(P==="/kpi") return demoKpi();
       if(P==="/telegram") return demoTg();
@@ -1863,9 +1891,14 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       for(const k of ["must","exclude","bonus","regions"]) S.prCrit[k]=[...new Set([...S.prCrit[k],...(sg[k]||[])])]; S.prCrit.search_kinds=[...new Set([...S.prCrit.search_kinds,...(sg.search_kinds||[])])];
       if((sg.keywords||[]).length) S.prKw[1]=[...new Set([...sg.keywords,...S.prKw[1]])]; l.applied=1; return {...demoPR(""),groups_added:0,rescore:{checked:S.pr.length}}; }
     if((m=P.match(/^\/prospects\/lessons\/(\d+)$/))&&method==="DELETE"){ S.prLessons=S.prLessons.filter(x=>x.id!=m[1]); return demoPR(""); }
+    if(P==="/samples"&&method==="POST"){ const c=(body.content||"").trim(); if(c.length<40) throw new Error("Bài mẫu quá ngắn"); const x={id:id(),title:(body.title||c.split("\n")[0]).slice(0,80),content:c,enabled:1,made:0,posted:0,comments:0,leads:0}; S.samples.push(x); return x; }
+    if(P==="/samples/import"){ let n=0; (body.text||"").split(/\n\s*-{3,}\s*\n/).forEach(c=>{ c=c.trim(); if(c.length>=40){ S.samples.push({id:id(),title:c.split("\n")[0].slice(0,80),content:c,enabled:1,made:0,posted:0,comments:0,leads:0}); n++; } }); if(!n) throw new Error("Không thêm được bài nào"); return {added:n}; }
+    if((m=P.match(/^\/samples\/(\d+)\/preview$/))){ const x=S.samples.find(y=>y.id==m[1]); return {preview:[tplVariant(x.content),tplVariant(x.content)]}; }
+    if((m=P.match(/^\/samples\/(\d+)$/))){ if(method==="DELETE"){ S.samples=S.samples.filter(y=>y.id!=m[1]); return {ok:true}; } const x=S.samples.find(y=>y.id==m[1]);
+      if(body.content!=null) x.content=body.content; if(body.title!=null) x.title=body.title; if(body.enabled!=null) x.enabled=body.enabled?1:0; return x; }
     if(P==="/post-template"&&method==="PUT"){ if(body.template!=null){ if(body.template.trim()&&body.template.trim().length<40) throw new Error("Mẫu quá ngắn"); S.tpl.template=body.template.trim()||TPL_DEFAULT; } if(body.enabled!=null) S.tpl.enabled=body.enabled; return demoTpl(); }
     if(P==="/post-template/preview") return {preview:[tplVariant((body.template||"").trim()||S.tpl.template),tplVariant((body.template||"").trim()||S.tpl.template)]};
-    if(P==="/post-template/make"){ for(let i=0;i<(body.count||3);i++){ const c=tplVariant(S.tpl.template); S.posts.unshift({id:id(),agent_id:"lan",product_id:null,product_name:"Mẫu của sếp",target_type:"group",angle:"mau_sep",title:c.split("\n")[0],content:c,hashtags:"",image_idea:"Ảnh catalog / nhà máy",status:"approved",created_at:now(),comments:0,leads:0,source:"template"}); }
+    if(P==="/post-template/make"){ for(let i=0;i<(body.count||3);i++){ const sm=S.samples.filter(y=>y.enabled); const pickS=sm[Math.floor(Math.random()*sm.length)]||{content:S.tpl.template}; pickS.made=(pickS.made||0)+1; const c=tplVariant(pickS.content); S.posts.unshift({id:id(),agent_id:"lan",product_id:null,product_name:"Mẫu của sếp",target_type:"group",angle:"mau_sep",title:c.split("\n")[0],content:c,hashtags:"",image_idea:"Ảnh catalog / nhà máy",status:"approved",created_at:now(),comments:0,leads:0,source:"template"}); }
       log("lan","Viết bài",`Làm ${body.count||3} bài đăng nhóm theo mẫu của sếp`); return {count:body.count||3}; }
     if(P==="/my-groups/sync"){ S.status.tuan={state:"working",text:"Rà soát nhóm trong các nick"}; setTimeout(()=>{ S.status.tuan={state:"idle",text:"Xong rà soát nhóm"}; },2500); return {nicks:2}; }
     if(P==="/my-groups/settings"){ const m={time:"mygroups_time",rest_days:"new_group_rest_days",leave_per_nick_day:"leave_per_nick_day",admin_min:"admin_posts_min",admin_max:"admin_posts_max",sell_share:"admin_sell_share"};
@@ -2247,7 +2280,7 @@ function show(v){
   if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
   if(v==="ceo") loadCeoChat(true);
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
-  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="samples") loadPostSamples(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
 $("#nav").addEventListener("click",e=>{ if(e.target.closest("#navMore")){ const o=!document.body.classList.contains("nav-open"); document.body.classList.toggle("nav-open",o); $("#navMore").setAttribute("aria-expanded",o); return; }
@@ -2362,17 +2395,40 @@ async function pollMeeting(){
 }
 
 /* --------------------------------------------- bài đăng */
+async function loadPostSamples(){
+  let d; try{ d=await api("/samples"); }catch(e){ $("#smpList").innerHTML=`<p class="err">${esc(e.message)}</p>`; return; }
+  ST.smp=d; $("#smpOn").checked=d.enabled; const on=d.items.filter(x=>x.enabled).length;
+  $("#smpStats").textContent=`${d.items.length} bài mẫu (${on} đang dùng) · ${d.stats.approved} bài Lan viết sẵn chờ xếp lịch · ${d.stats.scheduled} bài đã lên lịch · hôm nay đã đăng ${d.stats.posted_today} bài · cuối mỗi bài: ${d.phone.replace(/^📞\s*/,"")}`;
+  $("#smpList").innerHTML=d.items.length?d.items.map(x=>`<article class="smp${x.enabled?"":" off"}" data-smp="${x.id}">
+    <div class="smp-h"><b>${esc(x.title||"Bài mẫu #"+x.id)}</b><label class="row small" style="white-space:nowrap"><input type="checkbox" data-smpon ${x.enabled?"checked":""}> Đang dùng</label></div>
+    <pre>${esc(x.content)}</pre>
+    <div class="smp-st"><span class="chip">${x.made} bài Lan đã viết lại</span><span class="chip">${x.posted} bài đã đăng</span><span class="chip ${x.comments?"ok":""}">${x.comments} bình luận</span><span class="chip ${x.leads?"ok":""}">${x.leads} khách</span></div>
+    <div class="row wrap" style="gap:6px"><button class="btn sm" type="button" data-smpprev>Xem Lan viết lại</button><button class="btn sm ghost" type="button" data-smpmore>Xem đủ</button><button class="btn sm ghost" type="button" data-smpedit>Sửa</button><button class="btn sm ghost danger" type="button" data-smpdel>Xóa</button></div>
+    <div class="smp-prev" hidden></div></article>`).join(""):'<div class="card empty">Chưa có bài mẫu nào. Dán bài đăng sỉ mẫu ở khung trên.</div>';
+}
+$("#smpForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/samples","POST",{content:$("#smpText").value,title:$("#smpTitle").value}); e.target.reset(); toast("Đã thêm bài mẫu. Lan học và dùng từ lượt viết sau"); loadPostSamples(); }catch(err){ toast(err.message); } });
+$("#smpBulkBtn").addEventListener("click",()=>{ $("#smpBulk").hidden=!$("#smpBulk").hidden; });
+$("#smpBulkGo").addEventListener("click",async()=>{ try{ const r=await api("/samples/import","POST",{text:$("#smpBulkText").value}); $("#smpBulkText").value=""; toast(`Đã thêm ${r.added} bài mẫu`); loadPostSamples(); }catch(err){ toast(err.message); } });
+$("#smpOn").addEventListener("change",async e=>{ try{ await api("/post-template","PUT",{enabled:e.target.checked}); toast(e.target.checked?"Bài đăng nhóm chỉ viết từ thư viện bài mẫu":"Đã tắt: Lan viết bài nhóm theo từng sản phẩm như trước"); loadPostSamples(); }catch(err){ toast(err.message); } });
+$("#smpMake").addEventListener("click",async e=>{ const b=e.currentTarget; b.disabled=true; try{ const r=await api("/post-template/make","POST",{count:3}); toast(`Lan đã viết ${r.count} bài từ thư viện, chờ Tuấn xếp lịch (xem ở Bài đăng)`); loadPostSamples(); }catch(err){ toast(err.message); } b.disabled=false; });
+$("#smpList").addEventListener("change",async e=>{ const c=e.target.closest("[data-smpon]"); if(!c) return; const id=c.closest("[data-smp]").dataset.smp;
+  try{ await api(`/samples/${id}`,"PATCH",{enabled:c.checked}); toast(c.checked?"Lan dùng lại bài mẫu này":"Lan tạm không dùng bài mẫu này"); loadPostSamples(); }catch(err){ toast(err.message); } });
+$("#smpList").addEventListener("click",async e=>{ const card=e.target.closest("[data-smp]"); if(!card) return; const id=card.dataset.smp, x=ST.smp.items.find(y=>y.id==id); let b;
+  try{
+    if(e.target.closest("[data-smpmore]")){ card.querySelector("pre").classList.toggle("open"); return; }
+    if(e.target.closest("[data-smpprev]")){ const box=card.querySelector(".smp-prev"); box.hidden=false; box.innerHTML='<span class="small muted">Lan đang viết…</span>';
+      const r=await api(`/samples/${id}/preview`,"POST"); box.innerHTML=r.preview.map((t,i)=>`<h5 class="small muted" style="margin:0">Bản Lan viết lại ${i+1}</h5><article>${esc(t)}</article>`).join(""); return; }
+    if(e.target.closest("[data-smpedit]")){ card.querySelector("pre").outerHTML=`<form class="stack" data-smpsave><input type="text" value="${esc(x.title||"")}" aria-label="Tên bài mẫu"><textarea rows="12" aria-label="Nội dung bài mẫu">${esc(x.content)}</textarea><div class="row"><button class="btn sm primary" type="submit">Lưu</button><button class="btn sm ghost" type="button" data-smpcancel>Hủy</button></div></form>`; return; }
+    if(e.target.closest("[data-smpcancel]")) return loadPostSamples();
+    if((b=e.target.closest("[data-smpdel]"))){ if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } await api(`/samples/${id}`,"DELETE"); toast("Đã xóa bài mẫu"); return loadPostSamples(); }
+  }catch(err){ toast(err.message); } });
+$("#smpList").addEventListener("submit",async e=>{ const f=e.target.closest("[data-smpsave]"); if(!f) return; e.preventDefault(); const id=f.closest("[data-smp]").dataset.smp;
+  try{ await api(`/samples/${id}`,"PATCH",{title:f.querySelector("input").value,content:f.querySelector("textarea").value}); toast("Đã lưu bài mẫu"); loadPostSamples(); }catch(err){ toast(err.message); } });
 async function loadTpl(){
-  let d; try{ d=await api("/post-template"); }catch(e){ return; }
-  ST.tpl=d; if(document.activeElement!==$("#tplText")) $("#tplText").value=d.template; $("#tplOn").checked=d.enabled;
-  $("#tplStats").textContent=`Bài theo mẫu: ${d.stats.approved} bài chờ xếp lịch · ${d.stats.scheduled} bài đã lên lịch · hôm nay đã đăng ${d.stats.posted_today} bài. Số liên hệ cuối bài: ${d.phone.replace(/^📞\s*/,"")}.`;
-  tplPrevShow(d.preview); }
-function tplPrevShow(list){ $("#tplPreview").innerHTML=list.map((x,i)=>`<div><h5>Bản thử ${i+1}</h5><article>${esc(x)}</article></div>`).join(""); }
-$("#tplSave").addEventListener("click",async()=>{ try{ const d=await api("/post-template","PUT",{template:$("#tplText").value}); toast("Đã lưu mẫu. Lan làm bài theo mẫu mới từ lượt sau"); ST.tpl=d; tplPrevShow(d.preview); }catch(err){ toast(err.message); } });
-$("#tplPrev").addEventListener("click",async()=>{ try{ const r=await api("/post-template/preview","POST",{template:$("#tplText").value}); tplPrevShow(r.preview); }catch(err){ toast(err.message); } });
-$("#tplReset").addEventListener("click",()=>{ if(ST.tpl){ $("#tplText").value=ST.tpl.default; toast("Đã đưa về mẫu gốc, bấm Lưu mẫu để dùng"); } });
-$("#tplOn").addEventListener("change",async e=>{ try{ await api("/post-template","PUT",{enabled:e.target.checked}); toast(e.target.checked?"Bài đăng nhóm chỉ theo mẫu của sếp":"Đã tắt: Lan viết bài nhóm theo từng sản phẩm như trước"); loadTpl(); }catch(err){ toast(err.message); } });
-$("#tplMake").addEventListener("click",async e=>{ const b=e.currentTarget; b.disabled=true; try{ const r=await api("/post-template/make","POST",{count:3}); toast(`Lan đã làm ${r.count} bài theo mẫu, chờ Tuấn xếp lịch`); loadTpl(); loadPosts(); }catch(err){ toast(err.message); } b.disabled=false; });
+  let d; try{ d=await api("/samples"); }catch(e){ return; }
+  $("#tplOn").checked=d.enabled; const on=d.items.filter(x=>x.enabled).length;
+  $("#tplStats").textContent=`${on} bài mẫu đang dùng · ${d.stats.approved} bài chờ xếp lịch · ${d.stats.scheduled} bài đã lên lịch · hôm nay đã đăng ${d.stats.posted_today} bài. Mọi bài đăng vào nhóm nick đã tham gia và nhóm quản lý là bản viết lại của bài mẫu, cuối bài ${d.phone.replace(/^📞\s*/,"")}.`; }
+$("#tplOn").addEventListener("change",async e=>{ try{ await api("/post-template","PUT",{enabled:e.target.checked}); toast(e.target.checked?"Bài đăng nhóm chỉ viết từ thư viện bài mẫu":"Đã tắt: Lan viết bài nhóm theo từng sản phẩm như trước"); loadTpl(); }catch(err){ toast(err.message); } });
 async function loadPosts(){
   loadTpl();
   const [posts,products,sales]=await Promise.all([api("/posts"),api("/products"),api("/sales")]); ST.posts=posts; ST.products=products; ST.sales=sales;

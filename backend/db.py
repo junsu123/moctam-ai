@@ -239,6 +239,9 @@ CREATE TABLE IF NOT EXISTS prospects (
   status TEXT DEFAULT 'verified', lead_id INTEGER, found_by INTEGER, phone_tries INTEGER DEFAULT 0, note TEXT, verified_at TEXT, created_at TEXT, updated_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_prospect_url ON prospects(account_url);
+CREATE TABLE IF NOT EXISTS post_samples (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, enabled INTEGER DEFAULT 1, note TEXT, created_at TEXT, updated_at TEXT
+);
 CREATE TABLE IF NOT EXISTS prospect_lessons (
   id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, suggest TEXT, applied INTEGER DEFAULT 0, knowledge_id INTEGER, created_at TEXT
 );
@@ -312,7 +315,7 @@ MIGRATIONS = [
     ("groups", "is_sample", "INTEGER DEFAULT 0"), ("products", "is_sample", "INTEGER DEFAULT 0"),
     ("leads", "phone_at", "TEXT"), ("leads", "boss_status", "TEXT"), ("leads", "remind_at", "TEXT"),
     ("prospects", "phone_tries", "INTEGER DEFAULT 0"), ("prospects", "rule_bonus", "INTEGER DEFAULT 0"),
-    ("prospects", "rule_note", "TEXT"), ("prospects", "rule_fail", "TEXT"),
+    ("prospects", "rule_note", "TEXT"), ("prospects", "rule_fail", "TEXT"), ("posts", "sample_id", "INTEGER"),
     ("account_groups", "role", "TEXT DEFAULT 'member'"), ("account_groups", "origin", "TEXT"), ("account_groups", "joined_at", "TEXT"),
     ("account_groups", "verdict", "TEXT"), ("account_groups", "verdict_note", "TEXT"), ("account_groups", "left_at", "TEXT"),
     ("account_groups", "seen_at", "TEXT"), ("groups", "managed", "INTEGER DEFAULT 0"), ("groups", "pinned", "INTEGER DEFAULT 0"),
@@ -504,6 +507,11 @@ def init():
     if get_settings().get("care_posts_removed") != "1":  # sếp chốt: nhóm chỉ đăng bài theo mẫu tìm khách sỉ
         run("UPDATE posts SET status='rejected', error='Sếp chốt chỉ đăng bài theo mẫu' WHERE source='care' AND status IN ('scheduled','approved','draft')")
         set_setting("care_posts_removed", "1")
+    try:
+        import post_template
+        post_template.seed()  # thư viện bài mẫu: đưa mẫu MỘC TÂM vào làm bài đầu tiên
+    except Exception as e:
+        print("[post_template seed]", e)
     try:
         import pricing
         pricing.migrate()  # sếp chốt: bỏ giá khỏi sản phẩm, mời liên hệ Zalo

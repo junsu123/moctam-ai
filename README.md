@@ -100,14 +100,15 @@ sang giao diện máy tính. Nếu không đính được ảnh, sale vẫn đă
 hạn chế dù đã giãn cách, nên giữ số bài/ngày vừa phải, nội dung có giá trị và đúng luật từng nhóm.
 Máy chạy phần mềm phải bật trong giờ đăng bài; Chrome của các nick chạy trên chính máy đó.
 
-## Mẫu bài đăng nhóm của sếp: chỉ đăng bài tìm khách sỉ, gia công
+## Thư viện bài mẫu sỉ: Lan học từ bài mẫu của sếp để viết lại hay hơn
 
-Trang **Bài đăng → Mẫu bài đăng nhóm của sếp**. Mọi bài đăng vào **nhóm nick đã tham gia** và **nhóm nick quản lý** đều theo mẫu sếp đưa (MỘC TÂM nhận gia công & sỉ toàn quốc…), không đăng bài linh tinh (bài chăm sóc nhóm trước đây đã bỏ).
+Mục **Kho tri thức → Bài mẫu sỉ**. Sếp tạo danh sách các bài đăng sỉ mẫu; mọi bài đăng vào **nhóm nick đã tham gia** và **nhóm nick quản lý** là bản viết lại từ thư viện này: chỉ nội dung tìm khách sỉ, gia công, không đăng bài linh tinh, không ghi giá.
 
-- Sếp sửa mẫu ngay trên trang, viết `{số điện thoại}` ở chỗ cần ghi số: phần mềm thay bằng số Zalo báo giá (Cài đặt). Dòng “Ẩn bớt / Xem thêm” chép từ Facebook tự bị bỏ.
-- Đăng y hệt một bài nhiều lần dễ bị Facebook coi là spam, nên **mỗi bài là một bản biến thể** của mẫu: giữ đúng thông tin (thương hiệu, dòng sản phẩm, tiêu chuẩn GMP – ISO – FDA – VSATTP, dịch vụ, đối tượng), chỉ đổi emoji, vài cách nói tương đương, thứ tự gạch đầu dòng, câu mở đầu (“📣 TÌM ĐỐI TÁC SỈ & GIA CÔNG”…), hashtag; có thể nhắc sản phẩm đang bán chạy. Có khóa Claude thì Lan nhờ Claude viết lại theo đúng thông tin của mẫu; chưa có thì Lan tự biến thể theo quy tắc. Bài không trùng với bài theo mẫu trong 14 ngày.
-- Bài theo mẫu được duyệt sẵn (nội dung do sếp viết), Tuấn xếp lịch ngay; phần mềm vẫn tự bỏ mọi con số giá.
-- Nút **Xem thử 2 bài**, **Làm ngay 3 bài**, **Về mẫu gốc**; công tắc **Đăng nhóm theo mẫu** (tắt thì Lan viết bài nhóm theo từng sản phẩm như trước). Bài trang cá nhân và Fanpage vẫn viết theo sản phẩm.
+- **Thêm bài mẫu**: dán một bài (tên gợi nhớ không bắt buộc), hoặc **Dán nhiều bài một lần**, các bài cách nhau bằng một dòng chỉ có `---`. Viết `{số điện thoại}` ở chỗ cần ghi số, phần mềm thay bằng số Zalo báo giá (Cài đặt). Dòng “Ẩn bớt / Xem thêm” chép từ Facebook tự bị bỏ. Mẫu MỘC TÂM sếp gửi trước đó là bài mẫu đầu tiên.
+- Mỗi bài mẫu có: **Đang dùng** (bật/tắt), **Xem Lan viết lại** (2 bản thử), **Sửa**, **Xóa**, và số liệu: số bài Lan đã viết lại, đã đăng, số bình luận, số khách.
+- **Lan học thế nào**: thư viện được ghi vào sổ kiến thức của Lan. Có khóa Claude: Lan đọc cả thư viện (học cách mở đầu, bố cục, gạch đầu dòng, lời kêu gọi) rồi viết bài mới hay hơn từ một bài mẫu, giữ đúng thông tin của bài mẫu đó, không thêm thông tin mới. Chưa có khóa: Lan tự biến thể bài mẫu (đổi emoji, cách nói tương đương, thứ tự gạch đầu dòng, câu mở đầu, hashtag, có thể nhắc sản phẩm đang bán chạy). Mỗi bài đăng là một bản khác nhau, không trùng trong 14 ngày.
+- **Mẫu nào hiệu quả thì dùng nhiều hơn**: Lan chọn bài mẫu theo số khách và bình luận trên mỗi bài đã đăng, vẫn chừa 25% lượt thử đều các mẫu khác.
+- Bài viết từ bài mẫu được duyệt sẵn (nội dung do sếp đưa), Tuấn xếp lịch ngay; phần mềm vẫn tự bỏ mọi con số giá. Nút **Lan viết ngay 3 bài**; công tắc **Đăng nhóm theo bài mẫu** (tắt thì Lan viết bài nhóm theo từng sản phẩm như trước). Bài trang cá nhân và Fanpage vẫn viết theo sản phẩm.
 
 ## Nhóm có sẵn trong nick: đăng ở đâu, thoát nhóm nào, chăm sóc nhóm mình quản lý
 
@@ -118,7 +119,7 @@ Mục **Hội nhóm → Nhóm trong các nick**.
 - **Nhóm mới vào thì chưa đăng**: nhóm do phần mềm xin vào phải nghỉ 7 ngày (sửa được) mới bắt đầu đăng. Nhóm có sẵn trong nick đăng được ngay.
 - **Tuấn đánh giá từng nhóm** (đọc trang Giới thiệu và bảng tin như khi tìm nhóm mới, kèm kiểm tra nhóm có liên quan bán hàng, nguồn hàng, thực phẩm không): **Nên đăng**, **Đăng ít** (tương tác trung bình) hoặc **Thoát nhóm** (không liên quan, gần như không hoạt động, cấm bán hàng, chợ spam không ai bình luận). Mỗi lượt xem tối đa 8 nhóm, mỗi nhóm đánh giá lại sau 7 ngày.
 - **Tự thoát nhóm**: tối đa 3 nhóm/nick/ngày cho tự nhiên. Không bao giờ thoát nhóm nick quản lý, nhóm đã mang về khách, nhóm sếp bấm **Giữ nhóm**. Sếp có thể bấm **Thoát** ở từng nhóm, hoặc tắt tự thoát trong cài đặt.
-- **Nhóm mình quản lý**: mỗi nhóm nick là quản trị viên được đăng **5–10 bài mỗi ngày** (sửa được), rải đều trong khung giờ của nick, cách nhau ít nhất 25 phút. Tất cả là bài tìm khách sỉ, gia công theo mẫu của sếp (mỗi bài một biến thể); Lan chỉ làm số bài còn kịp đăng trong ngày. Bài trong nhóm mình quản lý không tính vào giới hạn số bài/ngày của nick.
+- **Nhóm mình quản lý**: mỗi nhóm nick là quản trị viên được đăng **5–10 bài mỗi ngày** (sửa được), rải đều trong khung giờ của nick, cách nhau ít nhất 25 phút. Tất cả là bài tìm khách sỉ, gia công viết lại từ thư viện bài mẫu của sếp (mỗi bài một bản khác nhau); Lan chỉ làm số bài còn kịp đăng trong ngày. Bài trong nhóm mình quản lý không tính vào giới hạn số bài/ngày của nick.
 
 ## Sale tự tìm hội nhóm mới
 
@@ -652,7 +653,7 @@ backend/
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, ca làm việc theo nick, đăng bài, lấy link bài, up bài
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
   errors.py      Sổ lỗi: ghi lỗi từ mọi màn hình và việc tự động, gộp lỗi trùng, gợi ý cách xử lý
-  post_template.py  Mẫu bài đăng nhóm của sếp, làm biến thể mỗi bài khác nhau
+  post_template.py  Thư viện bài mẫu sỉ của sếp, Lan viết lại mỗi bài khác nhau, chọn mẫu hiệu quả
   my_groups.py   Nhóm có sẵn trong nick: đọc danh sách nhóm, Tuấn đánh giá, tự thoát nhóm kém, nhóm mới vào nghỉ, chăm sóc nhóm quản lý
   prospect_rules.py  Điều kiện tìm khách sỉ sếp đặt, bài sếp dạy Mai, chấm lại theo điều kiện
   prospect.py    Mai tìm khách sỉ: tìm, đọc trang công khai, phân loại người bán, chấm điểm 100 có bằng chứng, lưu CRM
