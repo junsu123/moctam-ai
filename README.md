@@ -227,7 +227,7 @@ Chạy thật với TikTok, Shopee: hai nền tảng này thường bắt đăng
 
 Trang **Sản phẩm** là tài liệu bán hàng của cả đội:
 
-- **Thêm sản phẩm** ở form cuối trang (tên, dòng, giá sỉ, giá lẻ gợi ý, nhập tối thiểu, mô tả, điểm mạnh, thư mục ảnh).
+- **Thêm sản phẩm** ở form cuối trang (tên, dòng, nhập tối thiểu, mô tả, điểm mạnh, thư mục ảnh).
   Không thêm được 2 sản phẩm trùng tên.
 - **Sửa thông tin**: bấm ở thẻ sản phẩm, sửa trực tiếp rồi **Lưu thay đổi**. Agent dùng thông tin mới từ việc tiếp theo.
 - **Xóa sản phẩm**: bấm 2 lần để xác nhận. Bài nháp và bài chờ đăng của sản phẩm đó bị bỏ theo; bài đã đăng vẫn giữ.
