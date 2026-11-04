@@ -1113,6 +1113,60 @@ def patch_lead(lid: int, p: LeadPatch):
     return db.one("SELECT * FROM leads WHERE id=?", (lid,))
 
 
+class JunkIn(BaseModel):
+    reason: str = "other"
+    note: str = ""
+
+
+@app.post("/api/leads/{lid}/junk")
+def lead_junk(lid: int, p: JunkIn):
+    """Sếp loại khách là data rác: Mai ghi nhớ để lần sau tìm khách tự loại các trường hợp giống vậy."""
+    import junk
+    import prospect_rules
+    try:
+        r = junk.mark(lid, p.reason, p.note)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    try:
+        prospect_rules.rescore_all()  # khách khác giống data rác này: chấm lại
+    except Exception as e:
+        print("[junk rescore]", e)
+    return r
+
+
+@app.post("/api/leads/{lid}/unjunk")
+def lead_unjunk(lid: int):
+    import junk
+    junk.restore(lid)
+    return db.one("SELECT * FROM leads WHERE id=?", (lid,))
+
+
+@app.get("/api/junk")
+def junk_get():
+    import junk
+    return junk.overview()
+
+
+class JunkWord(BaseModel):
+    word: str
+
+
+@app.post("/api/junk/exclude")
+def junk_exclude(p: JunkWord):
+    import junk
+    import prospect_rules
+    junk.exclude_word(p.word.strip())
+    prospect_rules.rescore_all()
+    return junk.overview()
+
+
+@app.post("/api/junk/dismiss")
+def junk_dismiss(p: JunkWord):
+    import junk
+    junk.dismiss(p.word.strip())
+    return junk.overview()
+
+
 class ReplySent(BaseModel):
     text: str = ""
 

@@ -239,6 +239,12 @@ CREATE TABLE IF NOT EXISTS prospects (
   status TEXT DEFAULT 'verified', lead_id INTEGER, found_by INTEGER, phone_tries INTEGER DEFAULT 0, note TEXT, verified_at TEXT, created_at TEXT, updated_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_prospect_url ON prospects(account_url);
+CREATE TABLE IF NOT EXISTS junk (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, lead_id INTEGER, prospect_id INTEGER, name TEXT, phone TEXT, url TEXT, seller_type TEXT,
+  reason TEXT, note TEXT, text TEXT, created_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_junk_url ON junk(url);
+CREATE INDEX IF NOT EXISTS idx_junk_phone ON junk(phone);
 CREATE TABLE IF NOT EXISTS post_samples (
   id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, enabled INTEGER DEFAULT 1, note TEXT, created_at TEXT, updated_at TEXT
 );

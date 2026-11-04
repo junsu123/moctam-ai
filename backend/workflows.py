@@ -26,7 +26,7 @@ def stats() -> dict:
     yesterday = (db.clock() - timedelta(days=1)).strftime("%Y-%m-%d")
     c = lambda sql, p=(): db.one(sql, p)["n"]
     posted = c("SELECT COUNT(*) n FROM posts WHERE status='posted'")
-    leads = c("SELECT COUNT(*) n FROM leads")
+    leads = c("SELECT COUNT(*) n FROM leads WHERE COALESCE(status,'')!='junk'")
     best = db.one("""SELECT g.name, SUM(p.leads) l FROM posts p JOIN groups g ON g.id=p.group_id
                      WHERE p.status='posted' GROUP BY g.id ORDER BY l DESC LIMIT 1""")
     groups = db.q("SELECT * FROM groups")
@@ -42,7 +42,7 @@ def stats() -> dict:
         "leads_new": c("SELECT COUNT(*) n FROM leads WHERE status='new'"),
         "prospects_a": c("SELECT COUNT(*) n FROM prospects WHERE grade='A' AND status='verified'"),
         "prospects_manual": c("SELECT COUNT(*) n FROM prospects WHERE status='needs_manual'"),
-        "leads_hot": c("SELECT COUNT(*) n FROM leads WHERE score>=75 AND status NOT IN ('ordered','lost')"),
+        "leads_hot": c("SELECT COUNT(*) n FROM leads WHERE score>=75 AND status NOT IN ('ordered','lost','junk')"),
         "leads_ordered": c("SELECT COUNT(*) n FROM leads WHERE status='ordered'"),
         "best_group": best["name"] if best and best["l"] else None,
         "lead_per_post": round(leads / posted, 2) if posted else 0,

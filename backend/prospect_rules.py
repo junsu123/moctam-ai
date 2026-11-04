@@ -170,6 +170,16 @@ def apply(a: dict, name: str = "", extra: str = "") -> dict:
         fail.append(f"bài mới nhất cách đây {int(a['last_post_hours'] // 24)} ngày (sếp cần trong {c['recent_days']} ngày)")
     if a.get("seller_type") in c["skip_types"]:
         fail.append(f"là {prospect.SELLER_TYPES.get(a['seller_type'], a['seller_type'])} (sếp bỏ qua)")
+    import junk  # data rác sếp đã loại ở màn hình Khách hàng
+    for ph in a.get("phones") or []:
+        if (jb := junk.blocked(phone=ph)):
+            fail.append(f"SĐT {ph} sếp đã đánh dấu data rác ({jb})")
+    pen, why, hard_junk = junk.check(" ".join([a.get("_text") or "", extra or ""] + [e["text"] for e in a.get("evidence", [])]), name)
+    if hard_junk:
+        fail.append(hard_junk)
+    elif pen:
+        bonus -= pen
+        a["evidence"] = [{"kind": "rule_fail", "text": f"Mai trừ {pen} điểm: {why}", "url": None}] + a["evidence"]
     a["rule_bonus"] = bonus
     a["score"] = max(0, min(100, sum(parts.values()) + bonus))
     g = prospect.grade_of(a["score"])

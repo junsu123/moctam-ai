@@ -280,7 +280,7 @@ def evening_text() -> str:
     if company.brief_text():
         lines.append("\n" + e(company.brief_text()))
     pend = db.q("""SELECT name, phone FROM leads WHERE escalated_at IS NOT NULL AND COALESCE(boss_status,'') IN ('','remind')
-                   AND status NOT IN ('ordered','lost') ORDER BY escalated_at LIMIT 8""")
+                   AND status NOT IN ('ordered','lost','junk') ORDER BY escalated_at LIMIT 8""")
     if pend:
         lines.append("\n📞 <b>Khách còn chờ sếp gọi</b>")
         lines += [f"• {e(p['name'])} — {e(kpi.fmt_phone(p['phone']) or 'chưa có SĐT')}" for p in pend]
@@ -333,7 +333,8 @@ def lead_text(l: dict, reminder: bool = False) -> str:
 
 def lead_buttons(lid: int):
     return [[{"text": "📞 Đã gọi", "callback_data": f"l:{lid}:called"}, {"text": "✅ Chốt đơn", "callback_data": f"l:{lid}:won"}],
-            [{"text": "❌ Không mua", "callback_data": f"l:{lid}:lost"}, {"text": "⏰ Nhắc sau 2 giờ", "callback_data": f"l:{lid}:remind"}]]
+            [{"text": "❌ Không mua", "callback_data": f"l:{lid}:lost"}, {"text": "⏰ Nhắc sau 2 giờ", "callback_data": f"l:{lid}:remind"}],
+            [{"text": "🗑 Data rác (không hợp tệp khách)", "callback_data": f"l:{lid}:junk"}]]
 
 
 # ---------------------------------------------------------------- gửi
@@ -517,7 +518,7 @@ def handle_message(msg: dict):
         _reply(chat_id, kpi_text())
     elif cmd in ("/khach", "khách"):
         rows = db.q("""SELECT * FROM leads WHERE escalated_at IS NOT NULL AND COALESCE(boss_status,'') IN ('','remind')
-                       AND status NOT IN ('ordered','lost') ORDER BY escalated_at LIMIT 5""")
+                       AND status NOT IN ('ordered','lost','junk') ORDER BY escalated_at LIMIT 5""")
         if not rows:
             _reply(chat_id, "Không có khách nào đang chờ sếp tư vấn. 👍")
         for l in rows:
@@ -611,6 +612,10 @@ def handle_callback(cb: dict):
         db.run("UPDATE leads SET boss_status='lost', status='lost', updated_at=? WHERE id=?", (db.now(), lid))
         learning.on_lead_status(lid, "lost")
         note, toast = f"❌ Khách không mua ({hm})", "Đã ghi nhận"
+    elif act == "junk":
+        import junk
+        junk.mark(lid, "other", "Sếp bấm Data rác trên Telegram")
+        note, toast = f"🗑 Data rác: Mai đã ghi nhớ, lần sau không tìm lại ({hm})", "Mai đã ghi nhớ data rác"
     elif act == "remind":
         at = (db.clock() + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S")
         db.run("UPDATE leads SET boss_status='remind', remind_at=? WHERE id=?", (at, lid))

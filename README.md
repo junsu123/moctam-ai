@@ -246,6 +246,19 @@ Hạng **A** 80–100 (liên hệ trong 24 giờ), **B** 60–79 (theo dõi thê
 
 Mỗi thẻ khách có nút: Chép kịch bản, Vào Khách hàng, Đã liên hệ, Kiểm tra lại, Loại. Mai cũng báo cáo số khách A/B tìm được trong cuộc họp sáng, và tự học các kiến thức tìm khách (phân biệt chủ shop với affiliate, dấu hiệu livestream thật...) lúc rảnh.
 
+### Loại data rác: Mai ghi nhớ để lần sau tự loại
+
+Ở mục **Khách hàng**, mở một khách rồi bấm **Loại bỏ: data rác, không hợp tệp khách**, chọn lý do (Không bán hàng online, Sai ngành hàng, Chỉ mua lẻ, Đối thủ / nhà cung cấp, Affiliate / KOC, Cửa hàng truyền thống, SĐT sai, Tài khoản ảo, Khác) và ghi chú nếu muốn. Trên Telegram, thẻ khách cũng có nút **🗑 Data rác**.
+
+Khách bị loại biến khỏi danh sách và không tính vào KPI. Mai ghi nhớ như sau:
+- **Chặn đích danh**: link trang, SĐT, tên tài khoản đó. Lần tìm sau Mai bỏ qua (báo cáo ghi “bỏ qua N tài khoản sếp đã đánh dấu data rác”). Người đó bình luận để lại SĐT cũng không được tạo lại.
+- **Sai ngành hàng + ghi chú** (VD “bán mỹ phẩm, quần áo”): các ngành đó vào thẳng **Loại ngay nếu có** trong điều kiện tìm khách.
+- **Affiliate / KOC, cửa hàng truyền thống**: sếp loại kiểu này từ 2 lần thì Mai bỏ qua luôn kiểu người bán đó.
+- **Giống hệt data rác** (trùng trên 60% chữ): Mai loại.
+- **Học chữ chung**: từ 3 khách rác trở lên, Mai so với các khách chưa bị loại để tìm chữ hay có ở data rác mà khách thường không có (VD “dropship”, “Quảng Châu”). Chữ thuộc ngành hàng của xưởng (trà, ngũ cốc, livestream, đại lý...) không bao giờ bị học thành chữ rác. Khách mới có các chữ này bị trừ 25 điểm. Thẻ **Mai ghi nhớ data rác** ở đầu trang Khách hàng liệt kê các chữ đó: bấm **Loại hẳn** để thêm vào điều kiện loại, hoặc **Bỏ qua** nếu chữ đó không phải dấu hiệu rác.
+
+Mọi lần loại được ghi vào sổ kiến thức của Mai (“Data rác sếp đã loại”) và Mai chấm lại các khách đã tìm. Bấm **Data rác đã loại** để xem lại; bấm nhầm thì mở khách đó và bấm **Không phải rác, khôi phục**.
+
 Chạy thật với TikTok, Shopee: hai nền tảng này thường bắt đăng nhập hoặc captcha với trình duyệt tự động, nên phần lớn tài khoản sẽ ở trạng thái “cần sếp xem tay”. Vì vậy mặc định tắt; khi tắt, link TikTok/Shopee sếp dán cũng không được mở.
 
 ## Sản phẩm và sản phẩm đang bán chạy
@@ -674,6 +687,7 @@ backend/
   post_template.py  Thư viện bài mẫu sỉ của sếp, Lan viết lại mỗi bài khác nhau, chọn mẫu hiệu quả
   my_groups.py   Nhóm có sẵn trong nick: đọc danh sách nhóm, Tuấn đánh giá, tự thoát nhóm kém, nhóm mới vào nghỉ, chăm sóc nhóm quản lý
   prospect_rules.py  Điều kiện tìm khách sỉ sếp đặt, bài sếp dạy Mai, chấm lại theo điều kiện
+  junk.py        Data rác sếp loại: chặn đích danh, học chữ chung của data rác, trừ điểm/loại khách giống vậy
   prospect.py    Mai tìm khách sỉ: tìm, đọc trang công khai, phân loại người bán, chấm điểm 100 có bằng chứng, lưu CRM
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm
   group_review.py  Tuấn đánh giá nhóm theo chuẩn nhóm tương tác cao: chấm điểm, Nên vào / Cân nhắc / Bỏ qua, lý do

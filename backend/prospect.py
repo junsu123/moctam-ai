@@ -35,6 +35,7 @@ from datetime import timedelta
 from urllib.parse import quote, urlparse, parse_qs
 
 import db
+import junk
 from knowledge import plain
 
 TIKTOK_BASE = os.getenv("TIKTOK_BASE_URL", "https://www.tiktok.com").rstrip("/")
@@ -862,6 +863,11 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
                         rows = []
                     res["groups"] = res.get("groups", 0) + 1
                     for r in rows:
+                        if junk.blocked(r["href"], name=r["name"]):
+                            if canon(r["href"]) not in res.setdefault("junk", set()):
+                                junk.count_skip()
+                            res["junk"].add(canon(r["href"]))
+                            continue
                         d0 = find_dup(r["href"], [], r["name"], "facebook")
                         if d0 and (d0.get("phone") or not PHONE_RX.search(r["signal"]["text"])):
                             res["dup"].add(r["href"])  # đã có (trừ khi lần này họ ghi thêm SĐT)
@@ -894,6 +900,11 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
                 for r in rows:
                     if find_dup(r["href"], [], r["name"], pf):
                         res["dup"].add(canon(r["href"]))
+                        continue
+                    if junk.blocked(r["href"], name=r["name"]):  # sếp đã đánh dấu data rác
+                        if canon(r["href"]) not in res.setdefault("junk", set()):
+                            junk.count_skip()
+                        res["junk"].add(canon(r["href"]))
                         continue
                     if any(canon(x[0]["href"]) == canon(r["href"]) for x in queue):
                         continue
@@ -975,6 +986,8 @@ def _report(res: dict, notify: str | None, by_link: bool):
     extra = []
     if res.get("groups"):
         extra.append(f"đọc bình luận {res['groups']} nhóm, thấy {res.get('demand', 0)} người hỏi nguồn hàng")
+    if res.get("junk"):
+        extra.append(f"bỏ qua {len(res['junk'])} tài khoản sếp đã đánh dấu data rác")
     if res.get("ads"):
         extra.append(f"quét quảng cáo thấy {res['ads']} trang đang chạy quảng cáo hợp ngành")
     msg = (head + f" (xem {res['inspected']} tài khoản: A {g['A']}, B {g['B']}, C {g['C']}, D {g['D']}"

@@ -57,19 +57,19 @@ def day_stats(day: str | None = None) -> dict:
     d = (day or _today()) + "%"
     one = lambda sql, p=(): db.one(sql, p)["n"] or 0
     mn, mx = targets()
-    phone = one("SELECT COUNT(*) n FROM leads WHERE phone IS NOT NULL AND phone!='' AND COALESCE(phone_at, created_at) LIKE ?", (d,))
+    phone = one("SELECT COUNT(*) n FROM leads WHERE COALESCE(status,'')!='junk' AND phone IS NOT NULL AND phone!='' AND COALESCE(phone_at, created_at) LIKE ?", (d,))
     st = {
         "date": day or _today(), "target_min": mn, "target_max": mx,
         "leads_phone": phone,
-        "leads_total": one("SELECT COUNT(*) n FROM leads WHERE created_at LIKE ?", (d,)),
-        "leads_no_phone": one("SELECT COUNT(*) n FROM leads WHERE created_at LIKE ? AND (phone IS NULL OR phone='')", (d,)),
-        "from_comments": one("SELECT COUNT(*) n FROM leads WHERE created_at LIKE ? AND origin='comment'", (d,)),
+        "leads_total": one("SELECT COUNT(*) n FROM leads WHERE COALESCE(status,'')!='junk' AND created_at LIKE ?", (d,)),
+        "leads_no_phone": one("SELECT COUNT(*) n FROM leads WHERE COALESCE(status,'')!='junk' AND created_at LIKE ? AND (phone IS NULL OR phone='')", (d,)),
+        "from_comments": one("SELECT COUNT(*) n FROM leads WHERE COALESCE(status,'')!='junk' AND created_at LIKE ? AND origin='comment'", (d,)),
         "asked_phone": one("SELECT COUNT(*) n FROM comment_seen WHERE replied=1 AND created_at LIKE ?", (d,)),
         "posts": one("SELECT COUNT(*) n FROM posts WHERE status='posted' AND posted_at LIKE ?", (d,)),
         "bumps": one("SELECT COUNT(*) n FROM bumps WHERE status='done' AND done_at LIKE ?", (d,)),
-        "escalated": one("SELECT COUNT(*) n FROM leads WHERE escalated_at LIKE ?", (d,)),
-        "boss_pending": one("SELECT COUNT(*) n FROM leads WHERE COALESCE(is_sample,0)=0 AND escalated_at IS NOT NULL AND COALESCE(boss_status,'') IN ('','remind') AND status NOT IN ('ordered','lost')"),
-        "ordered": one("SELECT COUNT(*) n FROM leads WHERE status='ordered' AND updated_at LIKE ?", (d,)),
+        "escalated": one("SELECT COUNT(*) n FROM leads WHERE COALESCE(status,'')!='junk' AND escalated_at LIKE ?", (d,)),
+        "boss_pending": one("SELECT COUNT(*) n FROM leads WHERE COALESCE(status,'')!='junk' AND COALESCE(is_sample,0)=0 AND escalated_at IS NOT NULL AND COALESCE(boss_status,'') IN ('','remind') AND status NOT IN ('ordered','lost')"),
+        "ordered": one("SELECT COUNT(*) n FROM leads WHERE COALESCE(status,'')!='junk' AND status='ordered' AND updated_at LIKE ?", (d,)),
     }
     st["achieved"] = phone >= mn
     st["exceeded"] = phone >= mx
@@ -99,9 +99,9 @@ def per_sale(day: str | None = None) -> list[dict]:
         out.append({
             "id": s["id"], "name": s["name"], "fb_name": s["fb_name"], "active": s in active,
             "target_min": share(mn) if s in active else 0, "target_max": share(mx) if s in active else 0,
-            "leads_phone": q("""SELECT COUNT(*) n FROM leads l JOIN posts p ON p.id=l.post_id WHERE p.sale_id=?
+            "leads_phone": q("""SELECT COUNT(*) n FROM leads l JOIN posts p ON p.id=l.post_id WHERE COALESCE(l.status,'')!='junk' AND p.sale_id=?
                                AND l.phone IS NOT NULL AND l.phone!='' AND COALESCE(l.phone_at, l.created_at) LIKE ?"""),
-            "leads": q("SELECT COUNT(*) n FROM leads l JOIN posts p ON p.id=l.post_id WHERE p.sale_id=? AND l.created_at LIKE ?"),
+            "leads": q("SELECT COUNT(*) n FROM leads l JOIN posts p ON p.id=l.post_id WHERE COALESCE(l.status,'')!='junk' AND p.sale_id=? AND l.created_at LIKE ?"),
             "posts": q("SELECT COUNT(*) n FROM posts WHERE sale_id=? AND status='posted' AND posted_at LIKE ?"),
             "bumps": q("SELECT COUNT(*) n FROM bumps WHERE sale_id=? AND status='done' AND done_at LIKE ?"),
             "asked": q("SELECT COUNT(*) n FROM comment_seen WHERE sale_id=? AND replied=1 AND created_at LIKE ?"),
@@ -159,6 +159,10 @@ def upsert_lead(name: str, text: str, post_id: int | None, author: str | None = 
     import learning
     import workflows
     phone = phone or norm_phone(text)
+    import junk
+    if junk.blocked(phone=phone, name=author or name):  # sếp đã đánh dấu data rác: không tạo lại
+        junk.count_skip()
+        return None, False, False
     lead = None
     if phone:
         lead = db.one("SELECT * FROM leads WHERE phone=?", (phone,))
@@ -256,7 +260,7 @@ def escalate(lead_id: int, reason: str | None = None, force: bool = False) -> bo
 def check_escalations():
     """Gọi định kỳ: khách nào cần sếp thì chuyển, khách hẹn nhắc lại thì nhắc."""
     for l in db.q("""SELECT * FROM leads WHERE escalated_at IS NULL AND COALESCE(is_sample,0)=0
-                     AND status NOT IN ('ordered','lost') AND created_at >= ?""",
+                     AND status NOT IN ('ordered','lost','junk') AND created_at >= ?""",
                   ((db.clock() - timedelta(days=3)).strftime("%Y-%m-%d %H:%M:%S"),)):
         r = escalate_reason(l)
         if r:
