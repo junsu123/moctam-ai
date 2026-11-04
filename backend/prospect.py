@@ -399,6 +399,11 @@ def suggest_products(a: dict) -> list[dict]:
     return out[:3]
 
 
+def _zalo() -> str:
+    import pricing
+    return pricing.zalo()
+
+
 def cat_word(a: dict) -> str:
     """Nhóm hàng họ đang bán, lấy từ chính bằng chứng (để kịch bản nói đúng)."""
     ev = a.get("evidence", [])
@@ -423,17 +428,17 @@ def script(row: dict, a: dict, prods: list[dict]) -> str:
             "đang bán " + cat_word(a))
     names = ", ".join(p["name"] for p in prods[:2]) or "trà túi lọc và bột ngũ cốc"
     base = (f"Chào {who}, em là Hà bên {st.get('company_name') or 'xưởng'}. Em thấy bên mình {seen} trên "
-            f"{PLATFORM_TXT.get(row.get('platform'), 'mạng xã hội')}. Bên em là xưởng sản xuất {names}, có giá sỉ cho người bán online "
-            "và có sẵn ảnh, video thật để đăng bán. Nếu shop quan tâm, em gửi bảng giá và thông tin sản phẩm để mình xem trước ạ.")
+            f"{PLATFORM_TXT.get(row.get('platform'), 'mạng xã hội')}. Bên em là xưởng sản xuất {names}, bán sỉ tận xưởng cho người bán online "
+            f"và có sẵn ảnh, video thật để đăng bán. Giá sỉ shop nhắn Zalo {_zalo()} để được báo trực tiếp ạ. Shop đang bán kênh nào nhiều nhất ạ?")
     if "buyer" in a.get("tags", []):
         base = (f"Chào {who}, em là Hà bên {st.get('company_name') or 'xưởng'}. Em thấy anh/chị đang tìm nguồn {cat_word(a)} trong nhóm. "
                 f"Bên em là xưởng sản xuất {names}, bán sỉ tận xưởng cho người bán online, có ảnh và video thật để đăng bán. "
-                "Anh/chị đang cần loại nào và số lượng khoảng bao nhiêu để em gửi bảng giá phù hợp ạ?")
+                f"Anh/chị đang cần loại nào, số lượng khoảng bao nhiêu? Giá sỉ anh/chị nhắn Zalo {_zalo()} để được báo trực tiếp ạ.")
     elif "ads" in a.get("tags", []):
         seen = "đang chạy quảng cáo bán " + cat_word(a)
         base = (f"Chào {who}, em là Hà bên {st.get('company_name') or 'xưởng'}. Em thấy bên mình {seen} trên Facebook. "
-                f"Bên em là xưởng sản xuất {names}, có giá sỉ tận xưởng để shop thêm vào danh mục và có sẵn ảnh, video thật làm quảng cáo. "
-                "Nếu shop quan tâm, em gửi bảng giá để mình xem trước ạ.")
+                f"Bên em là xưởng sản xuất {names}, bán sỉ tận xưởng để shop thêm vào danh mục và có sẵn ảnh, video thật làm quảng cáo. "
+                f"Giá sỉ shop nhắn Zalo {_zalo()} để được báo trực tiếp ạ.")
     if a.get("affiliate_only"):
         base = (f"Chào {who}, em là Hà bên {st.get('company_name') or 'xưởng'}. Em thấy bạn đang giới thiệu sản phẩm "
                 f"{cat_word(a)} rất hay. Bạn có đang tự nhập hàng về bán hay chủ yếu "
@@ -447,7 +452,7 @@ def script(row: dict, a: dict, prods: list[dict]) -> str:
                            f"Viết tin nhắn tiếp cận LẦN ĐẦU (dưới 80 chữ, tự nhiên, xưng em) gửi {who}. Chỉ dựa vào bằng chứng sau, "
                            f"không bịa thêm: {json.dumps(ev, ensure_ascii=False)}. Loại người bán: {SELLER_TYPES[a['seller_type']]}. "
                            f"Sản phẩm của xưởng nên giới thiệu: {names}. KHÔNG hứa giá, chiết khấu, mẫu thử hay chính sách nào; "
-                           "chỉ đề nghị gửi bảng giá/thông tin. Kết bằng 1 câu hỏi.",
+                           f"chỉ mời nhắn Zalo {_zalo()} để được báo giá trực tiếp. Kết bằng 1 câu hỏi.",
                            mock=lambda: base, max_tokens=260, task="replies")
             if txt and len(txt) > 40 and not re.search(r"chiết khấu \d|giảm \d|tặng|miễn phí|cam kết", txt, re.I):
                 return txt.strip()

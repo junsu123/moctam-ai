@@ -15,7 +15,7 @@ ANGLES = {
 OPENERS = {
     "nguon_hang": ["📦 TÌM ĐẦU MỐI {cat} TẬN XƯỞNG — KHÔNG QUA TRUNG GIAN",
                    "🏭 Xưởng mình trực tiếp sản xuất {name}, cần thêm bạn bán online cùng phát triển"],
-    "loi_nhuan": ["💰 Nhập {wp} — bán lẻ {rp}: bài toán lời lãi cho shop online",
+    "loi_nhuan": ["💰 Nhập tận xưởng, biên lãi tốt cho shop online",
                   "Ai đang tìm sản phẩm biên lời tốt để bán quanh năm thì đọc bài này nhé 👇"],
     "livestream": ["🎥 Sản phẩm 'lên hình là bán': {name}",
                    "Live 30 phút pha {name} cho khách xem — đây là món mình gợi ý cho các bạn chủ live"],
@@ -36,14 +36,13 @@ def post(product: dict, angle: str, target_type: str, settings: dict) -> dict:
     body = [title, "",
             f"🌿 {name}: {product.get('description', '')}",
             f"✅ Điểm mạnh khi bán: {product.get('selling_points', '')}",
-            f"💵 Giá sỉ: {product.get('wholesale_price', '')} — giá bán lẻ gợi ý: {product.get('retail_price', '')}",
             f"📦 Nhập tối thiểu: {product.get('moq', '')}"]
     body += ["", "Xưởng hỗ trợ người bán online:",
              "• Ảnh, video thật quay tại xưởng để các bạn đăng bán",
              "• Gửi mẫu thử trước khi nhập",
              "• Đóng gói sẵn để giao hàng sàn TMĐT"]
     if target_type == "group":
-        body += ["", "Bạn nào quan tâm để lại bình luận \"quan tâm\", mình inbox gửi bảng giá nhé!"]
+        body += ["", "Bạn nào quan tâm để lại bình luận \"quan tâm\", mình inbox tư vấn nhé!"]
     else:
         body += ["", f"Liên hệ: {settings.get('contact_info', '')}"]
     plain = unicodedata.normalize("NFD", cat).encode("ascii", "ignore").decode().replace(" ", "").lower()
@@ -55,7 +54,7 @@ def post(product: dict, angle: str, target_type: str, settings: dict) -> dict:
 def lead_reply(lead: dict, message: str) -> str:
     n = lead.get("name") or "bạn"
     return (f"Chào {n} ạ! Cảm ơn {n} đã quan tâm hàng bên xưởng 🌿\n"
-            f"Mình gửi {n} bảng giá sỉ và hình ảnh thật nhé. Với nhu cầu \"{lead.get('need') or message}\", "
+            f"Mình gửi {n} hình ảnh, video thật nhé; giá sỉ {n} nhắn Zalo {__import__('pricing').zalo()} để được báo trực tiếp. Với nhu cầu \"{lead.get('need') or message}\", "
             "mình gợi ý {n} nhập thử combo nhỏ trước để test thị trường, xưởng gửi kèm mẫu thử + bộ ảnh/video "
             "để {n} đăng bán luôn.\n"
             f"{n} đang bán chủ yếu kênh nào (live, ads hay sàn) để mình tư vấn sản phẩm hợp nhất ạ?").replace("{n}", n)

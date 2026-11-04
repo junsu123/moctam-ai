@@ -224,8 +224,8 @@ def add_product(p: Product):
     if db.one("SELECT id FROM products WHERE lower(name)=lower(?)", (p.name.strip(),)):
         raise HTTPException(400, "Đã có sản phẩm cùng tên. Sửa sản phẩm đó thay vì thêm mới")
     pid = db.run("""INSERT INTO products(name, category, description, wholesale_price, retail_price, moq,
-                    selling_points, image_folder, hot_note, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)""",
-                 (p.name.strip(), p.category, p.description, p.wholesale_price, p.retail_price, p.moq, p.selling_points,
+                    selling_points, image_folder, hot_note, created_at) VALUES (?,?,?,'','',?,?,?,?,?)""",
+                 (p.name.strip(), p.category, p.description, p.moq, p.selling_points,
                   p.image_folder.strip().strip('"'), p.hot_note.strip(), db.now()))
     db.log("minh", "Thêm sản phẩm", f"{p.name.strip()}: Lan có thể viết bài, Hà tư vấn sản phẩm này từ giờ")
     if p.hot:
@@ -240,6 +240,7 @@ def patch_product(pid: int, p: ProductPatch):
         raise HTTPException(404, "Không tìm thấy sản phẩm")
     data = p.model_dump()
     hot = data.pop("hot")
+    data.pop("wholesale_price", None), data.pop("retail_price", None)  # sếp chốt: không lưu giá, giá liên hệ Zalo
     fields = {k: (v.strip().strip('"') if k == "image_folder" else v.strip() if isinstance(v, str) else v)
               for k, v in data.items() if v is not None}
     if "name" in fields and not fields["name"]:

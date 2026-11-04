@@ -968,7 +968,7 @@ label.f{font-weight:600;color:var(--muted)}
 
     <!-- SẢN PHẨM -->
     <section class="view" id="v-products" hidden>
-      <div class="vh"><div><h1>Sản phẩm</h1><p>Thông tin này là "tài liệu bán hàng" các agent dùng khi viết bài và tư vấn. Ghi giá sỉ, giá lẻ gợi ý và điểm mạnh càng rõ, bài càng thuyết phục.</p></div></div>
+      <div class="vh"><div><h1>Sản phẩm</h1><p>Thông tin này là "tài liệu bán hàng" các agent dùng khi viết bài và tư vấn. Ghi mô tả và điểm mạnh càng rõ, bài càng thuyết phục. <b>Không ghi giá</b>: mọi bài viết, tin nhắn đều mời khách liên hệ Zalo <b class="zalo-num">0386992326</b> để được báo giá (sửa số Zalo ở Cài đặt).</p></div></div>
       <div class="hot-bar" id="hotBar"></div>
       <div class="products" id="prodGrid"></div>
       <form class="card" id="prodForm">
@@ -977,8 +977,6 @@ label.f{font-weight:600;color:var(--muted)}
           <label class="f" for="pName">Tên<input type="text" id="pName" required></label>
           <label class="f" for="pCat">Dòng<select id="pCat"><option>Trà túi lọc</option><option>Bột ngũ cốc</option><option>Bột thiên nhiên</option><option>Cà phê hòa tan</option><option>Khác</option></select></label>
           <label class="f" for="pMoq">Nhập tối thiểu<input type="text" id="pMoq" placeholder="50 hộp"></label>
-          <label class="f" for="pWp">Giá sỉ<input type="text" id="pWp"></label>
-          <label class="f" for="pRp">Giá lẻ gợi ý<input type="text" id="pRp"></label>
           <label class="f" for="pDesc">Mô tả<input type="text" id="pDesc"></label>
           <label class="f" for="pSell" style="grid-column:1/-1">Điểm mạnh khi bán<input type="text" id="pSell"></label>
           <label class="row small" style="grid-column:1/-1"><input type="checkbox" id="pHot"> 🔥 Sản phẩm đang bán chạy: cả đội tập trung chào mời</label>
@@ -1172,6 +1170,8 @@ label.f{font-weight:600;color:var(--muted)}
           <label class="f" for="sName">Tên xưởng<input type="text" id="sName"></label>
           <label class="f" for="sVoice">Giọng văn thương hiệu<textarea id="sVoice"></textarea></label>
           <label class="f" for="sContact">Thông tin liên hệ cuối bài<input type="text" id="sContact"></label>
+          <label class="f" for="sZalo">Số Zalo báo giá (mọi bài, tin nhắn đều mời khách liên hệ số này, không ghi giá)<input type="text" id="sZalo" inputmode="tel" placeholder="0386992326"></label>
+          <label class="f" for="sPriceLine">Câu mời liên hệ giá (để trống: “💬 Giá vui lòng liên hệ trực tiếp Zalo …”)<input type="text" id="sPriceLine"></label>
           <div class="grid2">
             <label class="f" for="sTime">Giờ họp giao ban<input type="time" id="sTime"></label>
             <label class="f" for="sPer">Số bài đăng nhóm mỗi ngày<input type="number" id="sPer" min="1" max="20"></label>
@@ -1321,14 +1321,14 @@ const Demo = (() => {
   const today = () => now().slice(0,10);
   let seq = 100; const id = () => ++seq;
   const S = {
-    settings:{attach_images:"1",images_min:"2",images_max:"4",image_reuse_days:"14",kpi_min:"5",kpi_max:"10",kpi_check_time:"15:00",escalate_all_phone:"1",escalate_complex:"1",escalate_after_hours:"2",scan_enabled:"1",scan_times:"11:30,16:30,20:45",scan_max_age_days:"7",auto_reply_comments:"1",reply_max_per_nick:"10",reply_texts:"Dạ anh/chị để lại SĐT hoặc Zalo giúp em, bên em gọi tư vấn giá sỉ ngay ạ\nEm cảm ơn ạ, anh/chị cho em xin SĐT/Zalo để em gửi bảng giá sỉ và tư vấn kỹ hơn nhé",tg_token:"",tg_morning:"09:00",tg_evening:"21:30",tg_alert_leads:"1",tg_alert_kpi:"1",tg_alert_nick:"1",learn_enabled:"1",learn_time:"23:15",learn_explore:"0.25",bump_enabled:"1",bump_folder:"D:\\AnhSanPham",bump_time:"19:30",bump_max_age_days:"7",bump_max_per_nick:"8",bump_gap_minutes:"6",bump_texts:"Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng",cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 09xx.xxx.xxx",ai_live:false,model:"mô phỏng"},
+    settings:{attach_images:"1",images_min:"2",images_max:"4",image_reuse_days:"14",kpi_min:"5",kpi_max:"10",kpi_check_time:"15:00",escalate_all_phone:"1",escalate_complex:"1",escalate_after_hours:"2",scan_enabled:"1",scan_times:"11:30,16:30,20:45",scan_max_age_days:"7",auto_reply_comments:"1",reply_max_per_nick:"10",reply_texts:"Dạ anh/chị để lại SĐT hoặc Zalo giúp em, bên em gọi tư vấn giá sỉ ngay ạ\nEm cảm ơn ạ, anh/chị cho em xin SĐT/Zalo để em gửi bảng giá sỉ và tư vấn kỹ hơn nhé",tg_token:"",tg_morning:"09:00",tg_evening:"21:30",tg_alert_leads:"1",tg_alert_kpi:"1",tg_alert_nick:"1",learn_enabled:"1",learn_time:"23:15",learn_explore:"0.25",bump_enabled:"1",bump_folder:"D:\\AnhSanPham",bump_time:"19:30",bump_max_age_days:"7",bump_max_per_nick:"8",bump_gap_minutes:"6",bump_texts:"Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng",cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 0386992326",price_zalo:"0386992326",price_contact:"",ai_live:false,model:"mô phỏng"},
     products:[
-      {id:1,hot:1,hot_note:"Đang vào mùa lạnh, khách hỏi nhiều; tặng 5 hộp khi nhập từ 100 hộp",image_folder:"D:\\AnhSanPham\\Tra gung mat ong",name:"Trà gừng mật ong túi lọc",category:"Trà túi lọc",description:"Gừng sẻ sấy lạnh phối mật ong, hộp 20 túi x 2g.",wholesale_price:"38.000đ/hộp",retail_price:"65.000đ",moq:"50 hộp",selling_points:"Ấm bụng, dễ uống, bán chạy mùa lạnh; in nhãn riêng (OEM) được"},
-      {id:2,image_folder:"D:\\AnhSanPham\\Tra hoa dau biec",name:"Trà hoa đậu biếc - cỏ ngọt",category:"Trà túi lọc",description:"Hoa đậu biếc sấy khô phối cỏ ngọt, hộp 25 túi.",wholesale_price:"35.000đ/hộp",retail_price:"60.000đ",moq:"50 hộp",selling_points:"Màu xanh đẹp lên video, hợp livestream pha chế"},
-      {id:3,hot:1,image_folder:"D:\\AnhSanPham\\Bot ngu coc",name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",category:"Bột ngũ cốc",description:"Hũ 500g, không đường hóa học, rang xay tại xưởng.",wholesale_price:"85.000đ/hũ",retail_price:"150.000đ",moq:"30 hũ",selling_points:"Biên lợi nhuận cao, khách mua lặp lại, hợp bán sàn"},
-      {id:4,name:"Bột cần tây sấy lạnh",category:"Bột thiên nhiên",description:"Túi 100g, sấy lạnh giữ màu xanh tự nhiên.",wholesale_price:"75.000đ/túi",retail_price:"135.000đ",moq:"30 túi",selling_points:"Trend giữ dáng, nội dung TikTok/Reels dễ làm"},
-      {id:5,name:"Bột diếp cá - rau má",category:"Bột thiên nhiên",description:"Túi 100g, nguyên chất 100%.",wholesale_price:"60.000đ/túi",retail_price:"110.000đ",moq:"30 túi",selling_points:"Hợp tệp mẹ bỉm, chị em quan tâm làn da"},
-      {id:6,name:"Cà phê hòa tan 3in1 vị đậm",category:"Cà phê hòa tan",description:"Hộp 18 gói x 17g, vị đậm kiểu phố.",wholesale_price:"42.000đ/hộp",retail_price:"75.000đ",moq:"50 hộp",selling_points:"Giá dễ chốt, combo quà tặng, bán quanh năm"}],
+      {id:1,hot:1,hot_note:"Đang vào mùa lạnh, khách hỏi nhiều; tặng 5 hộp khi nhập từ 100 hộp",image_folder:"D:\\AnhSanPham\\Tra gung mat ong",name:"Trà gừng mật ong túi lọc",category:"Trà túi lọc",description:"Gừng sẻ sấy lạnh phối mật ong, hộp 20 túi x 2g.",moq:"50 hộp",selling_points:"Ấm bụng, dễ uống, bán chạy mùa lạnh; in nhãn riêng (OEM) được"},
+      {id:2,image_folder:"D:\\AnhSanPham\\Tra hoa dau biec",name:"Trà hoa đậu biếc - cỏ ngọt",category:"Trà túi lọc",description:"Hoa đậu biếc sấy khô phối cỏ ngọt, hộp 25 túi.",moq:"50 hộp",selling_points:"Màu xanh đẹp lên video, hợp livestream pha chế"},
+      {id:3,hot:1,image_folder:"D:\\AnhSanPham\\Bot ngu coc",name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",category:"Bột ngũ cốc",description:"Hũ 500g, không đường hóa học, rang xay tại xưởng.",moq:"30 hũ",selling_points:"Biên lợi nhuận cao, khách mua lặp lại, hợp bán sàn"},
+      {id:4,name:"Bột cần tây sấy lạnh",category:"Bột thiên nhiên",description:"Túi 100g, sấy lạnh giữ màu xanh tự nhiên.",moq:"30 túi",selling_points:"Trend giữ dáng, nội dung TikTok/Reels dễ làm"},
+      {id:5,name:"Bột diếp cá - rau má",category:"Bột thiên nhiên",description:"Túi 100g, nguyên chất 100%.",moq:"30 túi",selling_points:"Hợp tệp mẹ bỉm, chị em quan tâm làn da"},
+      {id:6,name:"Cà phê hòa tan 3in1 vị đậm",category:"Cà phê hòa tan",description:"Hộp 18 gói x 17g, vị đậm kiểu phố.",moq:"50 hộp",selling_points:"Giá dễ chốt, combo quà tặng, bán quanh năm"}],
     groups:[
       {id:1,name:"Cộng đồng bán hàng online toàn quốc",url:"",topic:"Bán hàng online",members:520000,rules:"Chỉ đăng bài bán hàng vào thứ 3, 5, 7. Không để số điện thoại trong bài.",min_days_between_posts:4,last_posted_at:null,leads_count:2},
       {id:2,name:"Hội chạy quảng cáo Facebook Ads",url:"",topic:"Quảng cáo",members:180000,rules:"Ưu tiên bài chia sẻ kinh nghiệm.",min_days_between_posts:5,last_posted_at:null,leads_count:1},
@@ -1369,7 +1369,7 @@ const Demo = (() => {
     profile:{posts:26,avg_words:118,avg_lines:12,emoji_per_post:6.4,top_emoji:["🌿","✅","💵","📦","👉","🔥"],top_tags:["#nguonhangsi","#taxuong","#banhangonline","#trasi"],bullet_share:88},
     quality:{claude:{judged:21,approve_rate:86,leads_avg:0.8,edited:3},self:{judged:7,approve_rate:71,leads_avg:0.6,edited:1}},
     top:{hook:[{text:"Nhập {wp}, bán {rp} — lãi rõ ràng từng hộp 💰",score:6.5,uses:3},{text:"📦 Nguồn {cat} tận xưởng, không qua trung gian, giá gốc cho người bán online",score:5,uses:2},{text:"Chị em chủ live ơi, món này lên hình là ra đơn 🎥",score:4.2,uses:1}],
-      cta:[{text:"👉 Bình luận \"GIÁ\" mình gửi bảng giá sỉ ngay nhé!",score:7.1,uses:4},{text:"Để lại SĐT/Zalo dưới bình luận, xưởng gọi tư vấn trong 15 phút 📞",score:5.4,uses:2}],point:[]},
+      cta:[{text:"👉 Bình luận \"quan tâm\" mình inbox tư vấn ngay nhé!",score:7.1,uses:4},{text:"Để lại SĐT/Zalo dưới bình luận, xưởng gọi tư vấn trong 15 phút 📞",score:5.4,uses:2}],point:[]},
     recent:S.posts.slice(0,6).map((p,i)=>({id:p.id,source:i%3===0?"self":"claude",product_name:p.product_name,title:p.title,content:p.content.slice(0,400),status:p.status==="posted"?"approved":"draft",leads:p.leads||0,created_at:p.created_at}))});
   S.kbLog={memory:31,claude:12,study:18}; S.kbSet={knowledge_enabled:"1",study_time:"07:00",study_per_agent:"2",idle_learning:"1",idle_study_per_day:"6"};
   const KB_ROLES={ceo:"CEO Đức",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",sale:"Nhân viên sale",all:"Cả đội"};
@@ -1390,8 +1390,8 @@ const Demo = (() => {
   const log=(a,action,detail)=>S.activity.unshift({id:id(),agent_id:a,action,detail,created_at:now()});
   const ANG={nguon_hang:"📦 TÌM ĐẦU MỐI {cat} TẬN XƯỞNG — KHÔNG QUA TRUNG GIAN",loi_nhuan:"💰 Nhập {wp}, bán lẻ {rp}: bài toán lời lãi cho shop online",livestream:"🎥 Sản phẩm 'lên hình là bán': {name}",ads:"📈 Tìm sản phẩm test ads chi phí thấp? Thử {name}",oem:"🏷️ Muốn có thương hiệu {cat} riêng? Xưởng nhận in nhãn từ số lượng nhỏ",cau_chuyen:"☕ Một ngày ở xưởng: từ nguyên liệu tới hộp {name}"};
   function makePost(p, ang, target){
-    const title=ANG[ang].replace("{cat}",p.category.toLowerCase()).replace("{name}",p.name).replace("{wp}",p.wholesale_price).replace("{rp}",p.retail_price);
-    const content=[title,"",`🌿 ${p.name}: ${p.description}`,`✅ Điểm mạnh khi bán: ${p.selling_points}`,`💵 Giá sỉ: ${p.wholesale_price}, giá lẻ gợi ý: ${p.retail_price}`,`📦 Nhập tối thiểu: ${p.moq}`,"","Xưởng hỗ trợ người bán online:","• Ảnh, video thật quay tại xưởng","• Gửi mẫu thử trước khi nhập","• Đóng gói sẵn giao hàng sàn TMĐT","",target==="group"?"Bạn nào quan tâm bình luận \"quan tâm\", mình inbox gửi bảng giá nhé!":`Liên hệ: ${S.settings.contact_info}`].join("\n");
+    const title=ANG[ang].replace("{cat}",p.category.toLowerCase()).replace("{name}",p.name).replace("{wp}","").replace("{rp}","");
+    const content=[title,"",`🌿 ${p.name}: ${p.description}`,`✅ Điểm mạnh khi bán: ${p.selling_points}`,`📦 Nhập tối thiểu: ${p.moq}`,"","Xưởng hỗ trợ người bán online:","• Ảnh, video thật quay tại xưởng","• Gửi mẫu thử trước khi nhập","• Đóng gói sẵn giao hàng sàn TMĐT","",target==="group"?"Bạn nào quan tâm bình luận \"quan tâm\", mình inbox tư vấn nhé!":`Liên hệ: ${S.settings.contact_info}`,"",`💬 Giá vui lòng liên hệ trực tiếp Zalo ${ZALO()}`].join("\n");
     return {id:id(),agent_id:"lan",product_id:p.id,product_name:p.name,target_type:target,angle:ang,title,content,hashtags:"#nguonhangsi #taxuong #banhangonline",image_idea:`Ảnh thật ${p.name} trên bàn gỗ trong xưởng, có tay người đang pha, chữ to: GIÁ SỈ TẬN XƯỞNG`,status:"draft",created_at:now(),comments:0,leads:0,source:Math.random()<0.4?"self":"claude"};
   }
   function genPosts(n, pid, target, angle){
@@ -1670,7 +1670,7 @@ const Demo = (() => {
     const push=(a,ph,t)=>{ allIds().forEach(x=>{ if(S.status[x]?.state==="talking") S.status[x]={state:"meeting",text:"Đang họp"}; }); S.status[a]={state:"talking",text:t.slice(0,60)}; S.msgs.push({id:id(),meeting_id:m.id,agent_id:a,phase:ph,content:t,created_at:now()}); };
     setTimeout(step,3200); return m.id;
   }
-  function reply(l,msg){ const n=l.name; return `Chào ${n} ạ! Cảm ơn ${n} đã quan tâm hàng bên xưởng 🌿\nMình gửi ${n} bảng giá sỉ và ảnh thật nhé. Với nhu cầu "${l.need||msg}", mình gợi ý ${n} nhập thử combo nhỏ trước để test thị trường, xưởng gửi kèm mẫu thử + bộ ảnh/video để ${n} đăng bán luôn.\n${n} đang bán chủ yếu kênh nào (live, ads hay sàn) để mình tư vấn sản phẩm hợp nhất ạ?`; }
+  function reply(l,msg){ const n=l.name; return `Chào ${n} ạ! Cảm ơn ${n} đã quan tâm hàng bên xưởng 🌿\nMình gửi ${n} ảnh thật nhé; giá sỉ ${n} nhắn Zalo ${ZALO()} để được báo trực tiếp. Với nhu cầu "${l.need||msg}", mình gợi ý ${n} nhập thử combo nhỏ trước để test thị trường, xưởng gửi kèm mẫu thử + bộ ảnh/video để ${n} đăng bán luôn.\n${n} đang bán chủ yếu kênh nào (live, ads hay sàn) để mình tư vấn sản phẩm hợp nhất ạ?`; }
   const wait=ms=>new Promise(r=>setTimeout(r,ms));
   async function handle(method, path, body){
     const [p, qs] = path.split("?"); const P=p.replace(/^\/api/,""); let m;
@@ -1785,8 +1785,8 @@ const Demo = (() => {
     if(method==="POST"&&P==="/ai-key") throw new Error("Bản xem trước không lưu khóa. Chạy phần mềm trên máy bạn để nhập khóa API.");
     if(method==="PUT"&&P==="/content-style"){ if(body.mode) S.style.mode=body.mode; return demoStyle(); }
     if(method==="POST"&&P==="/content-style/preview"){ const ps=S.products; const p=ps.find(x=>x.id==body.product_id)||ps[Math.floor(Math.random()*ps.length)];
-      const hook=["Nhập {wp}, bán {rp} — lãi rõ ràng từng hộp 💰","📦 Nguồn {cat} tận xưởng, không qua trung gian, giá gốc cho người bán online","Chị em chủ live ơi, món này lên hình là ra đơn 🎥"][Math.floor(Math.random()*3)].replace("{wp}",p.wholesale_price).replace("{rp}",p.retail_price).replace("{cat}",p.category.toLowerCase());
-      const content=[hook,"",`🌿 ${p.name}: ${p.description}`,...p.selling_points.split(/[,;]/).slice(0,3).map(x=>`✅ ${x.trim()}`),`💵 Giá sỉ: ${p.wholesale_price} — bán lẻ gợi ý ${p.retail_price}`,`📦 Nhập tối thiểu: ${p.moq}`,"","🎁 Tặng bộ ảnh, video quay tại xưởng để đăng bán","",'👉 Bình luận "GIÁ" mình gửi bảng giá sỉ ngay nhé!'].join("\n");
+      const hook=["💰 Nhập tận xưởng, biên lãi tốt cho shop online","📦 Nguồn {cat} tận xưởng, không qua trung gian, giá gốc cho người bán online","Chị em chủ live ơi, món này lên hình là ra đơn 🎥"][Math.floor(Math.random()*3)].replace("{wp}",p.wholesale_price).replace("{rp}",p.retail_price).replace("{cat}",p.category.toLowerCase());
+      const content=[hook,"",`🌿 ${p.name}: ${p.description}`,...p.selling_points.split(/[,;]/).slice(0,3).map(x=>`✅ ${x.trim()}`),`📦 Nhập tối thiểu: ${p.moq}`,"","🎁 Tặng bộ ảnh, video quay tại xưởng để đăng bán","",'👉 Bình luận "quan tâm" mình inbox tư vấn nhé!',"",`💬 Giá vui lòng liên hệ trực tiếp Zalo ${ZALO()}`].join("\n");
       return {title:hook,content,hashtags:"#nguonhangsi #taxuong #banhangonline",product:p.name,angle:"Biên lợi nhuận cho người bán"}; }
     if(method==="PUT"&&P==="/knowledge/settings"){ if(body.study_time&&!/^\d{2}:\d{2}$/.test(body.study_time)) throw new Error("Giờ phải có dạng HH:MM"); Object.assign(S.kbSet,{idle_learning:body.idle_learning?"1":"0",idle_study_per_day:String(body.idle_study_per_day??6),knowledge_enabled:body.knowledge_enabled?"1":"0",study_time:body.study_time||S.kbSet.study_time,study_per_agent:String(body.study_per_agent||2)}); return demoKB(); }
     if(method==="DELETE"&&(m=P.match(/^\/knowledge\/(\d+)$/))){ S.kb=S.kb.filter(k=>k.id!=m[1]); return {ok:true}; }
@@ -3087,8 +3087,7 @@ function prodEdit(p){
     <label class="f" for="en-${p.id}">Tên sản phẩm<input type="text" id="en-${p.id}" value="${esc(p.name)}" required></label>
     <div class="grid2"><label class="f" for="ec-${p.id}">Dòng<select id="ec-${p.id}">${cats.filter(Boolean).map(c=>`<option ${c===p.category?"selected":""}>${esc(c)}</option>`).join("")}</select></label>
       <label class="f" for="em-${p.id}">Nhập tối thiểu<input type="text" id="em-${p.id}" value="${esc(p.moq||"")}"></label>
-      <label class="f" for="ew-${p.id}">Giá sỉ<input type="text" id="ew-${p.id}" value="${esc(p.wholesale_price||"")}"></label>
-      <label class="f" for="er-${p.id}">Giá lẻ gợi ý<input type="text" id="er-${p.id}" value="${esc(p.retail_price||"")}"></label></div>
+</div>
     <label class="f" for="ed-${p.id}">Mô tả<textarea id="ed-${p.id}" rows="2">${esc(p.description||"")}</textarea></label>
     <label class="f" for="es-${p.id}">Điểm mạnh khi bán<textarea id="es-${p.id}" rows="2">${esc(p.selling_points||"")}</textarea></label>
     <label class="row small"><input type="checkbox" id="eh-${p.id}" ${p.hot?"checked":""}> 🔥 Đang bán chạy: cả đội tập trung chào mời</label>
@@ -3096,6 +3095,8 @@ function prodEdit(p){
     <div class="actions"><button class="btn sm primary" type="submit">Lưu thay đổi</button><button class="btn sm ghost" type="button" data-pcancel>Hủy</button></div></form>`;
 }
 async function loadProducts(){
+  if(!ST.zalo){ try{ const s=await api("/settings"); ST.zalo=s.price_zalo||"0386992326"; }catch(e){} }
+  document.querySelectorAll(".zalo-num").forEach(x=>x.textContent=ZALO());
   ST.products=await api("/products");
   const hot=ST.products.filter(p=>p.hot);
   $("#hotBar").innerHTML=hot.length?`🔥 Cả đội đang tập trung chào: <b>${hot.map(p=>esc(p.name)).join(", ")}</b>. Lan viết phần lớn bài về các sản phẩm này, Hà chào các sản phẩm này trước khi tư vấn khách, Tuấn up bài của chúng trước.`
@@ -3104,7 +3105,7 @@ async function loadProducts(){
   $("#prodGrid").innerHTML=ST.products.map(p=>`<div class="card prod${p.hot?" hot":""}" data-prod="${p.id}"><div class="prod-h"><div class="cat">${esc(p.category)}${p.is_sample?' · <span class="chip warn">Mẫu</span>':""}</div>
      <button type="button" class="hot-btn" data-phot="${p.id}" aria-pressed="${p.hot?"true":"false"}" title="Tích để cả đội tập trung chào mời sản phẩm này">🔥 ${p.hot?"Đang bán chạy":"Đánh dấu bán chạy"}</button></div>
    ${ST.editProd===p.id?prodEdit(p):`<h3>${esc(p.name)}</h3>${p.hot&&p.hot_note?`<div class="hot-note">${esc(p.hot_note)}</div>`:""}<p class="small muted">${esc(p.description)}</p>
-   <dl class="kv"><dt>Giá sỉ</dt><dd class="num"><b>${esc(p.wholesale_price)}</b></dd><dt>Giá lẻ gợi ý</dt><dd class="num">${esc(p.retail_price)}</dd><dt>Nhập tối thiểu</dt><dd>${esc(p.moq)}</dd><dt>Điểm mạnh</dt><dd>${esc(p.selling_points)}</dd></dl>`}
+   <dl class="kv"><dt>Giá</dt><dd>Liên hệ Zalo ${esc(ZALO())}</dd><dt>Nhập tối thiểu</dt><dd>${esc(p.moq)}</dd><dt>Điểm mạnh</dt><dd>${esc(p.selling_points)}</dd></dl>`}
    ${folderBox(p)}
    ${JSON.parse(p.images||"[]").length?`<div><span class="small muted">Ảnh tải lên (chỉ dùng khi chưa có thư mục ảnh)</span><div class="thumbs" style="margin-top:4px">${JSON.parse(p.images||"[]").map(src=>`<figure><img src="${src.startsWith("data:")?src:"/"+esc(src)}" alt="Ảnh ${esc(p.name)}"><button type="button" data-delimg="${esc(src)}" data-p="${p.id}" aria-label="Xóa ảnh">×</button></figure>`).join("")}</div></div>`:""}
    <div class="row"><label class="btn sm ghost" for="up-${p.id}">Tải ảnh lên</label><input type="file" id="up-${p.id}" data-up="${p.id}" accept="image/png,image/jpeg,image/webp" multiple hidden>${ST.editProd===p.id?"":`<button class="btn sm" type="button" data-pedit-open="${p.id}">Sửa thông tin</button>`}<button class="btn sm ghost danger" data-pr="${p.id}">Xóa sản phẩm</button></div></div>`).join("");
@@ -3123,13 +3124,14 @@ $("#prodGrid").addEventListener("click",async e=>{ const fs=e.target.closest("[d
   const d=e.target.closest("[data-delimg]"); if(d){ await api(`/products/${d.dataset.p}/images?path=${encodeURIComponent(d.dataset.delimg)}`,"DELETE"); return loadProducts(); }
   const b=e.target.closest("[data-pr]"); if(!b) return; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } const r=await api(`/products/${b.dataset.pr}`,"DELETE"); toast(r.drafts_removed?`Đã xóa sản phẩm và ${r.drafts_removed} bài nháp/chờ đăng của nó`:"Đã xóa sản phẩm"); loadProducts(); });
 $("#prodGrid").addEventListener("submit",async e=>{ const f=e.target.closest("[data-pedit]"); if(!f) return; e.preventDefault(); const id=+f.dataset.pedit;
-  try{ await api(`/products/${id}`,"PATCH",{name:$(`#en-${id}`).value,category:$(`#ec-${id}`).value,moq:$(`#em-${id}`).value,wholesale_price:$(`#ew-${id}`).value,retail_price:$(`#er-${id}`).value,description:$(`#ed-${id}`).value,selling_points:$(`#es-${id}`).value,hot:$(`#eh-${id}`).checked,hot_note:$(`#eo-${id}`).value});
+  try{ await api(`/products/${id}`,"PATCH",{name:$(`#en-${id}`).value,category:$(`#ec-${id}`).value,moq:$(`#em-${id}`).value,description:$(`#ed-${id}`).value,selling_points:$(`#es-${id}`).value,hot:$(`#eh-${id}`).checked,hot_note:$(`#eo-${id}`).value});
     ST.editProd=null; toast("Đã lưu sản phẩm. Các agent dùng thông tin mới từ việc tiếp theo."); }catch(err){ toast(err.message); }
   loadProducts(); });
-$("#prodForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/products","POST",{name:$("#pName").value,category:$("#pCat").value,description:$("#pDesc").value,wholesale_price:$("#pWp").value,retail_price:$("#pRp").value,moq:$("#pMoq").value,selling_points:$("#pSell").value,image_folder:$("#pFolder").value,hot:$("#pHot").checked,hot_note:$("#pHotNote").value}); e.target.reset(); toast("Đã thêm sản phẩm. Lan và Hà dùng sản phẩm này từ việc tiếp theo."); }catch(err){ toast(err.message); } loadProducts(); });
+$("#prodForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/products","POST",{name:$("#pName").value,category:$("#pCat").value,description:$("#pDesc").value,moq:$("#pMoq").value,selling_points:$("#pSell").value,image_folder:$("#pFolder").value,hot:$("#pHot").checked,hot_note:$("#pHotNote").value}); e.target.reset(); toast("Đã thêm sản phẩm. Lan và Hà dùng sản phẩm này từ việc tiếp theo."); }catch(err){ toast(err.message); } loadProducts(); });
 
 /* --------------------------------------------- phong cách viết của Lan */
 const ST_SRC={claude:["","Claude viết"],self:["ok","Lan tự viết"],boss:["talking","Sếp sửa"]};
+function ZALO(){ try{ return ST.zalo||"0386992326"; }catch(e){ return "0386992326"; } }
 const tplShow=t=>esc(t).replace(/\{name\}/g,"<i>[tên SP]</i>").replace(/\{wp\}/g,"<i>[giá sỉ]</i>").replace(/\{rp\}/g,"<i>[giá lẻ]</i>").replace(/\{moq\}/g,"<i>[nhập tối thiểu]</i>").replace(/\{cat\}/g,"<i>[dòng SP]</i>").replace(/\{contact\}/g,"<i>[liên hệ]</i>");
 async function loadStyle(){
   let d; try{ d=await api("/content-style"); }catch(e){ return; }
@@ -3302,7 +3304,7 @@ async function loadSettings(){
   loadSamples();
   loadCosts();
   const s=await api("/settings");
-  $("#sName").value=s.company_name||""; $("#sVoice").value=s.brand_voice||""; $("#sContact").value=s.contact_info||""; $("#sTime").value=s.meeting_time||"08:30";
+  $("#sName").value=s.company_name||""; $("#sVoice").value=s.brand_voice||""; $("#sContact").value=s.contact_info||""; $("#sZalo").value=s.price_zalo||"0386992326"; $("#sPriceLine").value=s.price_contact||""; ST.zalo=s.price_zalo||"0386992326"; $("#sTime").value=s.meeting_time||"08:30";
   $("#sPer").value=s.posts_per_day||4; $("#sAutoM").checked=s.auto_meeting==="1"; $("#sAutoW").checked=s.auto_daily_work==="1"; $("#sPage").value=s.fb_page_id||""; $("#sToken").value=s.fb_page_token||""; loadBump(s); $("#sImg").checked=s.attach_images!=="0"; $("#sImgMin").value=s.images_min||2; $("#sImgMax").value=s.images_max||4; $("#sImgDays").value=s.image_reuse_days||14; $("#sHeadless").checked=s.browser_headless==="1";
   showAi(s);
   loadTgSet().catch(()=>{});
@@ -3311,7 +3313,7 @@ async function loadSettings(){
     const diff=t.pc_now&&t.now?Math.abs(new Date(t.pc_now.replace(" ","T"))-new Date(t.now.replace(" ","T")))/6e4:0;
     $("#sTzNote").innerHTML=`Giờ trên phần mềm lúc này: <b>${esc((t.now||tzNow()).slice(11,16))} ${esc(fmtDate(t.now||tzNow()))}</b> (${esc(t.label||TZ.label)}).`+(diff>=30?` Máy tính đang đặt múi giờ khác (máy báo ${esc(t.pc_now.slice(11,16))}); phần mềm vẫn chạy theo múi giờ đã chọn ở đây, không cần sửa máy.`:""); }catch(e){}
 }
-$("#setForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{app_tz:$("#sTz").value,company_name:$("#sName").value,brand_voice:$("#sVoice").value,contact_info:$("#sContact").value,meeting_time:$("#sTime").value,posts_per_day:$("#sPer").value,auto_meeting:$("#sAutoM").checked?"1":"0",auto_daily_work:$("#sAutoW").checked?"1":"0",fb_page_id:$("#sPage").value,fb_page_token:$("#sToken").value,attach_images:$("#sImg").checked?"1":"0",images_min:$("#sImgMin").value,images_max:String(Math.max(+$("#sImgMax").value||1,+$("#sImgMin").value||1)),image_reuse_days:$("#sImgDays").value,browser_headless:$("#sHeadless").checked?"1":"0"}); $("#coName").textContent=$("#sName").value; toast("Đã lưu cài đặt"); loadSettings(); });
+$("#setForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{app_tz:$("#sTz").value,company_name:$("#sName").value,brand_voice:$("#sVoice").value,contact_info:$("#sContact").value,price_zalo:$("#sZalo").value.replace(/[^\d+]/g,"")||"0386992326",price_contact:$("#sPriceLine").value.trim(),meeting_time:$("#sTime").value,posts_per_day:$("#sPer").value,auto_meeting:$("#sAutoM").checked?"1":"0",auto_daily_work:$("#sAutoW").checked?"1":"0",fb_page_id:$("#sPage").value,fb_page_token:$("#sToken").value,attach_images:$("#sImg").checked?"1":"0",images_min:$("#sImgMin").value,images_max:String(Math.max(+$("#sImgMax").value||1,+$("#sImgMin").value||1)),image_reuse_days:$("#sImgDays").value,browser_headless:$("#sHeadless").checked?"1":"0"}); $("#coName").textContent=$("#sName").value; toast("Đã lưu cài đặt"); loadSettings(); });
 
 /* Phát hiện phần mềm trên máy đang chạy bản cũ, chưa khởi động lại sau khi cập nhật, hoặc chạy 2 bản cùng lúc */
 const HEALTH={pids:{},bad:""};

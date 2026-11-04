@@ -330,11 +330,6 @@ def compose(p: dict, angle: str, target: str, dry: bool = False) -> dict | None:
         lines += [t for t in (fill(x["text"], p, contact) for x in pts) if t.lower().strip("✅•-👉 ") not in
                   {l.lower().strip("✅•-👉 ") for l in lines}]
         used += pts
-        price = _pick("price", angle, target, p.get("id"))
-        price = [x for x in price if "{wp}" in x["text"] or x["product_id"] == p.get("id")]
-        lines.append(fill(price[0]["text"], p, contact) if price else
-                     f"💵 Giá sỉ: {p.get('wholesale_price') or 'inbox'} — giá bán lẻ gợi ý: {p.get('retail_price') or ''}".rstrip(" —:"))
-        used += price[:1]
         if p.get("moq") and not any("{moq}" in x["text"] for x in used):
             lines.append(f"📦 Nhập tối thiểu: {p['moq']}")
         sv = _pick("service", angle, target, p.get("id"), k=random.choice([1, 2]))

@@ -405,6 +405,7 @@ DEFAULT_SETTINGS = {
     "tg_report_done": "1",
     "prospect_enabled": "1", "prospect_time": "14:30", "prospect_inspect_per_run": "10", "prospect_facebook": "1",
     "prospect_tiktok": "0", "prospect_shopee": "0", "prospect_fb_keywords": "2", "prospect_ads": "1", "prospect_groups": "1", "prospect_groups_per_run": "3",
+    "price_zalo": "0386992326", "price_contact": "",
     "mygroups_enabled": "1", "mygroups_time": "09:15", "auto_leave": "1", "leave_per_nick_day": "3", "new_group_rest_days": "7",
     "mygroups_review_per_run": "8", "admin_posts_min": "5", "admin_posts_max": "10", "admin_care_ai": "1", "admin_sell_share": "50", "prospect_auto_crm": "1", "prospect_ai_script": "1", "prospect_keywords": "",
     "tg_sent_log": "{}",
@@ -499,7 +500,12 @@ def init():
         import content_style
         content_style.migrate()  # bài Claude viết trước đây -> kho bài để Lan học phong cách
     except Exception as e:
-        print("[content_style migrate]", e)  # bản cũ 1 sale = 1 nick -> bảng nick riêng, mỗi sale nhiều nick
+        print("[content_style migrate]", e)
+    try:
+        import pricing
+        pricing.migrate()  # sếp chốt: bỏ giá khỏi sản phẩm, mời liên hệ Zalo
+    except Exception as e:
+        print("[pricing migrate]", e)  # bản cũ 1 sale = 1 nick -> bảng nick riêng, mỗi sale nhiều nick
 
 
 def sample_counts() -> dict:

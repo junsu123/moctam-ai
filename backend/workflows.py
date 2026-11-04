@@ -80,13 +80,14 @@ WHERE = {"group": "một hội nhóm Facebook về bán hàng online/nguồn hà
 def _post_prompt(p: dict, ang: str, target_type: str, settings: dict, note: str, i: int) -> str:
     return f"""Viết 1 bài đăng Facebook để đăng lên {WHERE[target_type]}, nhằm tìm khách SỈ (người bán online) nhập sản phẩm sau:
 Tên: {p['name']} | Loại: {p['category']} | Mô tả: {p['description']}
-Giá sỉ: {p['wholesale_price']} | Giá lẻ gợi ý: {p['retail_price']} | Nhập tối thiểu: {p['moq']}
+Nhập tối thiểu: {p['moq']}
 Điểm bán: {p['selling_points']}
 Góc tiếp cận: {mock_brain.ANGLES.get(ang, ang)}
 Liên hệ: {settings.get('contact_info')}
 Yêu cầu thêm của sếp: {note or 'không'}
 Bài dài 110-180 chữ, emoji vừa phải, mở đầu gây chú ý, kết bằng lời kêu gọi bình luận/inbox.
 Câu chữ phải khác các bài khác (bài số {i + 1}, mã {random.randint(100, 999)}). Không hứa công dụng chữa bệnh.
+Không ghi giá hay mức lãi; dòng cuối ghi đúng: "{__import__('pricing').contact_line()}".
 Trả về JSON: {{"title": "...", "content": "...", "hashtags": "#... #... (không dấu)", "image_idea": "1 câu mô tả ảnh nên chụp"}}""" + \
         _kb("lan", f"viết bài {p['name']} {p['category']} {mock_brain.ANGLES.get(ang, ang)} {WHERE[target_type]} {note or ''}") + \
         _style_hint()
@@ -113,6 +114,8 @@ def _save_post(p: dict, ang: str, target_type: str, data) -> dict:
     if not isinstance(data, dict) or not data.get("content"):
         data = mock_brain.post(p, ang, target_type, db.get_settings())
     src = "self" if data.get("_self") else "mock" if content_style.is_mock(data) else "claude"
+    import pricing  # sếp chốt: không ghi giá, mời liên hệ Zalo
+    data = {**data, "content": pricing.sanitize(data["content"]), "title": pricing.sanitize(data.get("title") or "", False)}
     pid = db.run("""INSERT INTO posts(agent_id, product_id, target_type, angle, title, content, hashtags,
                     image_idea, status, created_at, source) VALUES ('lan',?,?,?,?,?,?,?,'draft',?,?)""",
                  (p["id"], target_type, ang, data.get("title", ""), data["content"],
@@ -473,19 +476,22 @@ def draft_reply(lead_id: int, message: str = "") -> str:
     if hit:  # câu khách hỏi đã biết cách trả lời: tự soạn từ sổ kiến thức, không gọi Claude
         knowledge._used([hit["id"]])
         knowledge._log("ha", "memory", q, hit["id"])
-        reply = f"Dạ em chào {lead['name']} ạ! {hit['content'].strip()} Anh/chị cho em xin SĐT hoặc Zalo để em gửi bảng giá và ảnh thật nhé?"
+        import pricing
+        reply = pricing.sanitize(f"Dạ em chào {lead['name']} ạ! {hit['content'].strip()} Anh/chị cho em xin SĐT hoặc Zalo để em gửi ảnh thật "
+                                 f"và tư vấn nhé? Giá sỉ anh/chị nhắn Zalo {pricing.zalo()} để được báo trực tiếp ạ.")
         rid = db.run("INSERT INTO replies(lead_id, text, created_at) VALUES (?,?,?)", (lead_id, reply, db.now()))
         db.log("ha", "Soạn tin", f"Soạn tin cho khách {lead['name']} bằng kiến thức đã học (không cần hỏi Claude): {hit['topic'][:60]}")
         set_status("ha", "idle", "Chờ sếp duyệt tin nhắn")
         return {"reply": reply, "reply_id": rid, "source": "memory"}
     products = [{**p, "dang_ban_chay": bool(p.pop("hot"))} for p in
-                db.q("SELECT name, wholesale_price, moq, hot FROM products ORDER BY hot DESC, id")]
+                db.q("SELECT name, moq, hot FROM products ORDER BY hot DESC, id")]
     prompt = f"""Soạn tin nhắn Messenger/Zalo trả lời khách sỉ tiềm năng.
 Khách: {lead['name']} | Kinh doanh: {lead['business_type']} | Nguồn: {lead['source']}
 Nhu cầu: {lead['need']} | Trạng thái: {lead['status']} | Ghi chú: {lead['note'] or ''}
 Tin nhắn mới nhất của khách: {message or '(chưa có, đây là tin chủ động)'}
 Danh sách sản phẩm (dang_ban_chay = sếp muốn ưu tiên chào): {products}
-Nếu khách chưa nói rõ sản phẩm, gợi ý sản phẩm đang bán chạy trước. Tin ngắn (dưới 90 chữ), thân thiện, gợi ý 1 bước tiếp theo rõ ràng (gửi bảng giá/mẫu thử/hẹn gọi), kết bằng 1 câu hỏi."""
+Nếu khách chưa nói rõ sản phẩm, gợi ý sản phẩm đang bán chạy trước. Tin ngắn (dưới 90 chữ), thân thiện, gợi ý 1 bước tiếp theo rõ ràng (mời nhắn Zalo để được báo giá/gửi mẫu thử/hẹn gọi), kết bằng 1 câu hỏi.
+Không báo giá: khách hỏi giá thì mời nhắn Zalo {__import__('pricing').zalo()} để được báo giá trực tiếp."""
     prompt += knowledge.block("ha", q)
     if llm.live:  # nhờ Claude soạn, đồng thời rút ra kiến thức dùng lại được để lần sau tự trả lời
         data = llm.json(system_prompt("ha", db.get_settings()), prompt + """
@@ -499,6 +505,8 @@ Trả về JSON {"reply": "tin nhắn gửi khách", "faq": {"question": "câu h
         reply = reply or mock_brain.lead_reply(lead, message)
     else:
         reply = mock_brain.lead_reply(lead, message)
+    import pricing
+    reply = pricing.sanitize(reply)
     rid = db.run("INSERT INTO replies(lead_id, text, created_at) VALUES (?,?,?)", (lead_id, reply, db.now()))
     db.log("ha", "Soạn tin", f"Soạn tin nhắn cho khách {lead['name']}")
     set_status("ha", "idle", "Chờ sếp duyệt tin nhắn")

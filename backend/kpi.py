@@ -211,17 +211,17 @@ def consult_note(lead: dict) -> str:
     """Hà soạn kịch bản tư vấn ngắn cho sếp (Haiku, ~0,0003 USD/khách)."""
     from agents import system_prompt
     from llm import llm
-    products = db.q("SELECT name, wholesale_price, retail_price, moq, hot dang_ban_chay FROM products ORDER BY hot DESC, id")
+    products = db.q("SELECT name, moq, hot dang_ban_chay FROM products ORDER BY hot DESC, id")
     post = db.one("SELECT p.title, pr.name pname FROM posts p LEFT JOIN products pr ON pr.id=p.product_id WHERE p.id=?",
                   (lead.get("post_id"),)) if lead.get("post_id") else None
     def mock():
         p = next((x for x in products if post and post.get("pname") == x["name"]), products[0] if products else None)
         if not p:
-            return "Hỏi khách đang bán kênh nào, số lượng dự kiến, rồi gửi bảng giá sỉ."
+            return "Hỏi khách đang bán kênh nào, số lượng dự kiến, rồi sếp báo giá trực tiếp theo số lượng."
         return (f"Chào anh/chị, em gọi từ xưởng về {p['name']} anh/chị quan tâm. "
-                f"Giá sỉ {p['wholesale_price']}, bán lẻ gợi ý {p['retail_price']}, nhập tối thiểu {p['moq']}. "
+                f"Nhập tối thiểu {p['moq']}; sếp báo giá trực tiếp theo số lượng khách nhập. "
                 "Hỏi: đang bán kênh nào (live/ads/sàn), dự kiến nhập bao nhiêu? Đề nghị gửi mẫu thử và ảnh/video để đăng bán.")
-    prompt = f"""Sếp sắp gọi điện cho khách sỉ này. Soạn kịch bản ngắn (dưới 70 chữ) gồm: câu mở đầu, báo giá sản phẩm khách quan tâm,
+    prompt = f"""Sếp sắp gọi điện cho khách sỉ này. Soạn kịch bản ngắn (dưới 70 chữ) gồm: câu mở đầu, giới thiệu sản phẩm khách quan tâm (KHÔNG nêu giá: sếp tự báo giá trực tiếp),
 2 câu hỏi để hiểu nhu cầu, 1 đề nghị chốt (gửi mẫu/ưu đãi đơn đầu nếu hợp lý). Không bịa chính sách.
 Khách: {lead.get('name')} | Bình luận/nhu cầu: {lead.get('need')} | Bài nguồn: {(post or {}).get('title') or ''} ({(post or {}).get('pname') or ''})
 Sản phẩm (dang_ban_chay=1: sếp muốn ưu tiên chào thêm nếu hợp nhu cầu khách): {products}"""

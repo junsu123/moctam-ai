@@ -223,6 +223,8 @@ Chạy thật với TikTok, Shopee: hai nền tảng này thường bắt đăng
 
 ## Sản phẩm và sản phẩm đang bán chạy
 
+**Không công khai giá** (sếp chốt): sản phẩm không còn ô giá sỉ, giá bán lẻ. Mọi bài đăng, tin nhắn Hà soạn, kịch bản tiếp cận của Mai, bài chăm sóc nhóm đều không ghi giá hay mức lãi; khi nói tới giá chỉ ghi “💬 Giá vui lòng liên hệ trực tiếp Zalo 0386992326”. Phần mềm tự bỏ mọi dòng có giá (99k, 35.000đ/hộp, “Giá sỉ: …”) trước khi lưu bài và thêm câu mời liên hệ Zalo nếu bài chưa có. Lời dặn của mọi agent và chỉ đạo chung của CEO cũng ghi rõ quy định này. Số Zalo và câu mời liên hệ sửa ở **Cài đặt**.
+
 Trang **Sản phẩm** là tài liệu bán hàng của cả đội:
 
 - **Thêm sản phẩm** ở form cuối trang (tên, dòng, giá sỉ, giá lẻ gợi ý, nhập tối thiểu, mô tả, điểm mạnh, thư mục ảnh).
