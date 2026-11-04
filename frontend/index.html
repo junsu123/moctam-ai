@@ -2277,7 +2277,7 @@ function prodEdit(p){
 async function loadProducts(){
   ST.products=await api("/products");
   const hot=ST.products.filter(p=>p.hot);
-  $("#hotBar").innerHTML=hot.length?`🔥 Cả đội đang tập trung chào: <b>${hot.map(p=>esc(p.name)).join(", ")}</b>. Lan viết phần lớn bài về các sản phẩm này, Hà và sale chào trước, Tuấn up bài của chúng trước.`
+  $("#hotBar").innerHTML=hot.length?`🔥 Cả đội đang tập trung chào: <b>${hot.map(p=>esc(p.name)).join(", ")}</b>. Lan viết phần lớn bài về các sản phẩm này, Hà chào các sản phẩm này trước khi tư vấn khách, Tuấn up bài của chúng trước.`
     :`Chưa có sản phẩm nào được tích <b>Đang bán chạy</b>. Bấm nút 🔥 ở sản phẩm muốn đẩy để cả đội tập trung chào mời.`;
   if(ST.editProd&&!ST.products.some(p=>p.id===ST.editProd)) ST.editProd=null;
   $("#prodGrid").innerHTML=ST.products.map(p=>`<div class="card prod${p.hot?" hot":""}" data-prod="${p.id}"><div class="prod-h"><div class="cat">${esc(p.category)}${p.is_sample?' · <span class="chip warn">Mẫu</span>':""}</div>

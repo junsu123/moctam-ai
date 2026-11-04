@@ -226,7 +226,7 @@ def execute(act: dict) -> str:
         if act.get("note") is not None and on:
             db.run("UPDATE products SET hot_note=? WHERE id=?", (str(act["note"])[:200], p["id"]))
         hot = [r["name"] for r in db.q("SELECT name FROM products WHERE hot=1")]
-        return (f"Đánh dấu {p['name']} đang bán chạy: Lan viết nhiều bài hơn về sản phẩm này, Hà và sale chào sản phẩm này trước"
+        return (f"Đánh dấu {p['name']} đang bán chạy: Lan viết nhiều bài hơn về sản phẩm này, Hà chào sản phẩm này trước khi tư vấn khách"
                 if on else f"Thôi ưu tiên {p['name']}") + (f". Đang tập trung: {', '.join(hot)}" if hot else "")
     if t == "plan":
         plan = workflows.plan_distribution()
