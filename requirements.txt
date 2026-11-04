@@ -6,3 +6,4 @@ python-dotenv>=1.0
 pydantic>=2.5
 playwright>=1.44
 psutil>=5.9
+tzdata>=2024.1  # dữ liệu múi giờ cho Windows (giờ Việt Nam)

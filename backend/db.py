@@ -20,12 +20,54 @@ DB_PATH = Path(__file__).resolve().parent.parent / "data" / "company.db"
 _lock = threading.RLock()
 
 
+# Múi giờ của phần mềm: mặc định giờ Việt Nam (GMT+7), không phụ thuộc múi giờ cài trên máy tính (Windows hay đặt sai).
+TZ_CHOICES = {
+    "Asia/Ho_Chi_Minh": ("Việt Nam (GMT+7)", 7), "Asia/Bangkok": ("Thái Lan, Lào, Campuchia (GMT+7)", 7),
+    "Asia/Singapore": ("Singapore, Malaysia (GMT+8)", 8), "Asia/Shanghai": ("Trung Quốc, Đài Loan (GMT+8)", 8),
+    "Asia/Seoul": ("Hàn Quốc (GMT+9)", 9), "Asia/Tokyo": ("Nhật Bản (GMT+9)", 9), "Australia/Sydney": ("Sydney (GMT+10/+11)", 10),
+    "Europe/London": ("Anh (GMT+0/+1)", 0), "Europe/Berlin": ("Đức, Pháp (GMT+1/+2)", 1),
+    "America/New_York": ("New York (GMT-5/-4)", -5), "America/Los_Angeles": ("California (GMT-8/-7)", -8), "UTC": ("UTC (GMT+0)", 0),
+}
+DEFAULT_TZ = "Asia/Ho_Chi_Minh"
+_TZ = {"name": os.getenv("APP_TZ") or DEFAULT_TZ, "zone": None}
+
+
+def set_tz(name: str | None):
+    name = name if name in TZ_CHOICES else DEFAULT_TZ
+    zone = None
+    try:
+        from zoneinfo import ZoneInfo
+        zone = ZoneInfo(name)
+    except Exception:  # Windows chưa có dữ liệu múi giờ (thư viện tzdata): dùng độ lệch cố định
+        zone = None
+    _TZ.update(name=name, zone=zone)
+
+
+def clock() -> datetime:
+    """Giờ hiện tại theo múi giờ của phần mềm (mặc định giờ Việt Nam), dạng không kèm múi giờ."""
+    from datetime import timedelta, timezone
+    z = _TZ["zone"]
+    if z is not None:
+        return datetime.now(z).replace(tzinfo=None)
+    return (datetime.now(timezone.utc) + timedelta(hours=TZ_CHOICES.get(_TZ["name"], ("", 7))[1])).replace(tzinfo=None)
+
+
+def tz_info() -> dict:
+    c = clock()
+    return {"tz": _TZ["name"], "label": TZ_CHOICES.get(_TZ["name"], (_TZ["name"],))[0], "now": c.strftime("%Y-%m-%d %H:%M:%S"),
+            "pc_now": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "choices": [{"id": k, "label": v[0]} for k, v in TZ_CHOICES.items()]}
+
+
+set_tz(_TZ["name"])
+
+
 def now() -> str:
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return clock().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def today() -> str:
-    return datetime.now().strftime("%Y-%m-%d")
+    return clock().strftime("%Y-%m-%d")
 
 
 def connect() -> sqlite3.Connection:
@@ -300,6 +342,7 @@ DEFAULT_SETTINGS = {
     "ceo_autopilot": "1",
     "discover_enabled": "1", "discover_time": "10:30", "discover_keywords_per_day": "3", "discover_add_per_day": "5",
     "join_enabled": "1", "join_per_nick_day": "2", "browse_minutes": "2",
+    "app_tz": "",  # trống = giờ Việt Nam (hoặc APP_TZ trong .env)
     "idle_learning": "1", "idle_study_per_day": "6", "growth_state": "",
     "knowledge_enabled": "1", "study_time": "07:00", "study_per_agent": "2", "knowledge_answer_threshold": "0.8",
     "study_last_date": "", "model_knowledge": "claude-haiku-5-5",
@@ -425,6 +468,7 @@ def init():
             run("UPDATE products SET is_sample=1 WHERE name=? AND COALESCE(images,'[]')='[]'", (name,))
         run("INSERT OR REPLACE INTO settings(key, value) VALUES ('sample_marked','1')")
     import accounts
+    set_tz(get_settings().get("app_tz") or os.getenv("APP_TZ") or DEFAULT_TZ)
     accounts.migrate()
     try:
         import content_style
@@ -471,7 +515,7 @@ def reset_test_data(products: bool = False, groups: bool = False) -> dict:
     import shutil
     backup_dir = DATA_DIR / "backups"
     backup_dir.mkdir(exist_ok=True)
-    backup = backup_dir / f"truoc-khi-chay-that-{datetime.now().strftime('%Y%m%d-%H%M%S')}.db"
+    backup = backup_dir / f"truoc-khi-chay-that-{clock().strftime('%Y%m%d-%H%M%S')}.db"
     with _lock:
         conn().commit()
         bk = sqlite3.connect(backup)

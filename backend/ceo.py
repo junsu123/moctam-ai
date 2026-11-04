@@ -214,7 +214,7 @@ def potential() -> dict:
     """Đánh giá tiềm năng tìm khách trên Facebook từ số liệu 14 ngày gần nhất."""
     import company
     st = s()
-    today = date.today()
+    today = db.clock().date()
     w0 = (today - timedelta(days=POTENTIAL_WINDOW - 1)).isoformat()
     mid = (today - timedelta(days=6)).isoformat()
     since = max(w0, company.founded() or w0)
@@ -293,9 +293,9 @@ def remind_waiting():
     for r in db.q("""SELECT * FROM sales WHERE hired_by='ceo' AND COALESCE(status,'active')='active'
                      AND login_status!='ok' AND COALESCE(is_sample,0)=0"""):
         last = (r.get("ceo_reminded_at") or r["created_at"] or db.now())[:10]
-        if (date.today() - date.fromisoformat(last)).days >= REMIND_EVERY_DAYS:
+        if (db.clock().date() - date.fromisoformat(last)).days >= REMIND_EVERY_DAYS:
             db.run("UPDATE sales SET ceo_reminded_at=? WHERE id=?", (db.now(), r["id"]))
-            waited = (date.today() - date.fromisoformat(r["created_at"][:10])).days
+            waited = (db.clock().date() - date.fromisoformat(r["created_at"][:10])).days
             _tg(f"⏳ CEO {NAME} nhắc: {html.escape(r['name'])} đã chờ nick Facebook {waited} ngày. "
                 "Sếp đăng nhập nick ở trang Nhân viên sale, hoặc hủy tuyển nếu chưa có nick.")
 
@@ -329,7 +329,7 @@ def tick():
         return
     handle_fired()
     check_milestones()
-    if s().get("ceo_last_daily") != db.today() and datetime.now().hour >= 8:
+    if s().get("ceo_last_daily") != db.today() and db.clock().hour >= 8:
         db.set_setting("ceo_last_daily", db.today())
         if s().get("ceo_potential", "1") == "1":
             check_potential()

@@ -159,7 +159,7 @@ def _can_study(a: dict) -> bool:
     if not a["last_study"]:
         return True
     gap = max(45, int(16 * 60 / max(cap, 1)))  # trải đều trong ngày, ít nhất 45 phút
-    return datetime.now() - datetime.strptime(a["last_study"], "%Y-%m-%d %H:%M:%S") >= timedelta(minutes=gap)
+    return db.clock() - datetime.strptime(a["last_study"], "%Y-%m-%d %H:%M:%S") >= timedelta(minutes=gap)
 
 
 def tick(now: datetime | None = None):
@@ -174,7 +174,7 @@ def tick(now: datetime | None = None):
             return
     except Exception:
         pass
-    now = now or datetime.now()
+    now = now or db.clock()
     st = _state()
     delta: dict[str, dict] = {}
     for aid in agents_now():

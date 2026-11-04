@@ -1043,6 +1043,8 @@ label.f{font-weight:600;color:var(--muted)}
             <label class="f" for="sTime">Giờ họp giao ban<input type="time" id="sTime"></label>
             <label class="f" for="sPer">Số bài đăng nhóm mỗi ngày<input type="number" id="sPer" min="1" max="20"></label>
           </div>
+          <label class="f" for="sTz">Múi giờ (giờ họp, giờ đăng bài, báo cáo Telegram đều theo múi giờ này)<select id="sTz"></select></label>
+          <p class="small muted" id="sTzNote"></p>
           <label class="row small"><input type="checkbox" id="sAutoM"> Tự động họp mỗi ngày</label>
           <label class="row small"><input type="checkbox" id="sAutoW"> Sau họp tự giao việc (viết bài, xếp lịch, lọc khách cần bám)</label>
           <h3>Nhân viên sale đăng bài</h3>
@@ -1152,6 +1154,12 @@ label.f{font-weight:600;color:var(--muted)}
 /* =========================================================== tiện ích */
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const TZ_LIST=[{id:"Asia/Ho_Chi_Minh",label:"Việt Nam (GMT+7)"},{id:"Asia/Bangkok",label:"Thái Lan, Lào, Campuchia (GMT+7)"},{id:"Asia/Singapore",label:"Singapore, Malaysia (GMT+8)"},{id:"Asia/Shanghai",label:"Trung Quốc, Đài Loan (GMT+8)"},{id:"Asia/Seoul",label:"Hàn Quốc (GMT+9)"},{id:"Asia/Tokyo",label:"Nhật Bản (GMT+9)"},{id:"Australia/Sydney",label:"Sydney (GMT+10/+11)"},{id:"Europe/London",label:"Anh (GMT+0/+1)"},{id:"Europe/Berlin",label:"Đức, Pháp (GMT+1/+2)"},{id:"America/New_York",label:"New York (GMT-5/-4)"},{id:"America/Los_Angeles",label:"California (GMT-8/-7)"},{id:"UTC",label:"UTC (GMT+0)"}];
+const TZ={name:"Asia/Ho_Chi_Minh",label:"Việt Nam (GMT+7)",choices:TZ_LIST};
+/* giờ hiện tại theo múi giờ của phần mềm (mặc định giờ Việt Nam), dạng "YYYY-MM-DD HH:MM:SS" */
+const tzNow=(z=TZ.name)=>{ try{ const p=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:z,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).formatToParts(new Date()).map(x=>[x.type,x.value]));
+  return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second}`; }catch(e){ return new Date().toISOString().replace("T"," ").slice(0,19); } };
+const setTz=t=>{ if(t&&t.tz){ TZ.name=t.tz; TZ.label=t.label||t.tz; if(t.choices) TZ.choices=t.choices; } };
 const fmtTime = s => s ? s.slice(11, 16) : "";
 const fmtDate = s => s ? `${s.slice(8,10)}/${s.slice(5,7)}` : "—";
 function toast(t){ const el=$("#toast"); const isErr=Date.now()-(ERR.lastAt||0)<2500&&ST.view!=="errors";
@@ -1441,7 +1449,7 @@ const Demo = (() => {
   async function handle(method, path, body){
     const [p, qs] = path.split("?"); const P=p.replace(/^\/api/,""); let m;
     if(method==="GET"){
-      if(P==="/health") return {ok:true,ai_live:false,model:"bản xem trước"};
+      if(P==="/health"){ const z=S.settings.app_tz||"Asia/Ho_Chi_Minh"; return {ok:true,ai_live:false,model:"bản xem trước",time:{tz:z,label:(TZ_LIST.find(x=>x.id===z)||TZ_LIST[0]).label,now:tzNow(z),pc_now:now(),choices:TZ_LIST}}; }
       if(P==="/agents"){ const prog=id=>{ const x=S.xp[id]||0, l=lvl(x); return {xp:x,level:l,level_xp:lxp(l),next_xp:lxp(l+1)}; };
         const rec=id=>S.activity.filter(x=>x.agent_id===id).slice(0,2);
         const learnSt=id=>{ const st=S.status[id]; if(st&&st.state!=="idle") return st; const t=DEMO_LEARN[id]||["Ôn lại: cách giữ nick an toàn","Ôn cách trả lời bình luận xin số điện thoại"]; return {state:"learning",text:t[Math.floor(Date.now()/40000)%t.length]}; };
@@ -2847,13 +2855,18 @@ async function loadSettings(){
   $("#sPer").value=s.posts_per_day||4; $("#sAutoM").checked=s.auto_meeting==="1"; $("#sAutoW").checked=s.auto_daily_work==="1"; $("#sPage").value=s.fb_page_id||""; $("#sToken").value=s.fb_page_token||""; loadBump(s); $("#sImg").checked=s.attach_images!=="0"; $("#sImgMin").value=s.images_min||2; $("#sImgMax").value=s.images_max||4; $("#sImgDays").value=s.image_reuse_days||14; $("#sHeadless").checked=s.browser_headless==="1";
   showAi(s);
   loadTgSet().catch(()=>{});
+  try{ const h=await api("/health"); setTz(h.time); const t=h.time||{};
+    $("#sTz").innerHTML=(TZ.choices||TZ_LIST).map(x=>`<option value="${x.id}" ${x.id===(s.app_tz||TZ.name)?"selected":""}>${esc(x.label)}</option>`).join("");
+    const diff=t.pc_now&&t.now?Math.abs(new Date(t.pc_now.replace(" ","T"))-new Date(t.now.replace(" ","T")))/6e4:0;
+    $("#sTzNote").innerHTML=`Giờ trên phần mềm lúc này: <b>${esc((t.now||tzNow()).slice(11,16))} ${esc(fmtDate(t.now||tzNow()))}</b> (${esc(t.label||TZ.label)}).`+(diff>=30?` Máy tính đang đặt múi giờ khác (máy báo ${esc(t.pc_now.slice(11,16))}); phần mềm vẫn chạy theo múi giờ đã chọn ở đây, không cần sửa máy.`:""); }catch(e){}
 }
-$("#setForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{company_name:$("#sName").value,brand_voice:$("#sVoice").value,contact_info:$("#sContact").value,meeting_time:$("#sTime").value,posts_per_day:$("#sPer").value,auto_meeting:$("#sAutoM").checked?"1":"0",auto_daily_work:$("#sAutoW").checked?"1":"0",fb_page_id:$("#sPage").value,fb_page_token:$("#sToken").value,attach_images:$("#sImg").checked?"1":"0",images_min:$("#sImgMin").value,images_max:String(Math.max(+$("#sImgMax").value||1,+$("#sImgMin").value||1)),image_reuse_days:$("#sImgDays").value,browser_headless:$("#sHeadless").checked?"1":"0"}); $("#coName").textContent=$("#sName").value; toast("Đã lưu cài đặt"); });
+$("#setForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{app_tz:$("#sTz").value,company_name:$("#sName").value,brand_voice:$("#sVoice").value,contact_info:$("#sContact").value,meeting_time:$("#sTime").value,posts_per_day:$("#sPer").value,auto_meeting:$("#sAutoM").checked?"1":"0",auto_daily_work:$("#sAutoW").checked?"1":"0",fb_page_id:$("#sPage").value,fb_page_token:$("#sToken").value,attach_images:$("#sImg").checked?"1":"0",images_min:$("#sImgMin").value,images_max:String(Math.max(+$("#sImgMax").value||1,+$("#sImgMin").value||1)),image_reuse_days:$("#sImgDays").value,browser_headless:$("#sHeadless").checked?"1":"0"}); $("#coName").textContent=$("#sName").value; toast("Đã lưu cài đặt"); loadSettings(); });
 
 /* Phát hiện phần mềm trên máy đang chạy bản cũ, chưa khởi động lại sau khi cập nhật, hoặc chạy 2 bản cùng lúc */
 const HEALTH={pids:{},bad:""};
 function staleBanner(msg){ const b=$("#staleBanner"); if(!b) return; b.hidden=!msg; if(msg) b.innerHTML=msg; HEALTH.bad=msg; }
 function checkHealth(h){
+  if(h&&h.time) setTz(h.time);
   if(DEMO||!h) return; const now=Date.now();
   if(h.pid) HEALTH.pids[h.pid]=now; else HEALTH.pids["cu"]=now;
   const recent=Object.entries(HEALTH.pids).filter(([,t])=>now-t<180000).map(([p])=>p);
@@ -2881,9 +2894,10 @@ async function pollHealth(){ try{ const r=await fetch("/api/health",{cache:"no-s
   show(location.hash.slice(1)||"office");
   await refresh();
   setInterval(refresh,3000);
-  setInterval(()=>{ if(ST.view==="office") loadCeoChat(); },6000);
+  setInterval(()=>{ if(ST.view==="ceo") loadCeoChat(); },6000);
   setInterval(()=>{ if(ST.view==="company") loadCompany(); if(ST.view==="kpi") loadKpi(); if(ST.view==="sales") loadSales(); if(ST.view==="posts"&&!ST.editPost&&!ST.postedForm&&ST.posts.some(p=>p.status==="posting")) loadPosts(); },4000);
   setInterval(()=>{ if(ST.dash?.meeting_running||ST.view==="meeting") pollMeeting(); },1500);
-  const tick=()=>{ const d=new Date(); $("#clock").textContent=d.toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"}); }; tick(); setInterval(tick,30000);
+  try{ const h=DEMO?await api("/health"):null; if(h) setTz(h.time); }catch(e){}
+  const tick=()=>{ const c=$("#clock"); c.textContent=tzNow().slice(11,16)+" · "+(TZ.label.match(/GMT[^)]*/)||[""])[0]; c.title="Giờ trên phần mềm: "+TZ.label; }; tick(); setInterval(tick,20000);
 })();
 </script>

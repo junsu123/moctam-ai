@@ -64,7 +64,7 @@ def record(task: str, model: str, usage, batch: bool = False):
 
 
 def month_spent() -> float:
-    r = db.one("SELECT COALESCE(SUM(cost_usd),0) c FROM usage WHERE created_at LIKE ?", (datetime.now().strftime("%Y-%m") + "%",))
+    r = db.one("SELECT COALESCE(SUM(cost_usd),0) c FROM usage WHERE created_at LIKE ?", (db.clock().strftime("%Y-%m") + "%",))
     return float(r["c"])
 
 

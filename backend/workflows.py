@@ -23,7 +23,7 @@ def set_status(agent_id: str, state: str, text: str):
 def stats() -> dict:
     import errors
     _err_new = errors.count_new()
-    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    yesterday = (db.clock() - timedelta(days=1)).strftime("%Y-%m-%d")
     c = lambda sql, p=(): db.one(sql, p)["n"]
     posted = c("SELECT COUNT(*) n FROM posts WHERE status='posted'")
     leads = c("SELECT COUNT(*) n FROM leads")
@@ -66,7 +66,7 @@ def group_ready(g: dict) -> bool:
     if not g.get("last_posted_at"):
         return True
     last = datetime.strptime(g["last_posted_at"][:10], "%Y-%m-%d")
-    return (datetime.now() - last).days >= int(g.get("min_days_between_posts") or 3)
+    return (db.clock() - last).days >= int(g.get("min_days_between_posts") or 3)
 
 
 # ---------------------------------------------------------------- Lan: viết bài
@@ -278,7 +278,7 @@ def plan_distribution() -> list[dict]:
     """
     set_status("tuan", "working", "Đang xếp lịch đăng nhóm")
     import accounts
-    today, now = db.today(), datetime.now()
+    today, now = db.today(), db.clock()
     # mỗi nick là một đơn vị đăng bài; một sale giữ nhiều nick và làm lần lượt từng nick
     sales = accounts.working()
     load, sale_last = {}, {}
@@ -396,7 +396,7 @@ def plan_bumps(force: bool = False) -> int:
     if not media_folder.root():
         db.log("tuan", "Up bài", "Chưa cài thư mục ảnh sản phẩm (Cài đặt → Up bài), hôm nay bỏ qua")
         return 0
-    now = datetime.now()
+    now = db.clock()
     cutoff = (now - timedelta(days=int(s.get("bump_max_age_days") or 7))).strftime("%Y-%m-%d %H:%M:%S")
     fresh = (now - timedelta(hours=10)).strftime("%Y-%m-%d %H:%M:%S")  # bài vừa đăng hôm nay chưa cần up
     texts = [t.strip() for t in (s.get("bump_texts") or "").splitlines()]
@@ -433,7 +433,7 @@ def bump_now(post_id: int) -> int | None:
     texts = [t.strip() for t in (db.get_settings().get("bump_texts") or "").splitlines()] or [""]
     return db.run("INSERT INTO bumps(post_id, sale_id, account_id, text, status, scheduled_for, created_at) VALUES (?,?,?,?,?,?,?)",
                   (post_id, p["sale_id"], p["account_id"], random.choice(texts), "scheduled",
-                   datetime.now().strftime("%Y-%m-%d %H:%M"), db.now()))
+                   db.clock().strftime("%Y-%m-%d %H:%M"), db.now()))
 
 
 # ---------------------------------------------------------------- Hà: chăm sóc khách
@@ -491,7 +491,7 @@ Trả về JSON {"reply": "tin nhắn gửi khách", "faq": {"question": "câu h
 
 
 def follow_up_list() -> list[dict]:
-    cutoff = (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d %H:%M:%S")
+    cutoff = (db.clock() - timedelta(days=2)).strftime("%Y-%m-%d %H:%M:%S")
     return db.q("""SELECT * FROM leads WHERE status IN ('new','contacted','sample')
                    AND (last_contact_at IS NULL OR last_contact_at < ? OR status='new')
                    ORDER BY score DESC""", (cutoff,))

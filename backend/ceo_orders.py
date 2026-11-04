@@ -617,7 +617,7 @@ def review_post(p: dict) -> tuple[bool, str]:
     if words > 380:
         return False, "Quá dài"
     head = re.sub(r"\W+", " ", (p.get("content") or "").lower())[:150]
-    since = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+    since = (db.clock() - timedelta(days=30)).strftime("%Y-%m-%d")
     for o in db.q("""SELECT content FROM posts WHERE id!=? AND status IN ('approved','scheduled','posting','posted')
                      AND created_at >= ?""", (p["id"], since)):
         if head and re.sub(r"\W+", " ", (o["content"] or "").lower())[:150] == head:
@@ -639,7 +639,7 @@ def _apply_review(p: dict, good: bool, why: str):
 def review_drafts() -> dict:
     import learning
     import workflows
-    cutoff = (datetime.now() - timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
+    cutoff = (db.clock() - timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
     ok = bad = 0
     for p in db.q("SELECT * FROM posts WHERE status='draft' AND created_at <= ? ORDER BY id LIMIT 20", (cutoff,)):
         good, why = review_post(p)

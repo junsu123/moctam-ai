@@ -114,7 +114,8 @@ def report_exc(source: str, title: str, exc: BaseException, **kw) -> int | None:
 
 
 def _trim():
-    db.run("DELETE FROM errors WHERE status='resolved' AND last_at < datetime('now','-30 days')")
+    from datetime import timedelta
+    db.run("DELETE FROM errors WHERE status='resolved' AND last_at < ?", ((db.clock() - timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S"),))
     n = db.one("SELECT COUNT(*) n FROM errors")["n"]
     if n > 1000:
         db.run("DELETE FROM errors WHERE id IN (SELECT id FROM errors ORDER BY status='new', last_at LIMIT ?)", (n - 1000,))

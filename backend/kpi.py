@@ -80,7 +80,7 @@ def day_stats(day: str | None = None) -> dict:
 def pace(st: dict | None = None) -> dict:
     """Đang đúng tiến độ không: so với phần ngày làm việc đã trôi qua (08:00–22:00)."""
     st = st or day_stats()
-    now = datetime.now()
+    now = db.clock()
     start, end = now.replace(hour=8, minute=0), now.replace(hour=22, minute=0)
     frac = min(1, max(0, (now - start).total_seconds() / (end - start).total_seconds()))
     expected = round(st["target_min"] * frac, 1)
@@ -124,7 +124,7 @@ def snapshot(day: str | None = None):
 def history(days: int = 14) -> list[dict]:
     out = []
     for i in range(days - 1, -1, -1):
-        d = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
+        d = (db.clock() - timedelta(days=i)).strftime("%Y-%m-%d")
         r = db.one("SELECT * FROM kpi_daily WHERE date=?", (d,)) if i else None
         if not r:
             s = day_stats(d)
@@ -202,7 +202,7 @@ def escalate_reason(lead: dict) -> str | None:
     hrs = float(s.get("escalate_after_hours") or 0)
     if hrs > 0 and lead.get("status") == "new" and lead.get("phone"):
         created = datetime.strptime(lead["created_at"][:19], "%Y-%m-%d %H:%M:%S")
-        if datetime.now() - created > timedelta(hours=hrs):
+        if db.clock() - created > timedelta(hours=hrs):
             return f"Khách có SĐT nhưng {hrs:g} giờ chưa ai tư vấn"
     return None
 
@@ -257,7 +257,7 @@ def check_escalations():
     """Gọi định kỳ: khách nào cần sếp thì chuyển, khách hẹn nhắc lại thì nhắc."""
     for l in db.q("""SELECT * FROM leads WHERE escalated_at IS NULL AND COALESCE(is_sample,0)=0
                      AND status NOT IN ('ordered','lost') AND created_at >= ?""",
-                  ((datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d %H:%M:%S"),)):
+                  ((db.clock() - timedelta(days=3)).strftime("%Y-%m-%d %H:%M:%S"),)):
         r = escalate_reason(l)
         if r:
             escalate(l["id"], r)

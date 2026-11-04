@@ -23,7 +23,7 @@ def _tick():
     if company.tick() == "dissolved":
         return  # công ty đã giải thể: không họp, không đăng, không quét, không gọi AI
     s = db.get_settings()
-    now = datetime.now()
+    now = db.clock()
     stamp = now.strftime("%Y-%m-%d %H:%M")
     # Họp giao ban hằng ngày
     days = {d.strip() for d in (s.get("meeting_weekdays") or "1,2,3,4,5,6,7").split(",")}

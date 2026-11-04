@@ -185,7 +185,7 @@ def flush_done(force: bool = False) -> int:
             return 0
         items = _done_buf[:25]
         del _done_buf[:25]
-    lines = [f"✅ <b>Việc vừa hoàn thành</b> · {datetime.now().strftime('%H:%M')}"]
+    lines = [f"✅ <b>Việc vừa hoàn thành</b> · {db.clock().strftime('%H:%M')}"]
     for _, ag, act, det in items:
         lines.append(f"{DONE_ACTIONS.get(act, '•')} <b>{e(_who(ag))}</b> · {e(act)}" + (f": {e(det[:300])}" if det else ""))
     send("\n".join(lines))
@@ -234,9 +234,9 @@ def kpi_text() -> str:
 
 def morning_text() -> str:
     import kpi
-    y = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    y = (db.clock() - timedelta(days=1)).strftime("%Y-%m-%d")
     ys = kpi.day_stats(y)
-    lines = [f"☀️ <b>Chào sếp, kế hoạch {datetime.now().strftime('%d/%m')}</b>",
+    lines = [f"☀️ <b>Chào sếp, kế hoạch {db.clock().strftime('%d/%m')}</b>",
              f"Hôm qua: {ys['leads_phone']}/{ys['target_min']} khách có SĐT {'✅' if ys['achieved'] else '❌'} · chuỗi đạt KPI: {kpi.streak()} ngày",
              f"Hôm nay cần: tối thiểu <b>{kpi.targets()[0]}</b>, phấn đấu <b>{kpi.targets()[1]}</b> khách để lại SĐT."]
     import company
@@ -276,7 +276,7 @@ def evening_text() -> str:
     import llm
     st = kpi.snapshot()
     import company
-    lines = [f"🌙 <b>Báo cáo cuối ngày {datetime.now().strftime('%d/%m')}</b>", kpi_text()]
+    lines = [f"🌙 <b>Báo cáo cuối ngày {db.clock().strftime('%d/%m')}</b>", kpi_text()]
     if company.brief_text():
         lines.append("\n" + e(company.brief_text()))
     pend = db.q("""SELECT name, phone FROM leads WHERE escalated_at IS NOT NULL AND COALESCE(boss_status,'') IN ('','remind')
@@ -368,7 +368,7 @@ def tick():
     """Gọi mỗi 30 giây từ lịch tự động: báo cáo sáng/tối, kiểm tra KPI giữa ngày, chúc mừng đạt KPI."""
     import kpi
     s = db.get_settings()
-    hm = datetime.now().strftime("%H:%M")
+    hm = db.clock().strftime("%H:%M")
     st = None
     if s.get("tg_alert_kpi") == "1":
         st = kpi.day_stats()
@@ -401,7 +401,7 @@ def start_scan_round(force: bool = True) -> int:
     s = db.get_settings()
     if s.get("scan_enabled") != "1" and not force:
         return 0
-    cutoff = (datetime.now() - timedelta(days=int(s.get("scan_max_age_days") or 7))).strftime("%Y-%m-%d %H:%M:%S")
+    cutoff = (db.clock() - timedelta(days=int(s.get("scan_max_age_days") or 7))).strftime("%Y-%m-%d %H:%M:%S")
     n = 0
     import accounts
     for acc in accounts.working():  # mỗi nick quét bài của chính nick đó, ở ca làm việc tới trên nick
@@ -594,7 +594,7 @@ def handle_callback(cb: dict):
     if not lead:
         call("answerCallbackQuery", callback_query_id=cb["id"], text="Không tìm thấy khách")
         return
-    hm = datetime.now().strftime("%H:%M %d/%m")
+    hm = db.clock().strftime("%H:%M %d/%m")
     if act == "called":
         db.run("UPDATE leads SET boss_status='called', status=CASE WHEN status='new' THEN 'contacted' ELSE status END, last_contact_at=?, updated_at=? WHERE id=?",
                (db.now(), db.now(), lid))
@@ -612,7 +612,7 @@ def handle_callback(cb: dict):
         learning.on_lead_status(lid, "lost")
         note, toast = f"❌ Khách không mua ({hm})", "Đã ghi nhận"
     elif act == "remind":
-        at = (datetime.now() + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S")
+        at = (db.clock() + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M:%S")
         db.run("UPDATE leads SET boss_status='remind', remind_at=? WHERE id=?", (at, lid))
         note, toast = f"⏰ Sẽ nhắc lại lúc {at[11:16]}", "Em sẽ nhắc sau 2 giờ"
     else:

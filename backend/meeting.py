@@ -172,7 +172,7 @@ def start(topic: str | None = None) -> int:
         return _running["id"]
     if not (topic or "").strip():
         import kpi
-        y = kpi.day_stats((datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"))
+        y = kpi.day_stats((db.clock() - timedelta(days=1)).strftime("%Y-%m-%d"))
         if not y["achieved"] and y["posts"]:
             topic = (f"Hôm qua mới có {y['leads_phone']}/{y['target_min']} khách để lại SĐT. "
                      "Hôm nay làm gì để đạt KPI?")

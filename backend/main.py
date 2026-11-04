@@ -147,7 +147,7 @@ def admin_restart():
 def health():
     return {"ok": True, "ai_live": llm.live, "model": llm_mod.model_for("posts") if llm.live else "mô phỏng",
             "build": STARTED_STAMP, "stale": _code_stamp() != STARTED_STAMP, "pid": os.getpid(), "started_at": STARTED_AT,
-            "restarting": _restart["at"], "idle": _idle()}
+            "restarting": _restart["at"], "idle": _idle(), "time": db.tz_info()}
 
 
 @app.get("/api/agents")
@@ -757,7 +757,7 @@ def costs():
     """Chi phí AI thật (đo từ số token mỗi lần gọi) + dự báo cuối tháng."""
     import calendar
     from datetime import datetime
-    now = datetime.now()
+    now = db.clock()
     month = now.strftime("%Y-%m") + "%"
     spent = llm_mod.month_spent()
     days_in = calendar.monthrange(now.year, now.month)[1]
@@ -821,6 +821,10 @@ def put_settings(data: dict):
                 except ValueError as e:
                     raise HTTPException(400, str(e))
             continue
+        if k == "app_tz":
+            if v and v not in db.TZ_CHOICES:
+                raise HTTPException(400, "Múi giờ không hợp lệ")
+            db.set_tz(v or db.DEFAULT_TZ)
         if k in db.DEFAULT_SETTINGS and k not in ("tg_chat_ids", "tg_pair_code", "tg_sent_log"):
             db.set_setting(k, str(v))
     return settings()

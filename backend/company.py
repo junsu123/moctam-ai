@@ -41,7 +41,7 @@ def founded() -> str | None:
 
 def day_no() -> int:
     f = founded()
-    return (date.today() - date.fromisoformat(f)).days + 1 if f else 0
+    return (db.clock().date() - date.fromisoformat(f)).days + 1 if f else 0
 
 
 def fmt_vnd(n) -> str:
@@ -81,11 +81,11 @@ def finance() -> dict:
     ai_usd = sum(r["usd"] for r in by)
     by_task = [{"task": r["task"] or "other", "label": TASK_LABEL.get(r["task"] or "other", r["task"]),
                 "vnd": round(r["usd"] * rate), "usd": round(r["usd"], 4), "calls": r["calls"]} for r in by]
-    d7 = (date.today() - timedelta(days=6)).isoformat()
+    d7 = (db.clock().date() - timedelta(days=6)).isoformat()
     daily = {r["d"]: r["usd"] for r in db.q("""SELECT substr(created_at,1,10) d, SUM(cost_usd) usd FROM usage
                                                WHERE created_at >= ? GROUP BY d""", (max(since, d7),))}
-    last7 = [{"date": (date.today() - timedelta(days=i)).isoformat(),
-              "vnd": round(daily.get((date.today() - timedelta(days=i)).isoformat(), 0) * rate)} for i in range(6, -1, -1)]
+    last7 = [{"date": (db.clock().date() - timedelta(days=i)).isoformat(),
+              "vnd": round(daily.get((db.clock().date() - timedelta(days=i)).isoformat(), 0) * rate)} for i in range(6, -1, -1)]
     revenue = db.one("SELECT COALESCE(SUM(amount),0) c FROM orders WHERE created_at >= ?", (since,))["c"]
     orders = db.one("SELECT COUNT(*) n FROM orders WHERE created_at >= ?", (since,))["n"]
     customers = db.one("""SELECT COUNT(DISTINCT COALESCE('l' || lead_id, 'c' || LOWER(TRIM(customer)), 'o' || id)) n
@@ -160,7 +160,7 @@ def sale_review(sale: dict) -> dict:
     if not start:  # chưa có ngày làm việc nào (sale mới chờ sếp đăng nhập nick): kỳ KPI chưa bắt đầu
         return {"period_start": None, "day": 0, "work_days": 0, "target_so_far": 0, "target_month": _share(1) * 30,
                 "leads_phone": 0, "pct": 0, "risk": "waiting", "days_left": 30}
-    days = (date.today() - date.fromisoformat(start)).days + 1
+    days = (db.clock().date() - date.fromisoformat(start)).days + 1
     w = db.one("SELECT COUNT(*) n, COALESCE(SUM(target),0) t FROM sale_days WHERE sale_id=? AND date >= ?", (sale["id"], start))
     got = db.one("""SELECT COUNT(*) n FROM leads l JOIN posts p ON p.id=l.post_id WHERE p.sale_id=?
                     AND l.phone IS NOT NULL AND l.phone!='' AND COALESCE(l.phone_at, l.created_at) >= ?""", (sale["id"], start))["n"]

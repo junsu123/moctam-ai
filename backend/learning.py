@@ -31,7 +31,7 @@ _running = {"on": False}
 
 
 def _ago(days: int) -> str:
-    return (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
+    return (db.clock() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
 
 
 # ---------------------------------------------------------------- 1. thống kê hiệu quả

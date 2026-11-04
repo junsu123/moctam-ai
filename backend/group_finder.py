@@ -75,7 +75,7 @@ def today_keywords(force: bool = False) -> list[str]:
     if cur.get("date") == db.today() and cur.get("keywords") and not force:
         return cur["keywords"]
     n = max(1, min(6, int(st.get("discover_keywords_per_day") or 3)))
-    recent = (date.today() - timedelta(days=2)).isoformat()
+    recent = (db.clock().date() - timedelta(days=2)).isoformat()
     scored = []
     for k in keyword_stats():
         sc = k["leads"] * 5 + k["groups"] * 0.5 + random.random() * 2

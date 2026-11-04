@@ -85,7 +85,7 @@ def _usage(paths: list[Path]) -> dict:
     if not paths:
         return {}
     days = int(db.get_settings().get("image_reuse_days") or 14)
-    since = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
+    since = (db.clock() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
     out = {str(p): {"n": 0, "last": "", "groups": set(), "sales": set()} for p in paths}
     rows = db.q("SELECT path, group_id, sale_id, used_at FROM image_usage WHERE path IN (%s)" % ",".join("?" * len(out)),
                 tuple(out))

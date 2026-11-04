@@ -272,7 +272,7 @@ def _today_topics(agent_id: str) -> list[str]:
             out += [f"cách tư vấn và chốt khách sỉ cho sản phẩm {n}" for n in hot[:1]]
             out += [f"trả lời câu khách hỏi: “{r['need'][:80]}”" for r in db.q(
                 """SELECT need FROM leads WHERE COALESCE(need,'')!='' AND created_at >= ? ORDER BY id DESC LIMIT 20""",
-                ((datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d"),)) if "?" in (r["need"] or "")][:2]
+                ((db.clock() - timedelta(days=7)).strftime("%Y-%m-%d"),)) if "?" in (r["need"] or "")][:2]
         if agent_id == "tuan":
             import group_finder
             kws = group_finder.today_keywords()
@@ -387,7 +387,7 @@ def overview(agent: str = "", query: str = "", limit: int = 60) -> dict:
     if query:
         q = tokens(query)
         rows = [r for r in rows if q and _score(q, set(), r) >= 0.5]
-    since = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+    since = (db.clock() - timedelta(days=30)).strftime("%Y-%m-%d")
     c = {r["kind"]: r["n"] for r in db.q("SELECT kind, COUNT(*) n FROM knowledge_log WHERE created_at >= ? GROUP BY kind", (since,))}
     mem, cl = c.get("memory", 0), c.get("claude", 0)
     return {"items": rows[:limit],

@@ -516,6 +516,14 @@ Muốn mở từ máy khác trong mạng nội bộ, đặt `HOST=0.0.0.0` trong
 lúc các sale không có việc dở, rồi tự chạy lại `run.bat` (cài thêm thư viện nếu cần) và trang tự tải lại. Chạy `run.bat`
 khi đang có bản khác chạy cũng không sao: bản mới tự tắt bản cũ. Phần mềm luôn chỉ chạy một bản.
 
+### Múi giờ
+
+Phần mềm chạy theo **giờ Việt Nam (GMT+7)** dù máy tính đặt múi giờ nào (Windows hay bị đặt sai múi giờ): giờ họp, giờ đăng bài,
+giờ quét bình luận, báo cáo Telegram, đồng hồ trong văn phòng đều theo giờ này. Đổi ở **Cài đặt → Công ty & lịch làm việc →
+Múi giờ**; trang này cũng cho biết giờ trên phần mềm và báo nếu máy tính đang đặt múi giờ khác (không cần sửa máy).
+Cập nhật bản này, `run.bat` tự cài thêm thư viện `tzdata` (dữ liệu múi giờ cho Windows); thiếu thư viện thì phần mềm vẫn tính
+đúng giờ Việt Nam bằng độ lệch cố định.
+
 ### Bật bộ não Claude
 
 Chưa có khóa API, hệ thống vẫn chạy ở **chế độ mô phỏng** (nội dung mẫu, không tốn tiền) để bạn làm quen giao diện.
