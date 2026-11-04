@@ -94,12 +94,39 @@ CEO ưu tiên chủ đề từng mang về khách, xen kẽ chủ đề chưa th
 1. Một sale (luân phiên các nick) mở Chrome, **lướt bảng tin** vài phút (chỉ xem, không bấm thích, không bình luận),
    rồi vào Facebook → Tìm kiếm → **Nhóm** với từng chủ đề, cuộn đọc kết quả: tên, link, số thành viên,
    công khai/riêng tư, số bài mỗi ngày.
-2. Nhóm được chấm điểm (đúng chủ đề, đông thành viên, hoạt động nhiều). Nhóm tốt (đúng chủ đề, từ 1.000 thành viên) được
-   **tự thêm** vào danh sách Hội nhóm, tối đa 5 nhóm/ngày; nhóm còn lại nằm ở "Nhóm tìm được, chưa thêm" để sếp chọn.
-3. Mỗi nick **xin vào** tối đa 2 nhóm mới/ngày, giãn cách giữa các lần. Nhóm công khai vào ngay, nhóm riêng tư chờ
+2. **Sale khảo sát rồi báo cáo.** Với các nhóm hứa hẹn nhất (mặc định 6 nhóm/lần), sale mở trang **Giới thiệu** và **bảng tin**
+   của nhóm (chỉ đọc), ghi lại: số bài mới hôm nay và trong tháng, tổng thành viên và số thành viên mới tuần trước, cảm xúc và
+   bình luận trung bình của các bài mới, bài mới nhất cách đây bao lâu, bao nhiêu bài là rao bán, luật nhóm có cấm bán hàng không.
+   Báo cáo của sale hiện ở nhật ký và Telegram.
+3. **Tuấn (chuyên viên hội nhóm) đánh giá có nên vào nhóm không**, so với **chuẩn nhóm tương tác cao**:
+
+   | Chỉ số | Chuẩn mặc định | Trọng số |
+   |---|---|---|
+   | Tương tác mỗi bài | 20 cảm xúc, 5 bình luận | 45 điểm (bình luận 25, cảm xúc 20) |
+   | Độ sôi nổi | 10 bài mới/ngày | 20 điểm |
+   | Đúng chủ đề | tên nhóm khớp chủ đề tìm | 10 điểm |
+   | Quy mô | càng đông càng tốt (đủ điểm từ 100.000) | 10 điểm |
+   | Tăng trưởng | +0,5% thành viên/tuần | 10 điểm |
+   | Bài mới nhất | trong 6 giờ | 5 điểm |
+
+   Khi đã có nhóm thật mang về khách (và đã đo chỉ số), chuẩn tự lấy theo **trung vị các nhóm mang về nhiều khách nhất**.
+   Nhóm toàn bài rao bán mà gần như không ai bình luận (chợ spam) bị trừ 20 điểm. **Loại ngay**: tên không khớp chủ đề,
+   dưới 1.000 thành viên, luật nhóm cấm bán hàng/quảng cáo, nhóm chết (7 ngày không có bài, hoặc dưới 10 bài/tháng).
+
+   | Kết luận | Điều kiện | Việc tiếp theo |
+   |---|---|---|
+   | **Nên vào** | từ 60 điểm **và** tương tác mỗi bài đạt từ 60% chuẩn | Tự thêm vào Hội nhóm (tối đa 5 nhóm/ngày), nick xin vào nhóm điểm cao trước |
+   | **Cân nhắc** | 40–59 điểm, hoặc điểm cao nhưng mỗi bài ít người tương tác | Chờ sếp bấm **Thêm** hoặc **Bỏ** |
+   | **Bỏ qua** | dưới 40 điểm hoặc bị loại | Nằm ở "Tuấn đã loại" kèm lý do; sếp vẫn bấm **Vẫn thêm** được |
+
+   Nhóm riêng tư chưa xem được bài: chỉ "Nên vào" khi số bài mỗi ngày đạt chuẩn. Vào được nhóm rồi, sale đọc bài trong nhóm
+   và Tuấn chấm lại bằng tương tác thật. Tuấn gửi bảng đánh giá qua Telegram: từng nhóm, điểm, chỉ số và lý do.
+   Sửa chuẩn ở **Hội nhóm → Tìm nhóm mới → Sửa chuẩn nhóm tương tác cao**, bấm **Tuấn chấm lại** để áp dụng ngay.
+   Khi xếp lịch đăng, Tuấn ưu tiên nhóm mang về khách, rồi nhóm điểm tương tác cao.
+4. Mỗi nick **xin vào** tối đa 2 nhóm mới/ngày, giãn cách giữa các lần. Nhóm công khai vào ngay, nhóm riêng tư chờ
    quản trị viên duyệt (sale tự kiểm tra lại). Nhóm bắt **trả lời câu hỏi** thì sale không tự trả lời thay sếp: phần mềm
    và Telegram báo để sếp mở Chrome của sale tự xin vào.
-4. Tuấn **ưu tiên đăng** vào nhóm hợp chủ đề hôm nay. Nhóm sale tự tìm chỉ nhận bài từ nick đã vào nhóm.
+5. Tuấn **ưu tiên đăng** vào nhóm hợp chủ đề hôm nay. Nhóm sale tự tìm chỉ nhận bài từ nick đã vào nhóm.
 
 Sửa chủ đề hôm nay, kho chủ đề, giờ tìm, số nhóm thêm/xin vào mỗi ngày ở **Hội nhóm → Tìm nhóm mới**. Nút
 **Sale đi tìm ngay** / **Xin vào nhóm ngay** chạy luôn không cần chờ giờ. Báo cáo sáng trên Telegram có chủ đề hôm nay.
@@ -443,7 +470,8 @@ backend/
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, ca làm việc theo nick, đăng bài, lấy link bài, up bài
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
   errors.py      Sổ lỗi: ghi lỗi từ mọi màn hình và việc tự động, gộp lỗi trùng, gợi ý cách xử lý
-  group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, chấm điểm, thêm nhóm, xin vào nhóm
+  group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm
+  group_review.py  Tuấn đánh giá nhóm theo chuẩn nhóm tương tác cao: chấm điểm, Nên vào / Cân nhắc / Bỏ qua, lý do
   ceo_orders.py  Sếp giao việc cho CEO: hiểu lệnh, chia việc cho agent, sửa agent, chỉ đạo lâu dài, CEO tự duyệt bài
   ceo.py         CEO: sa thải theo luật, tuyển người thay, tăng người theo mốc doanh thu và tiềm năng Facebook
   company.py     Công ty: vốn, chi phí, doanh thu, đánh giá KPI tháng, sa thải, giải thể

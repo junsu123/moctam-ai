@@ -187,6 +187,11 @@ label.row.small input{margin-top:3px;flex:none}
 .cand{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .cand li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .cand li:last-child{border-bottom:0}
+.cand li > div:first-child{min-width:0}
+.rv-note{margin-top:3px;color:var(--ink);opacity:.85}
+.bench{background:var(--panel-2);border-radius:9px;padding:8px 10px;margin:4px 0 8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.gf-rej{margin-top:8px}
+@media (max-width:560px){ .cand li{flex-wrap:wrap} .cand li > div:last-child{width:100%;justify-content:flex-end} }
 .gf-today{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .kw{display:inline-flex;align-items:center;gap:4px;background:var(--honey-soft);border-radius:20px;padding:3px 10px;font-size:12.5px;font-weight:600}
 .gf-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;margin-top:10px}
@@ -991,16 +996,19 @@ const Demo = (() => {
     return {items,new:S.errors.filter(e=>e.status==="new").length,open:S.errors.filter(e=>e.status!=="resolved").length,sources:ESRC}; }
   S.gf={today:["hội chạy quảng cáo facebook","nguồn hàng sỉ thực phẩm","mẹ bỉm sữa kinh doanh online"],by:"ceo",
     pool:["hội chạy quảng cáo facebook","cộng đồng bán hàng online","nguồn hàng sỉ thực phẩm","livestream bán hàng","bán hàng shopee tiktok shop","nhập hàng tận xưởng","mẹ bỉm sữa kinh doanh online","kinh doanh online tại nhà","sỉ trà túi lọc","bột ngũ cốc dinh dưỡng"],
-    settings:{discover_enabled:"1",discover_time:"10:30",discover_keywords_per_day:"3",discover_add_per_day:"5",join_enabled:"1",join_per_nick_day:"2",browse_minutes:"2"},
-    last:{at:"2026-11-03 10:42:00",sale_id:1,found:7,added:3,joins:{joined:1,requested:2}},
-    candidates:[{id:501,url:"https://www.facebook.com/groups/qcfbthucchien",name:"Cộng đồng chạy quảng cáo Facebook thực chiến",members:1200000,posts_per_day:50,privacy:"private",keyword:"hội chạy quảng cáo facebook",relevance:1,score:118},
-      {id:502,url:"https://www.facebook.com/groups/chotruasi",name:"Chợ Sỉ Thực Phẩm Khô Toàn Quốc",members:56000,posts_per_day:8,privacy:"public",keyword:"nguồn hàng sỉ thực phẩm",relevance:0.67,score:79},
-      {id:503,url:"https://www.facebook.com/groups/chaynho",name:"Chạy quảng cáo nhỏ lẻ",members:640,posts_per_day:0.3,privacy:"public",keyword:"hội chạy quảng cáo facebook",relevance:0.75,score:62}],
+    settings:{discover_enabled:"1",discover_time:"10:30",discover_keywords_per_day:"3",discover_add_per_day:"5",join_enabled:"1",join_per_nick_day:"2",browse_minutes:"2",scout_per_run:"6",review_posts_day:"10",review_avg_reactions:"20",review_avg_comments:"5",review_growth_week:"0.5",review_min_members:"1000",review_join_score:"60",review_consider_score:"40",review_use_best_groups:"1"},
+    last:{at:"2026-11-03 10:42:00",sale_id:1,found:7,scouted:6,review:{join:2,consider:2,skip:3},added:2,joins:{joined:1,requested:2}},
+    candidates:[{id:501,url:"https://www.facebook.com/groups/qcfbthucchien",name:"Cộng đồng chạy quảng cáo Facebook thực chiến",members:1200000,posts_per_day:50,posts_month:1600,new_members_week:5100,privacy:"private",keyword:"hội chạy quảng cáo facebook",relevance:1,score:118,sampled_posts:0,eng_score:58.5,verdict:"consider",review_note:"Mạnh: 53,3 bài/ngày, +5.100 thành viên/tuần (0,4%); Yếu: chưa xem được bài trong nhóm (nhóm riêng tư, sẽ đánh giá lại sau khi vào)"},
+      {id:502,url:"https://www.facebook.com/groups/chosithucpham",name:"Chợ Sỉ Thực Phẩm Khô Toàn Quốc",members:56000,posts_per_day:8,posts_month:640,new_members_week:900,privacy:"public",keyword:"nguồn hàng sỉ thực phẩm",relevance:0.67,score:79,sampled_posts:4,avg_reactions:4.8,avg_comments:1.8,last_post_hours:1,selling_ratio:0.5,eng_score:62.9,verdict:"consider",review_note:"Mạnh: 21,3 bài/ngày, +900 thành viên/tuần (1,6%), có bài mới trong giờ qua; Yếu: mỗi bài TB 4,8 cảm xúc, 1,8 bình luận (chuẩn 20 cảm xúc, 5 bình luận), tương tác mỗi bài thấp hơn 60% chuẩn nên chưa tự vào"}],
+    rejected:[{id:503,url:"https://www.facebook.com/groups/chaynho",name:"Chạy quảng cáo nhỏ lẻ",members:640,posts_per_day:0.3,privacy:"public",keyword:"hội chạy quảng cáo facebook",relevance:0.75,score:62,eng_score:37.7,verdict:"skip",status:"rejected",review_note:"Loại: chỉ 640 thành viên (cần từ 1.000)"},
+      {id:504,url:"https://www.facebook.com/groups/adsquestions",name:"Hội Quảng Cáo FB Ads Chuyên Sâu",members:86000,posts_month:380,new_members_week:300,privacy:"private",keyword:"hội chạy quảng cáo facebook",relevance:1,eng_score:61.8,verdict:"skip",status:"rejected",review_note:"Loại: luật nhóm cấm bán hàng/quảng cáo (“Nghiêm cấm quảng cáo bán hàng dưới mọi hình thức.”)"},
+      {id:505,url:"https://www.facebook.com/groups/choraovat",name:"Chợ Quảng Cáo Facebook Rao Vặt Sỉ Lẻ",members:120000,posts_month:1900,new_members_week:200,privacy:"public",keyword:"hội chạy quảng cáo facebook",relevance:1,sampled_posts:4,avg_reactions:1,avg_comments:0.2,last_post_hours:0.2,selling_ratio:1,eng_score:27.8,verdict:"skip",status:"rejected",review_note:"Mạnh: 63,3 bài/ngày, có bài mới trong giờ qua; Yếu: mỗi bài TB 1 cảm xúc, 0,2 bình luận (chuẩn 20 cảm xúc, 5 bình luận), 100% bài là rao bán mà gần như không ai bình luận (chợ spam)"}],
     pending:[{id:7,name:"Hội Quảng Cáo FB Ads Chuyên Sâu",url:"https://www.facebook.com/groups/adsquestions",sale:"Linh"}]};
-  S.groups.push({id:6,name:"Hội Chạy Quảng Cáo Facebook - Ads Việt Nam",url:"https://www.facebook.com/groups/chayqcfb",topic:"hội chạy quảng cáo facebook",members:245000,rules:"",min_days_between_posts:3,last_posted_at:null,leads_count:0,source:"search",keyword:"hội chạy quảng cáo facebook",member_account_ids:"11,12",joins:{11:{status:"joined"},12:{status:"joined"},21:{status:"requested"}}},
+  S.groups.push({id:6,name:"Hội Chạy Quảng Cáo Facebook - Ads Việt Nam",url:"https://www.facebook.com/groups/chayqcfb",topic:"hội chạy quảng cáo facebook",members:245000,eng_score:100,verdict:"join",review_note:"Mạnh: 38,3 bài/ngày, mỗi bài TB 42,8 cảm xúc, 15 bình luận, +2.400 thành viên/tuần (1,0%), có bài mới trong ngày",rules:"",min_days_between_posts:3,last_posted_at:null,leads_count:0,source:"search",keyword:"hội chạy quảng cáo facebook",member_account_ids:"11,12",joins:{11:{status:"joined"},12:{status:"joined"},21:{status:"requested"}}},
     {id:7,name:"Mẹ Bỉm Sữa Kinh Doanh Online",url:"https://www.facebook.com/groups/meobim",topic:"mẹ bỉm sữa kinh doanh online",members:310000,rules:"",min_days_between_posts:3,last_posted_at:null,leads_count:0,source:"search",keyword:"mẹ bỉm sữa kinh doanh online",member_account_ids:"",joins:{13:{status:"requested"},21:{status:"needs_answers",note:"Nhóm yêu cầu trả lời câu hỏi khi xin vào"}}});
   const gfToday=g=>S.gf.today.includes(g.keyword)||S.gf.today.some(k=>k.split(" ").filter(w=>w.length>3).some(w=>(g.name+" "+(g.topic||"")).toLowerCase().includes(w)));
-  function demoGF(){ const st=S.gf; return {today:st.today,today_by:st.by,pool:st.pool,settings:st.settings,last:st.last,candidates:st.candidates.filter(c=>!c.status),pending_answers:st.pending,
+  function demoGF(){ const st=S.gf; const se=st.settings; return {today:st.today,today_by:st.by,pool:st.pool,settings:se,last:st.last,candidates:st.candidates.filter(c=>!c.status),rejected:st.rejected||[],
+    benchmark_text:`${String(se.review_posts_day).replace(".",",")} bài/ngày, mỗi bài ${se.review_avg_reactions} cảm xúc và ${String(se.review_avg_comments).replace(".",",")} bình luận, +${String(se.review_growth_week).replace(".",",")}% thành viên/tuần`,pending_answers:st.pending,
     stats:st.pool.map((k,i)=>({keyword:k,groups:S.groups.filter(g=>g.keyword===k).length,leads:[4,2,3,1,0,0,0,0,0,0][i]||0,found:0,last_searched:i<3?"2026-11-03 10:40:00":null}))}; }
   S.chat=[]; S.orders=[];
   setInterval(()=>{ if(S.settings.ceo_autopilot==="0") return; const d=S.posts.filter(p=>p.status==="draft"); if(d.length){ d.forEach(p=>p.status="approved"); log("ceo","Duyệt bài",`Duyệt ${d.length} bài`); } },15000);
@@ -1213,7 +1221,8 @@ const Demo = (() => {
     if(method==="PUT"&&P==="/ceo/autopilot"){ S.settings.ceo_autopilot=body.on?"1":"0"; return demoChat(); }
     if(method==="DELETE"&&(m=P.match(/^\/ceo\/orders\/(\d+)$/))){ const o=S.orders.find(x=>x.id==m[1]); if(o) o.active=0; return demoChat(); }
     if(P==="/group-finder"&&method==="PUT"){ const st=S.gf; if(body.pool) st.pool=body.pool.map(x=>x.trim()).filter(Boolean);
-      Object.entries({discover_time:body.discover_time,discover_keywords_per_day:body.discover_keywords_per_day,discover_add_per_day:body.discover_add_per_day,join_per_nick_day:body.join_per_nick_day,browse_minutes:body.browse_minutes}).forEach(([k,v])=>{ if(v!=null) st.settings[k]=String(v); });
+      Object.entries({discover_time:body.discover_time,discover_keywords_per_day:body.discover_keywords_per_day,discover_add_per_day:body.discover_add_per_day,join_per_nick_day:body.join_per_nick_day,browse_minutes:body.browse_minutes,scout_per_run:body.scout_per_run,review_posts_day:body.review_posts_day,review_avg_reactions:body.review_avg_reactions,review_avg_comments:body.review_avg_comments,review_growth_week:body.review_growth_week,review_min_members:body.review_min_members,review_join_score:body.review_join_score}).forEach(([k,v])=>{ if(v!=null) st.settings[k]=String(v); });
+      if(body.review_use_best_groups!=null) st.settings.review_use_best_groups=body.review_use_best_groups?"1":"0";
       if(body.discover_enabled!=null) st.settings.discover_enabled=body.discover_enabled?"1":"0"; if(body.join_enabled!=null) st.settings.join_enabled=body.join_enabled?"1":"0"; return demoGF(); }
     if(method==="POST"&&P==="/group-finder/today"){ S.gf.today=body.keywords.map(x=>x.trim()).filter(Boolean).slice(0,6); S.gf.by="boss"; return demoGF(); }
     if(method==="POST"&&P==="/group-finder/reroll"){ S.gf.today=S.gf.pool.slice().sort(()=>Math.random()-.5).slice(0,3); S.gf.by="ceo"; log("ceo","Chọn chủ đề tìm nhóm hôm nay",S.gf.today.join("; ")); return demoGF(); }
@@ -1224,8 +1233,12 @@ const Demo = (() => {
         log(aid,"Tìm nhóm mới",`Tìm “${S.gf.today.join("”, “")}”: 2 nhóm mới, thêm 1 nhóm vào danh sách, xin vào 1 nhóm`); },9000);
       return {sale_id:r.id,account_id:na.id,account:na.name,keywords:S.gf.today}; }
     if(method==="POST"&&P==="/group-finder/join") return {ok:true,sales:workingNicks().length};
-    if(method==="POST"&&(m=P.match(/^\/group-finder\/candidates\/(\d+)\/(add|ignore)$/))){ const c=S.gf.candidates.find(x=>x.id==m[1]); c.status=m[2];
-      if(m[2]==="add") S.groups.push({id:id(),name:c.name,url:c.url,topic:c.keyword,members:c.members,rules:"",min_days_between_posts:3,last_posted_at:null,leads_count:0,source:"search",keyword:c.keyword,member_sale_ids:"",joins:{}}); return {ok:true}; }
+    if(method==="POST"&&P==="/group-finder/review"){ const se=S.gf.settings; const js=+se.review_join_score||60; const cnt={join:0,consider:0,skip:0,added:0};
+      [...S.gf.candidates.filter(c=>!c.status),...(S.gf.rejected||[])].forEach(c=>{ c.verdict=c.verdict==="skip"&&/^Loại/.test(c.review_note||"")?"skip":c.eng_score>=js&&(c.sampled_posts<3||c.avg_comments>=0.6*se.review_avg_comments)?"join":c.eng_score>=Math.min(40,js-10)?"consider":"skip"; cnt[c.verdict]++; });
+      S.gf.candidates.filter(c=>!c.status&&c.verdict==="join").forEach(c=>{ c.status="add"; cnt.added++; S.groups.push({id:id(),name:c.name,url:c.url,topic:c.keyword,members:c.members,eng_score:c.eng_score,verdict:"join",review_note:c.review_note,rules:"",min_days_between_posts:3,last_posted_at:null,leads_count:0,source:"search",keyword:c.keyword,member_account_ids:"",joins:{}}); });
+      log("tuan","Đánh giá nhóm",`Chấm lại theo tiêu chí mới: nên vào ${cnt.join}, cân nhắc ${cnt.consider}, bỏ qua ${cnt.skip}`); return {...demoGF(),result:cnt}; }
+    if(method==="POST"&&(m=P.match(/^\/group-finder\/candidates\/(\d+)\/(add|ignore)$/))){ let c=S.gf.candidates.find(x=>x.id==m[1]); if(!c){ c=(S.gf.rejected||[]).find(x=>x.id==m[1]); S.gf.rejected=S.gf.rejected.filter(x=>x!==c); S.gf.candidates.push(c); } c.status=m[2];
+      if(m[2]==="add") S.groups.push({id:id(),name:c.name,url:c.url,topic:c.keyword,members:c.members,eng_score:c.eng_score,verdict:c.verdict,review_note:c.review_note,rules:"",min_days_between_posts:3,last_posted_at:null,leads_count:0,source:"search",keyword:c.keyword,member_account_ids:"",joins:{}}); return {ok:true}; }
     if(P==="/ceo"&&method==="PUT"){ const st=S.ceoSt; if(body.mode) st.mode=body.mode; if(body.potential!=null) st.potential_on=body.potential; if(body.milestones) st.milestones=body.milestones.slice().sort((a,b)=>a.amount-b.amount); return demoCeo(); }
     if(method==="POST"&&(m=P.match(/^\/ceo\/decisions\/(\d+)$/))){ const d=S.ceoSt.proposed.find(x=>x.id==m[1]); S.ceoSt.proposed=S.ceoSt.proposed.filter(x=>x!==d);
       if(d&&body.approve){ demoHire(d.reason); } else if(d){ S.ceoSt.decisions.unshift({...d,status:"rejected"}); } return demoCeo(); }
@@ -2070,7 +2083,7 @@ async function loadGroups(){
   $("#groupWarn").hidden=!missing; $("#groupWarn").innerHTML=`<b>${missing} nhóm chưa có link</b>: sale không đăng được vào các nhóm này và Tuấn sẽ không xếp bài vào đó. Bấm “Thêm link” ở từng dòng.`;
   const linkCell=g=>`<div class="glink" data-gid="${g.id}">${g.url?`<a class="small" href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.url.replace(/^https:\/\/www\.facebook\.com/,""))}</a> <button type="button" class="btn sm ghost" data-gedit="${g.id}">Sửa link</button>`:`<span class="chip bad">Chưa có link</span> <button type="button" class="btn sm" data-gedit="${g.id}">Thêm link</button>`}</div>`;
   loadFinder();
-  $("#groupRows").innerHTML=ST.groups.map(g=>`<tr><td><b>${esc(g.name)}</b>${g.source==="search"?`<span class="src${g.today?" today":""}" title="Sale tìm thấy khi tìm “${esc(g.keyword||"")}”">${g.today?"Chủ đề hôm nay":"Tự tìm"}</span>`:g.today?'<span class="src today">Chủ đề hôm nay</span>':""}${linkCell(g)}</td><td>${esc(g.topic)}</td><td class="num">${(+g.members||0).toLocaleString("vi-VN")}</td><td class="small">${esc(g.rules)}</td><td class="num">${g.min_days_between_posts} ngày</td><td>${g.last_posted_at?fmtDate(g.last_posted_at):"Chưa đăng"}</td><td>${!g.url?'<span class="chip bad">Thiếu link</span>':g.source==="search"&&!(g.member_account_ids||"").trim()?'<span class="chip warn" title="Chỉ nick đã vào nhóm mới đăng được">Chờ nick vào nhóm</span>':`<span class="chip ${g.ready?"ok":"warn"}">${g.ready?"Đăng được":"Đang giãn cách"}</span>`}</td><td class="num">${g.leads_count||0}</td><td>${chips(g)}</td><td><button class="btn sm ghost danger" data-g="${g.id}">Xóa</button></td></tr>`).join("");
+  $("#groupRows").innerHTML=ST.groups.map(g=>`<tr><td><b>${esc(g.name)}</b>${g.source==="search"?`<span class="src${g.today?" today":""}" title="Sale tìm thấy khi tìm “${esc(g.keyword||"")}”">${g.today?"Chủ đề hôm nay":"Tự tìm"}</span>`:g.today?'<span class="src today">Chủ đề hôm nay</span>':""}${g.eng_score!=null?`<span class="src" title="${esc(g.review_note||"")}">Tương tác ${vn1(g.eng_score)}đ</span>`:""}${linkCell(g)}</td><td>${esc(g.topic)}</td><td class="num">${(+g.members||0).toLocaleString("vi-VN")}</td><td class="small">${esc(g.rules)}</td><td class="num">${g.min_days_between_posts} ngày</td><td>${g.last_posted_at?fmtDate(g.last_posted_at):"Chưa đăng"}</td><td>${!g.url?'<span class="chip bad">Thiếu link</span>':g.source==="search"&&!(g.member_account_ids||"").trim()?'<span class="chip warn" title="Chỉ nick đã vào nhóm mới đăng được">Chờ nick vào nhóm</span>':`<span class="chip ${g.ready?"ok":"warn"}">${g.ready?"Đăng được":"Đang giãn cách"}</span>`}</td><td class="num">${g.leads_count||0}</td><td>${chips(g)}</td><td><button class="btn sm ghost danger" data-g="${g.id}">Xóa</button></td></tr>`).join("");
 }
 $("#groupRows").addEventListener("click",async e=>{
   const ed=e.target.closest("[data-gedit]");
@@ -2116,20 +2129,45 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-askceo]")
 /* --------------------------------------------- tìm nhóm mới */
 const num=n=>(+n||0).toLocaleString("vi-VN");
 const PRIV={public:"Công khai",private:"Riêng tư"};
+const VERD={join:["ok","Nên vào"],consider:["warn","Cân nhắc"],skip:["bad","Bỏ qua"]};
+const vn1=x=>x==null||x===""?"?":(+x>=100||Number.isInteger(+x))?num(Math.round(+x)):String(Math.round(+x*10)/10).replace(".",",");
+function candLi(c){
+  const [vc,vt]=VERD[c.verdict]||["","Chưa khảo sát"];
+  const ppd=c.posts_month!=null?c.posts_month/30:c.posts_today!=null?c.posts_today:c.posts_per_day;
+  const m=[`${num(c.members)} thành viên`,PRIV[c.privacy]||"",ppd?`${vn1(ppd)} bài/ngày`:"",
+    c.sampled_posts>=3?`TB ${vn1(c.avg_reactions)} cảm xúc · ${vn1(c.avg_comments)} bình luận`:"",
+    c.new_members_week!=null?`+${vn1(c.new_members_week)} tv/tuần`:"",
+    c.last_post_hours!=null?`bài mới nhất ${c.last_post_hours<1?"dưới 1 giờ":c.last_post_hours<48?vn1(c.last_post_hours)+" giờ":Math.round(c.last_post_hours/24)+" ngày"} trước`:""].filter(Boolean).join(" · ");
+  return `<li><div><a href="${esc(c.url)}" target="_blank" rel="noopener"><b>${esc(c.name)}</b></a> <span class="chip ${vc}">${vt}${c.eng_score!=null?` · ${vn1(c.eng_score)} điểm`:""}</span>
+    <div class="small muted">${m} · chủ đề “${esc(c.keyword)}”</div>${c.review_note?`<div class="small rv-note">${esc(c.review_note)}</div>`:""}</div>
+    <div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn sm" type="button" data-gfadd="${c.id}">${c.status==="rejected"?"Vẫn thêm":"Thêm"}</button>${c.status==="rejected"?"":`<button class="btn sm ghost" type="button" data-gfign="${c.id}">Bỏ</button>`}</div></li>`;
+}
 async function loadFinder(){
   const box=$("#gfBody"); if(box.contains(document.activeElement)&&document.activeElement.matches("input,textarea")) return;
   let d; try{ d=await api("/group-finder"); }catch(e){ box.innerHTML=`<p class="err">${esc(e.message)}</p>`; return; }
   ST.gf=d; const st=d.settings, last=d.last||{};
   box.innerHTML=`<div class="gf-today"><b class="small">${d.today_by==="boss"?"Chủ đề sếp chọn hôm nay:":"CEO Đức chọn chủ đề hôm nay:"}</b>${(d.today||[]).map(k=>`<span class="kw">${esc(k)}</span>`).join("")}
       <button class="btn sm ghost" type="button" id="gfEdit">Sửa</button><button class="btn sm ghost" type="button" id="gfReroll" title="CEO chọn lại theo hiệu quả">CEO chọn lại</button></div>
-    <p class="small muted" style="margin:6px 0 0">${st.discover_enabled==="1"?`Mỗi ngày lúc <b>${esc(st.discover_time||"10:30")}</b> một sale lướt Facebook ${esc(st.browse_minutes||2)} phút rồi tìm nhóm theo các chủ đề này, tự thêm tối đa ${esc(st.discover_add_per_day)} nhóm tốt; mỗi nick xin vào tối đa ${esc(st.join_per_nick_day)} nhóm/ngày${st.join_enabled==="1"?"":" (đang tắt xin vào nhóm)"}. Tuấn ưu tiên đăng vào nhóm hợp chủ đề hôm nay.`:"Đang tắt tự tìm nhóm mỗi ngày."}
-      ${last.at?` Lần gần nhất ${fmtTime(last.at)} ${fmtDate(last.at)}: tìm được ${last.found} nhóm mới, thêm ${last.added} nhóm${last.joins?`, vào ${(last.joins.joined||0)} nhóm, chờ duyệt ${(last.joins.requested||0)}`:""}.`:""}</p>
+    <p class="small muted" style="margin:6px 0 0">${st.discover_enabled==="1"?`Mỗi ngày lúc <b>${esc(st.discover_time||"10:30")}</b> một sale lướt Facebook ${esc(st.browse_minutes||2)} phút, tìm nhóm theo các chủ đề này, mở xem ${esc(st.scout_per_run||6)} nhóm hứa hẹn nhất để đọc chỉ số tương tác rồi báo Tuấn. Tuấn chỉ thêm nhóm đạt chuẩn tương tác (tối đa ${esc(st.discover_add_per_day)} nhóm/ngày); mỗi nick xin vào tối đa ${esc(st.join_per_nick_day)} nhóm/ngày${st.join_enabled==="1"?"":" (đang tắt xin vào nhóm)"}. Tuấn ưu tiên đăng vào nhóm hợp chủ đề hôm nay.`:"Đang tắt tự tìm nhóm mỗi ngày."}
+      ${last.at?` Lần gần nhất ${fmtTime(last.at)} ${fmtDate(last.at)}: tìm được ${last.found} nhóm mới${last.scouted!=null?`, khảo sát ${last.scouted}, Tuấn đánh giá: nên vào ${(last.review||{}).join||0}, cân nhắc ${(last.review||{}).consider||0}, bỏ qua ${(last.review||{}).skip||0}`:""}, thêm ${last.added} nhóm${last.joins?`, vào ${(last.joins.joined||0)} nhóm, chờ duyệt ${(last.joins.requested||0)}`:""}.`:""}</p>
     ${d.pending_answers.length?`<div class="err" style="margin-top:8px"><b>${d.pending_answers.length} nhóm bắt trả lời câu hỏi khi xin vào</b>, sale không tự trả lời thay sếp. Mở Chrome của sale (trang Nhân viên sale) và tự xin vào: ${d.pending_answers.map(g=>`<a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.name)}</a> (${esc(g.sale)})`).join(", ")}</div>`:""}
     <div class="gf-grid">
-      <div><h4>Nhóm tìm được, chưa thêm vào danh sách (${d.candidates.length})</h4>
-        ${d.candidates.length?`<ul class="cand">${d.candidates.slice(0,15).map(c=>`<li><div><a href="${esc(c.url)}" target="_blank" rel="noopener"><b>${esc(c.name)}</b></a>
-            <div class="small muted">${num(c.members)} thành viên · ${PRIV[c.privacy]||"?"} · ${c.posts_per_day||"?"} bài/ngày · chủ đề “${esc(c.keyword)}”${c.relevance<=0?" · tên không khớp chủ đề":c.members<1000?" · nhóm nhỏ":""}</div></div>
-            <div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn sm" type="button" data-gfadd="${c.id}">Thêm</button><button class="btn sm ghost" type="button" data-gfign="${c.id}">Bỏ</button></div></li>`).join("")}</ul>`:'<p class="small muted">Chưa có. Nhóm tốt được tự thêm vào danh sách bên dưới; nhóm còn lại hiện ở đây để sếp chọn.</p>'}</div>
+      <div><h4>Tuấn đánh giá nhóm sale tìm được (${d.candidates.length})</h4>
+        <div class="bench small"><b>Chuẩn nhóm tương tác cao:</b> ${esc(d.benchmark_text||"")}. Nên vào khi đạt từ ${esc(st.review_join_score||60)} điểm và tương tác mỗi bài đạt 60% chuẩn.
+          <button class="btn sm ghost" type="button" id="gfRev">Tuấn chấm lại</button></div>
+        ${d.candidates.length?`<ul class="cand">${d.candidates.slice(0,20).map(candLi).join("")}</ul>`:'<p class="small muted">Chưa có. Nhóm “Nên vào” được tự thêm vào danh sách bên dưới; nhóm “Cân nhắc” hiện ở đây để sếp chọn.</p>'}
+        ${(d.rejected||[]).length?`<details class="gf-rej"><summary class="small">Tuấn đã loại ${d.rejected.length} nhóm (xem lý do)</summary><ul class="cand">${d.rejected.map(candLi).join("")}</ul></details>`:""}
+        <details><summary class="small">Sửa chuẩn nhóm tương tác cao</summary>
+          <form id="gfRevForm" class="stack" style="margin-top:8px">
+            <div class="grid2"><label class="f" for="rvP">Bài mới mỗi ngày<input type="number" id="rvP" min="0.5" step="0.5" value="${esc(st.review_posts_day)}"></label>
+              <label class="f" for="rvR">Cảm xúc TB mỗi bài<input type="number" id="rvR" min="1" value="${esc(st.review_avg_reactions)}"></label>
+              <label class="f" for="rvC">Bình luận TB mỗi bài<input type="number" id="rvC" min="0.5" step="0.5" value="${esc(st.review_avg_comments)}"></label>
+              <label class="f" for="rvG">Thành viên mới/tuần (%)<input type="number" id="rvG" min="0.05" step="0.05" value="${esc(st.review_growth_week)}"></label>
+              <label class="f" for="rvM">Thành viên tối thiểu<input type="number" id="rvM" min="0" step="100" value="${esc(st.review_min_members)}"></label>
+              <label class="f" for="rvJ">Điểm để Nên vào<input type="number" id="rvJ" min="20" max="95" value="${esc(st.review_join_score)}"></label>
+              <label class="f" for="rvS">Sale mở xem (nhóm/lần)<input type="number" id="rvS" min="0" max="15" value="${esc(st.scout_per_run)}"></label></div>
+            <label class="row small"><input type="checkbox" id="rvBest" ${st.review_use_best_groups!=="0"?"checked":""}> Khi đã có nhóm mang về khách, lấy chỉ số của các nhóm đó làm chuẩn</label>
+            <div><button class="btn sm primary" type="submit">Lưu và chấm lại</button></div></form></details></div>
       <div><h4>Kho chủ đề CEO chọn</h4>
         <ul class="recent">${d.stats.slice().sort((a,b)=>b.leads-a.leads||b.groups-a.groups).slice(0,8).map(k=>`<li><span>${esc(k.keyword)}</span><span class="muted small">${k.groups} nhóm · ${k.leads} khách${k.last_searched?` · tìm ${fmtDate(k.last_searched)}`:" · chưa tìm"}</span></li>`).join("")}</ul>
         <details><summary class="small">Sửa kho chủ đề và cài đặt</summary>
@@ -2151,11 +2189,14 @@ $("#gfBody").addEventListener("click",async e=>{ const t=e.target; let b;
       wrap.innerHTML=`<form class="row grow" id="gfTodayF" style="gap:6px;flex-wrap:nowrap;width:100%"><input type="text" class="grow" id="gfTodayIn" value="${esc(cur)}" aria-label="Chủ đề hôm nay, cách nhau bằng dấu phẩy" placeholder="VD hội chạy quảng cáo facebook, nguồn hàng sỉ"><button class="btn sm primary" type="submit">Lưu</button></form>`; $("#gfTodayIn").focus(); return; }
     if(t.closest("#gfReroll")){ await api("/group-finder/reroll","POST"); toast("CEO đã chọn lại chủ đề hôm nay"); return loadGroups(); }
     if((b=t.closest("[data-gfadd]"))){ await api(`/group-finder/candidates/${b.dataset.gfadd}/add`,"POST"); toast("Đã thêm nhóm vào danh sách, sale sẽ xin vào nhóm"); return loadGroups(); }
+    if(t.closest("#gfRev")){ const r=await api("/group-finder/review","POST"); toast(`Tuấn chấm lại: nên vào ${r.result.join}, cân nhắc ${r.result.consider}, bỏ qua ${r.result.skip}; thêm ${r.result.added} nhóm`); return loadGroups(); }
     if((b=t.closest("[data-gfign]"))){ await api(`/group-finder/candidates/${b.dataset.gfign}/ignore`,"POST"); return loadGroups(); }
   }catch(err){ toast(err.message); } });
 $("#gfBody").addEventListener("submit",async e=>{ e.preventDefault(); const f=e.target;
   try{
     if(f.id==="gfTodayF"){ await api("/group-finder/today","POST",{keywords:$("#gfTodayIn").value.split(/[,;\n]/)}); toast("Đã đổi chủ đề tìm nhóm hôm nay"); document.activeElement.blur(); return loadGroups(); }
+    if(f.id==="gfRevForm"){ await api("/group-finder","PUT",{review_posts_day:+$("#rvP").value,review_avg_reactions:+$("#rvR").value,review_avg_comments:+$("#rvC").value,review_growth_week:+$("#rvG").value,review_min_members:+$("#rvM").value,review_join_score:+$("#rvJ").value,scout_per_run:+$("#rvS").value,review_use_best_groups:$("#rvBest").checked});
+      const r=await api("/group-finder/review","POST"); toast(`Đã lưu chuẩn. Tuấn chấm lại: nên vào ${r.result.join}, cân nhắc ${r.result.consider}, bỏ qua ${r.result.skip}`); document.activeElement.blur(); return loadGroups(); }
     if(f.id==="gfForm"){ await api("/group-finder","PUT",{pool:$("#gfPool").value.split("\n"),discover_time:$("#gfTime").value,discover_keywords_per_day:+$("#gfK").value,discover_add_per_day:+$("#gfAdd").value,join_per_nick_day:+$("#gfJ").value,browse_minutes:+$("#gfB").value,discover_enabled:$("#gfOn").checked,join_enabled:$("#gfJOn").checked}); toast("Đã lưu cài đặt tìm nhóm"); document.activeElement.blur(); return loadGroups(); }
   }catch(err){ toast(err.message); } });
 $("#gfRun").onclick=async()=>{ try{ const r=await api("/group-finder/run","POST",{}); const s=(ST.sales||[]).find(x=>x.id===r.sale_id); toast(`${s?s.name:"Sale"}${r.account?` (nick ${r.account})`:""} đang lướt Facebook rồi tìm nhóm: ${r.keywords.join(", ")}`); }catch(e){ toast(e.message); } };

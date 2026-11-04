@@ -238,7 +238,8 @@ def plan_distribution() -> list[dict]:
         for t in times:
             sale_last[s["sale_id"]] = max(sale_last.get(s["sale_id"]) or "", t)
     taken = {r["group_id"] for r in db.q("SELECT group_id FROM posts WHERE status IN ('scheduled','posting') AND group_id IS NOT NULL")}
-    groups = [g for g in db.q("SELECT * FROM groups ORDER BY leads_count DESC, members DESC")
+    groups = [g for g in db.q("""SELECT * FROM groups WHERE NOT (COALESCE(verdict,'')='skip' AND COALESCE(leads_count,0)=0)
+                                 ORDER BY leads_count DESC, COALESCE(eng_score, 0) DESC, members DESC""")
               if group_ready(g) and g["id"] not in taken and (g.get("url") or "").strip()]  # nhóm chưa có link: không xếp
     import group_finder
     groups.sort(key=lambda g: not group_finder.matches_today(g))  # ưu tiên nhóm hợp chủ đề CEO chọn hôm nay
