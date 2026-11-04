@@ -42,12 +42,12 @@ def _tick():
     if facebook.configured():
         for p in db.q("""SELECT * FROM posts WHERE target_type='page' AND status='scheduled'
                          AND scheduled_for <= ?""", (stamp,)):
-            res = facebook.publish_page(f"{p['content']}\n\n{p['hashtags'] or ''}")
+            res = facebook.publish_post(p)
             if res["ok"]:
                 workflows.mark_posted(p["id"], res["url"], "Fanpage (tự động)", res["id"])
             else:
-                db.log("tuan", "Lỗi đăng Fanpage", res["error"])
-                db.run("UPDATE posts SET status='approved' WHERE id=?", (p["id"],))
+                db.log("tuan", "Không đăng bài thiếu ảnh" if res.get("no_image") else "Lỗi đăng Fanpage", f"Bài #{p['id']}: {res['error']}")
+                db.run("UPDATE posts SET status='approved', scheduled_for=NULL WHERE id=?", (p["id"],))
     # Bài nhóm / trang cá nhân, lượt up bài, quét bình luận đến hạn -> sale làm theo ca trên từng nick
     if s.get("bump_enabled") == "1" and stamp[11:] >= (s.get("bump_time") or "19:30"):
         workflows.plan_bumps()

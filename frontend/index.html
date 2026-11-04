@@ -905,6 +905,7 @@ label.f{font-weight:600;color:var(--muted)}
         </div>
         <div><button class="btn primary" type="submit" id="gBtn">Viết bài</button></div>
       </form>
+      <div class="banner noimg" id="noImgBar" hidden></div>
       <div class="board" id="board"></div>
     </section>
 
@@ -1250,6 +1251,7 @@ label.f{font-weight:600;color:var(--muted)}
           <label class="row small"><input type="checkbox" id="sAutoM"> Tự động họp mỗi ngày</label>
           <label class="row small"><input type="checkbox" id="sAutoW"> Sau họp tự giao việc (viết bài, xếp lịch, lọc khách cần bám)</label>
           <h3>Nhân viên sale đăng bài</h3>
+          <label class="row small"><input type="checkbox" id="sImgReq"> <span><b>Bắt buộc có ảnh:</b> bài không có ảnh thì không đăng lên Facebook (nhóm, trang cá nhân, Fanpage)</span></label>
           <label class="row small"><input type="checkbox" id="sImg"> Đính kèm ảnh sản phẩm khi đăng (chọn ngẫu nhiên trong thư mục ảnh của từng sản phẩm)</label>
           <div class="grid3">
             <label class="f" for="sImgMin">Ít nhất (ảnh/bài)<input type="number" id="sImgMin" min="1" max="10"></label>
@@ -1390,7 +1392,7 @@ const Demo = (() => {
   const today = () => now().slice(0,10);
   let seq = 100; const id = () => ++seq;
   const S = {
-    settings:{attach_images:"1",images_min:"2",images_max:"4",image_reuse_days:"14",kpi_min:"5",kpi_max:"10",kpi_check_time:"15:00",escalate_all_phone:"1",escalate_complex:"1",escalate_after_hours:"2",scan_enabled:"1",scan_times:"11:30,16:30,20:45",scan_max_age_days:"7",auto_reply_comments:"1",reply_max_per_nick:"10",reply_texts:"Dạ anh/chị để lại SĐT hoặc Zalo giúp em, bên em gọi tư vấn giá sỉ ngay ạ\nEm cảm ơn ạ, anh/chị cho em xin SĐT/Zalo để em gửi bảng giá sỉ và tư vấn kỹ hơn nhé",tg_token:"",tg_morning:"09:00",tg_evening:"21:30",tg_alert_leads:"1",tg_alert_kpi:"1",tg_alert_nick:"1",learn_enabled:"1",learn_time:"23:15",learn_explore:"0.25",bump_enabled:"1",bump_folder:"D:\\AnhSanPham",bump_time:"19:30",bump_max_age_days:"7",bump_max_per_nick:"8",bump_gap_minutes:"6",bump_texts:"Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng",cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 0386992326",price_zalo:"0386992326",price_contact:"",ai_live:false,model:"mô phỏng"},
+    settings:{attach_images:"1",require_images:"1",images_min:"2",images_max:"4",image_reuse_days:"14",kpi_min:"5",kpi_max:"10",kpi_check_time:"15:00",escalate_all_phone:"1",escalate_complex:"1",escalate_after_hours:"2",scan_enabled:"1",scan_times:"11:30,16:30,20:45",scan_max_age_days:"7",auto_reply_comments:"1",reply_max_per_nick:"10",reply_texts:"Dạ anh/chị để lại SĐT hoặc Zalo giúp em, bên em gọi tư vấn giá sỉ ngay ạ\nEm cảm ơn ạ, anh/chị cho em xin SĐT/Zalo để em gửi bảng giá sỉ và tư vấn kỹ hơn nhé",tg_token:"",tg_morning:"09:00",tg_evening:"21:30",tg_alert_leads:"1",tg_alert_kpi:"1",tg_alert_nick:"1",learn_enabled:"1",learn_time:"23:15",learn_explore:"0.25",bump_enabled:"1",bump_folder:"D:\\AnhSanPham",bump_time:"19:30",bump_max_age_days:"7",bump_max_per_nick:"8",bump_gap_minutes:"6",bump_texts:"Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng",cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 0386992326",price_zalo:"0386992326",price_contact:"",ai_live:false,model:"mô phỏng"},
     products:[
       {id:1,hot:1,hot_note:"Đang vào mùa lạnh, khách hỏi nhiều; tặng 5 hộp khi nhập từ 100 hộp",image_folder:"D:\\AnhSanPham\\Tra gung mat ong",name:"Trà gừng mật ong túi lọc",category:"Trà túi lọc",description:"Gừng sẻ sấy lạnh phối mật ong, hộp 20 túi x 2g.",moq:"50 hộp",selling_points:"Ấm bụng, dễ uống, bán chạy mùa lạnh; in nhãn riêng (OEM) được"},
       {id:2,image_folder:"D:\\AnhSanPham\\Tra hoa dau biec",name:"Trà hoa đậu biếc - cỏ ngọt",category:"Trà túi lọc",description:"Hoa đậu biếc sấy khô phối cỏ ngọt, hộp 25 túi.",moq:"50 hộp",selling_points:"Màu xanh đẹp lên video, hợp livestream pha chế"},
@@ -1794,7 +1796,8 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/sales") return S.sales.map(saleOut);
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products.slice().sort((a,b)=>(b.hot||0)-(a.hot||0)||a.id-b.id).map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g),joins:g.joins||{},today:gfToday(g)}));
-      if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,tg_token:S.settings.tg_token?"••••••":"",models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
+      if(P==="/posts") return S.posts.map(p=>{ const pr=S.products.find(x=>x.id===p.product_id); const shared=(S.settings.bump_folder||"").trim()?10:0;
+        return {...p,img_required:S.settings.require_images!=="0",img_count:pr?(demoFolder(pr).count||shared):shared}; }); if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,tg_token:S.settings.tg_token?"••••••":"",models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
       if(P==="/company") return demoCompany();
       if(P==="/errors") return demoErrors(qs);
       if(P==="/ceo") return {...demoCeo(),group_keywords:S.gf.today};
@@ -2513,13 +2516,13 @@ async function loadPosts(){
 function postCard(p){
   const open=ST.openPost.has(p.id), editing=ST.editPost===p.id, posting=ST.postedForm===p.id;
   const SRCP={self:["ok","Lan tự viết"],claude:["","Claude viết"],boss:["talking","Sếp sửa"],template:["ok","Từ bài mẫu"]};
-  const meta=`<div class="meta">${SRCP[p.source]?`<span class="chip ${SRCP[p.source][0]}" title="Ai viết nội dung bài này">${SRCP[p.source][1]}</span>`:""}<span class="chip">${TARGET[p.target_type]||p.target_type}</span>${p.product_name?`<span class="chip">${esc(p.product_name)}</span>`:""}${p.group_name?`<span class="chip ok">${esc(p.group_name)}</span>`:""}${p.scheduled_for&&p.status==="scheduled"?`<span class="chip warn">${fmtTime(p.scheduled_for)} ${fmtDate(p.scheduled_for)}</span>`:""}${p.sale_name?`<span class="chip">${esc(p.sale_name)}${p.account_name?` · nick ${esc(p.account_name)}`:""}</span>`:""}${p.status==="posting"?`<span class="chip talking">Đang đăng…</span>`:""}${p.status==="failed"?`<span class="chip bad">Đăng lỗi</span>`:""}</div>`;
+  const meta=`<div class="meta">${SRCP[p.source]?`<span class="chip ${SRCP[p.source][0]}" title="Ai viết nội dung bài này">${SRCP[p.source][1]}</span>`:""}<span class="chip">${TARGET[p.target_type]||p.target_type}</span>${p.product_name?`<span class="chip">${esc(p.product_name)}</span>`:""}${p.group_name?`<span class="chip ok">${esc(p.group_name)}</span>`:""}${p.scheduled_for&&p.status==="scheduled"?`<span class="chip warn">${fmtTime(p.scheduled_for)} ${fmtDate(p.scheduled_for)}</span>`:""}${p.sale_name?`<span class="chip">${esc(p.sale_name)}${p.account_name?` · nick ${esc(p.account_name)}`:""}</span>`:""}${p.status==="posting"?`<span class="chip talking">Đang đăng…</span>`:""}${p.status==="failed"?`<span class="chip bad">Đăng lỗi</span>`:""}${noImg(p)?`<span class="chip bad" title="Bài đăng lên Facebook bắt buộc kèm ảnh">📷 Thiếu ảnh, không đăng</span>`:p.img_count?`<span class="chip" title="Số ảnh sản phẩm sẵn để đính kèm">📷 ${p.img_count} ảnh</span>`:""}</div>`;
   let acts="";
   const shot = p.screenshot?`<a class="btn sm ghost" href="${esc(p.screenshot)}" target="_blank" rel="noopener">Ảnh chụp</a>`:"";
   const salePick = p.target_type!=="page" && ST.sales?.some(s=>(s.accounts||[]).length) ? `<select class="sm" id="sale-${p.id}" aria-label="Nick đăng bài" style="width:auto;max-width:100%;padding:4px 8px;font-size:12.5px">${ST.sales.filter(s=>s.status!=="fired"&&(s.accounts||[]).length).map(s=>`<optgroup label="${esc(s.name)}">${s.accounts.map(n=>`<option value="${n.id}" ${n.id===p.account_id?"selected":""}>${esc(n.name)}${n.login_status!=="ok"||!n.enabled?" (chưa sẵn sàng)":""}</option>`).join("")}</optgroup>`).join("")}</select><button class="btn sm primary" data-act="runNow">Đăng ngay</button><button class="btn sm" data-act="dry">Đăng thử</button>`:"";
   if(p.status==="draft") acts=`<button class="btn sm primary" data-act="approve">Duyệt</button><button class="btn sm" data-act="edit">Sửa</button><button class="btn sm ghost danger" data-act="rejectAsk">Loại</button>`;
   if(p.status==="draft"&&ST.rejectForm===p.id) acts=`<div style="width:100%"><span class="small muted">Vì sao loại? Lan sẽ rút kinh nghiệm.</span><div class="reasons" style="margin-top:4px">${["Quá dài","Không hấp dẫn","Sai thông tin","Sai giọng văn","Trùng ý bài khác","Không hợp nhóm"].map(r=>`<button type="button" data-act="reject" data-reason="${r}">${r}</button>`).join("")}<button type="button" data-act="reject" data-reason="">Bỏ qua</button><button type="button" data-act="cancel">Hủy</button></div></div>`;
-  else if(p.status==="approved"||p.status==="scheduled") acts=(p.target_type==="page"?`<button class="btn sm primary" data-act="page">Đăng Fanpage</button>`:"")+(p.target_type==="profile"||p.group_id?salePick:"")+`<button class="btn sm ghost" data-act="copy">Sao chép</button>${p.group_url?`<a class="btn sm ghost" href="${esc(p.group_url)}" target="_blank" rel="noopener">Mở nhóm</a>`:""}<button class="btn sm ghost" data-act="posted">Đăng tay xong</button>${shot}`;
+  else if(p.status==="approved"||p.status==="scheduled") acts=(noImg(p)?`<a class="btn sm primary" href="#products">Thêm ảnh sản phẩm</a>`:(p.target_type==="page"?`<button class="btn sm primary" data-act="page">Đăng Fanpage</button>`:"")+(p.target_type==="profile"||p.group_id?salePick:""))+`<button class="btn sm ghost" data-act="copy">Sao chép</button>${p.group_url?`<a class="btn sm ghost" href="${esc(p.group_url)}" target="_blank" rel="noopener">Mở nhóm</a>`:""}<button class="btn sm ghost" data-act="posted">Đăng tay xong</button>${shot}`;
   else if(p.status==="posting") acts=`<span class="small muted">${esc(p.sale_name||"Sale")} đang mở Chrome và đăng bài…</span>`;
   else if(p.status==="failed") acts=`<button class="btn sm primary" data-act="retry">Đưa về hàng đợi</button>${shot}`;
   else if(p.status==="posted"){
@@ -2545,6 +2548,7 @@ function linkBox(p){
     +(lb[0]==="failed"||lb[0]==="skipped"?(lb[1]?`<div class="err">${esc(lb[1])}</div>`:""):"")
     +(needLink?`<div class="row"><input type="url" class="grow" id="plink-${p.id}" placeholder="Dán link bài viết để sale up được" style="padding:5px 8px;font-size:12.5px"><button class="btn sm" data-act="saveLink">Lưu link</button></div>`:"");
 }
+function noImg(p){ return p.img_required&&p.img_count===0&&p.status!=="posted"; }
 function postImgs(p){
   let imgs=[]; try{ imgs=JSON.parse(p.images_used||"[]"); }catch(e){}
   if(!imgs.length) return "";
@@ -2555,6 +2559,8 @@ function postImgs(p){
 function renderBoard(){
   const cols=[["draft","Chờ duyệt"],["approved","Đã duyệt"],["scheduled","Lịch đăng hôm nay"],["posted","Đã đăng"]];
   const inCol=(p,s)=>s==="scheduled"?["scheduled","posting","failed"].includes(p.status):p.status===s;
+  const miss=ST.posts.filter(p=>noImg(p)&&["approved","scheduled","draft","failed"].includes(p.status)).length, bar=$("#noImgBar");
+  bar.hidden=!miss; if(miss) bar.innerHTML=`<b>${miss} bài chưa có ảnh nên sẽ không đăng.</b> Bài đăng lên Facebook bắt buộc kèm ảnh sản phẩm. Thêm thư mục ảnh cho sản phẩm ở <a href="#products">Sản phẩm</a> hoặc thư mục ảnh chung ở <a href="#setup">Cài đặt → Up bài</a>, Tuấn sẽ tự xếp lại các bài này.`;
   $("#board").innerHTML=cols.map(([s,l])=>{ const list=ST.posts.filter(p=>inCol(p,s)); return `<div class="col"><header><b>${l}</b><span class="chip num">${list.length}</span></header>${list.map(postCard).join("")||`<div class="empty">Trống</div>`}</div>`; }).join("");
 }
 $("#board").addEventListener("click",async e=>{
@@ -2570,7 +2576,7 @@ $("#board").addEventListener("click",async e=>{
   if(act==="copy") return copyText(`${p.content}\n\n${p.hashtags||""}`);
   if(act==="posted"){ ST.postedForm=id; return renderBoard(); }
   if(act==="confirmPosted"){ await api(`/posts/${id}/posted`,"POST",{poster:$(`#poster-${id}`).value,posted_url:$(`#purl-${id}`).value}); ST.postedForm=null; toast("Đã ghi nhận bài đăng"); refresh(); return loadPosts(); }
-  if(act==="page"){ b.disabled=true; const r=await api(`/posts/${id}/publish-page`,"POST"); toast(r.ok?"Đã đăng lên Fanpage":r.error); b.disabled=false; return loadPosts(); }
+  if(act==="page"){ b.disabled=true; try{ const r=await api(`/posts/${id}/publish-page`,"POST"); toast(r.ok?"Đã đăng lên Fanpage kèm ảnh":r.error); }catch(err){ toast(err.message); } b.disabled=false; return loadPosts(); }
   if(act==="runNow"||act==="dry"){ const aid=+$(`#sale-${id}`).value; b.disabled=true;
     try{ await api(`/posts/${id}/run`,"POST",{account_id:aid,dry_run:act==="dry"}); toast(act==="dry"?"Sale đang mở Chrome điền thử bài, không bấm Đăng. Ảnh chụp sẽ có sau ít giây.":"Sale đang mở Chrome để đăng bài"); }
     catch(err){ toast(err.message); } b.disabled=false; refresh(); return loadPosts(); }
@@ -3538,7 +3544,7 @@ async function loadSettings(){
   loadCosts();
   const s=await api("/settings");
   $("#sName").value=s.company_name||""; $("#sVoice").value=s.brand_voice||""; $("#sContact").value=s.contact_info||""; $("#sZalo").value=s.price_zalo||"0386992326"; $("#sPriceLine").value=s.price_contact||""; ST.zalo=s.price_zalo||"0386992326"; $("#sTime").value=s.meeting_time||"08:30";
-  $("#sPer").value=s.posts_per_day||4; $("#sAutoM").checked=s.auto_meeting==="1"; $("#sAutoW").checked=s.auto_daily_work==="1"; $("#sPage").value=s.fb_page_id||""; $("#sToken").value=s.fb_page_token||""; loadBump(s); $("#sImg").checked=s.attach_images!=="0"; $("#sImgMin").value=s.images_min||2; $("#sImgMax").value=s.images_max||4; $("#sImgDays").value=s.image_reuse_days||14; $("#sHeadless").checked=s.browser_headless==="1";
+  $("#sPer").value=s.posts_per_day||4; $("#sAutoM").checked=s.auto_meeting==="1"; $("#sAutoW").checked=s.auto_daily_work==="1"; $("#sPage").value=s.fb_page_id||""; $("#sToken").value=s.fb_page_token||""; loadBump(s); $("#sImgReq").checked=s.require_images!=="0"; $("#sImg").checked=s.attach_images!=="0"||$("#sImgReq").checked; $("#sImg").disabled=$("#sImgReq").checked; $("#sImgMin").value=s.images_min||2; $("#sImgMax").value=s.images_max||4; $("#sImgDays").value=s.image_reuse_days||14; $("#sHeadless").checked=s.browser_headless==="1";
   showAi(s);
   loadTgSet().catch(()=>{});
   try{ const h=await api("/health"); setTz(h.time); const t=h.time||{};
@@ -3546,7 +3552,8 @@ async function loadSettings(){
     const diff=t.pc_now&&t.now?Math.abs(new Date(t.pc_now.replace(" ","T"))-new Date(t.now.replace(" ","T")))/6e4:0;
     $("#sTzNote").innerHTML=`Giờ trên phần mềm lúc này: <b>${esc((t.now||tzNow()).slice(11,16))} ${esc(fmtDate(t.now||tzNow()))}</b> (${esc(t.label||TZ.label)}).`+(diff>=30?` Máy tính đang đặt múi giờ khác (máy báo ${esc(t.pc_now.slice(11,16))}); phần mềm vẫn chạy theo múi giờ đã chọn ở đây, không cần sửa máy.`:""); }catch(e){}
 }
-$("#setForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{app_tz:$("#sTz").value,company_name:$("#sName").value,brand_voice:$("#sVoice").value,contact_info:$("#sContact").value,price_zalo:$("#sZalo").value.replace(/[^\d+]/g,"")||"0386992326",price_contact:$("#sPriceLine").value.trim(),meeting_time:$("#sTime").value,posts_per_day:$("#sPer").value,auto_meeting:$("#sAutoM").checked?"1":"0",auto_daily_work:$("#sAutoW").checked?"1":"0",fb_page_id:$("#sPage").value,fb_page_token:$("#sToken").value,attach_images:$("#sImg").checked?"1":"0",images_min:$("#sImgMin").value,images_max:String(Math.max(+$("#sImgMax").value||1,+$("#sImgMin").value||1)),image_reuse_days:$("#sImgDays").value,browser_headless:$("#sHeadless").checked?"1":"0"}); $("#coName").textContent=$("#sName").value; toast("Đã lưu cài đặt"); loadSettings(); });
+$("#sImgReq").onchange=e=>{ if(e.target.checked) $("#sImg").checked=true; $("#sImg").disabled=e.target.checked; };
+$("#setForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{app_tz:$("#sTz").value,company_name:$("#sName").value,brand_voice:$("#sVoice").value,contact_info:$("#sContact").value,price_zalo:$("#sZalo").value.replace(/[^\d+]/g,"")||"0386992326",price_contact:$("#sPriceLine").value.trim(),meeting_time:$("#sTime").value,posts_per_day:$("#sPer").value,auto_meeting:$("#sAutoM").checked?"1":"0",auto_daily_work:$("#sAutoW").checked?"1":"0",fb_page_id:$("#sPage").value,fb_page_token:$("#sToken").value,attach_images:$("#sImg").checked||$("#sImgReq").checked?"1":"0",require_images:$("#sImgReq").checked?"1":"0",images_min:$("#sImgMin").value,images_max:String(Math.max(+$("#sImgMax").value||1,+$("#sImgMin").value||1)),image_reuse_days:$("#sImgDays").value,browser_headless:$("#sHeadless").checked?"1":"0"}); $("#coName").textContent=$("#sName").value; toast("Đã lưu cài đặt"); loadSettings(); });
 
 /* Phát hiện phần mềm trên máy đang chạy bản cũ, chưa khởi động lại sau khi cập nhật, hoặc chạy 2 bản cùng lúc */
 const HEALTH={pids:{},bad:""};

@@ -290,6 +290,34 @@ def _dt(s: str) -> datetime:
     return datetime.strptime(s[:16], "%Y-%m-%d %H:%M")
 
 
+def with_images(posts: list[dict]) -> list[dict]:
+    """Chỉ giữ bài có ảnh để đăng (sếp quy định bài phải có ảnh). Bài thiếu ảnh ghi rõ lý do, ở lại hàng chờ."""
+    import media_folder
+    ok, miss = [], 0
+    for p in posts:
+        why = media_folder.missing(p)
+        if why:
+            miss += 1
+            if p.get("error") != why:
+                db.run("UPDATE posts SET error=? WHERE id=?", (why, p["id"]))
+        else:
+            if (p.get("error") or "").startswith("Bài chưa có ảnh"):
+                db.run("UPDATE posts SET error=NULL WHERE id=?", (p["id"],))
+            ok.append(p)
+    if miss:
+        today = db.today()
+        s = db.get_settings()
+        if s.get("noimg_log_date") != today:  # báo 1 lần mỗi ngày, không spam nhật ký
+            db.set_setting("noimg_log_date", today)
+            db.log("tuan", "Bài thiếu ảnh chưa xếp lịch", f"{miss} bài chưa có ảnh nên không xếp đăng. Sếp thêm thư mục ảnh ở trang Sản phẩm "
+                   "hoặc Cài đặt → Up bài")
+            import errors
+            errors.report("image", "Có bài không có ảnh nên chưa đăng",
+                          f"{miss} bài đã duyệt chưa có ảnh. Bài đăng lên Facebook bắt buộc kèm ảnh. Thêm thư mục ảnh cho sản phẩm "
+                          "(trang Sản phẩm) hoặc thư mục ảnh chung (Cài đặt → Up bài).", screen="products")
+    return ok
+
+
 def plan_distribution() -> list[dict]:
     """Tuấn ghép bài đã duyệt với (nhóm, nick sale, giờ đăng).
 
@@ -364,8 +392,8 @@ def plan_distribution() -> list[dict]:
                      "time": when, "sale": f"{acc['sale_name']} · {acc['name']}" if acc else None})
 
     import post_template
-    approved = db.q("SELECT * FROM posts WHERE status='approved' AND target_type='group'"
-                    + (" AND source='template'" if post_template.enabled() else "") + " ORDER BY id")
+    approved = with_images(db.q("SELECT * FROM posts WHERE status='approved' AND target_type='group'"
+                                + (" AND source='template'" if post_template.enabled() else "") + " ORDER BY id"))
     if sales:
         for post in approved:
             for g in list(groups):
@@ -377,7 +405,7 @@ def plan_distribution() -> list[dict]:
                     assign(post, s, t.strftime("%Y-%m-%d %H:%M"), g)
                     groups.remove(g)
                     break
-        for post in db.q("SELECT * FROM posts WHERE status='approved' AND target_type='profile' ORDER BY id"):
+        for post in with_images(db.q("SELECT * FROM posts WHERE status='approved' AND target_type='profile' ORDER BY id")):
             cands = [(t, s) for s in sales if load[s["id"]]["profile"] == 0 and (t := next_slot(s))]
             if cands:
                 t, s = min(cands, key=lambda c: c[0])
@@ -389,7 +417,7 @@ def plan_distribution() -> list[dict]:
             assign(post, None, f"{today} {slots[len(plan) % len(slots)]}", group)
     # Bài Fanpage đã duyệt: xếp giờ, đến giờ hệ thống tự đăng qua Graph API
     page_slots = ["10:00", "19:30"]
-    for i, post in enumerate(db.q("SELECT * FROM posts WHERE status='approved' AND target_type='page' ORDER BY id")[:2]):
+    for i, post in enumerate(with_images(db.q("SELECT * FROM posts WHERE status='approved' AND target_type='page' ORDER BY id"))[:2]):
         when = f"{db.today()} {page_slots[i]}"
         db.run("UPDATE posts SET scheduled_for=?, status='scheduled' WHERE id=?", (when, post["id"]))
         plan.append({"post_id": post["id"], "group": "Fanpage", "time": when})
@@ -402,7 +430,7 @@ def plan_distribution() -> list[dict]:
 
 def mark_posted(post_id: int, posted_url: str = "", poster: str = "", fb_post_id: str = ""):
     post = db.one("SELECT * FROM posts WHERE id=?", (post_id,))
-    db.run("UPDATE posts SET status='posted', posted_at=?, posted_url=?, poster=?, fb_post_id=? WHERE id=?",
+    db.run("UPDATE posts SET status='posted', error=NULL, posted_at=?, posted_url=?, poster=?, fb_post_id=? WHERE id=?",
            (db.now(), posted_url, poster, fb_post_id, post_id))
     if post and post.get("group_id"):
         db.run("UPDATE groups SET last_posted_at=? WHERE id=?", (db.now(), post["group_id"]))

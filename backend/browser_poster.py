@@ -399,7 +399,7 @@ def _type_text(page, box, text: str):
 
 
 def _attach_images(page, dialog, imgs: list[str], labels: list[str]) -> list[str]:
-    """Đính ảnh vào hộp soạn bài. Trả về danh sách ảnh đã đính (rỗng nếu không đính được: vẫn đăng chữ)."""
+    """Đính ảnh vào hộp soạn bài. Trả về danh sách ảnh đã đính (rỗng nếu không đính được)."""
     def inputs():
         loc = dialog.locator('input[type="file"]')
         return [loc.nth(i) for i in range(loc.count())]
@@ -420,6 +420,11 @@ def _attach_images(page, dialog, imgs: list[str], labels: list[str]) -> list[str
     done = []
     if inp.get_attribute("multiple") is not None:
         inp.set_input_files(imgs)
+        try:  # trình duyệt có nhận tệp không
+            if inp.evaluate("e => e.files ? e.files.length : 0") == 0:
+                return []
+        except Exception:
+            pass
         done = list(imgs)
     else:
         for f in imgs:  # ô chỉ nhận 1 tệp: đính từng ảnh
@@ -485,15 +490,25 @@ def _publish(page, post: dict, target_url: str, composer_labels: list[str], dry_
     text = post["content"].rstrip() + ("\n\n" + post["hashtags"] if post.get("hashtags") else "")
     _type_text(page, box, text)
     _pause(page)
-    used = []
+    used, why = [], ""
     if imgs:
         try:
             used = _attach_images(page, dialog, [str(i) for i in imgs], s["photo_button"])
         except Exception as e:
-            db.log("tuan", "Không đính được ảnh", f"Bài #{post['id']}: {str(e).splitlines()[0][:150]}. Vẫn đăng phần chữ.")
+            why = str(e).splitlines()[0][:150]
             used = []
-        if not used:
-            db.log("tuan", "Không đính được ảnh", f"Bài #{post['id']}: không thấy ô chọn ảnh trong hộp soạn bài, đăng phần chữ.")
+        if not used and not media_folder.required():
+            db.log("tuan", "Không đính được ảnh", f"Bài #{post['id']}: {why or 'không thấy ô chọn ảnh trong hộp soạn bài'}, đăng phần chữ.")
+    if not used and media_folder.required():  # sếp quy định: bài phải có ảnh -> hủy bài đang soạn, không bấm Đăng
+        try:
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(1200)
+            _wait_click(page, s["discard_button"], timeout=4)
+        except Exception:
+            pass
+        raise NoImage("Không đính được ảnh vào bài nên KHÔNG đăng (sếp quy định bài phải có ảnh). "
+                      + (f"Lỗi: {why}. " if why else "Không thấy ô chọn ảnh trong hộp soạn bài. ")
+                      + "Thêm chữ của nút Ảnh/video vào fb_selectors.json nếu Facebook đổi giao diện")
     shot = db.SHOTS_DIR / f"post-{post['id']}.png"
     if dry_run:
         page.screenshot(path=str(shot))
@@ -641,6 +656,8 @@ def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
         else:
             url, labels = f"{FB_BASE}/me", selectors()["profile_composer"]
         imgs, warn = media_folder.pick_for_post(post, acc["sale_id"])
+        if not imgs and media_folder.required():
+            raise NoImage(media_folder.missing(post) or "Bài chưa chọn được ảnh nên không đăng (sếp quy định bài phải có ảnh)")
         if warn:
             db.log("tuan", "Thiếu ảnh mới", f"Bài #{post_id}: {warn}")
         shot, attached = _publish(page, post, url, labels, dry_run, imgs)
@@ -670,6 +687,8 @@ def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
         _fail(page, post_id, str(e), dry_run)
         _block(aid, str(e))
         raise
+    except NoImage as e:
+        _no_image(post, str(e), dry_run, agent)
     except Exception as e:
         _fail(page, post_id, friendly(e)[:300], dry_run)
         if "chưa là thành viên" in str(e) and post.get("group_id"):
@@ -1104,6 +1123,25 @@ def _job_session(pw, aid: int):
         except Exception:
             pass
         workflows.set_status(agent, "idle", f"Xong việc trên nick {accounts.label(acc)}")
+
+
+class NoImage(RuntimeError):
+    """Bài không có ảnh: không đăng."""
+
+
+def _no_image(post: dict, msg: str, dry_run: bool, agent: str):
+    """Bài thiếu ảnh: không đăng, trả bài về hàng chờ duyệt (bỏ nick/giờ) để khi có ảnh Tuấn xếp lại."""
+    import errors
+    errors.report("image", "Bài không có ảnh nên chưa đăng", msg, f"Bài #{post['id']}: {(post.get('title') or '')[:80]}",
+                  screen="products", ref_type="post", ref_id=post["id"])
+    if dry_run:
+        db.run("UPDATE posts SET error=? WHERE id=?", (msg[:300], post["id"]))
+    else:
+        # bài chăm sóc nhóm viết riêng cho 1 nhóm: bỏ luôn; bài tìm khách: về hàng chờ, có ảnh thì xếp lại
+        st = "failed" if post.get("source") == "care" else "approved"
+        db.run("""UPDATE posts SET status=?, error=?, sale_id=NULL, account_id=NULL, scheduled_for=NULL,
+                  managed=0 WHERE id=?""", (st, msg[:300], post["id"]))
+    db.log(agent, "Không đăng bài thiếu ảnh", f"Bài #{post['id']}: {msg[:200]}")
 
 
 def _fail(page, post_id: int, msg: str, dry_run: bool):

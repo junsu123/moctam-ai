@@ -421,6 +421,7 @@ DEFAULT_SETTINGS = {
     "mygroups_review_per_run": "8", "admin_posts_min": "5", "admin_posts_max": "10", "admin_care_ai": "1", "admin_sell_share": "50", "prospect_auto_crm": "1", "prospect_ai_script": "1", "prospect_keywords": "",
     "tg_sent_log": "{}",
     "attach_images": "1",
+    "require_images": "1",  # bài đăng Facebook bắt buộc kèm ảnh, không có ảnh thì không đăng
 }
 
 DATA_DIR = DB_PATH.parent

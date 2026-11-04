@@ -976,8 +976,15 @@ def posts(status: str | None = None):
               FROM bumps b WHERE b.post_id=p.id ORDER BY b.id DESC LIMIT 1) last_bump FROM posts p
              LEFT JOIN products pr ON pr.id=p.product_id LEFT JOIN groups g ON g.id=p.group_id
              LEFT JOIN sales s ON s.id=p.sale_id LEFT JOIN fb_accounts fa ON fa.id=p.account_id"""
-    return db.q(sql + (" WHERE p.status=?" if status else "") + " ORDER BY p.id DESC LIMIT 200",
+    rows = db.q(sql + (" WHERE p.status=?" if status else "") + " ORDER BY p.id DESC LIMIT 200",
                 (status,) if status else ())
+    import media_folder
+    need = media_folder.required()
+    for r in rows:  # bài chưa đăng: còn ảnh để đăng không (bắt buộc có ảnh thì thiếu ảnh sẽ không đăng)
+        if r["status"] in ("draft", "approved", "scheduled", "posting", "failed"):
+            r["img_count"] = media_folder.image_count(r)
+            r["img_required"] = need
+    return rows
 
 
 @app.post("/api/posts/generate")
@@ -1038,9 +1045,11 @@ def publish_page(pid: int):
     p = db.one("SELECT * FROM posts WHERE id=?", (pid,))
     if not p:
         raise HTTPException(404)
-    res = facebook.publish_page(f"{p['content']}\n\n{p['hashtags'] or ''}")
+    res = facebook.publish_post(p)
     if res["ok"]:
         workflows.mark_posted(pid, res["url"], "Fanpage (API)", res["id"])
+    elif res.get("no_image"):
+        raise HTTPException(400, res["error"])
     return res
 
 
@@ -1541,6 +1550,9 @@ def run_post(pid: int, r: PostRun):
         raise HTTPException(400, "Bài Fanpage đăng qua nút Đăng Fanpage")
     if p["target_type"] == "group" and not p.get("group_id"):
         raise HTTPException(400, "Bài nhóm chưa được xếp vào nhóm nào. Bấm 'Tuấn xếp lịch' trước")
+    import media_folder
+    if (why := media_folder.missing(p)):  # sếp quy định bài phải có ảnh
+        raise HTTPException(400, why)
     db.run("UPDATE posts SET sale_id=?, account_id=? WHERE id=?", (sid, aid, pid))
     if not r.dry_run:
         db.run("UPDATE posts SET status='posting', error=NULL WHERE id=?", (pid,))

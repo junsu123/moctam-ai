@@ -300,6 +300,21 @@ nhiêu ảnh chưa đăng và đủ cho khoảng bao nhiêu bài nữa. Thẻ b�
 Sản phẩm chưa có thư mục riêng sẽ dùng thư mục chung (Cài đặt → Tự động up bài): thư mục con trùng tên sản phẩm,
 hoặc ảnh để thẳng trong thư mục chung.
 
+**Bắt buộc có ảnh** (Cài đặt → Nhân viên sale đăng bài, mặc định bật): bài không có ảnh thì **không đăng lên Facebook**,
+ở mọi đường đăng (hội nhóm, nhóm mình quản lý, trang cá nhân, Fanpage):
+- Tuấn không xếp lịch bài thiếu ảnh. Bài nằm lại cột Đã duyệt với dòng đỏ “Bài chưa có ảnh nên không đăng: ...” chỉ rõ
+  cần điền thư mục ảnh ở đâu, và chip **📷 Thiếu ảnh, không đăng**. Đầu trang Bài đăng báo số bài thiếu ảnh; nút
+  Đăng ngay, Đăng thử, Đăng Fanpage được thay bằng **Thêm ảnh sản phẩm**. Có ảnh rồi thì Tuấn tự xếp lại các bài đó.
+- Bài mẫu sỉ và bài chăm sóc nhóm quản lý (không gắn sản phẩm) lấy ảnh ở thư mục chung; chưa có thư mục chung thì Lan
+  không làm thêm các bài này.
+- Lúc đăng, sale chọn ảnh trước khi mở hộp soạn bài; không chọn được ảnh thì không mở. Nếu Facebook không nhận ảnh
+  (không thấy nút Ảnh/video, trình duyệt không nhận tệp) thì sale **hủy bài đang soạn, không bấm Đăng**, trả bài về hàng
+  chờ và ghi vào màn hình Lỗi.
+- Fanpage: ảnh được tải lên trước rồi gắn vào bài (Graph API `photos` + `attached_media`); không có ảnh thì không gọi API.
+- Thẻ bài chưa đăng hiện **📷 N ảnh** là số ảnh sẵn để đính kèm.
+
+Bỏ chọn “Bắt buộc có ảnh” nếu muốn cho phép đăng bài chỉ có chữ như trước.
+
 ## Lưu link bài và tự động up bài
 
 **Link bài:** ngay sau khi đăng, nhân viên sale mở mục "Nội dung của bạn" trong nhóm (hoặc trang cá nhân), tìm đúng bài

@@ -507,9 +507,13 @@ def plan_admin() -> list[dict]:
         need = min(need, int((end - start).total_seconds() // (30 * 60)) + 1)  # chỉ làm số bài còn kịp đăng hôm nay
         import post_template
         src_sql = " AND source='template'" if post_template.enabled() else ""
-        items = db.q(f"SELECT * FROM posts WHERE status='approved' AND target_type='group'{src_sql} ORDER BY id LIMIT ?", (need,))
-        if len(items) < need and post_template.enabled():  # Lan làm thêm bài theo mẫu của sếp cho đủ chỉ tiêu
+        items = workflows.with_images(db.q(f"SELECT * FROM posts WHERE status='approved' AND target_type='group'{src_sql} ORDER BY id LIMIT ?", (need,)))
+        import media_folder
+        no_shared = media_folder.missing({})  # bài mẫu, bài chăm sóc nhóm lấy ảnh ở thư mục chung
+        if len(items) < need and post_template.enabled() and not no_shared:  # Lan làm thêm bài theo mẫu của sếp cho đủ chỉ tiêu
             items += post_template.make_posts(need - len(items))
+        if no_shared:  # không có ảnh thì không làm bài chăm sóc (không đăng bài không ảnh)
+            items = [x for x in items if isinstance(x, dict)]
         if not items:
             continue
         taken = [datetime.strptime(r["t"][:16], "%Y-%m-%d %H:%M") for r in rows if r["t"]]

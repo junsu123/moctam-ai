@@ -12,6 +12,9 @@ Chống trùng lặp khi đăng bài (theo thứ tự ưu tiên):
 4. Mỗi bài lấy ngẫu nhiên từ "tối thiểu" đến "tối đa" ảnh, thứ tự ảnh cũng ngẫu nhiên.
 Khi thư mục ít ảnh tới mức không đủ ảnh mới, hệ thống nới dần điều kiện (bỏ điều kiện 2, rồi 1) thay vì đăng không ảnh,
 và nhắc sếp bổ sung ảnh.
+
+BẮT BUỘC CÓ ẢNH (cài đặt require_images, mặc định bật): bài không có ảnh thì không xếp lịch, không đăng
+(nhóm, trang cá nhân, Fanpage); đính ảnh thất bại thì hủy bài đang soạn chứ không đăng phần chữ.
 """
 import json
 import random
@@ -107,15 +110,52 @@ def _rank(paths: list[Path], usage: dict) -> list[Path]:
     return [k[-1] for k in sorted(keyed)]
 
 
-def pick_for_post(post: dict, sale_id: int | None = None) -> tuple[list[Path], str | None]:
-    """Chọn ảnh cho một bài đăng. Trả về (danh sách ảnh, cảnh báo nếu phải dùng lại ảnh)."""
-    s = db.get_settings()
-    if s.get("attach_images") != "1":
-        return [], None
+def required() -> bool:
+    """Sếp quy định: bài đăng lên Facebook bắt buộc kèm ảnh, không có ảnh thì không đăng."""
+    return db.get_settings().get("require_images", "1") != "0"
+
+
+def pool_for(post: dict) -> list[Path]:
     product = _product(post.get("product_id"))
     pool = images_for(product)
     if not pool and product:  # dự phòng: ảnh tải lên trong phần mềm
         pool = [db.DATA_DIR / rel for rel in json.loads(product.get("images") or "[]") if (db.DATA_DIR / rel).exists()]
+    return pool
+
+
+_count_cache: dict = {}
+
+
+def image_count(post: dict) -> int:
+    """Số ảnh có thể dùng cho bài (nhớ 60 giây theo sản phẩm, vì xếp lịch và danh sách bài gọi nhiều lần)."""
+    import time
+    key = post.get("product_id") or 0
+    hit = _count_cache.get(key)
+    if hit and hit[0] > time.time() - 60:
+        return hit[1]
+    n = len(pool_for(post))
+    _count_cache[key] = (time.time(), n)
+    return n
+
+
+def missing(post: dict) -> str | None:
+    """Lý do bài KHÔNG được đăng vì thiếu ảnh (None = đủ ảnh hoặc sếp không bắt buộc)."""
+    if not required() or image_count(post):
+        return None
+    product = _product(post.get("product_id"))
+    if product:
+        return (f"Bài chưa có ảnh nên không đăng: sản phẩm “{product['name']}” chưa có ảnh. Vào Sản phẩm, điền thư mục ảnh "
+                "cho sản phẩm này (hoặc thư mục chung ở Cài đặt → Up bài)")
+    return ("Bài chưa có ảnh nên không đăng: chưa có thư mục ảnh chung. Vào Cài đặt → Up bài, điền thư mục ảnh sản phẩm "
+            "(hoặc điền thư mục ảnh riêng ở trang Sản phẩm)")
+
+
+def pick_for_post(post: dict, sale_id: int | None = None) -> tuple[list[Path], str | None]:
+    """Chọn ảnh cho một bài đăng. Trả về (danh sách ảnh, cảnh báo nếu phải dùng lại ảnh)."""
+    s = db.get_settings()
+    if s.get("attach_images") != "1" and not required():
+        return [], None
+    pool = pool_for(post)
     if not pool:
         return [], None
     lo = max(1, int(s.get("images_min") or 2))
