@@ -125,7 +125,12 @@ def member_ids(g: dict) -> set[int]:
 
 
 def can_post_in(g: dict, aid: int) -> bool:
-    """Nick có được đăng vào nhóm này không. Nhóm sếp nhập chưa đánh dấu nick nào: coi như mọi nick đã vào;
-    nhóm sale tự tìm: chỉ nick đã vào."""
+    """Nick có được đăng vào nhóm này không.
+    - Nick đã đọc danh sách nhóm thật (Tuấn rà soát): chỉ nhóm nick đang ở, trừ nhóm mới vào còn đang nghỉ và nhóm Tuấn cho thoát.
+    - Chưa rà soát: nhóm sếp nhập chưa đánh dấu nick nào coi như mọi nick đã vào; nhóm sale tự tìm chỉ nick đã vào."""
+    import my_groups
+    st = my_groups.membership(g, aid)
+    if st != "unknown":
+        return st == "ok"
     mem = member_ids(g)
     return aid in mem if (mem or g.get("source") == "search") else True

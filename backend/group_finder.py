@@ -213,8 +213,8 @@ def add_candidate(cid: int, by: str = "ceo", joined_account: int | None = None) 
                (f"Sếp chọn thêm (Tuấn: {c.get('review_note') or ''})"[:600], gid))
     db.run("UPDATE group_candidates SET status='added', group_id=? WHERE id=?", (gid, cid))
     if joined_account:
-        db.run("INSERT OR REPLACE INTO account_groups(group_id, account_id, status, requested_at, updated_at) VALUES (?,?,?,?,?)",
-               (gid, joined_account, "joined", db.now(), db.now()))
+        db.run("""INSERT OR REPLACE INTO account_groups(group_id, account_id, status, requested_at, updated_at, origin, joined_at)
+                  VALUES (?,?,?,?,?,'app',?)""", (gid, joined_account, "joined", db.now(), db.now(), db.now()))
     mem = f"{c['members'] or 0:,}".replace(",", ".")
     sc = f", {c['eng_score']:g} điểm tương tác".replace(".", ",") if c.get("eng_score") is not None else ""
     db.log("tuan" if by == "ceo" else "minh", "Thêm nhóm mới tìm được", f"{c['name']} ({mem} thành viên{sc}, chủ đề “{c['keyword']}”)")
@@ -235,11 +235,16 @@ def auto_add(limit: int | None = None) -> list[dict]:
     return out
 
 
-def set_join(group_id: int, aid: int, status: str, note: str = ""):
-    """Trạng thái xin vào nhóm của một nick; nick đã vào thì được Tuấn xếp bài vào nhóm đó."""
+def set_join(group_id: int, aid: int, status: str, note: str = "", origin: str = "app"):
+    """Trạng thái xin vào nhóm của một nick; nick đã vào thì được Tuấn xếp bài vào nhóm đó.
+    Nhóm nick mới vào (origin app): nghỉ vài ngày mới đăng bài (my_groups.can_post)."""
+    old = db.one("SELECT status FROM account_groups WHERE group_id=? AND account_id=?", (group_id, aid))
     db.run("""INSERT INTO account_groups(group_id, account_id, status, note, requested_at, updated_at) VALUES (?,?,?,?,?,?)
               ON CONFLICT(group_id, account_id) DO UPDATE SET status=excluded.status, note=excluded.note,
               updated_at=excluded.updated_at""", (group_id, aid, status, note[:200], db.now(), db.now()))
+    if status == "joined" and (not old or old["status"] != "joined"):
+        db.run("UPDATE account_groups SET joined_at=?, origin=COALESCE(origin, ?) WHERE group_id=? AND account_id=?",
+               (db.now(), origin, group_id, aid))
     g = db.one("SELECT member_account_ids FROM groups WHERE id=?", (group_id,))
     if not g:
         return

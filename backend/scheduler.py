@@ -9,6 +9,7 @@ import db
 import facebook
 import meeting
 import kpi
+import my_groups
 import prospect
 import telegram_bot
 import workflows
@@ -67,6 +68,7 @@ def _tick():
     import group_finder
     group_finder.tick(now)
     prospect.tick(now)  # Mai đi tìm khách sỉ mỗi ngày
+    my_groups.tick(now)  # Tuấn rà soát nhóm trong nick, thoát nhóm kém; bù bài cho nhóm mình quản lý
     import knowledge
     knowledge.tick(now)
     import growth

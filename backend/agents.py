@@ -36,7 +36,7 @@ AGENTS = {
         "id": "tuan",
         "name": "Tuấn",
         "role": "Chuyên viên Hội nhóm",
-        "short": "Chọn nhóm, lên lịch đăng, tránh vi phạm luật nhóm",
+        "short": "Rà soát nhóm trong các nick, chọn nhóm đăng, thoát nhóm kém, chăm sóc nhóm mình quản lý, lên lịch đăng",
         "personality": "Thực tế, cẩn thận, thuộc luật từng nhóm, ghét spam vì sợ bị chặn nick. Hay phản biện ý tưởng đăng dồn dập.",
         "look": {"skin": "#e8b88f", "shirt": "#2e9e6b", "pants": "#2c3a33", "hair": "#1d1d1d",
                   "hairStyle": "cap", "accessory": "cap", "accent": "#bff0d4"},

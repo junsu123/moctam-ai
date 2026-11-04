@@ -26,6 +26,8 @@ SETTINGS_OK = {
     "meeting_time": ("time", 0, 0, "giờ họp sáng"), "auto_meeting": ("bool", 0, 0, "tự họp mỗi sáng"),
     "bump_enabled": ("bool", 0, 0, "tự up bài"), "scan_enabled": ("bool", 0, 0, "tự quét bình luận"),
     "discover_enabled": ("bool", 0, 0, "tự tìm nhóm"), "join_enabled": ("bool", 0, 0, "tự xin vào nhóm"),
+    "auto_leave": ("bool", 0, 0, "tự thoát nhóm kém"), "admin_posts_min": ("int", 0, 20, "số bài tối thiểu/ngày ở nhóm mình quản lý"),
+    "admin_posts_max": ("int", 1, 20, "số bài tối đa/ngày ở nhóm mình quản lý"),
     "prospect_tiktok": ("bool", 0, 0, "Mai tìm khách trên TikTok"), "prospect_shopee": ("bool", 0, 0, "Mai tìm khách trên Shopee"),
     "prospect_enabled": ("bool", 0, 0, "Mai tự tìm khách sỉ mỗi ngày"), "prospect_time": ("time", 0, 0, "giờ Mai đi tìm khách sỉ"),
 }
@@ -269,6 +271,12 @@ def execute(act: dict) -> str:
         r = group_finder.start_discover(None, kws or None, notify=act.get("_via", "web"))
         return (f"Giao sale {_name('sale-' + str(r['sale_id']))} (nick {r['account']}) lướt Facebook rồi tìm nhóm theo: {', '.join(r['keywords'])}"
                 f"{_busy_note(r['sale_id'])}. Tìm xong em báo lại sếp.")
+    if t == "review_my_groups":
+        import my_groups
+        n = my_groups.start_sync(act.get("_via", "web"))
+        return (f"Giao {n} nick mở danh sách nhóm đã tham gia, Tuấn đánh giá nhóm nào nên đăng, nhóm nào thoát"
+                + (" (đang bật tự thoát nhóm kém)" if s().get("auto_leave", "1") == "1" else "") + ". Xong em báo lại sếp.") if n else \
+            "Chưa rà soát được: " + why_no_sales()
     if t == "find_prospects":
         import group_finder
         import prospect
@@ -442,6 +450,7 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - meeting {topic}: triệu tập họp
 - find_groups {keywords: [..]}: giao sale lướt Facebook tìm nhóm theo chủ đề
 - join_groups {}: các nick xin vào nhóm mới
+- review_my_groups {}: đọc danh sách nhóm nick đã tham gia sẵn, Tuấn đánh giá nhóm nào nên đăng, thoát nhóm kém
 - find_prospects {keywords: [..], urls: [..], directions: [..]}: directions 5 = quét thư viện quảng cáo Facebook (trang đang chạy
   quảng cáo), 6 = đọc bài và bình luận trong nhóm tìm người hỏi nguồn hàng, 1-4 = tìm trang/shop. Mai tìm khách sỉ (người đang bán online, livestream trên Facebook/TikTok/Shopee),
   chấm điểm A/B/C/D, hạng A/B vào mục Khách hàng. urls = link sếp gửi để Mai phân tích. Không tự nhắn tin cho khách.
@@ -539,10 +548,15 @@ def _rule_plan(text: str) -> dict:
                                r"người livestream|nhà bán|shop|đại lý|khách tiềm năng)", low) or
                      (agent == "mai" and re.search(r"\b(tìm|kiếm|săn|phân tích|xem)\b", low)) or
                      (links and re.search(r"tiktok|shopee|facebook\.com/(?!groups)", " ".join(links)) and not want_join))
+    if m := re.search(r"\b(bật|mở|tắt|dừng|ngừng|thôi)\b.{0,12}tự\s*(động\s*)?(thoát|rời)\s*nhóm", low):
+        acts.append({"type": "setting", "key": "auto_leave", "value": "0" if m.group(1) in ("tắt", "dừng", "ngừng", "thôi") else "1"})
+    want_review_groups = re.search(r"(rà soát|xem lại|đánh giá|dọn|thoát|rời)\s*(các\s*)?(nhóm|group)", low) and not want_find
     want_ads = re.search(r"(quét|tìm|xem|soi)\b.{0,25}(quảng cáo|chạy ads|chạy quảng cáo|thư viện quảng cáo)", low)
     want_demand = re.search(r"(bình luận|comment|cmt|bài)\s*(trong|ở|của)\s*(các\s*)?(nhóm|group|hội)|hỏi nguồn|tìm nguồn hàng|cần nhập hàng", low)
     if acts and all(a["type"] == "setting" for a in acts):
         pass
+    elif want_review_groups and not links:
+        acts.append({"type": "review_my_groups"})
     elif (want_ads or want_demand) and not want_write and not want_find:
         acts.append({"type": "find_prospects", "urls": [], "keywords": [],
                      "directions": ([5] if want_ads else []) + ([6] if want_demand else [])})

@@ -100,6 +100,17 @@ sang giao diện máy tính. Nếu không đính được ảnh, sale vẫn đă
 hạn chế dù đã giãn cách, nên giữ số bài/ngày vừa phải, nội dung có giá trị và đúng luật từng nhóm.
 Máy chạy phần mềm phải bật trong giờ đăng bài; Chrome của các nick chạy trên chính máy đó.
 
+## Nhóm có sẵn trong nick: đăng ở đâu, thoát nhóm nào, chăm sóc nhóm mình quản lý
+
+Mục **Hội nhóm → Nhóm trong các nick**.
+
+- **Đọc danh sách nhóm thật của nick**: mỗi ngày (mặc định 09:15, hoặc bấm “Tuấn rà soát ngay”, hoặc nói với CEO “rà soát nhóm”) sale mở Facebook → Nhóm → *Nhóm bạn đã tham gia* của từng nick, lưu lại nhóm nào nick là **quản trị viên**, nhóm nào là thành viên. Nhóm mới thấy trong nick được tự thêm vào danh sách Hội nhóm.
+- **Chỉ đăng vào nhóm nick đang ở**: khi nick đã được rà soát, Tuấn chỉ xếp bài của nick vào nhóm có trong danh sách của chính nick đó.
+- **Nhóm mới vào thì chưa đăng**: nhóm do phần mềm xin vào phải nghỉ 7 ngày (sửa được) mới bắt đầu đăng. Nhóm có sẵn trong nick đăng được ngay.
+- **Tuấn đánh giá từng nhóm** (đọc trang Giới thiệu và bảng tin như khi tìm nhóm mới, kèm kiểm tra nhóm có liên quan bán hàng, nguồn hàng, thực phẩm không): **Nên đăng**, **Đăng ít** (tương tác trung bình) hoặc **Thoát nhóm** (không liên quan, gần như không hoạt động, cấm bán hàng, chợ spam không ai bình luận). Mỗi lượt xem tối đa 8 nhóm, mỗi nhóm đánh giá lại sau 7 ngày.
+- **Tự thoát nhóm**: tối đa 3 nhóm/nick/ngày cho tự nhiên. Không bao giờ thoát nhóm nick quản lý, nhóm đã mang về khách, nhóm sếp bấm **Giữ nhóm**. Sếp có thể bấm **Thoát** ở từng nhóm, hoặc tắt tự thoát trong cài đặt.
+- **Chăm sóc nhóm mình quản lý**: mỗi nhóm nick là quản trị viên được đăng **5–10 bài mỗi ngày** (sửa được), rải đều trong khung giờ của nick, cách nhau ít nhất 25 phút. Một nửa là bài bán hàng đã duyệt, một nửa là bài chăm sóc nhóm (thảo luận, hỏi đáp, mẹo bán hàng, kiến thức sản phẩm, chào thành viên mới, bình chọn) do Lan viết (có khóa Claude thì viết mới, chưa có thì ghép từ mẫu và sổ kiến thức; không rao giá, không hứa công dụng). Từ 15 giờ mà chưa đủ bài bán hàng thì Lan bù bằng bài chăm sóc cho đủ chỉ tiêu. Bài trong nhóm mình quản lý không tính vào giới hạn số bài/ngày của nick.
+
 ## Sale tự tìm hội nhóm mới
 
 Mỗi ngày (mặc định 10:30) CEO Đức chọn 3 chủ đề tìm nhóm, ví dụ "hội chạy quảng cáo facebook", "nguồn hàng sỉ thực phẩm".
@@ -617,6 +628,7 @@ backend/
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, ca làm việc theo nick, đăng bài, lấy link bài, up bài
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
   errors.py      Sổ lỗi: ghi lỗi từ mọi màn hình và việc tự động, gộp lỗi trùng, gợi ý cách xử lý
+  my_groups.py   Nhóm có sẵn trong nick: đọc danh sách nhóm, Tuấn đánh giá, tự thoát nhóm kém, nhóm mới vào nghỉ, chăm sóc nhóm quản lý
   prospect.py    Mai tìm khách sỉ: tìm, đọc trang công khai, phân loại người bán, chấm điểm 100 có bằng chứng, lưu CRM
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm
   group_review.py  Tuấn đánh giá nhóm theo chuẩn nhóm tương tác cao: chấm điểm, Nên vào / Cân nhắc / Bỏ qua, lý do

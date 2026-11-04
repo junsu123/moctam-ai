@@ -309,6 +309,10 @@ MIGRATIONS = [
     ("groups", "is_sample", "INTEGER DEFAULT 0"), ("products", "is_sample", "INTEGER DEFAULT 0"),
     ("leads", "phone_at", "TEXT"), ("leads", "boss_status", "TEXT"), ("leads", "remind_at", "TEXT"),
     ("prospects", "phone_tries", "INTEGER DEFAULT 0"),
+    ("account_groups", "role", "TEXT DEFAULT 'member'"), ("account_groups", "origin", "TEXT"), ("account_groups", "joined_at", "TEXT"),
+    ("account_groups", "verdict", "TEXT"), ("account_groups", "verdict_note", "TEXT"), ("account_groups", "left_at", "TEXT"),
+    ("account_groups", "seen_at", "TEXT"), ("groups", "managed", "INTEGER DEFAULT 0"), ("groups", "pinned", "INTEGER DEFAULT 0"),
+    ("groups", "slug", "TEXT"), ("posts", "managed", "INTEGER DEFAULT 0"), ("fb_accounts", "groups_synced_at", "TEXT"),
 ]
 
 DEFAULT_SETTINGS = {
@@ -396,7 +400,9 @@ DEFAULT_SETTINGS = {
     "tg_alert_kpi": "1",
     "tg_report_done": "1",
     "prospect_enabled": "1", "prospect_time": "14:30", "prospect_inspect_per_run": "10", "prospect_facebook": "1",
-    "prospect_tiktok": "0", "prospect_shopee": "0", "prospect_fb_keywords": "2", "prospect_ads": "1", "prospect_groups": "1", "prospect_groups_per_run": "3", "prospect_auto_crm": "1", "prospect_ai_script": "1", "prospect_keywords": "",
+    "prospect_tiktok": "0", "prospect_shopee": "0", "prospect_fb_keywords": "2", "prospect_ads": "1", "prospect_groups": "1", "prospect_groups_per_run": "3",
+    "mygroups_enabled": "1", "mygroups_time": "09:15", "auto_leave": "1", "leave_per_nick_day": "3", "new_group_rest_days": "7",
+    "mygroups_review_per_run": "8", "admin_posts_min": "5", "admin_posts_max": "10", "admin_care_ai": "1", "admin_sell_share": "50", "prospect_auto_crm": "1", "prospect_ai_script": "1", "prospect_keywords": "",
     "tg_sent_log": "{}",
     "attach_images": "1",
 }

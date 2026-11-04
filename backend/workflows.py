@@ -263,7 +263,12 @@ def post_demand() -> list[tuple[str, int]]:
     pending = db.one("SELECT COUNT(*) n FROM ai_batches WHERE status='in_progress'")["n"]
     if pending:
         return []  # đang có lô chưa xong, không gửi thêm
-    return [("group", max(0, cap_group - have("group"))), ("profile", max(0, cap_profile - have("profile")))]
+    try:
+        import my_groups
+        extra = my_groups.admin_sell_need()  # bài bán hàng cho nhóm mình quản lý (5–10 bài/ngày/nhóm)
+    except Exception:
+        extra = 0
+    return [("group", max(0, cap_group + extra - have("group"))), ("profile", max(0, cap_profile - have("profile")))]
 
 
 # ---------------------------------------------------------------- Tuấn: phân phối nhóm
@@ -280,21 +285,28 @@ def plan_distribution() -> list[dict]:
     """
     set_status("tuan", "working", "Đang xếp lịch đăng nhóm")
     import accounts
+    import my_groups
+    try:
+        admin_plan = my_groups.plan_admin()  # nhóm mình quản lý: 5–10 bài/ngày, xếp trước
+    except Exception as e:
+        print("[plan_admin]", e)
+        admin_plan = []
     today, now = db.today(), db.clock()
     # mỗi nick là một đơn vị đăng bài; một sale giữ nhiều nick và làm lần lượt từng nick
     sales = accounts.working()
     load, sale_last = {}, {}
     for s in sales:
-        rows = db.q("""SELECT scheduled_for, posted_at, target_type FROM posts WHERE account_id=? AND
+        rows = db.q("""SELECT scheduled_for, posted_at, target_type, COALESCE(managed,0) managed FROM posts WHERE account_id=? AND
                        ((status IN ('scheduled','posting') AND scheduled_for LIKE ?) OR (status='posted' AND posted_at LIKE ?))""",
                     (s["id"], today + "%", today + "%"))
         times = [r["scheduled_for"] or r["posted_at"] for r in rows]
-        load[s["id"]] = {"count": len(rows), "last": max(times) if times else None,
+        load[s["id"]] = {"count": sum(1 for r in rows if not r["managed"]), "last": max(times) if times else None,  # bài nhóm mình quản lý không tính giới hạn
                          "profile": sum(r["target_type"] == "profile" for r in rows)}
         for t in times:
             sale_last[s["sale_id"]] = max(sale_last.get(s["sale_id"]) or "", t)
     taken = {r["group_id"] for r in db.q("SELECT group_id FROM posts WHERE status IN ('scheduled','posting') AND group_id IS NOT NULL")}
-    groups = [g for g in db.q("""SELECT * FROM groups WHERE NOT (COALESCE(verdict,'')='skip' AND COALESCE(leads_count,0)=0)
+    groups = [g for g in db.q("""SELECT * FROM groups WHERE NOT (COALESCE(verdict,'')='skip' AND COALESCE(leads_count,0)=0
+                                 AND COALESCE(pinned,0)=0) AND COALESCE(managed,0)=0
                                  ORDER BY leads_count DESC, COALESCE(eng_score, 0) DESC, members DESC""")
               if group_ready(g) and g["id"] not in taken and (g.get("url") or "").strip()]  # nhóm chưa có link: không xếp
     import group_finder
@@ -365,7 +377,8 @@ def plan_distribution() -> list[dict]:
         when = f"{db.today()} {page_slots[i]}"
         db.run("UPDATE posts SET scheduled_for=?, status='scheduled' WHERE id=?", (when, post["id"]))
         plan.append({"post_id": post["id"], "group": "Fanpage", "time": when})
-    db.log("tuan", "Xếp lịch", f"Đã xếp {len(plan)} bài cho hôm nay" if plan
+    adm = sum(x["count"] for x in admin_plan)
+    db.log("tuan", "Xếp lịch", (f"Đã xếp {len(plan)} bài cho hôm nay" + (f", cộng {adm} bài cho nhóm mình quản lý" if adm else "")) if plan or adm
            else "Chưa có bài đã duyệt hoặc nhóm đủ điều kiện để xếp lịch")
     set_status("tuan", "idle", f"Lịch hôm nay: {len(plan)} bài")
     return plan

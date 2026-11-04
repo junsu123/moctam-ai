@@ -1126,7 +1126,7 @@ def _fail(page, post_id: int, msg: str, dry_run: bool):
 
 JOB_NAME = {"open": "mở Chrome", "check": "kiểm tra phiên", "post": "đăng bài", "bump": "up bài", "scan": "quét bình luận",
             "discover": "tìm nhóm mới", "join": "xin vào nhóm", "session": "làm ca trên nick",
-            "prospect": "mở trang tìm khách sỉ cho Mai"}
+            "prospect": "mở trang tìm khách sỉ cho Mai", "mygroups": "rà soát nhóm của nick"}
 
 
 def _worker(sale_id: int, q: Queue):
@@ -1164,6 +1164,9 @@ def _worker(sale_id: int, q: Queue):
                 elif k == "join":
                     import group_finder
                     group_finder.job_join(pw, aid, job.get("notify"))
+                elif k == "mygroups":
+                    import my_groups
+                    my_groups.job_sync(pw, aid, job.get("notify"), job.get("leave"))
                 elif k == "prospect":
                     import prospect
                     prospect.job(pw, aid, job.get("plan"), job.get("urls"), job.get("notify"))
