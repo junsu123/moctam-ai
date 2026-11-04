@@ -2,25 +2,32 @@
 <title>Phòng Kinh doanh AI</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 <style>
 /* Bố cục: thanh điều hướng trái + vùng làm việc; văn phòng 3D là sân khấu chung cho "Văn phòng" và "Phòng họp" */
 :root{
-  --bg:#ecefe6; --panel:#fafbf6; --panel-2:#e2e7da; --ink:#1b2620; --muted:#5a695e; --line:#cfd7c8;
-  --accent:#3b7749; --accent-ink:#ffffff; --accent-soft:#d5e7d3; --honey:#a86f0e; --honey-soft:#f6e6c4;
-  --danger:#b2452c; --danger-soft:#f4dbd3; --stage:#dbe5d3;
-  --f-display:"Baloo 2","Be Vietnam Pro",system-ui,sans-serif;
+  /* Xưởng trà: giấy gạo mát, xanh lá trà, nước trà hổ phách, đất nung cho lỗi */
+  --bg:#f1f3ee; --panel:#fbfcf9; --panel-2:#e8ece4; --ink:#17241c; --muted:#5b6b60; --line:#d6ddd2; --line-2:#e4e9e0;
+  --accent:#2e6a4c; --accent-ink:#ffffff; --accent-soft:#dcebdf; --honey:#a2620e; --honey-soft:#f5e6cb;
+  --danger:#b0412a; --danger-soft:#f6ded6; --stage:#dbe5d3;
+  --side:#173327; --side-2:#21443a; --side-ink:#eef4ee; --side-muted:#a6bdae; --side-line:#2b5143;
+  --f-display:"Bricolage Grotesque","Be Vietnam Pro",system-ui,sans-serif;
   --f-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --r:12px; --shadow:0 1px 2px rgba(20,40,25,.06),0 6px 20px rgba(20,40,25,.06);
+  --r:14px; --r-s:10px; --r-xs:7px;
+  --shadow:0 1px 0 rgba(23,36,28,.04),0 8px 24px -12px rgba(23,36,28,.18);
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0f1511; --panel:#171f1a; --panel-2:#212b24; --ink:#e5ebe3; --muted:#98a699; --line:#2c3930;
-  --accent:#7bbd88; --accent-ink:#0f1511; --accent-soft:#22382a; --honey:#e3ab4a; --honey-soft:#3a2f1a;
-  --danger:#e57f63; --danger-soft:#3d231c; --stage:#18221c; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}}
+  --bg:#0e1411; --panel:#151d18; --panel-2:#1d2721; --ink:#e6ece5; --muted:#97a79b; --line:#2a372f; --line-2:#222d26;
+  --accent:#7fc29a; --accent-ink:#0e1411; --accent-soft:#1f3528; --honey:#e2a74c; --honey-soft:#3a2c16;
+  --danger:#ea8366; --danger-soft:#3e211a; --stage:#18221c;
+  --side:#0a100d; --side-2:#16221c; --side-ink:#e6ece5; --side-muted:#8fa395; --side-line:#1f2c25;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0f1511; --panel:#171f1a; --panel-2:#212b24; --ink:#e5ebe3; --muted:#98a699; --line:#2c3930;
-  --accent:#7bbd88; --accent-ink:#0f1511; --accent-soft:#22382a; --honey:#e3ab4a; --honey-soft:#3a2f1a;
-  --danger:#e57f63; --danger-soft:#3d231c; --stage:#18221c; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}
+  --bg:#0e1411; --panel:#151d18; --panel-2:#1d2721; --ink:#e6ece5; --muted:#97a79b; --line:#2a372f; --line-2:#222d26;
+  --accent:#7fc29a; --accent-ink:#0e1411; --accent-soft:#1f3528; --honey:#e2a74c; --honey-soft:#3a2c16;
+  --danger:#ea8366; --danger-soft:#3e211a; --stage:#18221c;
+  --side:#0a100d; --side-2:#16221c; --side-ink:#e6ece5; --side-muted:#8fa395; --side-line:#1f2c25;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6); color-scheme:dark}
 html,body{height:100%}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body);margin:0}
@@ -422,24 +429,201 @@ tbody tr.sel td{background:var(--accent-soft)}
   h1{font-size:24px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ================================================================ Thiết kế lại 11/2026
+   Ý tưởng: thanh bên màu lá trà đậm là điểm nhận diện duy nhất; vùng làm việc yên tĩnh, sáng, chữ rõ.
+   Thứ bậc: bảng điều khiển chính (nền sáng, viền mảnh) > khối phụ (nền nhạt, không viền) > danh sách (đường kẻ). */
+body{font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--f-display);letter-spacing:-.01em}
+h1{font-size:30px;font-weight:700;line-height:1.1}
+h2{font-size:19px;font-weight:700}
+h3{font-size:16px;font-weight:650}
+h4{font-weight:650}
+::selection{background:var(--honey-soft)}
+:focus-visible{outline:2px solid var(--honey);outline-offset:2px;border-radius:6px}
+
+/* ---- thanh bên */
+.app{grid-template-columns:248px minmax(0,1fr)}
+.side{background:var(--side);color:var(--side-ink);border-right:0;gap:14px;padding-block:22px 16px}
+.brand{padding:0 6px 6px}
+.brand-mark{background:var(--honey);color:#1c1304;width:40px;height:40px;border-radius:55% 55% 55% 10%;font:800 19px var(--f-display);transform:rotate(-8deg)}
+.brand b{font:700 16px/1.15 var(--f-display);color:var(--side-ink)}
+.brand span{color:var(--side-muted)}
+.nav{gap:1px}
+.nav-g{display:block;font-size:11.5px;font-weight:600;color:var(--side-muted);padding:14px 10px 4px;opacity:.85}
+.nav-g:first-child{padding-top:2px}
+.nav button{color:var(--side-muted);padding:8px 10px;border-radius:9px;font-weight:500;position:relative}
+.nav button svg{opacity:.85}
+.nav button:hover{background:var(--side-2);color:var(--side-ink)}
+.nav button.on{background:var(--side-2);color:var(--side-ink);font-weight:600}
+.nav button.on::before{content:"";position:absolute;left:-4px;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--honey)}
+.nav button.on svg{opacity:1;color:var(--honey)}
+.nav .badge{background:var(--honey);color:#1c1304}
+.nav .badge.err{background:var(--danger);color:#fff}
+.nav-more{display:none!important}
+.mode{border:1px solid var(--side-line);color:var(--side-muted);border-radius:10px;background:transparent}
+.mode b{color:var(--side-ink)}
+.mode a{color:var(--honey)}
+.side :focus-visible{outline-color:var(--honey)}
+
+/* ---- vùng làm việc */
+.main{padding-block:26px 48px;padding-left:max(18px,2.4vw)}
+.view{gap:18px;max-width:1440px}
+.vh{align-items:flex-end;padding-bottom:2px}
+.vh p{font-size:13.5px;max-width:72ch;margin-top:6px}
+.btn{border-radius:9px;border-color:var(--line);background:var(--panel);transition:border-color .15s,background .15s}
+.btn:hover{border-color:var(--accent);background:var(--panel)}
+.btn.primary{box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.btn.ghost:hover{background:var(--panel-2)}
+
+/* bảng điều khiển chính: viền mảnh + bóng rất nhẹ; khối phụ trong thẻ: nền nhạt, không viền */
+.card{border-radius:var(--r);border-color:var(--line);box-shadow:var(--shadow);padding:16px;gap:12px}
+.card .card{box-shadow:none}
+.card-h h2,.card-h h3{margin:0}
+.note,.bench,.hot-bar,.imgfolder,.kb-ans,.st-post{border-radius:var(--r-s)}
+.sale-stats div,.kb-stats div,.skills div,.pipe div{border-radius:var(--r-s)}
+.chip{border-radius:999px;font-weight:600}
+.empty{border-radius:var(--r-s);background:color-mix(in srgb,var(--panel-2) 45%,transparent)}
+.banner{border:0;border-left:3px solid var(--honey);border-radius:var(--r-s);background:var(--honey-soft);padding:9px 14px}
+.alert{border:0;border-left:3px solid var(--danger);border-radius:var(--r-s)}
+.ap-note{border-left:3px solid var(--honey);border-radius:var(--r-s)}
+.ceo,.gf,.ceo-chat{border-top:1px solid var(--line)}
+.src{color:var(--honey)}
+.member-chips button.need{background:var(--danger-soft)}
+
+/* bảng: đầu cột chữ thường, đường kẻ mảnh */
+.tbl-wrap{border-radius:var(--r);box-shadow:var(--shadow)}
+th{text-transform:none;letter-spacing:0;font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel)}
+thead th{border-bottom:1px solid var(--line)}
+td{border-bottom-color:var(--line-2)}
+.phase,.lessons .src,.prod .cat{text-transform:none;letter-spacing:0}
+.phase{font-size:11.5px;font-weight:600}
+.prod .cat{font-size:12.5px}
+
+/* số liệu lớn: chữ tiêu đề, số thẳng hàng */
+.kpi .v,.co-tile .v,.sale-stats b,.kb-stats b,.skills b,.pipe b,.spend b,.kpi-hero .big{font-family:var(--f-display);font-weight:700;letter-spacing:-.02em}
+
+/* ---- Văn phòng: bàn làm việc của sếp */
+.strip{display:flex;flex-direction:column;gap:8px}
+.strip:not(:has(> :not([hidden]))){display:none}
+.desk{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:stretch}
+.ceo-chat{gap:10px}
+.ceo-chat .card-h h2{font-size:18px}
+.chatlog{max-height:300px;min-height:96px;padding:4px 2px}
+.chatlog .b{background:var(--accent);color:var(--accent-ink)}
+.chatlog .c{background:var(--panel-2)}
+.ceo-form{display:flex;gap:8px;align-items:stretch}
+.ceo-form input{font-size:15px;padding:11px 14px;border-radius:11px}
+.ceo-form .btn{padding-inline:18px;border-radius:11px}
+.chips{margin:0}
+.chips button{border-radius:999px;background:transparent}
+.today{display:flex;flex-direction:column;gap:12px;min-width:0}
+.kpi-hero{border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+#officeKpi{grid-template-columns:auto minmax(0,1fr);gap:6px 18px;text-decoration:none;color:inherit}
+#officeKpi:hover{border-color:var(--accent)}
+#officeKpi > :last-child{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left!important}
+#officeKpi > :last-child span{margin:0!important}
+.today .kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kpi{border-radius:var(--r-s);border-color:var(--line-2);padding:11px 12px;box-shadow:none}
+.kpi .v{font-size:24px}
+.kpi.warn{border-color:var(--line-2)}
+.guide summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary::after{content:"Xem";margin-left:auto;font-size:12px;color:var(--accent);font-weight:600}
+.guide[open] summary::after{content:"Thu gọn"}
+.post .idea{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.stage{border-radius:var(--r);border-color:var(--line);box-shadow:var(--shadow)}
+.team .member{border-radius:var(--r-s)}
+
+/* ---- Bài đăng: cột kanban gọn, nội dung bài cắt ngắn */
+.col{border-radius:var(--r);background:color-mix(in srgb,var(--panel-2) 70%,transparent);padding:10px}
+.col>header b{font-size:15px}
+.post{border-radius:var(--r-s);border-color:var(--line-2);box-shadow:0 1px 0 rgba(23,36,28,.04)}
+.post h4{font-family:var(--f-body);font-weight:600;font-size:13.5px}
+.post pre{max-height:7.6em;font-size:12.8px;color:color-mix(in srgb,var(--ink) 88%,var(--muted))}
+.post pre:not(.open)::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.2em;background:linear-gradient(transparent,var(--panel))}
+.post .meta .chip{font-size:11px;padding:1px 7px}
+.col .empty{padding:9px;font-size:12.5px}
+
+/* ---- Nhân viên sale, sản phẩm, đào tạo */
+.nick{border-radius:var(--r-s);border-color:var(--line-2)}
+.prod.hot{box-shadow:var(--shadow),inset 0 0 0 1px var(--honey);border-color:var(--honey)}
+.hot-btn[aria-pressed="true"]{font-weight:700}
+.lessons li{border-radius:var(--r-s)}
+
+/* ---- trường nhập */
+input[type=text],input[type=number],input[type=url],input[type=time],input[type=password],select,textarea{border-radius:9px;border-color:var(--line);background:var(--panel);transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+input[type=checkbox]{accent-color:var(--accent)}
+label.f{font-weight:600;color:var(--muted)}
+
+.toast{border-radius:11px;background:var(--side);color:var(--side-ink);box-shadow:var(--shadow)}
+.drawer{box-shadow:-20px 0 40px -24px rgba(0,0,0,.35)}
+
+@media (max-width:1180px){
+  .desk{grid-template-columns:minmax(0,1fr)}
+  .today .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+/* ---- điện thoại: thanh dưới 4 mục chính + "Thêm" mở bảng mọi mục */
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{background:var(--side);border-top:0;box-shadow:0 -6px 20px -12px rgba(0,0,0,.4)}
+  .nav{justify-content:space-around}
+  .nav-g{display:none}
+  .nav button:not(.pri){display:none}
+  .nav-more{display:flex!important}
+  .nav button{font-size:10.5px;color:var(--side-muted);padding:6px 2px;min-width:0}
+  .nav button.on::before{left:30%;right:30%;top:0;bottom:auto;height:3px;width:auto}
+  .nav .badge.err:not([hidden]){display:block}
+  body.nav-open .side{top:0;flex-direction:column;overflow-y:auto;padding:max(20px,env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px))}
+  body.nav-open .brand{display:flex}
+  body.nav-open .nav{flex-direction:column;justify-content:flex-start}
+  body.nav-open .nav-g{display:block}
+  body.nav-open .nav button,body.nav-open .nav button:not(.pri){display:flex;flex-direction:row;font-size:15px;gap:12px;padding:11px 12px;align-items:center}
+  body.nav-open .nav .badge,body.nav-open .nav .badge.err:not([hidden]){display:inline-block;position:static;width:auto;height:auto;font-size:11px;padding:0 7px;border-radius:10px;margin-left:auto}
+  body.nav-open #moreBadge{display:none!important}
+  body.nav-open .brand{padding-right:6px}
+  body.nav-open .nav-more{order:-1;align-self:flex-end;width:auto;font-size:14px!important}
+  body.nav-open .nav-more svg{display:none}
+  body.nav-open .nav-more::before{content:"Đóng"}
+  body.nav-open .nav-more{color:transparent!important;border:1px solid var(--side-line)!important;border-radius:9px!important;padding:6px 14px!important}
+  body.nav-open .nav-more::before{color:var(--side-ink)}
+  body.nav-open .nav button.on::before{left:-4px;right:auto;top:10px;bottom:10px;width:3px;height:auto}
+  h1{font-size:25px}
+  .main{padding-top:18px}
+  .vh p{font-size:13px}
+  .today .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #officeKpi{grid-template-columns:minmax(0,1fr)}
+  .ceo-form input{font-size:16px}
+  .chatlog{max-height:240px}
+  .board{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
 <div class="app">
   <aside class="side">
     <div class="brand"><div class="brand-mark">T</div><div><b id="coName">Xưởng Trà &amp; Bột</b><span>Phòng Kinh doanh AI</span></div></div>
-    <nav class="nav" id="nav">
+    <nav class="nav" id="nav" aria-label="Các mục">
+      <span class="nav-g">Điều hành</span>
+      <button data-v="office" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Văn phòng</button>
       <button data-v="company"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M10 21v-4h4v4"/></svg>Công ty<span class="badge" id="coBadge" hidden>!</span></button>
-      <button data-v="office"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Văn phòng</button>
       <button data-v="meeting"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="3.5" r="1.5"/><circle cx="12" cy="20.5" r="1.5"/><circle cx="3.5" cy="12" r="1.5"/><circle cx="20.5" cy="12" r="1.5"/></svg>Phòng họp<span class="badge" id="liveBadge" hidden>LIVE</span></button>
-      <button data-v="posts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Bài đăng<span class="badge" id="draftBadge" hidden></span></button>
+      <span class="nav-g">Bán hàng</span>
+      <button data-v="posts" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Bài đăng<span class="badge" id="draftBadge" hidden></span></button>
+      <button data-v="leads" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>Khách hàng</button>
+      <button data-v="kpi" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>KPI & Báo cáo<span class="badge" id="bossBadge" hidden></span></button>
+      <span class="nav-g">Facebook</span>
       <button data-v="sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M8 9.5l2.5 2.5L16 7"/></svg>Nhân viên sale<span class="badge" id="saleBadge" hidden>!</span></button>
       <button data-v="groups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 2 6 5.5"/></svg>Hội nhóm</button>
-      <button data-v="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>Khách hàng</button>
+      <span class="nav-g">Kho tri thức</span>
       <button data-v="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8l8-4 8 4v9l-8 4-8-4zM4 8l8 4 8-4M12 12v9"/></svg>Sản phẩm</button>
-      <button data-v="kpi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>KPI & Báo cáo<span class="badge" id="bossBadge" hidden></span></button>
       <button data-v="learn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5M22 9v6"/></svg>Đào tạo</button>
+      <span class="nav-g">Hệ thống</span>
       <button data-v="errors"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.5"/></svg>Lỗi<span class="badge err" id="errBadge" hidden></span></button>
       <button data-v="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Cài đặt</button>
+      <button type="button" class="nav-more" id="navMore" aria-expanded="false" aria-controls="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Thêm<span class="badge err" id="moreBadge" hidden></span></button>
     </nav>
     <div class="mode" id="modeBox"><span class="dot"></span>Đang kết nối…</div>
   </aside>
@@ -447,29 +631,35 @@ tbody tr.sel td{background:var(--accent-soft)}
   <main class="main">
     <!-- VĂN PHÒNG -->
     <section class="view" id="v-office">
-      <div class="banner" id="coBanner" hidden></div>
-      <div class="banner" id="demoBanner" hidden>Bạn đang xem <b>bản xem trước với dữ liệu mẫu</b>. Mọi thao tác đều chạy được nhưng không lưu lại. Chạy backend Python (hướng dẫn trong README) để dùng thật.</div>
       <div class="vh">
-        <div><h1>Văn phòng</h1><p>CEO và đội 5 nhân viên AI đang làm việc. Bấm vào một nhân vật để xem việc của họ.</p></div>
+        <div><h1>Văn phòng</h1><p>Giao việc cho CEO, xem đội đang làm gì và tiến độ hôm nay.</p></div>
         <div class="actions">
           <button class="btn" id="btnDaily" data-direct>Giao việc hằng ngày</button>
           <button class="btn primary" id="btnCall" data-direct>Triệu tập họp</button>
         </div>
       </div>
-      <div class="alert" id="saleAlert" hidden><span id="saleAlertTxt"></span><a class="btn sm" href="#sales">Xử lý</a></div>
-      <section class="card ceo-chat" id="ceoChat">
-        <div class="card-h"><h3>Giao việc cho CEO Đức</h3><span class="small muted" id="ceoChatMode"></span></div>
-        <div class="chatlog" id="ceoLog" aria-live="polite"></div>
-        <p class="small ceo-run" id="ceoRun" hidden></p>
-        <div class="chips" id="ceoSugg"></div>
-        <form class="row" id="ceoForm"><input type="text" class="grow" id="ceoIn" placeholder="Nhắn việc cho CEO, ví dụ: Viết 3 bài về trà gừng · Lan viết dài quá, viết ngắn lại" aria-label="Việc giao cho CEO" autocomplete="off"><button class="btn primary" type="submit">Giao việc</button></form>
-      </section>
-      <a class="kpi-hero" id="officeKpi" href="#kpi" style="text-decoration:none;color:inherit"></a>
-      <div class="kpis" id="kpis"></div>
+      <div class="strip">
+        <div class="banner" id="coBanner" hidden></div>
+        <div class="banner" id="demoBanner" hidden>Bạn đang xem <b>bản xem trước với dữ liệu mẫu</b>. Mọi thao tác chạy được nhưng không lưu lại. Chạy phần mềm trên máy (hướng dẫn trong README) để dùng thật.</div>
+        <div class="alert" id="saleAlert" hidden><span id="saleAlertTxt"></span><a class="btn sm" href="#sales">Xử lý</a></div>
+      </div>
+      <div class="desk">
+        <section class="card ceo-chat" id="ceoChat">
+          <div class="card-h"><h2>Giao việc cho CEO Đức</h2><span class="small muted" id="ceoChatMode"></span></div>
+          <div class="chatlog" id="ceoLog" aria-live="polite"></div>
+          <p class="small ceo-run" id="ceoRun" hidden></p>
+          <form class="ceo-form" id="ceoForm"><input type="text" class="grow" id="ceoIn" placeholder="Nhắn việc cho CEO, VD: Viết 3 bài về trà gừng" aria-label="Việc giao cho CEO" autocomplete="off"><button class="btn primary" type="submit">Giao việc</button></form>
+          <div class="chips" id="ceoSugg"></div>
+        </section>
+        <section class="today" aria-label="Hôm nay">
+          <a class="kpi-hero" id="officeKpi" href="#kpi"></a>
+          <div class="kpis" id="kpis"></div>
+        </section>
+      </div>
       <div class="split">
         <div class="stage-slot" id="slot-office"></div>
         <div class="sidecol">
-          <div class="card"><div class="card-h"><h3>Đội ngũ</h3><span class="small muted" id="clock"></span></div><div class="team" id="team"></div></div>
+          <div class="card"><div class="card-h"><h3>Đội ngũ</h3><span class="small muted num" id="clock"></span></div><div class="team" id="team"></div></div>
           <div class="card"><h3>Nhật ký hoạt động</h3><ol class="feed" id="feed"></ol></div>
         </div>
       </div>
@@ -540,14 +730,14 @@ tbody tr.sel td{background:var(--accent-soft)}
     <!-- NHÂN VIÊN SALE -->
     <section class="view" id="v-sales" hidden>
       <div class="vh"><div><h1>Nhân viên sale</h1><p>Mỗi sale AI giữ 3–5 tài khoản Facebook, mỗi nick một hồ sơ Chrome riêng trên máy đang chạy phần mềm. Sale làm theo ca: mở Chrome của một nick, làm hết việc đến giờ của nick đó (đăng bài, up bài, quét bình luận), đóng lại rồi chuyển sang nick kế tiếp.</p></div></div>
-      <div class="note"><b>Bắt đầu với một sale mới</b>
+      <details class="note guide" id="salesGuide"><summary><b>Hướng dẫn bắt đầu với một sale mới</b></summary>
         <ol class="steps" style="margin-top:6px">
           <li>Tuyển sale ở cuối trang, rồi bấm <b>Thêm nick</b> cho đủ 3–5 nick.</li>
           <li>Ở từng nick, bấm <b>Mở Chrome</b>: một cửa sổ Chrome riêng của nick hiện lên trên máy này. Đăng nhập Facebook, vào sẵn các nhóm cần đăng, rồi đóng cửa sổ. Phiên đăng nhập được giữ lại.</li>
           <li>Vào <b>Hội nhóm</b>, đánh dấu nick nào đã là thành viên nhóm nào (nhóm sale tự tìm thì sale tự xin vào bằng từng nick).</li>
           <li>Ở <b>Bài đăng</b>, chọn nick rồi bấm <b>Đăng thử</b> một bài: sale điền nội dung nhưng không bấm Đăng, kèm ảnh chụp để sếp kiểm tra. Ổn rồi thì để sale tự đăng theo lịch.</li>
         </ol>
-        <p style="margin-top:6px">Tuấn chia bài đều cho các nick, mỗi nick có giới hạn bài/ngày và khung giờ riêng. Nick nào gặp checkpoint hoặc bị chặn tạm thời thì chỉ nick đó dừng, bài của nick trả về hàng đợi cho nick khác; các nick còn lại vẫn làm. Facebook không khuyến khích đăng tự động, nên giữ giới hạn mỗi nick vừa phải.</p></div>
+        <p style="margin-top:6px">Tuấn chia bài đều cho các nick, mỗi nick có giới hạn bài/ngày và khung giờ riêng. Nick nào gặp checkpoint hoặc bị chặn tạm thời thì chỉ nick đó dừng, bài của nick trả về hàng đợi cho nick khác; các nick còn lại vẫn làm. Facebook không khuyến khích đăng tự động, nên giữ giới hạn mỗi nick vừa phải.</p></details>
       <div class="sales" id="salesGrid"></div>
       <form class="card" id="saleForm">
         <h3>Tuyển nhân viên sale</h3>
@@ -1688,7 +1878,11 @@ function show(v){
   if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
-$("#nav").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) location.hash=b.dataset.v; });
+$("#nav").addEventListener("click",e=>{ if(e.target.closest("#navMore")){ const o=!document.body.classList.contains("nav-open"); document.body.classList.toggle("nav-open",o); $("#navMore").setAttribute("aria-expanded",o); return; }
+  const b=e.target.closest("button[data-v]"); if(b){ document.body.classList.remove("nav-open"); $("#navMore").setAttribute("aria-expanded","false"); location.hash=b.dataset.v; } });
+addEventListener("keydown",e=>{ if(e.key==="Escape"&&document.body.classList.contains("nav-open")){ document.body.classList.remove("nav-open"); $("#navMore").setAttribute("aria-expanded","false"); } });
+/* chấm đỏ trên nút "Thêm" (điện thoại) khi mục ẩn trong đó có việc cần sếp xem */
+setInterval(()=>{ const hid=[...document.querySelectorAll("#nav button[data-v]:not(.pri) .badge")].some(x=>!x.hidden); const mb=$("#moreBadge"); if(mb) mb.hidden=!hid; },1500);
 addEventListener("hashchange",()=>show(location.hash.slice(1)||"office"));
 $("#camOffice").onclick=()=>World.setCam("office"); $("#camMeet").onclick=()=>World.setCam("meeting");
 
@@ -1867,6 +2061,7 @@ async function loadSales(){
   if(salesBusy) return; salesBusy=true;
   try{
     ST.sales=await api("/sales"); const grid=$("#salesGrid");
+    const gd=$("#salesGuide"); if(gd&&!gd.dataset.touched){ gd.open=!ST.sales.some(x=>!x.is_sample&&x.status!=="fired"); }
     const ae=document.activeElement; if(ae && grid.contains(ae) && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)) return; // đang gõ trong form nick
     grid.innerHTML=ST.sales.length?ST.sales.map(s=>{ const [lc,lt]=LOGIN[s.login_status]||["",s.login_status];
       if(s.status==="fired") return `<div class="card" style="opacity:.75"><div class="card-h"><div class="row">${avaHtml(s.agent_id)}<div><h3>${esc(s.name)}</h3><span class="small muted">${s.replaced_by?"Nick đã chuyển cho người thay":`Nick: ${esc(s.fb_name||"chưa có")}`}</span></div></div><span class="chip bad">Đã nghỉ việc</span></div>
@@ -1905,6 +2100,7 @@ async function loadSales(){
     </div>`; }).join(""):`<div class="empty">Chưa có nhân viên sale. Tuyển sale đầu tiên ở form bên dưới.</div>`;
   }finally{ salesBusy=false; }
 }
+$("#salesGuide").addEventListener("toggle",e=>{ e.target.dataset.touched="1"; });
 $("#salesGrid").addEventListener("click",async e=>{
   const nb=e.target.closest("[data-na]"), b=e.target.closest("[data-sa]"); if(!nb&&!b) return;
   const id=+(nb||b).closest("[data-sale]").dataset.sale; const s=ST.sales.find(x=>x.id===id);
