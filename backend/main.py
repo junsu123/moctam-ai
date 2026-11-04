@@ -508,6 +508,38 @@ def tpl_make(p: TplMake):
     return {"count": len(made)}
 
 
+# ------------------------------------------------------------------ CEO học duyệt bài
+@app.get("/api/ceo-review")
+def cr_get():
+    import ceo_review
+    return ceo_review.overview()
+
+
+class CRSet(BaseModel):
+    min_score: int | None = None
+    ai: bool | None = None
+
+
+@app.put("/api/ceo-review")
+def cr_put(p: CRSet):
+    import ceo_review
+    if p.min_score is not None:
+        db.set_setting("ceo_review_min", str(max(40, min(95, p.min_score))))
+    if p.ai is not None:
+        db.set_setting("ceo_review_ai", "1" if p.ai else "0")
+    return ceo_review.overview()
+
+
+class CRTry(BaseModel):
+    content: str
+
+
+@app.post("/api/ceo-review/try")
+def cr_try(p: CRTry):
+    import ceo_review
+    return ceo_review.review(p.content)
+
+
 # ------------------------------------------------------------------ thư viện bài mẫu sỉ của sếp
 @app.get("/api/samples")
 def smp_list():
@@ -959,6 +991,13 @@ def patch_post(pid: int, p: PostPatch):
     if not old:
         raise HTTPException(404)
     # --- tín hiệu học từ sếp
+    import ceo_review
+    if old.get("reviewed_by") == "ceo" and old["status"] in ("approved", "scheduled"):  # sếp sửa / hủy bài CEO đã duyệt
+        if p.content is not None and p.content.strip() != (old["content"] or "").strip():
+            ceo_review.on_boss_correction(old, p.content)
+        elif p.status == "rejected":
+            ceo_review.on_boss_correction(old, None, (p.reason or "").strip()[:120])
+            learning.record_feedback(pid, "reject", old["content"], "", (p.reason or "").strip()[:120])
     if p.content is not None and p.content.strip() != (old["content"] or "").strip():
         learning.record_feedback(pid, "edit", old["content"], p.content)
         try:

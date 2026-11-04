@@ -307,15 +307,32 @@ def make_posts(n: int, status: str = "approved", target_type: str = "group") -> 
             continue
         seen.add(plain(c)[:160])
         out.append((r["id"], c))
-    made = []
+    import ceo_review
+    by_id = {r["id"]: r for r in rows}
+    made, redo = [], 0
     for sid, c in out[:n]:
+        rv = ceo_review.review(c, sample=by_id.get(sid, {}).get("content"))  # CEO chấm trước khi cho đăng
+        tries = 0
+        while not rv["ok"] and tries < 4:  # chưa đạt: Lan viết lại bản khác từ đúng bài mẫu đó
+            tries += 1
+            redo += 1
+            c2 = variant(f"{rnd.random()}-redo-{tries}", by_id[sid]["content"]) if sid in by_id else c
+            rv2 = ceo_review.review(c2, sample=by_id.get(sid, {}).get("content"))
+            if rv2["score"] > rv["score"]:
+                c, rv = c2, rv2
+        if not rv["ok"]:
+            db.log("ceo", "Duyệt bài", f"Không duyệt bài viết lại từ mẫu #{sid}: {ceo_review.note(rv)[:200]}")
+            continue
         title = next((l for l in c.splitlines() if l.strip()), "")[:80]
         pid = db.run("""INSERT INTO posts(agent_id, product_id, target_type, angle, title, content, hashtags, image_idea, status,
                         created_at, source, sample_id) VALUES ('lan', NULL, ?, 'mau_sep', ?, ?, '', ?, ?, ?, 'template', ?)""",
                      (target_type, title, c, "Ảnh catalog / nhà máy / dây chuyền sản xuất, sản phẩm thật", status, db.now(), sid))
+        ceo_review.save(pid, rv)
         made.append(db.one("SELECT * FROM posts WHERE id=?", (pid,)))
     if made:
-        db.log("lan", "Viết bài", f"Viết lại {len(made)} bài đăng nhóm từ thư viện {len(rows)} bài mẫu của sếp (mỗi bài một bản khác nhau)")
+        db.log("lan", "Viết bài", f"Viết lại {len(made)} bài đăng nhóm từ thư viện {len(rows)} bài mẫu của sếp, CEO chấm "
+               f"{min(m['review_score'] for m in made)}–{max(m['review_score'] for m in made)} điểm rồi mới duyệt"
+               + (f" (Lan viết lại {redo} lần theo góp ý của CEO)" if redo else ""))
         workflows.set_status("lan", "idle", f"Vừa viết {len(made)} bài từ bài mẫu")
     return made
 

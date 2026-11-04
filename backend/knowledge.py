@@ -44,7 +44,9 @@ CURRICULUM = {
              "cách đọc xu hướng 7 ngày và 30 ngày", "đánh giá nhóm Facebook theo tương tác"],
     "minh": ["cách điều hành họp giao ban 15 phút hiệu quả", "cách giao việc rõ ràng có người chịu trách nhiệm và hạn",
              "cách đặt mục tiêu tuần cho phòng kinh doanh online"],
-    "ceo": ["cách mở rộng kênh bán sỉ qua cộng tác viên", "cách định giá sỉ theo bậc số lượng",
+    "ceo": ["cách duyệt bài đăng nhóm bán sỉ: tiêu chí bài tốt", "dấu hiệu bài đăng dễ bị Facebook đánh dấu spam",
+            "cách viết lời kêu gọi để người bán hàng để lại SĐT", "cách viết tiêu đề bài đăng nhóm thu hút người bán online",
+            "cách mở rộng kênh bán sỉ qua cộng tác viên", "cách định giá sỉ theo bậc số lượng",
             "khi nào nên tuyển thêm nhân sự bán hàng", "cách xây thương hiệu xưởng trên Facebook"],
     "sale": ["cách nuôi nick Facebook an toàn", "dấu hiệu nick sắp bị checkpoint và cách tránh",
              "cách trả lời bình luận xin số điện thoại tự nhiên", "cách tham gia nhóm mới không bị từ chối"],
@@ -106,6 +108,13 @@ LIBRARY = {
          "giao viec trach nhiem han"),
     ],
     "ceo": [
+        ("cách duyệt bài đăng nhóm bán sỉ: tiêu chí bài tốt", "Duyệt bài đăng nhóm theo tiêu chí nào?",
+         "Bài tốt: nói rõ tìm khách sỉ/đại lý/gia công ngay từ đầu; tiêu đề ngắn gây chú ý; giữ đủ thông tin của bài mẫu sếp "
+         "(thương hiệu, tiêu chuẩn, dòng sản phẩm, dịch vụ); gạch đầu dòng dễ đọc; emoji vừa phải; có lời kêu gọi và số Zalo; "
+         "không ghi giá, không hứa công dụng; không trùng bài đã đăng.", "duyet bai tieu chi bai tot"),
+        ("dấu hiệu bài đăng dễ bị Facebook đánh dấu spam", "Bài thế nào dễ bị Facebook coi là spam?",
+         "Đăng y hệt một nội dung vào nhiều nhóm, quá nhiều emoji hoặc hashtag, chữ viết hoa toàn bài, nhiều link, đăng dồn dập "
+         "trong thời gian ngắn. Mỗi bài nên khác câu mở đầu và cách nói.", "spam facebook trung lap"),
         ("cách định giá sỉ theo bậc số lượng", "Định giá sỉ theo số lượng thế nào?",
          "Chia 3 bậc: lẻ sỉ (nhập tối thiểu), sỉ vừa (gấp 3–5 lần) giảm 5–8%, đại lý (gấp 10 lần) giảm 12–15%. Giữ biên lãi cho "
          "người bán lại tối thiểu 30–40% so với giá bán lẻ gợi ý.", "dinh gia si bac so luong dai ly"),

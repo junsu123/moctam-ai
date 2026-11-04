@@ -642,6 +642,17 @@ label.f{font-weight:600;color:var(--muted)}
 .mg-prog{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:4px}
 .mg-prog .bar{width:120px;height:6px}
 @media (max-width:560px){ .mg-list li{grid-template-columns:minmax(0,1fr)} .mg .card-h{flex-direction:column} }
+/* CEO học duyệt bài */
+.ceo-rv{font-size:12px;background:var(--panel-2);border-radius:8px;padding:5px 8px;color:var(--muted);overflow-wrap:anywhere}
+.ceo-rv b{color:var(--ink)}
+.ceo-rv.ok b{color:var(--accent)}
+.ceo-rv.bad{background:var(--danger-soft)}
+.ceo-rv.bad b{color:var(--danger)}
+.cr-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:10px}
+.cr-kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:13px;margin:0}
+.cr-kv dt{color:var(--muted)}
+.cr-kv dd{margin:0}
+@media (max-width:900px){ .cr-grid{grid-template-columns:minmax(0,1fr)} }
 /* Thư viện bài mẫu */
 .smp-add{margin-bottom:16px}
 .smp-add textarea{font-size:13px;line-height:1.5}
@@ -1007,6 +1018,10 @@ label.f{font-weight:600;color:var(--muted)}
           <div><button class="btn sm primary" type="button" id="smpBulkGo">Thêm tất cả</button></div></div>
       </form>
       <div class="smp-grid" id="smpList"><p class="muted small">Đang tải…</p></div>
+      <section class="card" id="crCard" style="margin-top:18px">
+        <div class="card-h"><div><h3>CEO học duyệt bài</h3><p class="small muted" style="margin:2px 0 0">CEO Đức học cách viết bài từ thư viện bài mẫu trên, từ quy định của sếp và từ mỗi lần sếp sửa hay hủy bài CEO đã duyệt. Mọi bài đăng nhóm đều được CEO chấm điểm trước khi đăng; chưa đạt thì Lan viết lại theo góp ý.</p></div></div>
+        <div id="crBody"><p class="muted small">Đang tải…</p></div>
+      </section>
     </section>
 
     <!-- SẢN PHẨM -->
@@ -1559,6 +1574,13 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     return txt+"\n\n"+["#nguonhangsi","#giacong","#tratuiloc","#cafehoatan","#ngucoc","#thuonghieurieng","#bansi","#OEM"].sort(()=>Math.random()-.5).slice(0,4).join(" "); }
   S.samples=[{id:1,title:"MỘC TÂM - nhận gia công & sỉ toàn quốc",content:TPL_DEFAULT,enabled:1,made:6,posted:4,comments:9,leads:2},
     {id:2,title:"Tìm đại lý, CTV trà túi lọc",content:"🔥 TÌM ĐẠI LÝ – CTV TRÀ TÚI LỌC TOÀN QUỐC\nXưởng Mộc Tâm cần tìm đại lý, CTV bán trà túi lọc, cafe hòa tan\n• Sản phẩm có sẵn, hàng xưởng\n• Hỗ trợ ảnh, video bán hàng\n• Không cần vốn lớn, nhập ít cũng được\nAi quan tâm ib hoặc kết bạn Zalo {số điện thoại}",enabled:1,made:3,posted:2,comments:4,leads:1}];
+  S.cr={min_score:70,ai:true,lessons:["Sếp rút ngắn bài CEO đã duyệt (163 → 110 chữ): duyệt bài dài tối đa khoảng 130 chữ."]};
+  function demoCR(){ return {profile:{samples:S.samples.filter(x=>x.enabled).length,min_words:40,max_words:130,emoji_max:12,bad_phrases:[],lessons:S.cr.lessons},min_score:S.cr.min_score,approved:12,rejected:3,boss_fixed:1,accuracy:92,ai:S.cr.ai,
+    recent:S.posts.filter(p=>p.review_score!=null).slice(0,6).map(p=>({id:p.id,title:p.title,review_score:p.review_score}))}; }
+  function demoCRTry(c){ const t=c||""; const r=[], tips=[]; let sc=0; if(/sỉ|đại lý|gia công|nguồn hàng/i.test(t)) sc+=25; else { r.push("chưa nói rõ tìm khách sỉ / đại lý / gia công"); }
+    if(t.replace(/\D/g,"").includes(ZALO())) sc+=20; else { r.push("thiếu số Zalo báo giá"); tips.push(`thêm dòng 💬 Giá vui lòng liên hệ trực tiếp Zalo ${ZALO()}`); }
+    if(/^\s*[•\-✅]/m.test(t)) sc+=15; else tips.push("thêm gạch đầu dòng cho dễ đọc"); const w=(t.match(/\S+/g)||[]).length; if(w>=40&&w<=130) sc+=10; else r.push(w<40?`quá ngắn (${w} chữ)`:`quá dài (${w} chữ)`);
+    sc+=25; if(/\d+\s*(k|đ)\b/i.test(t)){ r.unshift("còn ghi giá (sếp chốt không công khai giá)"); sc=Math.min(sc,30); } return {score:sc,ok:sc>=S.cr.min_score,reasons:r,tips}; }
   function demoSamples(){ return {items:S.samples,enabled:S.tpl.enabled,ai:true,phone:`📞 Zalo/ĐT: ${ZALO()}`,stats:demoTpl().stats}; }
   function demoTpl(){ const ps=S.posts.filter(p=>p.source==="template"); return {template:S.tpl.template,default:TPL_DEFAULT,enabled:S.tpl.enabled,ai:true,phone:`📞 Zalo/ĐT: ${ZALO()}`,preview:[tplVariant(S.tpl.template),tplVariant(S.tpl.template)],
     stats:{approved:ps.filter(p=>p.status==="approved").length,scheduled:ps.filter(p=>p.status==="scheduled").length,posted_today:ps.filter(p=>p.status==="posted").length}}; }
@@ -1775,6 +1797,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/my-groups") return demoMG();
       if(P==="/post-template") return demoTpl();
       if(P==="/samples") return demoSamples();
+      if(P==="/ceo-review") return demoCR();
       if(P==="/knowledge"){ const u=new URLSearchParams(qs||""); return demoKB(u.get("agent")||"",u.get("q")||""); }
       if(P==="/kpi") return demoKpi();
       if(P==="/telegram") return demoTg();
@@ -1891,6 +1914,8 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       for(const k of ["must","exclude","bonus","regions"]) S.prCrit[k]=[...new Set([...S.prCrit[k],...(sg[k]||[])])]; S.prCrit.search_kinds=[...new Set([...S.prCrit.search_kinds,...(sg.search_kinds||[])])];
       if((sg.keywords||[]).length) S.prKw[1]=[...new Set([...sg.keywords,...S.prKw[1]])]; l.applied=1; return {...demoPR(""),groups_added:0,rescore:{checked:S.pr.length}}; }
     if((m=P.match(/^\/prospects\/lessons\/(\d+)$/))&&method==="DELETE"){ S.prLessons=S.prLessons.filter(x=>x.id!=m[1]); return demoPR(""); }
+    if(P==="/ceo-review"&&method==="PUT"){ if(body.min_score) S.cr.min_score=body.min_score; if(body.ai!=null) S.cr.ai=body.ai; return demoCR(); }
+    if(P==="/ceo-review/try") return demoCRTry(body.content);
     if(P==="/samples"&&method==="POST"){ const c=(body.content||"").trim(); if(c.length<40) throw new Error("Bài mẫu quá ngắn"); const x={id:id(),title:(body.title||c.split("\n")[0]).slice(0,80),content:c,enabled:1,made:0,posted:0,comments:0,leads:0}; S.samples.push(x); return x; }
     if(P==="/samples/import"){ let n=0; (body.text||"").split(/\n\s*-{3,}\s*\n/).forEach(c=>{ c=c.trim(); if(c.length>=40){ S.samples.push({id:id(),title:c.split("\n")[0].slice(0,80),content:c,enabled:1,made:0,posted:0,comments:0,leads:0}); n++; } }); if(!n) throw new Error("Không thêm được bài nào"); return {added:n}; }
     if((m=P.match(/^\/samples\/(\d+)\/preview$/))){ const x=S.samples.find(y=>y.id==m[1]); return {preview:[tplVariant(x.content),tplVariant(x.content)]}; }
@@ -1898,7 +1923,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(body.content!=null) x.content=body.content; if(body.title!=null) x.title=body.title; if(body.enabled!=null) x.enabled=body.enabled?1:0; return x; }
     if(P==="/post-template"&&method==="PUT"){ if(body.template!=null){ if(body.template.trim()&&body.template.trim().length<40) throw new Error("Mẫu quá ngắn"); S.tpl.template=body.template.trim()||TPL_DEFAULT; } if(body.enabled!=null) S.tpl.enabled=body.enabled; return demoTpl(); }
     if(P==="/post-template/preview") return {preview:[tplVariant((body.template||"").trim()||S.tpl.template),tplVariant((body.template||"").trim()||S.tpl.template)]};
-    if(P==="/post-template/make"){ for(let i=0;i<(body.count||3);i++){ const sm=S.samples.filter(y=>y.enabled); const pickS=sm[Math.floor(Math.random()*sm.length)]||{content:S.tpl.template}; pickS.made=(pickS.made||0)+1; const c=tplVariant(pickS.content); S.posts.unshift({id:id(),agent_id:"lan",product_id:null,product_name:"Mẫu của sếp",target_type:"group",angle:"mau_sep",title:c.split("\n")[0],content:c,hashtags:"",image_idea:"Ảnh catalog / nhà máy",status:"approved",created_at:now(),comments:0,leads:0,source:"template"}); }
+    if(P==="/post-template/make"){ for(let i=0;i<(body.count||3);i++){ const sm=S.samples.filter(y=>y.enabled); const pickS=sm[Math.floor(Math.random()*sm.length)]||{content:S.tpl.template}; pickS.made=(pickS.made||0)+1; const c=tplVariant(pickS.content); const rvd=demoCRTry(c); S.posts.unshift({id:id(),review_score:Math.max(rvd.score,80),review_ok:1,review_note:`CEO chấm ${Math.max(rvd.score,80)}/100`,agent_id:"lan",product_id:null,product_name:"Mẫu của sếp",target_type:"group",angle:"mau_sep",title:c.split("\n")[0],content:c,hashtags:"",image_idea:"Ảnh catalog / nhà máy",status:"approved",created_at:now(),comments:0,leads:0,source:"template"}); }
       log("lan","Viết bài",`Làm ${body.count||3} bài đăng nhóm theo mẫu của sếp`); return {count:body.count||3}; }
     if(P==="/my-groups/sync"){ S.status.tuan={state:"working",text:"Rà soát nhóm trong các nick"}; setTimeout(()=>{ S.status.tuan={state:"idle",text:"Xong rà soát nhóm"}; },2500); return {nicks:2}; }
     if(P==="/my-groups/settings"){ const m={time:"mygroups_time",rest_days:"new_group_rest_days",leave_per_nick_day:"leave_per_nick_day",admin_min:"admin_posts_min",admin_max:"admin_posts_max",sell_share:"admin_sell_share"};
@@ -2280,7 +2305,7 @@ function show(v){
   if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
   if(v==="ceo") loadCeoChat(true);
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
-  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="samples") loadPostSamples(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="samples"){ loadPostSamples(); loadCeoReview(); } if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
 $("#nav").addEventListener("click",e=>{ if(e.target.closest("#navMore")){ const o=!document.body.classList.contains("nav-open"); document.body.classList.toggle("nav-open",o); $("#navMore").setAttribute("aria-expanded",o); return; }
@@ -2424,6 +2449,31 @@ $("#smpList").addEventListener("click",async e=>{ const card=e.target.closest("[
   }catch(err){ toast(err.message); } });
 $("#smpList").addEventListener("submit",async e=>{ const f=e.target.closest("[data-smpsave]"); if(!f) return; e.preventDefault(); const id=f.closest("[data-smp]").dataset.smp;
   try{ await api(`/samples/${id}`,"PATCH",{title:f.querySelector("input").value,content:f.querySelector("textarea").value}); toast("Đã lưu bài mẫu"); loadPostSamples(); }catch(err){ toast(err.message); } });
+async function loadCeoReview(){
+  let d; try{ d=await api("/ceo-review"); }catch(e){ return; }
+  const pf=d.profile;
+  $("#crBody").innerHTML=`<div class="cr-grid">
+    <div class="stack">
+      <dl class="cr-kv"><dt>Học từ</dt><dd>${pf.samples} bài mẫu của sếp · ${pf.lessons.length} bài học từ những lần sếp sửa</dd>
+        <dt>Bài tốt phải có</dt><dd>Ý tìm khách sỉ / đại lý / gia công; lời kêu gọi + số Zalo; tiêu đề ngắn, gạch đầu dòng; giữ đủ thông tin của bài mẫu; không ghi giá; không hứa công dụng; không trùng bài đã đăng</dd>
+        <dt>Độ dài</dt><dd>${pf.min_words}–${pf.max_words} chữ · tối đa ${pf.emoji_max} emoji</dd>
+        ${pf.bad_phrases.length?`<dt>Cụm sếp đã bỏ</dt><dd>${pf.bad_phrases.map(esc).join("; ")}</dd>`:""}
+        <dt>30 ngày qua</dt><dd>CEO duyệt ${d.approved} bài, loại ${d.rejected} bài; sếp phải sửa hoặc hủy ${d.boss_fixed} bài CEO đã duyệt${d.accuracy!=null?` · <b>duyệt đúng ý sếp ${d.accuracy}%</b>`:""}</dd></dl>
+      <form id="crSet" class="row wrap" style="gap:10px;align-items:flex-end"><label class="f" for="crMin" style="max-width:220px">Điểm tối thiểu để duyệt<input type="number" id="crMin" min="40" max="95" value="${d.min_score}"></label>
+        <label class="row small"><input type="checkbox" id="crAi" ${d.ai?"checked":""}> Nhờ Claude góp ý khi chấm (khi có khóa)</label><button class="btn sm primary" type="submit">Lưu</button></form>
+      ${pf.lessons.length?`<div><b class="small">Bài học CEO rút ra từ sếp</b><ul class="recent" style="margin:4px 0 0">${pf.lessons.map(x=>`<li><span>${esc(x)}</span></li>`).join("")}</ul></div>`:'<p class="small muted" style="margin:0">Chưa có bài học từ sếp. Khi sếp sửa hoặc hủy một bài CEO đã duyệt (ở trang Bài đăng), CEO tự ghi lại và chấm chặt hơn lần sau.</p>'}
+    </div>
+    <div class="stack">
+      <form id="crTry" class="stack"><label class="f" for="crTryIn">Thử: dán một bài để CEO chấm<textarea id="crTryIn" rows="6"></textarea></label><div><button class="btn sm" type="submit">CEO chấm thử</button></div><div id="crTryOut"></div></form>
+      ${d.recent.length?`<div><b class="small">CEO chấm gần đây</b><ul class="recent" style="margin:4px 0 0">${d.recent.map(r=>`<li><span>${esc((r.title||"").slice(0,60))}</span><span class="chip ${r.review_score>=d.min_score?"ok":"bad"}">${r.review_score}/100</span></li>`).join("")}</ul></div>`:""}
+    </div></div>`;
+}
+$("#crBody").addEventListener("submit",async e=>{ e.preventDefault();
+  try{
+    if(e.target.id==="crSet"){ await api("/ceo-review","PUT",{min_score:+$("#crMin").value,ai:$("#crAi").checked}); toast("Đã lưu tiêu chuẩn duyệt bài của CEO"); return loadCeoReview(); }
+    if(e.target.id==="crTry"){ const r=await api("/ceo-review/try","POST",{content:$("#crTryIn").value});
+      $("#crTryOut").innerHTML=`<div class="ceo-rv ${r.ok?"ok":"bad"}"><b>CEO chấm ${r.score}/100 · ${r.ok?"Duyệt":"Chưa duyệt"}</b>${r.reasons.length?`<br>${r.reasons.map(esc).join("; ")}`:""}${r.tips.length?`<br>Góp ý: ${r.tips.map(esc).join("; ")}`:""}</div>`; }
+  }catch(err){ toast(err.message); } });
 async function loadTpl(){
   let d; try{ d=await api("/samples"); }catch(e){ return; }
   $("#tplOn").checked=d.enabled; const on=d.items.filter(x=>x.enabled).length;
@@ -2437,7 +2487,7 @@ async function loadPosts(){
 }
 function postCard(p){
   const open=ST.openPost.has(p.id), editing=ST.editPost===p.id, posting=ST.postedForm===p.id;
-  const SRCP={self:["ok","Lan tự viết"],claude:["","Claude viết"],boss:["talking","Sếp sửa"]};
+  const SRCP={self:["ok","Lan tự viết"],claude:["","Claude viết"],boss:["talking","Sếp sửa"],template:["ok","Từ bài mẫu"]};
   const meta=`<div class="meta">${SRCP[p.source]?`<span class="chip ${SRCP[p.source][0]}" title="Ai viết nội dung bài này">${SRCP[p.source][1]}</span>`:""}<span class="chip">${TARGET[p.target_type]||p.target_type}</span>${p.product_name?`<span class="chip">${esc(p.product_name)}</span>`:""}${p.group_name?`<span class="chip ok">${esc(p.group_name)}</span>`:""}${p.scheduled_for&&p.status==="scheduled"?`<span class="chip warn">${fmtTime(p.scheduled_for)} ${fmtDate(p.scheduled_for)}</span>`:""}${p.sale_name?`<span class="chip">${esc(p.sale_name)}${p.account_name?` · nick ${esc(p.account_name)}`:""}</span>`:""}${p.status==="posting"?`<span class="chip talking">Đang đăng…</span>`:""}${p.status==="failed"?`<span class="chip bad">Đăng lỗi</span>`:""}</div>`;
   let acts="";
   const shot = p.screenshot?`<a class="btn sm ghost" href="${esc(p.screenshot)}" target="_blank" rel="noopener">Ảnh chụp</a>`:"";
@@ -2457,7 +2507,8 @@ function postCard(p){
     : `<pre class="${open?"open":""}">${esc(p.content)}</pre>${p.content.length>260?`<button class="btn ghost sm" data-act="more" style="align-self:flex-start">${open?"Thu gọn":"Xem đủ"}</button>`:""}`;
   const posted = posting ? `<div class="inline-form"><input type="text" id="poster-${p.id}" placeholder="Ai đăng? (VD: Linh - nick 2)"><input type="url" id="purl-${p.id}" placeholder="Dán link bài vừa đăng"><div class="acts"><button class="btn sm primary" data-act="confirmPosted">Xác nhận đã đăng</button><button class="btn sm ghost" data-act="cancel">Hủy</button></div></div>`:"";
   const result = p.status==="posted" ? `<div class="row small"><label class="f" style="flex:1">Bình luận<input type="number" min="0" value="${p.comments||0}" id="cm-${p.id}"></label><label class="f" style="flex:1">Khách thu được<input type="number" min="0" value="${p.leads||0}" id="ld-${p.id}"></label><button class="btn sm" data-act="result" style="align-self:flex-end">Lưu</button></div>`:"";
-  return `<article class="post" data-p="${p.id}"><h4>${esc(p.title||"(Không tiêu đề)")}</h4>${meta}${body}${p.hashtags?`<div class="tags">${esc(p.hashtags)}</div>`:""}${p.image_idea&&p.status!=="posted"?`<div class="idea"><b>Ảnh/video:</b> ${esc(p.image_idea)}</div>`:""}${postImgs(p)}${p.error?`<div class="err">${esc(p.error)}</div>`:""}${p.status==="posted"?linkBox(p):""}${posted}${result}<div class="acts">${acts}</div></article>`;
+  const rv=p.review_score!=null?`<div class="ceo-rv ${p.review_ok===0?"bad":p.review_score>=85?"ok":""}"><b>CEO chấm ${p.review_score}/100</b>${(p.review_note||"").replace(/^CEO chấm \d+\/100:?\s*\.?\s*/,"")?` · ${esc((p.review_note||"").replace(/^CEO chấm \d+\/100:?\s*\.?\s*/,""))}`:""}</div>`:"";
+  return `<article class="post" data-p="${p.id}"><h4>${esc(p.title||"(Không tiêu đề)")}</h4>${meta}${rv}${body}${p.hashtags?`<div class="tags">${esc(p.hashtags)}</div>`:""}${p.image_idea&&p.status!=="posted"?`<div class="idea"><b>Ảnh/video:</b> ${esc(p.image_idea)}</div>`:""}${postImgs(p)}${p.error?`<div class="err">${esc(p.error)}</div>`:""}${p.status==="posted"?linkBox(p):""}${posted}${result}<div class="acts">${acts}</div></article>`;
 }
 const PLINK={found:["ok","Đã lưu link bài"],pending:["warn","Bài chờ nhóm duyệt"],not_found:["warn","Chưa lấy được link"],removed:["bad","Bài đã bị xóa/ẩn"]};
 function linkBox(p){

@@ -110,6 +110,23 @@ Mục **Kho tri thức → Bài mẫu sỉ**. Sếp tạo danh sách các bài �
 - **Mẫu nào hiệu quả thì dùng nhiều hơn**: Lan chọn bài mẫu theo số khách và bình luận trên mỗi bài đã đăng, vẫn chừa 25% lượt thử đều các mẫu khác.
 - Bài viết từ bài mẫu được duyệt sẵn (nội dung do sếp đưa), Tuấn xếp lịch ngay; phần mềm vẫn tự bỏ mọi con số giá. Nút **Lan viết ngay 3 bài**; công tắc **Đăng nhóm theo bài mẫu** (tắt thì Lan viết bài nhóm theo từng sản phẩm như trước). Bài trang cá nhân và Fanpage vẫn viết theo sản phẩm.
 
+## CEO học viết bài để duyệt bài tốt hơn
+
+Khung **CEO học duyệt bài** ở cuối trang Bài mẫu sỉ. Mọi bài đăng (bài viết lại từ bài mẫu và bài nháp Lan viết) đều được CEO Đức chấm điểm 100 trước khi đăng; điểm và góp ý hiện trên từng bài ở trang Bài đăng.
+
+| Tiêu chí | Điểm | CEO học từ |
+|---|---|---|
+| Nói rõ tìm khách sỉ / đại lý / gia công | 25 | Thư viện bài mẫu |
+| Lời kêu gọi + số Zalo báo giá | 20 | Bài mẫu, quy định giá |
+| Bố cục giống bài mẫu (tiêu đề ngắn, gạch đầu dòng, emoji vừa phải) | 15 | Bài mẫu, sếp chê nhiều emoji |
+| Độ dài trong khoảng của bài mẫu | 10 | Bài mẫu, sếp rút ngắn bài |
+| Giữ đủ thông tin chính của bài mẫu (thương hiệu, GMP, ISO, FDA…) | 15 | Bài mẫu gốc của bài đó |
+| Không trùng bài đã đăng 14 ngày | 15 | Chống Facebook coi là spam |
+
+Ghi giá, hứa công dụng chữa bệnh, có cụm câu sếp từng bỏ, hoặc trùng y hệt bài đã đăng thì không duyệt. Từ **70 điểm** trở lên mới duyệt (sửa được). Bài viết lại từ bài mẫu mà chưa đạt thì Lan viết lại bản khác (tối đa 4 lần) theo góp ý của CEO. Có khóa Claude thì CEO nhờ Claude đọc bài cùng thư viện mẫu và các bài học để góp ý thêm.
+
+**CEO rút kinh nghiệm từ sếp**: sếp sửa hoặc hủy một bài CEO đã duyệt (trang Bài đăng) thì CEO ghi bài học vào sổ tay và sổ kiến thức: sếp rút ngắn thì hạ độ dài tối đa, sếp bỏ câu nào thì lần sau gặp câu đó không duyệt, sếp hủy vì “nhiều emoji” thì giới hạn emoji chặt hơn. Khung CEO học duyệt bài hiện: chuẩn CEO đang dùng, bài học từ sếp, số bài CEO duyệt/loại trong 30 ngày, tỉ lệ **duyệt đúng ý sếp**, và ô **CEO chấm thử** để sếp dán một bài bất kỳ. CEO cũng tự học thêm các chủ đề viết bài (tiêu chí bài tốt, dấu hiệu bài bị coi là spam, cách viết lời kêu gọi) lúc rảnh.
+
 ## Nhóm có sẵn trong nick: đăng ở đâu, thoát nhóm nào, chăm sóc nhóm mình quản lý
 
 Mục **Hội nhóm → Nhóm trong các nick**.
@@ -653,6 +670,7 @@ backend/
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, ca làm việc theo nick, đăng bài, lấy link bài, up bài
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
   errors.py      Sổ lỗi: ghi lỗi từ mọi màn hình và việc tự động, gộp lỗi trùng, gợi ý cách xử lý
+  ceo_review.py  CEO chấm bài 100 điểm theo bài mẫu, quy định và bài học từ sếp
   post_template.py  Thư viện bài mẫu sỉ của sếp, Lan viết lại mỗi bài khác nhau, chọn mẫu hiệu quả
   my_groups.py   Nhóm có sẵn trong nick: đọc danh sách nhóm, Tuấn đánh giá, tự thoát nhóm kém, nhóm mới vào nghỉ, chăm sóc nhóm quản lý
   prospect_rules.py  Điều kiện tìm khách sỉ sếp đặt, bài sếp dạy Mai, chấm lại theo điều kiện

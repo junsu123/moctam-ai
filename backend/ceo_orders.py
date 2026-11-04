@@ -682,6 +682,17 @@ def handle(text: str, via: str = "web") -> dict:
 
 # ---------------------------------------------------------------- tự vận hành: CEO duyệt bài
 def review_post(p: dict) -> tuple[bool, str]:
+    """CEO chấm bài theo những gì đã học (bài mẫu của sếp, quy định, những lần sếp sửa bài): xem ceo_review.py."""
+    import ceo_review
+    sample = db.one("SELECT content FROM post_samples WHERE id=?", (p["sample_id"],)) if p.get("sample_id") else None
+    rv = ceo_review.review(f"{p.get('content') or ''}\n{p.get('hashtags') or ''}", p["id"], (sample or {}).get("content"))
+    ceo_review.save(p["id"], rv)
+    if rv["ok"]:
+        return True, ""
+    return False, ceo_review.note(rv)
+
+
+def _review_post_old(p: dict) -> tuple[bool, str]:
     text = f"{p.get('content') or ''}\n{p.get('hashtags') or ''}"
     words = len(text.split())
     if REVIEW_BAD.search(text):
