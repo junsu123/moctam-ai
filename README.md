@@ -13,7 +13,7 @@ Một "công ty" gồm 5 nhân viên AI làm thay phần việc của đội sal
 | **Tuấn** | Hội nhóm | Ghép bài đã duyệt với nhóm phù hợp, tôn trọng luật nhóm và số ngày giãn cách, xếp giờ đăng |
 | **Hà** | Chăm sóc khách | Chấm điểm khách, soạn tin nhắn trả lời, nhắc bám khách sau 2 ngày |
 | **Khoa** | Phân tích | Đo số bài, số khách, nhóm hiệu quả nhất; đưa số liệu vào cuộc họp |
-| **Sale 1…8** | Nhân viên sale | Mỗi sale giữ **một tài khoản Facebook** trong một hồ sơ Chrome riêng, tự đăng bài vào nhóm và trang cá nhân theo lịch |
+| **Sale 1…8** | Nhân viên sale | Mỗi sale giữ **3–5 tài khoản Facebook**, mỗi nick một hồ sơ Chrome riêng; làm theo ca từng nick: đăng bài vào nhóm và trang cá nhân, up bài, quét bình luận, rồi chuyển nick kế tiếp |
 
 ## Một ngày làm việc
 
@@ -22,7 +22,7 @@ Một "công ty" gồm 5 nhân viên AI làm thay phần việc của đội sal
    Sếp gõ ý kiến vào ô "Sếp phát biểu" bất cứ lúc nào, trưởng phòng sẽ phản hồi và cả nhóm tính đến.
 2. Kết thúc họp: Minh chốt việc → mục **Việc được giao**.
 3. Sau họp (tự động): Lan viết bài nháp → **sếp duyệt** → Tuấn xếp lịch vào nhóm → Hà lọc khách cần bám.
-4. Đến giờ trong lịch, nhân viên sale AI tự mở Chrome của nick mình, vào nhóm, dán nội dung, đính kèm ảnh sản phẩm, bấm Đăng,
+4. Đến giờ trong lịch, nhân viên sale AI tự mở Chrome của nick có việc, vào nhóm, dán nội dung, đính kèm ảnh sản phẩm, bấm Đăng,
    chụp ảnh màn hình làm bằng chứng rồi đóng Chrome.
 5. Khi có người bình luận/inbox: thêm vào **Khách hàng**, để Hà soạn tin, sao chép gửi khách.
 6. Nhập số bình luận và số khách thu được cho từng bài đã đăng → Khoa xếp hạng nhóm hiệu quả.
@@ -273,7 +273,7 @@ Số tiền viết kiểu `2500000`, `2.500.000`, `2,5tr`, `2tr5`, `800k` đều
 chi phí nuôi agent, doanh thu và tình trạng từng sale.
 
 **Sale bị sa thải:** nick và phiên đăng nhập vẫn giữ. Ở trang Công ty, nhập tên người thay → **Tuyển thay, giữ nick**:
-sale mới nhận nick, hội nhóm của nick cũ và bắt đầu kỳ KPI mới.
+sale mới nhận toàn bộ các nick, hội nhóm của các nick cũ và bắt đầu kỳ KPI mới.
 
 **Sau khi giải thể:** sale dừng đăng, AI dừng, văn phòng 3D đóng cửa. Dữ liệu vẫn còn để xem lại; có thể **Thành lập lại**
 với vốn mới.
@@ -335,8 +335,8 @@ và đủ các điều kiện an toàn: có đủ 14 ngày dữ liệu, số kh�
 văn phòng còn chỗ (tối đa 8 sale), vốn đủ nuôi agent ít nhất 60 ngày, lần tuyển vì tiềm năng trước đã cách 14 ngày.
 Bấm **Đánh giá ngay** để CEO xem lại lập tức; tắt "Tự tuyển thêm khi thấy tiềm năng" nếu chỉ muốn tăng người theo mốc doanh thu.
 
-**Việc của sếp khi có sale mới:** mỗi sale cần một tài khoản Facebook. CEO tạo chỗ làm và hồ sơ Chrome, Telegram báo
-sếp; sếp vào **Nhân viên sale** → **Mở Chrome để đăng nhập** và đăng nhập nick. Kỳ KPI của sale mới chỉ bắt đầu từ ngày
+**Việc của sếp khi có sale mới:** mỗi sale cần 3–5 tài khoản Facebook. CEO tạo chỗ làm và nick đầu tiên, Telegram báo
+sếp; sếp vào **Nhân viên sale** → **Thêm nick** cho đủ số nick, rồi bấm **Mở Chrome để đăng nhập** ở từng nick. Kỳ KPI của sale mới chỉ bắt đầu từ ngày
 nick chạy được, nên chờ nick không bị tính là trượt KPI. CEO nhắc lại mỗi 3 ngày nếu chưa có nick; chưa có nick thì
 cho nghỉ việc để hủy tuyển.
 
