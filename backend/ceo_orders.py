@@ -107,12 +107,12 @@ def _bg(fn, *a, **kw):
 def followup(text: str, via: str = "web"):
     """CEO báo lại cho sếp khi việc đã giao làm xong (hoặc không làm được)."""
     _say("ceo", text, via=via)
-    if via == "telegram":
-        try:
-            import telegram_bot
+    try:  # mọi việc xong đều báo sếp qua Telegram, kể cả việc sếp giao trên phần mềm
+        import telegram_bot
+        if via == "telegram" or telegram_bot.report_enabled():
             telegram_bot.send("👔 <b>CEO Đức báo lại:</b> " + telegram_bot.e(text))
-        except Exception as ex:
-            print("[ceo_orders]", ex)
+    except Exception as ex:
+        print("[ceo_orders]", ex)
 
 
 JOB_TXT = {"open": "mở Chrome chờ sếp đăng nhập", "check": "kiểm tra phiên", "post": "đăng bài", "bump": "up bài",
@@ -531,6 +531,13 @@ def handle(text: str, via: str = "web") -> dict:
         reply += "\n" + "\n".join(f"• {d['result']}" for d in done)
     _say("ceo", reply, done, via=via)
     db.log("ceo", "Nhận việc từ sếp", text[:150])
+    if via != "telegram" and done:  # sếp giao trên phần mềm: CEO cũng báo qua Telegram những gì đã làm
+        try:
+            import telegram_bot
+            if telegram_bot.report_enabled():
+                telegram_bot.send(f"👔 <b>Sếp giao trên phần mềm:</b> {telegram_bot.e(text[:300])}\n\n<b>CEO Đức:</b> {telegram_bot.e(reply)}")
+        except Exception as ex:
+            print("[ceo_orders]", ex)
     return {"reply": reply, "actions": done}
 
 

@@ -309,6 +309,7 @@ DEFAULT_SETTINGS = {
     "tg_alert_leads": "1",
     "tg_alert_nick": "1",
     "tg_alert_kpi": "1",
+    "tg_report_done": "1",
     "tg_sent_log": "{}",
     "attach_images": "1",
 }
@@ -506,9 +507,17 @@ def set_setting(key: str, value: str):
         (key, value))
 
 
+LOG_HOOKS: list = []  # hàm nhận (agent_id, action, detail) mỗi khi có hoạt động mới (VD: báo Telegram việc đã xong)
+
+
 def log(agent_id: str, action: str, detail: str = ""):
     run("INSERT INTO activity(agent_id, action, detail, created_at) VALUES (?,?,?,?)",
         (agent_id, action, detail, now()))
+    for h in LOG_HOOKS:
+        try:
+            h(agent_id, action, detail)
+        except Exception as e:
+            print("[log hook]", e)
 
 
 def dumps(x) -> str:

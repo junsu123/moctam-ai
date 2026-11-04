@@ -664,7 +664,8 @@ def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
             link, st = _capture_link(page, post)
             note = {"found": "đã lưu link bài", "pending": "bài đang chờ nhóm duyệt, sẽ lấy link sau",
                     "not_found": "chưa lấy được link, sẽ thử lại khi up bài"}[st]
-            db.log(agent, "Đã đăng", f"Bài #{post_id} lên {where} bằng nick {accounts.label(acc)}, {note}")
+            db.log(agent, "Đã đăng", f"Bài #{post_id} lên {where} bằng nick {accounts.label(acc)}, {note}"
+                   + (f": {link}" if st == "found" and link else ""))
     except Blocked as e:
         _fail(page, post_id, str(e), dry_run)
         _block(aid, str(e))

@@ -2,7 +2,7 @@
 
 Cài đặt (1 lần):
 1. Trên Telegram, chat với @BotFather → /newbot → đặt tên → nhận token.
-2. Dán token vào trang KPI & Báo cáo → bấm "Tạo mã ghép nối".
+2. Dán token vào Cài đặt → Bot Telegram (hoặc trang KPI & Báo cáo) → bấm "Kiểm tra và lưu" → "Tạo mã ghép nối".
 3. Mở bot vừa tạo, gửi mã 6 số đó. Từ giờ chỉ những chat đã ghép nối mới nhận báo cáo và ra lệnh được.
 
 Bot dùng long polling (không cần IP/tên miền công khai), chạy ngay trên máy của sếp.
@@ -81,7 +81,8 @@ def status() -> dict:
         except Exception as ex:
             _state["error"] = str(ex)
     s = db.get_settings()
-    return {"has_token": bool(t), "bot": (_state["bot"] or {}).get("username") if t else None, "chats": len(chats()),
+    return {"has_token": bool(t), "token_masked": mask_token(t), "report_done": s.get("tg_report_done", "1") == "1",
+            "bot": (_state["bot"] or {}).get("username") if t else None, "chats": len(chats()),
             "pair_code": s.get("tg_pair_code") or "", "error": _state["error"] if t else None}
 
 
@@ -94,6 +95,113 @@ def new_pair_code() -> str:
 def reset_token():
     _state["bot"] = None
     _state["error"] = None
+
+
+TOKEN_RX = __import__("re").compile(r"^\d{5,12}:[A-Za-z0-9_-]{30,}$")
+
+
+def mask_token(t: str | None = None) -> str:
+    t = (t if t is not None else token()) or ""
+    return f"{t.split(':')[0]}:…{t[-4:]}" if t else ""
+
+
+def verify_token(t: str) -> dict:
+    """Hỏi Telegram xem token có đúng không (getMe). Trả về thông tin bot hoặc ném lỗi dễ hiểu."""
+    t = (t or "").strip()
+    if not TOKEN_RX.match(t):
+        raise ValueError("Token không đúng dạng. Token do @BotFather gửi có dạng 123456789:AAH…, copy đủ cả dãy, không thừa dấu cách")
+    try:
+        r = httpx.post(f"{API}/bot{t}/getMe", timeout=10)
+        data = r.json()
+    except Exception as ex:
+        raise ValueError(f"Không kết nối được Telegram ({str(ex)[:80]}). Kiểm tra Internet của máy chạy phần mềm rồi thử lại")
+    if not data.get("ok"):
+        if r.status_code in (401, 404):
+            raise ValueError("Telegram báo token sai hoặc bot đã bị xóa. Lấy lại token ở @BotFather (/mybots → chọn bot → API Token)")
+        raise ValueError("Telegram từ chối: " + str(data.get("description") or r.status_code))
+    return data["result"]
+
+
+def save_token(t: str) -> dict:
+    bot = verify_token(t)
+    old = token()
+    db.set_setting("tg_token", t.strip())
+    if old and old.split(":")[0] != t.strip().split(":")[0]:
+        db.set_setting("tg_chat_ids", "")  # bot khác: phải ghép nối lại
+    reset_token()
+    _state["bot"] = bot
+    return bot
+
+
+# ---------------------------------------------------------------- báo việc đã xong
+# Việc đã hoàn thành (theo nhật ký hoạt động) được gom lại và gửi sếp mỗi phút một tin, để không bị dội tin nhắn.
+DONE_ACTIONS = {
+    "Đã đăng": "📝", "Đăng thử": "🧪", "Up bài": "⬆️", "Xong ca trên nick": "🔁", "Quét bình luận": "🔎",
+    "Tìm nhóm mới": "🧭", "Xin vào nhóm": "🚪", "Đăng nhập": "🔑", "Khách mới từ bình luận": "🙋",
+    "Viết bài": "✍️", "Viết bài (lô)": "✍️", "Xếp lịch": "🗓️", "Lịch up bài": "🗓️", "Thêm nhóm": "➕",
+    "Thêm nhóm mới tìm được": "➕", "Thêm link nhóm": "🔗", "Soạn tin": "💬", "Danh sách bám khách": "📋",
+    "Khách mới": "🙋", "Khách để lại SĐT": "📞", "Tự học": "🎓", "Báo cáo": "📊", "Kết thúc họp": "🤝",
+    "Duyệt bài": "✅", "Chọn chủ đề tìm nhóm hôm nay": "🎯", "Đổi cài đặt theo lệnh sếp": "⚙️", "CEO yêu cầu sửa": "🛠️",
+    "Tuyển người thay": "👔", "Sa thải": "👔", "Đạt KPI tháng": "🏅", "Lên cấp": "⭐",
+}
+SKIP_BY_BOSS = {("minh", "Duyệt bài")}  # việc chính sếp vừa bấm: không cần báo lại
+_done_buf: list[tuple[float, str, str, str]] = []
+_done_lock = threading.Lock()
+DIGEST_WAIT = 45  # giây: gom các việc xong gần nhau vào một tin
+
+
+def report_enabled() -> bool:
+    return configured() and db.get_settings().get("tg_report_done", "1") == "1"
+
+
+def _on_log(agent_id: str, action: str, detail: str):
+    if action not in DONE_ACTIONS or (agent_id, action) in SKIP_BY_BOSS:
+        return
+    if action in ("Quét bình luận", "Up bài") and not str(agent_id).startswith("sale-"):
+        return  # Tuấn chỉ giao việc hoặc nhắc thiếu ảnh, chưa phải việc xong
+    if (agent_id, action) == ("tuan", "Đã đăng") and "Fanpage" not in (detail or ""):
+        return  # bài sale tự đăng đã có tin của sale; bài sếp tự đánh dấu thì sếp đã biết
+    if not report_enabled():
+        return
+    with _done_lock:
+        _done_buf.append((time.time(), str(agent_id), action, detail or ""))
+
+
+def _who(agent_id: str) -> str:
+    if agent_id.startswith("sale-"):
+        r = db.one("SELECT name FROM sales WHERE id=?", (agent_id[5:],)) if agent_id[5:].isdigit() else None
+        return f"Sale {r['name']}" if r else "Sale"
+    try:
+        import agents
+        a = agents.AGENTS.get(agent_id)
+        return f"{a['name']} ({a.get('role', '')})".replace(" ()", "") if a else agent_id
+    except Exception:
+        return agent_id
+
+
+def flush_done(force: bool = False) -> int:
+    with _done_lock:
+        if not _done_buf or (not force and time.time() - _done_buf[0][0] < DIGEST_WAIT and len(_done_buf) < 20):
+            return 0
+        items = _done_buf[:25]
+        del _done_buf[:25]
+    lines = [f"✅ <b>Việc vừa hoàn thành</b> · {datetime.now().strftime('%H:%M')}"]
+    for _, ag, act, det in items:
+        lines.append(f"{DONE_ACTIONS.get(act, '•')} <b>{e(_who(ag))}</b> · {e(act)}" + (f": {e(det[:300])}" if det else ""))
+    send("\n".join(lines))
+    return len(items)
+
+
+def _digest_loop():
+    while True:
+        time.sleep(15)
+        try:
+            flush_done()
+        except Exception as ex:
+            print("[telegram] báo việc xong lỗi:", ex)
+
+
+db.LOG_HOOKS.append(_on_log)
 
 
 # ---------------------------------------------------------------- nội dung báo cáo
@@ -548,3 +656,4 @@ def start():
     if not _state["started"]:
         _state["started"] = True
         threading.Thread(target=_poll, daemon=True).start()
+        threading.Thread(target=_digest_loop, daemon=True).start()

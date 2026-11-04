@@ -182,7 +182,9 @@ lại vào phần mềm và dùng cho việc tự học của Hà.
 **Kết nối Telegram (5 phút):**
 
 1. Trên Telegram, nhắn **@BotFather** → `/newbot` → đặt tên → nhận token.
-2. Phần mềm → **KPI & Báo cáo** → dán token → **Lưu token** → **Tạo mã ghép nối**.
+2. Phần mềm → **Cài đặt → Bot Telegram** (hoặc **KPI & Báo cáo**) → dán token → **Kiểm tra và lưu** → **Tạo mã ghép nối**.
+   Phần mềm hỏi Telegram trước khi lưu: token sai dạng, sai hoặc bot đã bị xóa thì báo ngay, không lưu. Token chỉ hiện dạng che
+   (`123456789:…abcd`). Đổi sang bot khác thì phải ghép nối lại; **Xóa token** để ngừng gửi Telegram.
 3. Mở bot vừa tạo, gửi mã 6 số. Bot trả lời "Đã kết nối". Chỉ chat đã ghép nối mới nhận báo cáo và ra lệnh được.
 
 Bot chạy ngay trên máy của bạn (không cần tên miền hay mở cổng). Máy phải bật và có Internet thì bot mới trả lời.
@@ -193,9 +195,14 @@ Bot chạy ngay trên máy của bạn (không cần tên miền hay mở cổng
 |---|---|
 | 09:00 | KPI hôm qua, chuỗi ngày đạt KPI, mục tiêu hôm nay, lịch đăng, kết luận và việc giao trong cuộc họp sáng, nick cần xử lý |
 | Ngay khi có | Phiếu khách cần sếp tư vấn, nick bị checkpoint/đăng xuất |
+| Khoảng mỗi phút | **Mọi việc vừa hoàn thành**, gom thành một tin: sale đăng bài (kèm link bài), đăng thử, up bài, xong ca trên nick, quét bình luận, tìm nhóm, xin vào nhóm, nick đăng nhập xong; Lan viết bài; Tuấn xếp lịch, thêm nhóm, đăng Fanpage; Hà soạn tin, khách mới; Khoa báo cáo, cả đội tự học; kết thúc họp; CEO duyệt bài, chọn chủ đề, sửa agent, tuyển/sa thải |
+| Khi CEO làm xong việc sếp giao | Lời CEO báo lại, kể cả việc sếp giao trên phần mềm (không chỉ việc giao qua Telegram) |
 | 15:00 | Cảnh báo nếu KPI đang chậm |
 | Khi đạt | Chúc mừng đạt KPI tối thiểu, vượt KPI |
 | 21:30 | KPI cả ngày theo từng nick, khách còn chờ sếp gọi, đơn đã chốt, bài học mới, chi phí AI |
+
+Tắt báo việc xong ở **Cài đặt → Bot Telegram** nếu thấy nhiều tin (báo cáo sáng/tối, khách và cảnh báo vẫn gửi).
+Việc chính sếp vừa bấm trên phần mềm (duyệt bài, tự đánh dấu đã đăng) không báo lại.
 
 **Lệnh Telegram:** `/baocao` báo cáo nhanh · `/kpi` tiến độ · `/khach` khách đang chờ sếp · `/congty` vốn, chi phí nuôi agent, doanh thu, tình trạng sale · `/doanhthu 2tr5 Tên khách` nhập doanh thu · `/ceo` nhân sự, mốc doanh thu, tiềm năng · nhắn tin thường = giao việc cho CEO · `/hop [chủ đề]` triệu tập họp
 (gửi kết luận khi họp xong) · `/tamdung` tạm dừng mọi nick · `/tieptuc` bật lại.

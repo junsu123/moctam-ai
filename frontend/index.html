@@ -628,7 +628,7 @@ tbody tr.sel td{background:var(--accent-soft)}
             <div class="card-h"><h3>Telegram</h3><span class="chip" id="tgState">—</span></div>
             <ol class="steps small">
               <li>Trên Telegram, nhắn <b>@BotFather</b> → gửi <b>/newbot</b> → đặt tên → nhận token.</li>
-              <li>Dán token vào ô dưới, bấm <b>Lưu token</b>.</li>
+              <li>Dán token vào ô dưới, bấm <b>Lưu token</b> (hoặc nhập ở <a href="#setup">Cài đặt → Bot Telegram</a>).</li>
               <li>Bấm <b>Tạo mã ghép nối</b>, mở bot vừa tạo và gửi mã 6 số đó.</li>
             </ol>
             <label class="f" for="tgToken">Token bot<div class="row"><input type="text" class="grow" id="tgToken" autocomplete="off" placeholder="123456789:AA…"><button class="btn sm" type="submit">Lưu token</button></div></label>
@@ -779,6 +779,22 @@ tbody tr.sel td{background:var(--accent-soft)}
             <div class="actions"><button class="btn primary" type="submit" id="aiSave">Kiểm tra và lưu</button><button type="button" class="btn" id="aiTest">Kiểm tra lại khóa đang dùng</button><button type="button" class="btn ghost danger" id="aiDel">Xóa khóa</button></div>
             <p class="small muted">Khóa chỉ lưu trên máy này (trong data/company.db), không gửi đi đâu ngoài Anthropic và không hiện lại đầy đủ trên giao diện.</p>
           </form>
+          <form class="card" id="tgSetForm">
+            <div class="card-h"><h3>Bot Telegram</h3><span class="chip" id="tgsState">—</span></div>
+            <p class="small muted">Mọi việc cả đội làm xong (đăng bài, up bài, tìm nhóm, viết bài, xếp lịch, họp, CEO xử lý việc sếp giao…) đều được báo về Telegram của sếp, cùng báo cáo sáng/tối, khách cần tư vấn và cảnh báo nick.</p>
+            <div id="tgsBox" class="note"></div>
+            <ol class="steps small">
+              <li>Trên Telegram, nhắn <b>@BotFather</b> → gửi <b>/newbot</b> → đặt tên bot → BotFather gửi lại <b>token</b> dạng <code>123456789:AAH…</code>.</li>
+              <li>Dán token vào ô dưới, bấm <b>Kiểm tra và lưu</b>.</li>
+              <li>Bấm <b>Tạo mã ghép nối</b>, mở bot vừa tạo trên Telegram và gửi mã 6 số đó.</li>
+            </ol>
+            <label class="f" for="tgsToken">Token bot Telegram
+              <div class="row"><input type="password" class="grow" id="tgsToken" autocomplete="off" spellcheck="false" placeholder="123456789:AAH…"><button type="button" class="btn sm ghost" id="tgsShow" aria-label="Hiện hoặc ẩn token">Hiện</button></div></label>
+            <div class="actions"><button class="btn primary" type="submit" id="tgsSave">Kiểm tra và lưu</button><button type="button" class="btn" id="tgsPair">Tạo mã ghép nối</button><button type="button" class="btn" id="tgsTest">Gửi tin thử</button><button type="button" class="btn ghost danger" id="tgsDel">Xóa token</button></div>
+            <div id="tgsPairBox"></div>
+            <label class="row small"><input type="checkbox" id="tgsDone"> Báo về Telegram mọi việc đã hoàn thành (gom các việc xong gần nhau thành một tin, khoảng mỗi phút)</label>
+            <p class="small muted">Giờ báo cáo sáng/tối, cảnh báo KPI và khách cần tư vấn chỉnh ở <a href="#kpi">KPI &amp; Báo cáo</a>. Token chỉ lưu trên máy này và không hiện lại đầy đủ.</p>
+          </form>
           <form class="card" id="bumpForm">
             <div class="card-h"><h3>Tự động up bài</h3><span class="chip" id="bumpToday"></span></div>
             <p class="small muted">Mỗi ngày, từ giờ đã chọn, mỗi nhân viên sale vào lại các bài mình đã đăng và bình luận một ảnh sản phẩm lấy từ thư mục trên máy này, để bài nổi lên đầu nhóm. Mỗi bài tối đa 1 lần/ngày, mỗi ảnh không lặp lại trên cùng một bài cho tới khi dùng hết ảnh.</p>
@@ -887,6 +903,7 @@ const Demo = (() => {
       {id:31,sale_id:3,name:"Nam Nguồn Hàng",login_status:"not_logged_in",enabled:1,max_posts_per_day:3,min_gap_minutes:45,active_from:"08:00",active_to:"22:00",last_error:"Chưa đăng nhập Facebook trong hồ sơ này",last_session_at:null}],
     busyAcc:{},
   };
+  const demoTg=()=>{ const t=S.settings.tg_token||""; return {has_token:!!t,token_masked:t?`${t.split(":")[0]}:…${t.slice(-4)}`:"",report_done:S.settings.tg_report_done!=="0",bot:t?"moctam_sales_bot":null,chats:S.tgChats||0,pair_code:S.pairCode||"",error:null}; };
   const nicksOf=sid=>S.accounts.filter(a=>a.sale_id===sid);
   const syncSale=sid=>{ const r=S.sales.find(x=>x.id===sid); if(!r) return; const ns=nicksOf(sid); r.fb_name=ns.map(a=>a.name).join(", ");
     r.login_status=ns.some(a=>a.enabled&&a.login_status==="ok")?"ok":ns.some(a=>a.login_status==="checkpoint")?"checkpoint":"not_logged_in";
@@ -1101,12 +1118,9 @@ const Demo = (() => {
       if(P==="/sample-data") return {sales:S.sales.filter(x=>x.is_sample).length,leads:S.leads.filter(x=>x.is_sample).length,groups:S.groups.length,products:S.products.length};
       if(P==="/learning") return demoLearning();
       if(P==="/kpi") return demoKpi();
-      if(P==="/telegram") return {has_token:!!S.settings.tg_token,bot:S.settings.tg_token?"moctam_sales_bot":null,chats:S.tgChats||0,pair_code:S.pairCode||"",error:null};
+      if(P==="/telegram") return demoTg();
       if(P==="/posts/recent-posted") return S.posts.filter(p=>p.status==="posted").map(p=>({id:p.id,title:p.title,posted_at:p.posted_at,group_name:p.group_name,target_type:p.target_type}));
       if(P==="/bump/folder"){ const f=S.settings.bump_folder; return f?{path:f,exists:true,count:23,root_count:5,products:[{id:1,name:"Trà gừng mật ong túi lọc",count:8},{id:3,name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",count:6},{id:4,name:"Bột cần tây sấy lạnh",count:4}],samples:[]}:{path:"",exists:false,count:0,products:[],samples:[]}; }
-      if(P==="/telegram/pair"){ if(!S.settings.tg_token) throw new Error("Dán token bot Telegram và bấm Lưu trước"); S.pairCode=String(Math.floor(100000+Math.random()*899999)); setTimeout(()=>{ S.tgChats=1; S.pairCode=""; log("minh","Kết nối Telegram","Đã ghép nối với Sếp"); },8000); return {has_token:true,bot:"moctam_sales_bot",chats:S.tgChats||0,pair_code:S.pairCode}; }
-      if(P==="/telegram/send"){ if(!S.tgChats) throw new Error("Chưa ghép nối Telegram. Tạo mã ghép nối và gửi mã đó cho bot"); return {ok:true}; }
-      if(P==="/telegram/unlink"){ S.tgChats=0; return {has_token:!!S.settings.tg_token,bot:"moctam_sales_bot",chats:0,pair_code:""}; }
       if(P==="/scan/now"){ const sid=S.sales.find(x=>x.login_status==="ok"); if(!sid) return {posts:0}; const aid=`sale-${sid.id}`; S.status[aid]={state:"working",text:"Đang đọc bình luận 3 bài để tìm khách"};
         setTimeout(()=>{ S.status[aid]={state:"idle",text:"Quét xong: 1 khách mới, 1 SĐT"}; S.leads.unshift({id:id(),name:"Đỗ Ngọc Ánh",contact:"0938 222 456",phone:"0938222456",origin:"comment",source:"Bình luận bài #3 · Cộng đồng bán hàng online toàn quốc",business_type:"",need:"Quan tâm trà đậu biếc, 0938222456",score:75,status:"new",escalated_at:now(),escalate_reason:"Khách đã để lại SĐT, cần người gọi/nhắn Zalo tư vấn",consult_note:"Chào chị, em gọi từ xưởng về trà hoa đậu biếc. Giá sỉ 35.000đ/hộp, lẻ gợi ý 60.000đ, nhập từ 50 hộp. Chị đang bán live hay sàn, dự kiến nhập bao nhiêu? Em gửi mẫu thử để chị quay video nhé.",created_at:now()}); S.kpiPhone=(S.kpiPhone||3)+1; log(aid,"Quét bình luận","Bài #3: 1 khách mới, 1 SĐT"); },5000); return {posts:3}; }
       if((m=P.match(/^\/leads\/(\d+)\/escalate$/))){ const l=S.leads.find(x=>x.id==m[1]); Object.assign(l,{escalated_at:now(),escalate_reason:"Sếp chọn tự tư vấn khách này",consult_note:"Chào anh/chị, em gọi từ xưởng. Hỏi kênh bán, số lượng dự kiến, đề nghị gửi mẫu thử."}); return {ok:true,telegram:!!S.tgChats}; }
@@ -1123,6 +1137,10 @@ const Demo = (() => {
       if((m=P.match(/^\/meetings\/(\d+)$/))){ const after=+(new URLSearchParams(qs).get("after")||0); const mt=S.meetings.find(x=>x.id==m[1]); return {...mt,messages:S.msgs.filter(x=>x.meeting_id==m[1]&&x.id>after)}; }
     }
     if(method==="POST"){
+      if(P==="/telegram/token"){ if(!/^\d{5,12}:[A-Za-z0-9_-]{30,}$/.test(body.token||"")) throw new Error("Token không đúng dạng. Token do @BotFather gửi có dạng 123456789:AAH…, copy đủ cả dãy, không thừa dấu cách"); S.settings.tg_token=body.token; log("minh","Kết nối Telegram","Đã lưu token bot @moctam_sales_bot"); return demoTg(); }
+      if(P==="/telegram/pair"){ if(!S.settings.tg_token) throw new Error("Dán token bot Telegram và bấm Lưu trước"); S.pairCode=String(Math.floor(100000+Math.random()*899999)); setTimeout(()=>{ S.tgChats=1; S.pairCode=""; log("minh","Kết nối Telegram","Đã ghép nối với Sếp"); },8000); return demoTg(); }
+      if(P==="/telegram/send"){ if(!S.tgChats) throw new Error("Chưa ghép nối Telegram. Tạo mã ghép nối và gửi mã đó cho bot"); return {ok:true}; }
+      if(P==="/telegram/unlink"){ S.tgChats=0; S.pairCode=""; return demoTg(); }
       if(P==="/posts/generate"){ S.status.lan={state:"working",text:`Đang viết ${body.count} bài`}; await wait(1400); const r=genPosts(Math.min(body.count||3,10),body.product_id,body.target_type||"group",body.angle); S.status.lan={state:"idle",text:`Vừa viết xong ${r.length} bài`}; return r; }
       if(P==="/distribution/plan") return plan();
       if(P==="/meetings") return {id:startMeeting(body.topic)};
@@ -1177,6 +1195,8 @@ const Demo = (() => {
     if(method==="POST"&&P==="/costs/preset"){ const PR={tiet_kiem:["claude-haiku-5-5","claude-haiku-5-5","claude-haiku-5-5"],can_bang:["claude-sonnet-5-5","claude-haiku-5-5","claude-haiku-5-5"],chat_luong:["claude-sonnet-5-5","claude-sonnet-5-5","claude-sonnet-5-5"]}[body.name];
       Object.assign(S.settings,{model_posts:PR[0],model_replies:PR[1],model_meeting:PR[2],use_batch:"1",cost_preset:body.name}); return S.settings; }
     if(method==="POST"&&P==="/ai-key") throw new Error("Bản xem trước không lưu khóa. Chạy phần mềm trên máy bạn để nhập khóa API.");
+    if(method==="PUT"&&P==="/telegram/report"){ S.settings.tg_report_done=body.report_done?"1":"0"; return demoTg(); }
+    if(method==="DELETE"&&P==="/telegram/token"){ S.settings.tg_token=""; S.tgChats=0; S.pairCode=""; return demoTg(); }
     if(method==="PUT"&&P==="/settings"){ if(body.tg_token==="••••••") delete body.tg_token; Object.assign(S.settings,body); return S.settings; }
     if(method==="DELETE"&&(m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const path=new URLSearchParams(qs).get("path"); pr.images=JSON.stringify(JSON.parse(pr.images||"[]").filter(x=>x!==path)); return {ok:true}; }
     if(method==="POST"&&P==="/company/found"){ Object.assign(S.co,{status:"active",day:1,capital:body.capital,orders:[],founded_at:today()}); log("minh","Thành lập công ty",`Vốn ${body.capital}`); return demoCompany(); }
@@ -1988,7 +2008,8 @@ function showTg(t){
   $("#tgState").className="chip "+st[0]; $("#tgState").textContent=st[1];
   $("#tgPair").innerHTML=t.error?`<div class="err">${esc(t.error)}</div>`:t.pair_code?`<div class="note">Mở <b>@${esc(t.bot||"bot của bạn")}</b> trên Telegram và gửi mã:<div class="tg-code" style="margin-top:6px">${esc(t.pair_code)}</div></div>`:t.bot?`<p class="small muted">Bot: <b>@${esc(t.bot)}</b></p>`:"";
 }
-$("#tgForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{tg_token:$("#tgToken").value.trim()}); toast("Đã lưu token"); showTg(await api("/telegram")); });
+$("#tgForm").addEventListener("submit",async e=>{ e.preventDefault(); const k=$("#tgToken").value.trim(); if(!k||k==="••••••"){ toast("Dán token bot Telegram vào ô trước"); return; }
+  try{ const t=await api("/telegram/token","POST",{token:k}); $("#tgToken").value="••••••"; toast(`Token đúng: bot @${t.bot}`); showTg(t); }catch(err){ toast(err.message); } });
 $("#tgPairBtn").onclick=async()=>{ try{ showTg(await api("/telegram/pair","POST")); toast("Gửi mã này cho bot trên Telegram"); }catch(err){ toast(err.message); } };
 $("#tgTest").onclick=async()=>{ try{ await api("/telegram/send","POST",{kind:"test"}); toast("Đã gửi tin thử. Kiểm tra Telegram."); }catch(err){ toast(err.message); } };
 $("#tgNow").onclick=async()=>{ try{ await api("/telegram/send","POST",{kind:"evening"}); toast("Đã gửi báo cáo qua Telegram"); }catch(err){ toast(err.message); } };
@@ -2265,6 +2286,32 @@ $("#aiForm").addEventListener("submit",async e=>{ e.preventDefault(); const k=$(
 $("#aiTest").onclick=async e=>{ e.target.disabled=true; try{ const r=await api("/ai-key/test","POST"); toast(r.warning||"Khóa đang hoạt động tốt"); }catch(err){ toast(err.message); } e.target.disabled=false; };
 $("#aiDel").onclick=async e=>{ const b=e.target; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } b.dataset.confirm=""; b.textContent="Xóa khóa";
   const r=await api("/ai-key","DELETE"); toast(r.live?"Đã xóa khóa trong phần mềm, đang dùng khóa từ file .env":"Đã xóa khóa. Các agent chuyển về nội dung mẫu."); showAi(await api("/settings")); };
+function showTgSet(t){
+  const st=!t.has_token?["warn","Chưa có token"]:t.error?["bad","Lỗi kết nối"]:t.chats?["ok","Đã kết nối"]:["warn","Chờ ghép nối"];
+  $("#tgsState").className="chip "+st[0]; $("#tgsState").textContent=st[1];
+  $("#tgsBox").innerHTML = !t.has_token ? "Chưa có bot Telegram. Làm theo 3 bước dưới để sếp nhận báo cáo trên điện thoại."
+    : t.error ? `<span class="err">${esc(t.error)}</span>`
+    : `Bot <b>@${esc(t.bot||"?")}</b> · token <b>${esc(t.token_masked||"••••••")}</b> · ${t.chats?`đang gửi báo cáo tới ${t.chats} chat`:"chưa ghép nối chat nào, bấm Tạo mã ghép nối"}.`;
+  $("#tgsPairBox").innerHTML = t.pair_code&&!t.chats ? `<div class="note">Mở <b>@${esc(t.bot||"bot của bạn")}</b> trên Telegram và gửi mã:<div class="tg-code" style="margin-top:6px">${esc(t.pair_code)}</div></div>` : "";
+  $("#tgsDone").checked = t.report_done!==false;
+  $("#tgsPair").hidden=!t.has_token; $("#tgsTest").hidden=!t.chats; $("#tgsDel").hidden=!t.has_token;
+}
+let tgsPoll=null;
+const loadTgSet=async()=>{ const t=await api("/telegram"); showTgSet(t); return t; };
+$("#tgsShow").onclick=()=>{ const i=$("#tgsToken"); i.type=i.type==="password"?"text":"password"; $("#tgsShow").textContent=i.type==="password"?"Hiện":"Ẩn"; };
+$("#tgSetForm").addEventListener("submit",async e=>{ e.preventDefault(); const k=$("#tgsToken").value.trim();
+  if(!k){ toast("Dán token bot Telegram vào ô trước"); return; }
+  const b=$("#tgsSave"); b.disabled=true; b.textContent="Đang kiểm tra với Telegram…";
+  try{ const t=await api("/telegram/token","POST",{token:k}); $("#tgsToken").value=""; showTgSet(t); toast(t.chats?`Đã lưu token bot @${t.bot}`:`Token đúng: bot @${t.bot}. Bấm Tạo mã ghép nối để nhận báo cáo.`); }
+  catch(err){ toast(err.message); }
+  b.disabled=false; b.textContent="Kiểm tra và lưu"; });
+$("#tgsPair").onclick=async()=>{ try{ showTgSet(await api("/telegram/pair","POST")); toast("Gửi mã này cho bot trên Telegram");
+    clearInterval(tgsPoll); let n=0; tgsPoll=setInterval(async()=>{ n++; const t=await loadTgSet().catch(()=>null); if((t&&t.chats)||n>40){ clearInterval(tgsPoll); if(t&&t.chats) toast("Đã ghép nối Telegram. Từ giờ việc xong sẽ báo về đây."); } },3000);
+  }catch(err){ toast(err.message); } };
+$("#tgsTest").onclick=async()=>{ try{ await api("/telegram/send","POST",{kind:"test"}); toast("Đã gửi tin thử. Kiểm tra Telegram."); }catch(err){ toast(err.message); } };
+$("#tgsDone").onchange=async e=>{ showTgSet(await api("/telegram/report","PUT",{report_done:e.target.checked})); toast(e.target.checked?"Mọi việc xong sẽ được báo qua Telegram":"Đã tắt báo việc xong (báo cáo sáng/tối vẫn gửi)"); };
+$("#tgsDel").onclick=async e=>{ const b=e.target; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } b.dataset.confirm=""; b.textContent="Xóa token";
+  showTgSet(await api("/telegram/token","DELETE")); toast("Đã xóa token. Phần mềm ngừng gửi Telegram."); };
 const SAMPLE_NAME={sales:"sale",leads:"khách",groups:"hội nhóm",products:"sản phẩm"};
 async function loadSamples(){
   const c=await api("/sample-data"); const parts=Object.entries(c).filter(([k,v])=>v).map(([k,v])=>`${v} ${SAMPLE_NAME[k]}`);
@@ -2293,6 +2340,7 @@ async function loadSettings(){
   $("#sName").value=s.company_name||""; $("#sVoice").value=s.brand_voice||""; $("#sContact").value=s.contact_info||""; $("#sTime").value=s.meeting_time||"08:30";
   $("#sPer").value=s.posts_per_day||4; $("#sAutoM").checked=s.auto_meeting==="1"; $("#sAutoW").checked=s.auto_daily_work==="1"; $("#sPage").value=s.fb_page_id||""; $("#sToken").value=s.fb_page_token||""; loadBump(s); $("#sImg").checked=s.attach_images!=="0"; $("#sImgMin").value=s.images_min||2; $("#sImgMax").value=s.images_max||4; $("#sImgDays").value=s.image_reuse_days||14; $("#sHeadless").checked=s.browser_headless==="1";
   showAi(s);
+  loadTgSet().catch(()=>{});
 }
 $("#setForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",{company_name:$("#sName").value,brand_voice:$("#sVoice").value,contact_info:$("#sContact").value,meeting_time:$("#sTime").value,posts_per_day:$("#sPer").value,auto_meeting:$("#sAutoM").checked?"1":"0",auto_daily_work:$("#sAutoW").checked?"1":"0",fb_page_id:$("#sPage").value,fb_page_token:$("#sToken").value,attach_images:$("#sImg").checked?"1":"0",images_min:$("#sImgMin").value,images_max:String(Math.max(+$("#sImgMax").value||1,+$("#sImgMin").value||1)),image_reuse_days:$("#sImgDays").value,browser_headless:$("#sHeadless").checked?"1":"0"}); $("#coName").textContent=$("#sName").value; toast("Đã lưu cài đặt"); });
 

@@ -739,8 +739,13 @@ def put_settings(data: dict):
             continue
         if k == "anthropic_api_key":
             continue  # chỉ lưu qua /api/ai-key sau khi kiểm tra
-        if k == "tg_token":
-            telegram_bot.reset_token()
+        if k == "tg_token":  # token bot: kiểm tra với Telegram trước khi lưu
+            if str(v).strip():
+                try:
+                    telegram_bot.save_token(str(v))
+                except ValueError as e:
+                    raise HTTPException(400, str(e))
+            continue
         if k in db.DEFAULT_SETTINGS and k not in ("tg_chat_ids", "tg_pair_code", "tg_sent_log"):
             db.set_setting(k, str(v))
     return settings()
@@ -1360,6 +1365,40 @@ def scan_now():
 
 @app.get("/api/telegram")
 def tg_status():
+    return telegram_bot.status()
+
+
+class TgToken(BaseModel):
+    token: str
+
+
+@app.post("/api/telegram/token")
+def tg_save_token(t: TgToken):
+    """Lưu token bot Telegram sau khi hỏi Telegram token có đúng không."""
+    try:
+        bot = telegram_bot.save_token(t.token)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    db.log("minh", "Kết nối Telegram", f"Đã lưu token bot @{bot.get('username')}")
+    return telegram_bot.status()
+
+
+@app.delete("/api/telegram/token")
+def tg_delete_token():
+    db.set_setting("tg_token", "")
+    db.set_setting("tg_chat_ids", "")
+    db.set_setting("tg_pair_code", "")
+    telegram_bot.reset_token()
+    return telegram_bot.status()
+
+
+class TgReport(BaseModel):
+    report_done: bool
+
+
+@app.put("/api/telegram/report")
+def tg_report(r: TgReport):
+    db.set_setting("tg_report_done", "1" if r.report_done else "0")
     return telegram_bot.status()
 
 
