@@ -292,6 +292,15 @@ def evening_text() -> str:
         import agents
         lines.append("\n📚 <b>Bài học mới</b>")
         lines += [f"• {e(agents.name_of(l['agent_id']))}: {e(l['text'][:160])}" for l in les]
+    try:
+        import growth
+        lv = db.q("SELECT agent_id, detail FROM activity WHERE action='Lên cấp' AND created_at LIKE ?", (db.today() + "%",))
+        gt = growth.summary_text()
+        if gt or lv:
+            import agents
+            lines.append("\n🎓 " + e(gt) + ("" if not lv else " Lên cấp: " + e(", ".join(f"{agents.name_of(x['agent_id'])} ({x['detail'][:12]})" for x in lv[:6]))))
+    except Exception:
+        pass
     cost = db.one("SELECT COALESCE(SUM(cost_usd),0) c FROM usage WHERE created_at LIKE ?", (db.today() + "%",))["c"]
     lines.append(f"\n💵 Chi phí AI hôm nay: ${cost:.3f} · tháng này: ${llm.month_spent():.2f}")
     if not st["achieved"]:

@@ -300,6 +300,7 @@ DEFAULT_SETTINGS = {
     "ceo_autopilot": "1",
     "discover_enabled": "1", "discover_time": "10:30", "discover_keywords_per_day": "3", "discover_add_per_day": "5",
     "join_enabled": "1", "join_per_nick_day": "2", "browse_minutes": "2",
+    "idle_learning": "1", "idle_study_per_day": "6", "growth_state": "",
     "knowledge_enabled": "1", "study_time": "07:00", "study_per_agent": "2", "knowledge_answer_threshold": "0.8",
     "study_last_date": "", "model_knowledge": "claude-haiku-5-5",
     "self_write_mode": "auto", "self_write_min": "12", "lan_style": "", "content_library_migrated": "",

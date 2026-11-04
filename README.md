@@ -331,6 +331,24 @@ Trang Đào tạo cho biết: số kiến thức, số học hôm nay, số lầ
 khách" để Hà tự dùng khi khách hỏi đúng ý đó). Trên Telegram: hỏi CEO bằng câu hỏi (VD "Khách chê giá cao thì trả lời sao?"),
 hoặc nhắn "Cho cả đội học thêm kiến thức". Kiến thức học mỗi ngày được báo trong tin "Việc vừa hoàn thành".
 
+## Văn phòng: agent luôn làm việc hoặc học để lên cấp
+
+Trang **Văn phòng** chỉ có văn phòng 3D và cột **Đội đang làm gì**: mỗi agent (cả nhân viên sale) hiện trạng thái
+Đang làm / Đang học / Đang họp, việc đang làm, cấp độ và thanh kinh nghiệm tới cấp sau, số kiến thức học hôm nay và
+2 việc vừa xong. Ô giao việc cho CEO, KPI hôm nay và nhật ký chuyển sang trang **Giao việc**.
+
+Agent không bao giờ ngồi không. Mỗi 30 giây, agent nào không có việc thật (và không đang họp) tự vào một buổi 6–12 phút:
+
+1. **Học với Claude** (Haiku): tối đa 6 buổi/agent/ngày (chỉnh ở Đào tạo → Sổ kiến thức → Cài đặt), cách nhau ít nhất
+   45 phút; mỗi kiến thức mới lưu vào sổ, **+5 kinh nghiệm**. Chưa có khóa: học từ thư viện có sẵn đến khi hết.
+2. **Luyện tập** không tốn tiền: Lan luyện viết bài theo phong cách đã học, Hà luyện trả lời câu khách hay hỏi, Tuấn xem lại
+   nhóm cần cân nhắc, Khoa xem số liệu, sale ôn cách giữ nick: **+2 kinh nghiệm**, tối đa 10/ngày.
+3. **Ôn lại** kiến thức trong sổ: **+1 kinh nghiệm**, tối đa 10/ngày.
+
+Việc thật luôn được ưu tiên: có việc là agent chuyển sang làm ngay. Kinh nghiệm từ học có giới hạn mỗi ngày, nên muốn lên cấp
+nhanh vẫn phải làm ra kết quả (bài được duyệt, khách, đơn). Báo cáo tối trên Telegram có số kiến thức cả đội học trong ngày và
+ai lên cấp. Chi phí: khoảng 0,02 USD/ngày cho 7 agent với 6 buổi học mỗi agent.
+
 ## Công ty: vốn, sa thải, giải thể
 
 Trang **Công ty** quản lý vốn, chi phí nuôi agent, doanh thu và luật sống còn. Bấm **Thành lập công ty** (mặc định vốn 10.000.000đ)
@@ -536,6 +554,7 @@ backend/
   kpi.py         KPI: nhận diện SĐT, tiến độ, chia theo nick, lịch sử; chuyển khách cho sếp, kịch bản tư vấn
   telegram_bot.py  Bot Telegram: ghép nối, báo cáo, phiếu khách có nút bấm, lệnh /baocao /kpi /khach /hop
   content_style.py  Kho bài Claude viết, phong cách viết của Lan, Lan tự ghép bài mới theo phong cách đã học
+  growth.py      Agent rảnh thì tự học với Claude, luyện tập, ôn bài để lên cấp (không bao giờ ngồi không)
   knowledge.py   Sổ kiến thức: tự học mỗi ngày, tra sổ trước khi làm, chỉ hỏi Claude khi chưa biết và lưu lại câu trả lời
   learning.py    Tự học: thống kê hiệu quả, chọn góc/sản phẩm/giờ, sổ tay bài học, cấp độ, phản tỉnh mỗi đêm
   fb_selectors.json  Chữ hiển thị trên giao diện Facebook (sửa khi Facebook đổi giao diện)

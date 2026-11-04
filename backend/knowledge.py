@@ -399,4 +399,5 @@ def overview(agent: str = "", query: str = "", limit: int = 60) -> dict:
                       "self_rate": round(mem / (mem + cl) * 100) if mem + cl else None},
             "roles": ROLE_NAME, "sources": SOURCE_TXT,
             "settings": {k: st for k, st in db.get_settings().items() if k in ("knowledge_enabled", "study_time", "study_per_agent",
-                                                                                "knowledge_answer_threshold", "study_last_date")}}
+                                                                                "knowledge_answer_threshold", "study_last_date",
+                                                                                "idle_learning", "idle_study_per_day")}}

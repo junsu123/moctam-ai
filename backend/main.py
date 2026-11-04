@@ -153,6 +153,8 @@ def health():
 @app.get("/api/agents")
 def list_agents():
     out = agents.public_list()
+    import growth
+    growth_today = growth.today()
     login_txt = {"ok": "Nick sẵn sàng", "not_logged_in": "Chờ sếp đăng nhập Facebook", "checkpoint": "Nick bị checkpoint, đã dừng"}
     sales_by_id = {f"sale-{r['id']}": r for r in db.q("SELECT id, login_status FROM sales")}
     for a in out:
@@ -163,6 +165,10 @@ def list_agents():
             if a["status"].get("state") == "idle":
                 a["status"] = {"state": "idle", "text": login_txt.get(a["login_status"], "")}
         a["tasks"] = db.q("SELECT * FROM tasks WHERE agent_id=? AND status!='done' ORDER BY id DESC LIMIT 5", (a["id"],))
+        a["progress"] = learning.progress(a["id"])
+        a["recent"] = db.q("""SELECT action, detail, created_at FROM activity WHERE agent_id=? AND action NOT IN ('Tự học lúc rảnh')
+                              ORDER BY id DESC LIMIT 3""", (a["id"],))
+        a["learned_today"] = (growth_today.get(a["id"]) or {}).get("learned", 0)
     return out
 
 
@@ -1633,6 +1639,8 @@ def knowledge_ask(a: KnowAsk):
 
 
 class KnowSettings(BaseModel):
+    idle_learning: bool | None = None
+    idle_study_per_day: int | None = None
     knowledge_enabled: bool | None = None
     study_time: str | None = None
     study_per_agent: int | None = None
@@ -1643,6 +1651,10 @@ def knowledge_settings(k: KnowSettings):
     import knowledge
     if k.knowledge_enabled is not None:
         db.set_setting("knowledge_enabled", "1" if k.knowledge_enabled else "0")
+    if k.idle_learning is not None:
+        db.set_setting("idle_learning", "1" if k.idle_learning else "0")
+    if k.idle_study_per_day is not None:
+        db.set_setting("idle_study_per_day", str(max(0, min(24, k.idle_study_per_day))))
     if k.study_time is not None:
         if not re.fullmatch(r"\d{2}:\d{2}", k.study_time):
             raise HTTPException(400, "Giờ phải có dạng HH:MM")

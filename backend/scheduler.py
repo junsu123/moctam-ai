@@ -67,6 +67,8 @@ def _tick():
     group_finder.tick(now)
     import knowledge
     knowledge.tick(now)
+    import growth
+    growth.tick(now)  # agent rảnh thì tự học / luyện tập để lên cấp
     # KPI: chuyển khách cần sếp, nhắc lại; báo cáo Telegram
     kpi.check_escalations()
     telegram_bot.tick()

@@ -503,7 +503,31 @@ td{border-bottom-color:var(--line-2)}
 /* số liệu lớn: chữ tiêu đề, số thẳng hàng */
 .kpi .v,.co-tile .v,.sale-stats b,.kb-stats b,.skills b,.pipe b,.spend b,.kpi-hero .big{font-family:var(--f-display);font-weight:700;letter-spacing:-.02em}
 
-/* ---- Văn phòng: bàn làm việc của sếp */
+/* ---- Văn phòng: chỉ văn phòng 3D + cột việc của từng agent */
+.office-h{align-items:center}
+.office-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:stretch}
+.office-grid .stage{height:calc(100vh - 150px);min-height:520px;max-height:none}
+.crew{padding:14px 10px 10px 14px;max-height:calc(100vh - 150px);min-height:520px;display:flex;flex-direction:column}
+.crew-list{overflow-y:auto;padding-right:4px;gap:2px}
+.crew-item{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start;padding:10px 8px;border:0;border-bottom:1px solid var(--line-2);background:none;text-align:left;width:100%;border-radius:0}
+.crew-item:hover{background:var(--panel-2);border-radius:var(--r-s)}
+.crew-item .who{display:flex;flex-direction:column;gap:3px;min-width:0}
+.crew-top{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.crew-top b{font-size:14px}
+.crew-top .chip{margin-left:auto}
+.crew-role{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crew-now{font-size:13px;line-height:1.4}
+.crew-item.working .crew-now{font-weight:600}
+.crew-item .xp{height:5px;margin-top:3px}
+.crew-meta{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.crew-rec{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted);margin-top:2px}
+.crew-rec span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crew-rec time{opacity:.75}
+.chip.learning{background:color-mix(in srgb,#5a7fb0 18%,var(--panel));color:#3d6596}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip.learning{color:#9cbbe3}}
+:root[data-theme="dark"] .chip.learning{color:#9cbbe3}
+
+/* ---- Giao việc: bàn làm việc của sếp */
 .strip{display:flex;flex-direction:column;gap:8px}
 .strip:not(:has(> :not([hidden]))){display:none}
 .desk{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:stretch}
@@ -562,6 +586,9 @@ label.f{font-weight:600;color:var(--muted)}
 
 @media (max-width:1180px){
   .desk{grid-template-columns:minmax(0,1fr)}
+  .office-grid{grid-template-columns:minmax(0,1fr)}
+  .office-grid .stage{height:60vh;min-height:380px}
+  .crew{max-height:none;min-height:0}
   .today .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 
@@ -608,12 +635,13 @@ label.f{font-weight:600;color:var(--muted)}
     <nav class="nav" id="nav" aria-label="Các mục">
       <span class="nav-g">Điều hành</span>
       <button data-v="office" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6"/></svg>Văn phòng</button>
+      <button data-v="ceo" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>Giao việc</button>
       <button data-v="company"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M10 21v-4h4v4"/></svg>Công ty<span class="badge" id="coBadge" hidden>!</span></button>
       <button data-v="meeting"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="3.5" r="1.5"/><circle cx="12" cy="20.5" r="1.5"/><circle cx="3.5" cy="12" r="1.5"/><circle cx="20.5" cy="12" r="1.5"/></svg>Phòng họp<span class="badge" id="liveBadge" hidden>LIVE</span></button>
       <span class="nav-g">Bán hàng</span>
       <button data-v="posts" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Bài đăng<span class="badge" id="draftBadge" hidden></span></button>
       <button data-v="leads" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>Khách hàng</button>
-      <button data-v="kpi" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>KPI & Báo cáo<span class="badge" id="bossBadge" hidden></span></button>
+      <button data-v="kpi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>KPI & Báo cáo<span class="badge" id="bossBadge" hidden></span></button>
       <span class="nav-g">Facebook</span>
       <button data-v="sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M8 9.5l2.5 2.5L16 7"/></svg>Nhân viên sale<span class="badge" id="saleBadge" hidden>!</span></button>
       <button data-v="groups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 2 6 5.5"/></svg>Hội nhóm</button>
@@ -631,8 +659,23 @@ label.f{font-weight:600;color:var(--muted)}
   <main class="main">
     <!-- VĂN PHÒNG -->
     <section class="view" id="v-office">
+      <div class="vh office-h">
+        <div><h1>Văn phòng</h1><p id="crewSum">Cả đội đang làm việc hoặc tự học để lên cấp.</p></div>
+        <div class="actions"><a class="btn primary" href="#ceo">Giao việc cho CEO</a></div>
+      </div>
+      <div class="office-grid">
+        <div class="stage-slot" id="slot-office"></div>
+        <aside class="crew card" aria-label="Việc của từng agent">
+          <div class="card-h"><h3>Đội đang làm gì</h3><span class="small muted num" id="clock"></span></div>
+          <div class="team crew-list" id="team"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- GIAO VIỆC CHO CEO -->
+    <section class="view" id="v-ceo" hidden>
       <div class="vh">
-        <div><h1>Văn phòng</h1><p>Giao việc cho CEO, xem đội đang làm gì và tiến độ hôm nay.</p></div>
+        <div><h1>Giao việc</h1><p>Nhắn việc cho CEO Đức. CEO chia việc cho cả đội và báo lại khi xong, kể cả qua Telegram.</p></div>
         <div class="actions">
           <button class="btn" id="btnDaily" data-direct>Giao việc hằng ngày</button>
           <button class="btn primary" id="btnCall" data-direct>Triệu tập họp</button>
@@ -645,7 +688,7 @@ label.f{font-weight:600;color:var(--muted)}
       </div>
       <div class="desk">
         <section class="card ceo-chat" id="ceoChat">
-          <div class="card-h"><h2>Giao việc cho CEO Đức</h2><span class="small muted" id="ceoChatMode"></span></div>
+          <div class="card-h"><h2>CEO Đức</h2><span class="small muted" id="ceoChatMode"></span></div>
           <div class="chatlog" id="ceoLog" aria-live="polite"></div>
           <p class="small ceo-run" id="ceoRun" hidden></p>
           <form class="ceo-form" id="ceoForm"><input type="text" class="grow" id="ceoIn" placeholder="Nhắn việc cho CEO, VD: Viết 3 bài về trà gừng" aria-label="Việc giao cho CEO" autocomplete="off"><button class="btn primary" type="submit">Giao việc</button></form>
@@ -656,13 +699,7 @@ label.f{font-weight:600;color:var(--muted)}
           <div class="kpis" id="kpis"></div>
         </section>
       </div>
-      <div class="split">
-        <div class="stage-slot" id="slot-office"></div>
-        <div class="sidecol">
-          <div class="card"><div class="card-h"><h3>Đội ngũ</h3><span class="small muted num" id="clock"></span></div><div class="team" id="team"></div></div>
-          <div class="card"><h3>Nhật ký hoạt động</h3><ol class="feed" id="feed"></ol></div>
-        </div>
-      </div>
+      <div class="card"><h3>Nhật ký hoạt động</h3><ol class="feed" id="feed"></ol></div>
     </section>
 
     <!-- CÔNG TY -->
@@ -680,7 +717,7 @@ label.f{font-weight:600;color:var(--muted)}
       <div class="split">
         <div class="stage-slot" id="slot-meeting"></div>
         <div class="sidecol">
-          <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. Muốn họp về một chủ đề, nhắn CEO ở <a href="#office">Văn phòng</a>, ví dụ “Họp về giá sỉ mùa Tết”. Sếp vẫn chen vào cuộc họp được.</p>
+          <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. Muốn họp về một chủ đề, nhắn CEO ở <a href="#ceo">Giao việc</a>, ví dụ “Họp về giá sỉ mùa Tết”. Sếp vẫn chen vào cuộc họp được.</p>
           <div class="card" id="startCard" data-direct>
             <h3>Mở cuộc họp mới</h3>
             <label class="f" for="topicSel">Chủ đề tranh luận
@@ -712,7 +749,7 @@ label.f{font-weight:600;color:var(--muted)}
         <div><h1>Bài đăng</h1><p>Lan viết bài, CEO duyệt (sếp vẫn sửa hoặc duyệt thay được), Tuấn xếp lịch theo nhóm và nick. Đến giờ, nhân viên sale AI tự mở Chrome của nick mình và đăng. Bài Fanpage đăng qua API chính thức.</p></div>
         <div class="actions"><button class="btn" id="btnPlan" data-direct>Tuấn xếp lịch đăng nhóm</button></div>
       </div>
-      <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. CEO tự giao Lan viết bài, tự duyệt bài nháp và cho Tuấn xếp lịch. Muốn viết thêm hay sửa cách viết, nhắn CEO ở <a href="#office">Văn phòng</a> hoặc Telegram.</p>
+      <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. CEO tự giao Lan viết bài, tự duyệt bài nháp và cho Tuấn xếp lịch. Muốn viết thêm hay sửa cách viết, nhắn CEO ở <a href="#ceo">Giao việc</a> hoặc Telegram.</p>
       <form class="card" id="genForm" data-direct>
         <h3>Giao Lan viết bài</h3>
         <div class="grid3">
@@ -898,7 +935,7 @@ label.f{font-weight:600;color:var(--muted)}
           </form>
         </div>
       </div>
-      <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. Agent nào làm chưa đúng, nhắn CEO ở <a href="#office">Văn phòng</a> (ví dụ “Lan viết dài quá, viết dưới 150 chữ”), CEO sẽ ghi thành bài học bắt buộc cho agent đó.</p>
+      <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. Agent nào làm chưa đúng, nhắn CEO ở <a href="#ceo">Giao việc</a> (ví dụ “Lan viết dài quá, viết dưới 150 chữ”), CEO sẽ ghi thành bài học bắt buộc cho agent đó.</p>
       <div class="card kb" id="kbCard">
         <div class="card-h"><h3>Sổ kiến thức của đội</h3><span class="chip" id="kbSelf">—</span></div>
         <p class="small muted">Mỗi ngày các agent tự học kiến thức mới hợp với việc đang làm và ghi vào sổ. Khi làm việc, agent tra sổ trước; câu đã biết thì tự trả lời, không cần hỏi Claude. Chưa biết mới hỏi Claude, và câu trả lời luôn được lưu lại để lần sau tự dùng.</p>
@@ -920,9 +957,11 @@ label.f{font-weight:600;color:var(--muted)}
           <details><summary class="small">Cài đặt tự học kiến thức</summary>
             <form class="stack" id="kbSet" style="margin-top:8px">
               <label class="row small"><input type="checkbox" id="kbOn"> Mỗi ngày tự học kiến thức mới</label>
+              <label class="row small"><input type="checkbox" id="kbIdle"> Lúc rảnh, agent tự học, luyện tập, ôn bài để lên cấp (không bao giờ ngồi không)</label>
+              <label class="f" for="kbIdleN">Số buổi học với Claude mỗi agent/ngày lúc rảnh<input type="number" id="kbIdleN" min="0" max="24"></label>
               <div class="grid2"><label class="f" for="kbTime">Giờ tự học<input type="time" id="kbTime"></label>
                 <label class="f" for="kbN">Số kiến thức mỗi agent/ngày<input type="number" id="kbN" min="1" max="5"></label></div>
-              <p class="small muted">Có khóa Claude: mỗi agent 1 lần gọi Haiku mỗi ngày (khoảng 0,001 USD). Chưa có khóa: học từ thư viện có sẵn; câu hỏi chưa biết được ghi lại để học khi có khóa.</p>
+              <p class="small muted">Có khóa Claude: buổi học sáng 1 lần gọi Haiku/agent; học lúc rảnh tối đa số buổi trên, mỗi buổi 1 lần gọi Haiku (6 buổi × 7 agent ≈ 0,02 USD/ngày). Chưa có khóa: học từ thư viện có sẵn; câu hỏi chưa biết được ghi lại để học khi có khóa.</p>
               <div><button class="btn sm primary" type="submit">Lưu</button></div></form></details>
         </div>
       </div>
@@ -1119,7 +1158,7 @@ function toast(t){ const el=$("#toast"); const isErr=Date.now()-(ERR.lastAt||0)<
   el.textContent=t; if(isErr){ const a=document.createElement("a"); a.href="#errors"; a.textContent="Xem lỗi"; el.appendChild(a); }
   el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,isErr?6000:2600); }
 async function copyText(t){ try{ await navigator.clipboard.writeText(t); toast("Đã sao chép nội dung"); }catch(e){ toast("Không sao chép được, hãy bôi đen và sao chép thủ công"); } }
-const STATUS_TXT = {idle:"Rảnh", working:"Đang làm", meeting:"Đang họp", talking:"Đang nói"};
+const STATUS_TXT = {idle:"Rảnh", working:"Đang làm", meeting:"Đang họp", talking:"Đang nói", learning:"Đang học"};
 const LEAD_ST = {new:"Mới", contacted:"Đã liên hệ", sample:"Đã gửi mẫu", ordered:"Đã nhập hàng", lost:"Không mua"};
 const PHASE = {open:"Mở đầu", report:"Báo cáo", debate:"Tranh luận", close:"Chốt", boss:"Sếp"};
 const TARGET = {group:"Hội nhóm", profile:"Trang cá nhân", page:"Fanpage"};
@@ -1190,7 +1229,7 @@ const Demo = (() => {
     top:{hook:[{text:"Nhập {wp}, bán {rp} — lãi rõ ràng từng hộp 💰",score:6.5,uses:3},{text:"📦 Nguồn {cat} tận xưởng, không qua trung gian, giá gốc cho người bán online",score:5,uses:2},{text:"Chị em chủ live ơi, món này lên hình là ra đơn 🎥",score:4.2,uses:1}],
       cta:[{text:"👉 Bình luận \"GIÁ\" mình gửi bảng giá sỉ ngay nhé!",score:7.1,uses:4},{text:"Để lại SĐT/Zalo dưới bình luận, xưởng gọi tư vấn trong 15 phút 📞",score:5.4,uses:2}],point:[]},
     recent:S.posts.slice(0,6).map((p,i)=>({id:p.id,source:i%3===0?"self":"claude",product_name:p.product_name,title:p.title,content:p.content.slice(0,400),status:p.status==="posted"?"approved":"draft",leads:p.leads||0,created_at:p.created_at}))});
-  S.kbLog={memory:31,claude:12,study:18}; S.kbSet={knowledge_enabled:"1",study_time:"07:00",study_per_agent:"2"};
+  S.kbLog={memory:31,claude:12,study:18}; S.kbSet={knowledge_enabled:"1",study_time:"07:00",study_per_agent:"2",idle_learning:"1",idle_study_per_day:"6"};
   const KB_ROLES={ceo:"CEO Đức",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",sale:"Nhân viên sale",all:"Cả đội"};
   const kbPlain=t=>(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d");
   const kbHit=q=>{ const w=kbPlain(q).split(/\W+/).filter(x=>x.length>2); let best=null,bs=0; S.kb.filter(k=>k.status==="active").forEach(k=>{ const h=kbPlain(k.topic+" "+k.question); const sc=w.filter(x=>h.includes(x)).length/(w.length||1); if(sc>bs){bs=sc;best=k;} }); return bs>=0.6?best:null; };
@@ -1248,6 +1287,9 @@ const Demo = (() => {
     ha:[{label:"Tỉ lệ chốt đơn",unit:"%",now:38,prev:25},{label:"Tin nhắn đã gửi",unit:"",now:21,prev:14},{label:"Bài học mới",unit:"",now:2,prev:0}],
     khoa:[{label:"Bài có số liệu kết quả",unit:"%",now:40,prev:35},{label:"Bài học mới",unit:"",now:1,prev:1}]};
   const lvl=xp=>1+Math.floor(Math.sqrt(xp/50)), lxp=l=>50*(l-1)**2;
+  const DEMO_LEARN={ceo:["Đang học: cách định giá sỉ theo bậc số lượng","Ôn lại: khi nào nên tuyển thêm nhân sự bán hàng"],minh:["Đang học: cách điều hành họp giao ban 15 phút","Ôn lại: cách giao việc có hạn và người chịu trách nhiệm"],
+    lan:["Luyện viết bài về Trà gừng mật ong theo phong cách đã học","Đang học: cách viết câu mở đầu giữ chân người đọc"],tuan:["Đang học: dấu hiệu nhóm tương tác thật và nhóm ảo","Xem lại nhóm cần cân nhắc: Chợ Sỉ Thực Phẩm Khô"],
+    ha:["Luyện trả lời khách: chiết khấu nhập số lượng lớn","Đang học: xử lý khách chê giá cao"],khoa:["Xem lại số liệu bài đăng 7 ngày qua","Đang học: cách tính chi phí trên mỗi khách có SĐT"]};
   function demoFolder(p){ if(!p.image_folder) return {exists:false,source:"",count:0,fresh:0,samples:[]}; const n=[24,18,9,15,6,12][(p.id-1)%6]||10, fr=[17,11,2,9,4,7][(p.id-1)%6]||5; return {path:p.image_folder,exists:true,source:"product",count:n,fresh:fr,posts_left:Math.floor(fr/2),samples:[],error:null}; }
   S.co={status:"active",founded_at:"2026-10-12",day:23,trial_days:60,capital:10000000,orders:[{id:1,lead_name:"Nguyễn Thu Hà",amount:2850000,via:"telegram",created_at:"2026-10-29 15:20:00"},{id:2,lead_name:"Shop Mộc An",amount:4200000,via:"app",created_at:"2026-11-02 10:05:00",note:"Ngũ cốc 50 hũ"}]};
   S.ceoSt={mode:"auto",potential_on:true,milestones:[{amount:50000000,hires:1},{amount:100000000,hires:1}],
@@ -1400,7 +1442,11 @@ const Demo = (() => {
     const [p, qs] = path.split("?"); const P=p.replace(/^\/api/,""); let m;
     if(method==="GET"){
       if(P==="/health") return {ok:true,ai_live:false,model:"bản xem trước"};
-      if(P==="/agents") return AGENT_DEFS.map(a=>({...a,kind:"core",level:lvl(S.xp[a.id]||0),status:S.status[a.id],tasks:S.tasks.filter(t=>t.agent_id===a.id&&t.status!=="done")})).concat(saleAgents().map(a=>({...a,level:lvl(S.xp[a.id]||0),tasks:[]})));
+      if(P==="/agents"){ const prog=id=>{ const x=S.xp[id]||0, l=lvl(x); return {xp:x,level:l,level_xp:lxp(l),next_xp:lxp(l+1)}; };
+        const rec=id=>S.activity.filter(x=>x.agent_id===id).slice(0,2);
+        const learnSt=id=>{ const st=S.status[id]; if(st&&st.state!=="idle") return st; const t=DEMO_LEARN[id]||["Ôn lại: cách giữ nick an toàn","Ôn cách trả lời bình luận xin số điện thoại"]; return {state:"learning",text:t[Math.floor(Date.now()/40000)%t.length]}; };
+        return AGENT_DEFS.map(a=>({...a,kind:"core",level:lvl(S.xp[a.id]||0),progress:prog(a.id),recent:rec(a.id),learned_today:(a.id.length%3)+1,status:learnSt(a.id),tasks:S.tasks.filter(t=>t.agent_id===a.id&&t.status!=="done")}))
+          .concat(saleAgents().map(a=>({...a,level:lvl(S.xp[a.id]||0),progress:prog(a.id),recent:rec(a.id),learned_today:1,status:learnSt(a.id),tasks:[]}))); }
       if(P==="/sales") return S.sales.map(saleOut);
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products.slice().sort((a,b)=>(b.hot||0)-(a.hot||0)||a.id-b.id).map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g),joins:g.joins||{},today:gfToday(g)}));
@@ -1506,7 +1552,7 @@ const Demo = (() => {
       const hook=["Nhập {wp}, bán {rp} — lãi rõ ràng từng hộp 💰","📦 Nguồn {cat} tận xưởng, không qua trung gian, giá gốc cho người bán online","Chị em chủ live ơi, món này lên hình là ra đơn 🎥"][Math.floor(Math.random()*3)].replace("{wp}",p.wholesale_price).replace("{rp}",p.retail_price).replace("{cat}",p.category.toLowerCase());
       const content=[hook,"",`🌿 ${p.name}: ${p.description}`,...p.selling_points.split(/[,;]/).slice(0,3).map(x=>`✅ ${x.trim()}`),`💵 Giá sỉ: ${p.wholesale_price} — bán lẻ gợi ý ${p.retail_price}`,`📦 Nhập tối thiểu: ${p.moq}`,"","🎁 Tặng bộ ảnh, video quay tại xưởng để đăng bán","",'👉 Bình luận "GIÁ" mình gửi bảng giá sỉ ngay nhé!'].join("\n");
       return {title:hook,content,hashtags:"#nguonhangsi #taxuong #banhangonline",product:p.name,angle:"Biên lợi nhuận cho người bán"}; }
-    if(method==="PUT"&&P==="/knowledge/settings"){ if(body.study_time&&!/^\d{2}:\d{2}$/.test(body.study_time)) throw new Error("Giờ phải có dạng HH:MM"); Object.assign(S.kbSet,{knowledge_enabled:body.knowledge_enabled?"1":"0",study_time:body.study_time||S.kbSet.study_time,study_per_agent:String(body.study_per_agent||2)}); return demoKB(); }
+    if(method==="PUT"&&P==="/knowledge/settings"){ if(body.study_time&&!/^\d{2}:\d{2}$/.test(body.study_time)) throw new Error("Giờ phải có dạng HH:MM"); Object.assign(S.kbSet,{idle_learning:body.idle_learning?"1":"0",idle_study_per_day:String(body.idle_study_per_day??6),knowledge_enabled:body.knowledge_enabled?"1":"0",study_time:body.study_time||S.kbSet.study_time,study_per_agent:String(body.study_per_agent||2)}); return demoKB(); }
     if(method==="DELETE"&&(m=P.match(/^\/knowledge\/(\d+)$/))){ S.kb=S.kb.filter(k=>k.id!=m[1]); return {ok:true}; }
     if(method==="PUT"&&P==="/telegram/report"){ S.settings.tg_report_done=body.report_done?"1":"0"; return demoTg(); }
     if(method==="DELETE"&&P==="/telegram/token"){ S.settings.tg_token=""; S.tgChats=0; S.pairCode=""; return demoTg(); }
@@ -1815,7 +1861,7 @@ const World = (() => {
       } else {
         const f=c.final||deskSpot(c.id); c.root.rotation.y=lerpA(c.root.rotation.y,f.ry,0.12);
         c.legs.forEach(l=>l.rotation.x+=(-1.45-l.rotation.x)*0.2); c.body.position.y+=(-0.04-c.body.position.y)*0.2;
-        if(c.state==="working" && c.mode==="desk"){ c.arms.forEach((a,i)=>a.rotation.x=-1.15+Math.sin(t*22+i*2)*0.12); c.head.rotation.x=0.12; }
+        if((c.state==="working"||c.state==="learning") && c.mode==="desk"){ c.arms.forEach((a,i)=>a.rotation.x=-1.15+Math.sin(t*22+i*2)*0.12); c.head.rotation.x=0.12; }
         else if(talking){ c.arms[1].rotation.x=-0.9+Math.sin(t*4)*0.4; c.arms[0].rotation.x+=( -0.2-c.arms[0].rotation.x)*0.1; c.head.rotation.x=Math.sin(t*5)*0.08; c.body.position.y=-0.04+Math.abs(Math.sin(t*6))*0.05; }
         else { c.arms.forEach(a=>a.rotation.x+=(-0.15-a.rotation.x)*0.1); c.head.rotation.x=0; c.head.rotation.y=Math.sin(t*0.6+c.phase)*0.25; c.body.position.y=-0.04+Math.sin(t*2+c.phase)*0.015; }
       }
@@ -1856,7 +1902,7 @@ const World = (() => {
     const ids=new Set(agents.map(a=>a.id)); let changed=false;
     for(const a of agents) if(!chars[a.id]){ addAgent(a); changed=true; }
     for(const id of Object.keys(chars)) if(!ids.has(id)){ removeAgent(id); changed=true; }
-    for(const a of agents){ const label=a.level?`${a.name} · Cấp ${a.level}`:a.name; if(chars[a.id] && tags[a.id] && tags[a.id].textContent!==label){ tags[a.id].textContent=label; AGENT[a.id]={...AGENT[a.id],...a}; } }
+    for(const a of agents){ const label=(a.level?`${a.name} · Cấp ${a.level}`:a.name)+(a.status?.state==="learning"?" · đang học":""); if(chars[a.id] && tags[a.id] && tags[a.id].textContent!==label){ tags[a.id].textContent=label; AGENT[a.id]={...AGENT[a.id],...a}; } }
     if(changed){ layoutSeats(agents.map(a=>a.id)); for(const c of Object.values(chars)) if(c.mode==="meeting"){ const s=SEATS[c.id]; c.root.position.set(s.x,0,s.z); c.final=s; } }
     for(const a of agents){ const c=chars[a.id]; if(!c) continue; const st=a.status||{}; c.state=st.state||"idle"; c.statusText=st.text||"";
       if(st.state==="meeting"||st.state==="talking"||meetingRunning) goMeeting(a.id); else goDesk(a.id); }
@@ -1873,7 +1919,8 @@ function show(v){
   if(!document.getElementById("v-"+v)) v="office";
   ST.view=v; document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!=="v-"+v);
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
-  if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); loadCeoChat(true); }
+  if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
+  if(v==="ceo") loadCeoChat(true);
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
   if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
@@ -1894,7 +1941,7 @@ async function refresh(){
     const s=dash.stats;
     $("#kpis").innerHTML=[["Bài chờ duyệt",s.drafts,s.drafts>0],["Bài đã duyệt / lên lịch",s.approved],["Bài đã đăng",s.posted_total],["Khách nóng",s.leads_hot,s.leads_hot>0],["Khách mới chưa liên hệ",s.leads_new,s.leads_new>0],["Nick đang chạy",s.nicks_total!=null?`${s.nicks_ok||0}/${s.nicks_total||0}`:`${s.sales_ok||0}/${s.sales_total||0}`,!!(s.nicks_problem??s.sales_problem)]]
       .map(([l,v,w])=>`<div class="kpi${w?" warn":""}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
-    $("#team").innerHTML=agents.map(a=>`<button class="member" data-a="${a.id}">${avaHtml(a.id)}<span class="who"><b>${esc(a.name)} ${a.level?`<span class="lv">Cấp ${a.level}</span>`:""} <span class="muted" style="display:inline;font-weight:500">${esc(a.role)}</span></b><span>${esc(a.status?.text||"")}</span></span><span class="chip ${a.status?.state||""}">${STATUS_TXT[a.status?.state]||"Rảnh"}</span></button>`).join("");
+    renderCrew(agents);
     $("#feed").innerHTML=dash.activity.length?dash.activity.map(x=>`<li>${avaHtml(x.agent_id)}<div><b>${esc(x.action)}</b> · ${esc(x.detail)}<time>${esc(AGENT[x.agent_id]?.name||"")} · ${fmtTime(x.created_at)} ${fmtDate(x.created_at)}</time></div></li>`).join(""):`<li class="muted">Chưa có hoạt động.</li>`;
     const db=$("#draftBadge"); db.hidden=!s.drafts; db.textContent=s.drafts; setErrBadge(s.errors_new||0);
     document.body.classList.toggle("autopilot",!!s.autopilot);
@@ -1908,6 +1955,21 @@ async function refresh(){
     if(dash.meeting_running && ST.meetingId!==dash.meeting_running){ ST.meetingId=dash.meeting_running; ST.lastMsg=0; ST.msgs=[]; }
   }catch(e){ console.error(e); }
 }
+function renderCrew(agents){
+  const n={working:0,learning:0,meeting:0}; agents.forEach(a=>{ const st=a.status?.state; if(st==="talking") n.meeting++; else if(n[st]!=null) n[st]++; });
+  const sum=$("#crewSum"); if(sum) sum.textContent=[n.working&&`${n.working} đang làm việc`,n.learning&&`${n.learning} đang tự học`,n.meeting&&`${n.meeting} đang họp`].filter(Boolean).join(" · ")||"Cả đội đang sẵn sàng.";
+  if(document.activeElement&&$("#team").contains(document.activeElement)&&document.activeElement.tagName!=="BUTTON") return;
+  $("#team").innerHTML=agents.map(a=>{ const st=a.status?.state||"idle"; const pr=a.progress||{}; const span=Math.max(1,(pr.next_xp||1)-(pr.level_xp||0)); const pct=Math.max(2,Math.min(100,((pr.xp||0)-(pr.level_xp||0))/span*100));
+    const rec=(a.recent||[]).slice(0,2);
+    return `<button class="crew-item ${st}" data-a="${a.id}">${avaHtml(a.id)}<span class="who">
+      <span class="crew-top"><b>${esc(a.name)}</b><span class="lv">Cấp ${a.level||1}</span><span class="chip ${st}">${STATUS_TXT[st]||"Rảnh"}</span></span>
+      <span class="crew-role">${esc(a.role)}</span>
+      <span class="crew-now">${esc(a.status?.text||"Đang sẵn sàng")}</span>
+      <span class="xp" title="${pr.xp||0}/${pr.next_xp||0} kinh nghiệm để lên cấp ${(a.level||1)+1}"><i style="width:${pct}%"></i></span>
+      <span class="crew-meta">${num(pr.xp||0)}/${num(pr.next_xp||0)} XP${a.learned_today?` · học ${a.learned_today} kiến thức hôm nay`:""}</span>
+      ${rec.length?`<span class="crew-rec">${rec.map(r=>`<span>✓ ${esc(r.action)}${r.detail?`: ${esc(r.detail.slice(0,70))}`:""} <time>${fmtTime(r.created_at)}</time></span>`).join("")}</span>`:""}
+    </span></button>`; }).join("");
+}
 $("#team").addEventListener("click",e=>{ const b=e.target.closest("[data-a]"); if(b) openAgent(b.dataset.a); });
 function openAgent(id){
   const a=ST.agents.find(x=>x.id===id)||AGENT[id]; const d=$("#drawer");
@@ -1918,7 +1980,7 @@ function openAgent(id){
    <div id="dLearn"></div>
    <div><h3>Việc đang mở</h3><ul class="tasks" style="margin-top:6px">${(a.tasks||[]).length?a.tasks.map(t=>`<li>· ${esc(t.title)}</li>`).join(""):'<li class="muted small">Không có việc tồn.</li>'}</ul></div>
    ${id!=="ceo"&&!String(id).startsWith("sale-")?`<div class="ap-note">Luật: sếp chỉ giao việc cho CEO. <button type="button" class="btn sm" data-askceo="${esc(a.name)}">Nhắn CEO về ${esc(a.name)}</button></div>`:""}
-   <div class="actions" data-direct>${{lan:'<a class="btn primary" href="#posts">Giao Lan viết bài</a>',tuan:'<button class="btn primary" id="dPlan">Xếp lịch đăng nhóm</button>',ha:'<a class="btn primary" href="#leads">Mở danh sách khách</a>',khoa:'<a class="btn primary" href="#office">Xem số liệu</a>',minh:'<a class="btn primary" href="#meeting">Vào phòng họp</a>'}[id]||'<a class="btn primary" href="#sales">Quản lý nick</a>'}</div>`;
+   <div class="actions" data-direct>${{lan:'<a class="btn primary" href="#posts">Giao Lan viết bài</a>',tuan:'<button class="btn primary" id="dPlan">Xếp lịch đăng nhóm</button>',ha:'<a class="btn primary" href="#leads">Mở danh sách khách</a>',khoa:'<a class="btn primary" href="#kpi">Xem số liệu</a>',minh:'<a class="btn primary" href="#meeting">Vào phòng họp</a>'}[id]||'<a class="btn primary" href="#sales">Quản lý nick</a>'}</div>`;
   d.hidden=false; $("#dClose").onclick=()=>d.hidden=true; d.querySelectorAll("a").forEach(x=>x.addEventListener("click",()=>d.hidden=true));
   api("/learning").then(L=>{ const x=L.agents.find(z=>z.id===id); if(!x||!$("#dLearn")) return; const pg=x.progress;
     $("#dLearn").innerHTML=`<h3>Phát triển <span class="lv">Cấp ${pg.level}</span></h3>${pg.goal?`<p class="goal" style="margin-top:6px">${esc(pg.goal)}</p>`:""}
@@ -2220,7 +2282,7 @@ function ceoBlock(o){
     <div class="ceo-h"><div class="row">${avaHtml("ceo")}<div><h3>CEO ${esc(o.name)} · điều hành nhân sự</h3><span class="small muted">${hc.working} nick đang chạy · ${hc.waiting_nick} chờ nick · ${hc.total}/${hc.max} chỗ trong văn phòng</span></div></div>
       <div class="row wrap"><div class="seg" role="group" aria-label="Quyền quyết định của CEO"><button type="button" data-ceomode="auto" class="${o.mode==="auto"?"on":""}">CEO tự quyết</button><button type="button" data-ceomode="approve" class="${o.mode==="approve"?"on":""}">Chờ duyệt</button></div>
         <button class="btn sm" type="button" data-ceo="review">Đánh giá ngay</button></div></div>
-    <div class="row wrap small" style="gap:10px"><label class="row" style="gap:6px"><input type="checkbox" id="apToggle" ${document.body.classList.contains("autopilot")?"checked":""}> <b>Luật: sếp chỉ giao việc cho CEO</b> (CEO tự giao việc cho các agent, tự duyệt bài, tự xếp lịch)</label><a href="#office">Giao việc cho CEO →</a></div>
+    <div class="row wrap small" style="gap:10px"><label class="row" style="gap:6px"><input type="checkbox" id="apToggle" ${document.body.classList.contains("autopilot")?"checked":""}> <b>Luật: sếp chỉ giao việc cho CEO</b> (CEO tự giao việc cho các agent, tự duyệt bài, tự xếp lịch)</label><a href="#ceo">Giao việc cho CEO →</a></div>
     <div id="ceoOrders"></div>
     ${o.group_keywords&&o.group_keywords.length?`<div class="gf-today small"><b>Hôm nay sale tìm và ưu tiên đăng nhóm chủ đề:</b>${o.group_keywords.map(k=>`<span class="kw">${esc(k)}</span>`).join("")}<a href="#groups">Xem nhóm tìm được →</a></div>`:""}
     ${o.proposed.length?`<div class="ceo-prop">${o.proposed.map(d=>`<div><b>${esc(d.title)}</b><span class="small">${esc(d.reason)}</span><div class="row"><button class="btn sm primary" type="button" data-ceook="${d.id}">Duyệt</button><button class="btn sm ghost" type="button" data-ceono="${d.id}">Không</button></div></div>`).join("")}</div>`:""}
@@ -2436,7 +2498,7 @@ $("#ceoForm").addEventListener("submit",async e=>{ e.preventDefault(); const v=$
   try{ await api("/ceo/chat","POST",{text:v}); $("#ceoIn").value=""; }catch(err){ toast(err.message); }
   btn.disabled=false; btn.textContent="Giao việc"; ST.ceoChat=null; loadCeoChat(true); refresh(); });
 $("#ceoSugg").addEventListener("click",e=>{ const b=e.target.closest("[data-sugg]"); if(!b) return; $("#ceoIn").value=b.dataset.sugg; $("#ceoIn").focus(); });
-document.addEventListener("click",e=>{ const b=e.target.closest("[data-askceo]"); if(!b) return; $("#drawer").hidden=true; location.hash="office";
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-askceo]"); if(!b) return; $("#drawer").hidden=true; location.hash="ceo";
   setTimeout(()=>{ $("#ceoIn").value=`${b.dataset.askceo} `; $("#ceoIn").focus(); },300); });
 
 /* --------------------------------------------- tìm nhóm mới */
@@ -2651,7 +2713,7 @@ async function loadKB(){
     return `<li><div><b>${esc(k.topic||k.question)}</b><div class="meta"><span class="chip">${esc(roles[k.agent_id]||k.agent_id)}</span><span class="chip ${sc}">${st}</span>${k.kind==="faq"?'<span class="chip ok">Trả lời khách</span>':""}${k.uses?`<span class="small muted">dùng ${k.uses} lần</span>`:""}<span class="small muted">${fmtDate(k.created_at)}</span></div>
       ${k.question&&k.question!==k.topic?`<div class="small muted">Hỏi: ${esc(k.question)}</div>`:""}<div class="small">${k.status==="pending"?"Đội chưa biết, sẽ học trong buổi tự học tới.":esc(k.content)}</div></div>
       <button type="button" class="btn sm ghost danger" data-kbdel="${k.id}">Xóa</button></li>`; }).join(""):'<li class="muted small">Chưa có kiến thức nào. Bấm “Học ngay” hoặc chờ buổi tự học hằng ngày.</li>';
-  const st=d.settings||{}; if(!$("#kbSet").contains(document.activeElement)){ $("#kbOn").checked=st.knowledge_enabled!=="0"; $("#kbTime").value=st.study_time||"07:00"; $("#kbN").value=st.study_per_agent||2; }
+  const st=d.settings||{}; if(!$("#kbSet").contains(document.activeElement)){ $("#kbOn").checked=st.knowledge_enabled!=="0"; $("#kbIdle").checked=st.idle_learning!=="0"; $("#kbIdleN").value=st.idle_study_per_day||6; $("#kbTime").value=st.study_time||"07:00"; $("#kbN").value=st.study_per_agent||2; }
 }
 $("#kbAgent").onchange=loadKB;
 $("#kbSearch").oninput=()=>{ clearTimeout(kbTimer); kbTimer=setTimeout(loadKB,300); };
@@ -2666,7 +2728,7 @@ $("#kbStudy").onclick=async()=>{ await api("/knowledge/study","POST"); toast("C�
 $("#kbList").addEventListener("click",async e=>{ const b=e.target.closest("[data-kbdel]"); if(!b) return; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa"; return; } await api(`/knowledge/${b.dataset.kbdel}`,"DELETE"); loadKB(); });
 $("#kbTeach").addEventListener("submit",async e=>{ e.preventDefault();
   try{ await api("/knowledge","POST",{agent_id:$("#kbTAgent").value,topic:$("#kbTTopic").value,question:$("#kbTQ").value,content:$("#kbTC").value,kind:$("#kbTFaq").checked?"faq":"guide"}); e.target.reset(); toast("Đã dạy. Agent dùng kiến thức này từ việc tiếp theo."); }catch(err){ toast(err.message); } loadKB(); });
-$("#kbSet").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/knowledge/settings","PUT",{knowledge_enabled:$("#kbOn").checked,study_time:$("#kbTime").value,study_per_agent:+$("#kbN").value}); toast("Đã lưu cài đặt tự học"); document.activeElement.blur(); }catch(err){ toast(err.message); } loadKB(); });
+$("#kbSet").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/knowledge/settings","PUT",{knowledge_enabled:$("#kbOn").checked,study_time:$("#kbTime").value,study_per_agent:+$("#kbN").value,idle_learning:$("#kbIdle").checked,idle_study_per_day:+$("#kbIdleN").value}); toast("Đã lưu cài đặt tự học"); document.activeElement.blur(); }catch(err){ toast(err.message); } loadKB(); });
 
 /* --------------------------------------------- cài đặt */
 const MODEL_NAME={"claude-haiku-5-5":"Haiku 5.5 (rẻ nhất)","claude-sonnet-5-5":"Sonnet 5.5 (cân bằng)","claude-opus-5-5":"Opus 5.5 (cao cấp)"};
