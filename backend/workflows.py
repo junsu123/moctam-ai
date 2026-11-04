@@ -165,6 +165,10 @@ def _plan_items(count: int, product_id: int | None, target_type: str, angle: str
 def generate_posts(count: int = 3, product_id: int | None = None, target_type: str = "group",
                    angle: str | None = None, note: str = "") -> list[dict]:
     """Viết ngay (sếp đang chờ trên giao diện)."""
+    import post_template
+    if target_type == "group" and post_template.enabled():  # sếp chốt: bài nhóm chỉ đăng theo mẫu tìm khách sỉ
+        set_status("lan", "working", f"Đang làm {count} bài theo mẫu của sếp")
+        return post_template.make_posts(count)
     settings = db.get_settings()
     items = _plan_items(count, product_id, target_type, angle)
     if not items:
@@ -182,7 +186,14 @@ def generate_posts_batch(plan: list[tuple[str, int]]) -> dict:
     """Viết theo lô qua Batch API (rẻ hơn 50%). plan: [(target_type, số bài)].
     Không có API key / tắt chế độ lô / gửi lỗi -> viết ngay như bình thường."""
     settings = db.get_settings()
+    import post_template
+    tpl_made = []
+    if post_template.enabled():  # bài nhóm: theo mẫu của sếp (không cần Claude viết)
+        tpl_made = post_template.make_posts(sum(n for tt, n in plan if tt == "group"))
+        plan = [(tt, n) for tt, n in plan if tt != "group"]
     items = [it for tt, n in plan if n > 0 for it in _plan_items(n, None, tt, None)]
+    if not items and tpl_made:
+        return {"mode": "template", "count": len(tpl_made)}
     if not items:
         return {"mode": "none", "count": 0}
     if settings.get("use_batch") != "1" or not llm.live:
@@ -352,7 +363,9 @@ def plan_distribution() -> list[dict]:
         plan.append({"post_id": post["id"], "group": group["name"] if group else TARGET_NAME[post["target_type"]],
                      "time": when, "sale": f"{acc['sale_name']} · {acc['name']}" if acc else None})
 
-    approved = db.q("SELECT * FROM posts WHERE status='approved' AND target_type='group' ORDER BY id")
+    import post_template
+    approved = db.q("SELECT * FROM posts WHERE status='approved' AND target_type='group'"
+                    + (" AND source='template'" if post_template.enabled() else "") + " ORDER BY id")
     if sales:
         for post in approved:
             for g in list(groups):

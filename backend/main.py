@@ -453,6 +453,61 @@ def gf_ignore(cid: int):
     return {"ok": True}
 
 
+# ------------------------------------------------------------------ mẫu bài đăng nhóm của sếp
+@app.get("/api/post-template")
+def tpl_get():
+    import post_template as T
+    st = db.get_settings()
+    return {"template": T.template(), "default": T.DEFAULT_TEMPLATE, "enabled": T.enabled(), "ai": st.get("template_ai", "1") == "1",
+            "phone": T.phone_line(), "preview": T.preview(2),
+            "stats": {"approved": db.one("SELECT COUNT(*) n FROM posts WHERE source='template' AND status='approved'")["n"],
+                      "scheduled": db.one("SELECT COUNT(*) n FROM posts WHERE source='template' AND status='scheduled'")["n"],
+                      "posted_today": db.one("SELECT COUNT(*) n FROM posts WHERE source='template' AND status='posted' AND posted_at LIKE ?",
+                                             (db.today() + "%",))["n"]}}
+
+
+class TplIn(BaseModel):
+    template: str | None = None
+    enabled: bool | None = None
+    ai: bool | None = None
+
+
+@app.put("/api/post-template")
+def tpl_put(p: TplIn):
+    if p.template is not None:
+        t = p.template.strip()
+        if t and len(t) < 40:
+            raise HTTPException(400, "Mẫu quá ngắn")
+        db.set_setting("post_template", t)
+    if p.enabled is not None:
+        db.set_setting("template_mode", "1" if p.enabled else "0")
+    if p.ai is not None:
+        db.set_setting("template_ai", "1" if p.ai else "0")
+    db.log("minh", "Đổi mẫu bài đăng nhóm", "Sếp cập nhật mẫu bài đăng nhóm, Lan làm bài theo mẫu mới từ lượt sau")
+    return tpl_get()
+
+
+class TplPreview(BaseModel):
+    template: str | None = None
+
+
+@app.post("/api/post-template/preview")
+def tpl_preview(p: TplPreview):
+    import post_template as T
+    return {"preview": T.preview(2, (p.template or "").strip() or None)}
+
+
+class TplMake(BaseModel):
+    count: int = 3
+
+
+@app.post("/api/post-template/make")
+def tpl_make(p: TplMake):
+    import post_template as T
+    made = T.make_posts(max(1, min(20, p.count)))
+    return {"count": len(made)}
+
+
 # ------------------------------------------------------------------ nhóm có sẵn trong nick (Tuấn rà soát)
 @app.get("/api/my-groups")
 def mg_get():

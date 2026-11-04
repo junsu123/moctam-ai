@@ -487,13 +487,11 @@ def _today_rows(gid: int) -> list[dict]:
 
 def plan_admin() -> list[dict]:
     """Xếp bài cho nhóm mình quản lý: đủ 5–10 bài/ngày/nhóm, rải đều trong khung giờ của nick quản trị.
-    Phần bài bán hàng chờ bài Lan viết và được duyệt; từ 15 giờ mà vẫn thiếu thì bù bằng bài chăm sóc nhóm."""
+    Sếp chốt: chỉ đăng bài tìm khách sỉ / gia công theo mẫu của sếp (mỗi bài một biến thể), không đăng bài linh tinh."""
     if s().get("mygroups_enabled", "1") != "1":
         return []
     import workflows
     now, today = db.clock(), db.today()
-    share = max(0, min(100, int(s().get("admin_sell_share") or 50))) / 100
-    late = now.hour >= 15
     plan = []
     for p in admin_pairs():
         gid, acc = p["group_id"], p["acc"]
@@ -502,20 +500,17 @@ def plan_admin() -> list[dict]:
         need = target - len(rows)
         if need <= 0:
             continue
-        sell_left = max(0, round(target * share) - sum(r["source"] != "care" for r in rows))
-        care_left = max(0, target - round(target * share) - sum(r["source"] == "care" for r in rows))
-        sells = db.q("SELECT * FROM posts WHERE status='approved' AND target_type='group' ORDER BY id LIMIT ?", (sell_left,))
-        if late:  # cuối ngày chưa đủ bài bán hàng: bù bằng bài chăm sóc cho đủ chỉ tiêu
-            care_left = need - len(sells)
-        cares = care_posts({"id": gid, "name": p["name"]}, min(care_left, need - len(sells)))
-        items = []
-        while (sells or cares) and len(items) < need:  # xen kẽ bài bán hàng và bài chăm sóc
-            for src in (sells, cares):
-                if src and len(items) < need:
-                    items.append(src.pop(0))
         start = max(now + timedelta(minutes=5), datetime.strptime(f"{today} {acc['active_from'] or '08:00'}", "%Y-%m-%d %H:%M"))
         end = datetime.strptime(f"{today} {acc['active_to'] or '22:00'}", "%Y-%m-%d %H:%M")
-        if start >= end or not items:
+        if start >= end:
+            continue
+        need = min(need, int((end - start).total_seconds() // (30 * 60)) + 1)  # chỉ làm số bài còn kịp đăng hôm nay
+        import post_template
+        src_sql = " AND source='template'" if post_template.enabled() else ""
+        items = db.q(f"SELECT * FROM posts WHERE status='approved' AND target_type='group'{src_sql} ORDER BY id LIMIT ?", (need,))
+        if len(items) < need and post_template.enabled():  # Lan làm thêm bài theo mẫu của sếp cho đủ chỉ tiêu
+            items += post_template.make_posts(need - len(items))
+        if not items:
             continue
         taken = [datetime.strptime(r["t"][:16], "%Y-%m-%d %H:%M") for r in rows if r["t"]]
         step = (end - start) / need
@@ -543,14 +538,16 @@ def plan_admin() -> list[dict]:
                          "sell": sum(isinstance(x, dict) for x in items[:made])})
     if plan:
         db.log("lan", "Chăm sóc nhóm quản lý", "; ".join(
-            f"{x['group'][:40]}: xếp thêm {x['count']} bài ({x['sell']} bài bán hàng, {x['count'] - x['sell']} bài chăm sóc; "
-            f"mục tiêu {x['target']} bài/ngày, nick {x['account']})" for x in plan))
+            f"{x['group'][:40]}: xếp thêm {x['count']} bài tìm khách sỉ theo mẫu (mục tiêu {x['target']} bài/ngày, nick {x['account']})" for x in plan))
         workflows.set_status("lan", "idle", "Đã xếp bài chăm sóc nhóm quản lý")
     return plan
 
 
 def admin_sell_need() -> int:
     """Số bài bán hàng Lan cần viết thêm cho nhóm quản lý hôm nay (phần còn lại là bài chăm sóc nhóm)."""
+    import post_template
+    if post_template.enabled():
+        return 0  # nhóm quản lý đăng bài theo mẫu của sếp, Lan làm ngay khi xếp lịch
     share = max(0, min(100, int(s().get("admin_sell_share") or 50))) / 100
     return sum(max(0, round(target_today(p["group_id"]) * share) - sum(r["source"] != "care" for r in _today_rows(p["group_id"])))
                for p in admin_pairs())

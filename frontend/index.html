@@ -642,6 +642,14 @@ label.f{font-weight:600;color:var(--muted)}
 .mg-prog{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:4px}
 .mg-prog .bar{width:120px;height:6px}
 @media (max-width:560px){ .mg-list li{grid-template-columns:minmax(0,1fr)} .mg .card-h{flex-direction:column} }
+/* Mẫu bài đăng nhóm */
+.tpl .card-h{align-items:flex-start;gap:12px}
+.tpl-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:10px}
+#tplText{font-size:13px;line-height:1.5;min-height:300px}
+.tpl-prev{display:flex;flex-direction:column;gap:10px;max-height:470px;overflow:auto}
+.tpl-prev article{border:1px solid var(--line);border-radius:10px;padding:10px 12px;white-space:pre-wrap;font-size:13px;line-height:1.5;background:var(--panel-2);overflow-wrap:anywhere}
+.tpl-prev h5{margin:0 0 4px;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+@media (max-width:900px){ .tpl-grid{grid-template-columns:minmax(0,1fr)} .tpl .card-h{flex-direction:column} }
 /* Tìm khách sỉ */
 .pr-rules{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;align-items:start;margin:0 0 14px}
 .pr-rules .card{margin:0}
@@ -846,6 +854,17 @@ label.f{font-weight:600;color:var(--muted)}
         <div class="actions"><button class="btn" id="btnPlan" data-direct>Tuấn xếp lịch đăng nhóm</button></div>
       </div>
       <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. CEO tự giao Lan viết bài, tự duyệt bài nháp và cho Tuấn xếp lịch. Muốn viết thêm hay sửa cách viết, nhắn CEO ở <a href="#ceo">Giao việc</a> hoặc Telegram.</p>
+      <section class="card tpl" id="tplCard">
+        <div class="card-h"><div><h3>Mẫu bài đăng nhóm của sếp</h3><p class="small muted" style="margin:2px 0 0">Mọi bài đăng vào nhóm nick đã tham gia và nhóm nick quản lý đều theo mẫu này: chỉ nội dung tìm khách sỉ, gia công. Mỗi bài Lan làm một bản biến thể (đổi emoji, cách nói, thứ tự gạch đầu dòng, câu mở đầu, hashtag) để Facebook không coi là bài trùng. Viết <b>{số điện thoại}</b> ở chỗ cần ghi số, phần mềm thay bằng số Zalo báo giá.</p></div>
+          <label class="row small" style="white-space:nowrap"><input type="checkbox" id="tplOn"> Đăng nhóm theo mẫu</label></div>
+        <div class="tpl-grid">
+          <div class="stack"><textarea id="tplText" rows="16" aria-label="Mẫu bài đăng nhóm"></textarea>
+            <div class="row wrap"><button class="btn sm primary" type="button" id="tplSave">Lưu mẫu</button><button class="btn sm" type="button" id="tplPrev">Xem thử 2 bài</button>
+              <button class="btn sm ghost" type="button" id="tplReset">Về mẫu gốc</button><button class="btn sm ghost" type="button" id="tplMake">Làm ngay 3 bài</button></div>
+            <p class="small muted" id="tplStats" style="margin:0"></p></div>
+          <div class="tpl-prev" id="tplPreview"></div>
+        </div>
+      </section>
       <form class="card" id="genForm" data-direct>
         <h3>Giao Lan viết bài</h3>
         <div class="grid3">
@@ -886,7 +905,7 @@ label.f{font-weight:600;color:var(--muted)}
     <section class="view" id="v-groups" hidden>
       <div class="vh"><div><h1>Hội nhóm</h1><p>Danh sách nhóm Tuấn theo dõi. Ghi rõ luật nhóm và số ngày giãn cách để không bị báo spam hay chặn nick. Sale tự tìm nhóm mới theo chủ đề CEO chọn mỗi ngày và xin vào nhóm. Ở cột "Nick đã vào nhóm", bấm tên nick để đánh dấu; nhóm sếp tự nhập chưa đánh dấu nick nào thì coi như mọi nick đều đã vào, nhóm sale tự tìm thì chỉ nick đã vào mới đăng.</p></div></div>
       <section class="card mg" id="mgCard">
-        <div class="card-h"><div><h3>Nhóm trong các nick</h3><p class="small muted" style="margin:2px 0 0">Đăng vào nhóm nick đã tham gia sẵn. Tuấn đánh giá từng nhóm: nên đăng, đăng ít hay thoát. Nhóm mới vào nghỉ vài ngày mới đăng. Nhóm nick quản lý được đăng đều mỗi ngày.</p></div>
+        <div class="card-h"><div><h3>Nhóm trong các nick</h3><p class="small muted" style="margin:2px 0 0">Đăng vào nhóm nick đã tham gia sẵn. Tuấn đánh giá từng nhóm: nên đăng, đăng ít hay thoát. Nhóm mới vào nghỉ vài ngày mới đăng. Nhóm nick quản lý được đăng đều mỗi ngày. Bài đăng nhóm theo mẫu của sếp (trang Bài đăng).</p></div>
           <button class="btn sm primary" type="button" id="mgRun">Tuấn rà soát ngay</button></div>
         <div id="mgBody"><p class="muted small">Đang tải…</p></div>
       </section>
@@ -1485,6 +1504,37 @@ const Demo = (() => {
     mgRow(904,1,"Linh Nguyễn","Cộng Đồng Bán Hàng Online Toàn Quốc","member","app","rest",69,520000,"Nick mới vào nhóm, nghỉ đến 09/11 rồi mới đăng.",{rest_until:"2026-11-09"}),
     mgRow(905,2,"Phương Sỉ Tận Gốc","Hội Du Lịch Bụi","member","existing","leave",63,500000,"Loại: nhóm không liên quan bán hàng, nguồn hàng hay thực phẩm"),
     mgRow(906,1,"Linh Nguyễn","Quảng Cáo Facebook 2019","member","existing","left",36,15000,"Loại: nhóm gần như không còn hoạt động (bài mới nhất cách đây 730 ngày)",{left_at:"2026-11-04 09:20:00"})];
+  const TPL_DEFAULT=`MỘC TÂM
+Nhận gia công & sỉ toàn quốc các dòng Trà Túi Lọc, Cafe Hòa Tan, Cốm, Bột Thiên Nhiên...
+Sản xuất tại nhà máy đạt các tiêu chuẩn GMP – ISO – FDA – VSATTP
+Hơn 100+ mã sản phẩm đa dạng:
+Trà thảo mộc • Cafe • Ngũ cốc
+Bột • Cốm • Detox • Các dòng thảo mộc...
+Nhiều sản phẩm đang được thị trường và các nền tảng TMĐT quan tâm.
+Nhận sỉ & gia công trọn gói:
+• Bỏ sỉ toàn quốc
+• Gia công thương hiệu riêng
+• Thiết kế bao bì theo yêu cầu
+• Hỗ trợ xây dựng & phát triển sản phẩm
+• Hỗ trợ từ khâu sản xuất đến hoàn thiện sản phẩm
+Phù hợp cho shop online, đại lý, nhà phân phối, người mới bắt đầu kinh doanh và các thương hiệu muốn phát triển sản phẩm riêng.
+Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để được tư vấn.
+{số điện thoại}`;
+  S.tpl={template:TPL_DEFAULT,enabled:true,made:0};
+  function tplVariant(tpl){ const R=a=>a[Math.floor(Math.random()*a.length)]; const sym=R(["•","✅","✔️","🔹","▪️"]);
+    const EM=[[/gia công|sỉ toàn quốc|nhận sỉ/i,["🏭","📦","🤝"]],[/gmp|iso|fda|tiêu chuẩn|nhà máy/i,["✅","🏅","🛡️"]],[/mã sản phẩm|đa dạng/i,["🌿","🍃","📋"]],[/trà|cafe|ngũ cốc|bột|cốm/i,["🍵","☕","🌾"]],[/thị trường|tmđt/i,["🔥","📈","🛒"]],[/phù hợp|dành cho/i,["👉","🎯","🙌"]],[/catalog|bảng giá|ib|tư vấn/i,["📩","💬","📲"]]];
+    const out=[], bl=[]; const flush=()=>{ if(bl.length){ bl.sort(()=>Math.random()-.5); out.push(...bl.splice(0)); } };
+    tpl.split("\n").filter(l=>!/^\s*(ẩn bớt|xem thêm)\s*$/i.test(l)).forEach((raw,i)=>{ let l=raw.trim();
+      if(/\{\s*(số điện thoại|phone|sđt|zalo)\s*\}/i.test(l)){ flush(); out.push(`📞 Zalo/ĐT: ${ZALO()}`); return; }
+      if(!l){ flush(); out.push(""); return; }
+      if(/^[•\-✅✔▪+]/.test(l)){ bl.push(`${sym} ${l.replace(/^[•\-✅✔️▪+\s]+/,"")}`); return; }
+      flush(); if(i===0&&l.length<=40){ out.push(R(["🌿 ","✨ ","🏭 ",""])+l.toUpperCase()); return; }
+      const m=EM.find(([rx])=>rx.test(l)); out.push(m&&Math.random()<.85?`${R(m[1])} ${l}`:l); });
+    flush(); const hook=R(["📣 TÌM ĐỐI TÁC SỈ & GIA CÔNG","🤝 KẾT NỐI SHOP ONLINE – ĐẠI LÝ – NHÀ PHÂN PHỐI","🔎 Shop nào đang tìm nguồn hàng tận xưởng?",""]);
+    let txt=(hook?hook+"\n\n":"")+out.join("\n").trim(); if(!txt.includes(ZALO())) txt+=`\n📞 Zalo/ĐT: ${ZALO()}`;
+    return txt+"\n\n"+["#nguonhangsi","#giacong","#tratuiloc","#cafehoatan","#ngucoc","#thuonghieurieng","#bansi","#OEM"].sort(()=>Math.random()-.5).slice(0,4).join(" "); }
+  function demoTpl(){ const ps=S.posts.filter(p=>p.source==="template"); return {template:S.tpl.template,default:TPL_DEFAULT,enabled:S.tpl.enabled,ai:true,phone:`📞 Zalo/ĐT: ${ZALO()}`,preview:[tplVariant(S.tpl.template),tplVariant(S.tpl.template)],
+    stats:{approved:ps.filter(p=>p.status==="approved").length,scheduled:ps.filter(p=>p.status==="scheduled").length,posted_today:ps.filter(p=>p.status==="posted").length}}; }
   function demoMG(){ return {items:S.mg,counts:{},verdicts:{},settings:S.mgSet,last:{detail:"Tuấn rà soát nhóm: nick Linh Nguyễn đang ở 4 nhóm (1 nhóm quản lý); đánh giá 4 nhóm: nên đăng 1, đăng ít 0, không đạt 1; đã thoát Quảng Cáo Facebook 2019 (nhóm gần như không còn hoạt động).",created_at:"2026-11-04 09:21:00"},
     nicks:[{id:1,name:"Linh Nguyễn",sale:"Linh",synced_at:"2026-11-04 09:21:00",groups:3,admin:1,post:1,leave:0},{id:2,name:"Phương Sỉ Tận Gốc",sale:"Phương",synced_at:"2026-11-04 09:24:00",groups:2,admin:0,post:1,leave:1}]}; }
   const PR_TYPES={buyer:"Người đang tìm nguồn hàng",ads:"Đang chạy quảng cáo",owner:"Chủ shop tự nhập hàng",live:"Người bán hàng livestream",multi:"Người bán hàng đa nền tảng",marketplace:"Nhà bán hàng trên sàn TMĐT",ctv:"Cộng tác viên",affiliate:"Affiliate",koc:"KOC/KOL",store:"Cửa hàng truyền thống",unknown:"Chưa rõ"};
@@ -1696,6 +1746,7 @@ const Demo = (() => {
       if(P==="/content-style") return demoStyle();
       if(P==="/prospects") return demoPR(qs);
       if(P==="/my-groups") return demoMG();
+      if(P==="/post-template") return demoTpl();
       if(P==="/knowledge"){ const u=new URLSearchParams(qs||""); return demoKB(u.get("agent")||"",u.get("q")||""); }
       if(P==="/kpi") return demoKpi();
       if(P==="/telegram") return demoTg();
@@ -1812,6 +1863,10 @@ const Demo = (() => {
       for(const k of ["must","exclude","bonus","regions"]) S.prCrit[k]=[...new Set([...S.prCrit[k],...(sg[k]||[])])]; S.prCrit.search_kinds=[...new Set([...S.prCrit.search_kinds,...(sg.search_kinds||[])])];
       if((sg.keywords||[]).length) S.prKw[1]=[...new Set([...sg.keywords,...S.prKw[1]])]; l.applied=1; return {...demoPR(""),groups_added:0,rescore:{checked:S.pr.length}}; }
     if((m=P.match(/^\/prospects\/lessons\/(\d+)$/))&&method==="DELETE"){ S.prLessons=S.prLessons.filter(x=>x.id!=m[1]); return demoPR(""); }
+    if(P==="/post-template"&&method==="PUT"){ if(body.template!=null){ if(body.template.trim()&&body.template.trim().length<40) throw new Error("Mẫu quá ngắn"); S.tpl.template=body.template.trim()||TPL_DEFAULT; } if(body.enabled!=null) S.tpl.enabled=body.enabled; return demoTpl(); }
+    if(P==="/post-template/preview") return {preview:[tplVariant((body.template||"").trim()||S.tpl.template),tplVariant((body.template||"").trim()||S.tpl.template)]};
+    if(P==="/post-template/make"){ for(let i=0;i<(body.count||3);i++){ const c=tplVariant(S.tpl.template); S.posts.unshift({id:id(),agent_id:"lan",product_id:null,product_name:"Mẫu của sếp",target_type:"group",angle:"mau_sep",title:c.split("\n")[0],content:c,hashtags:"",image_idea:"Ảnh catalog / nhà máy",status:"approved",created_at:now(),comments:0,leads:0,source:"template"}); }
+      log("lan","Viết bài",`Làm ${body.count||3} bài đăng nhóm theo mẫu của sếp`); return {count:body.count||3}; }
     if(P==="/my-groups/sync"){ S.status.tuan={state:"working",text:"Rà soát nhóm trong các nick"}; setTimeout(()=>{ S.status.tuan={state:"idle",text:"Xong rà soát nhóm"}; },2500); return {nicks:2}; }
     if(P==="/my-groups/settings"){ const m={time:"mygroups_time",rest_days:"new_group_rest_days",leave_per_nick_day:"leave_per_nick_day",admin_min:"admin_posts_min",admin_max:"admin_posts_max",sell_share:"admin_sell_share"};
       for(const [k,v] of Object.entries(m)) if(body[k]!=null) S.mgSet[v]=String(body[k]); if(body.auto_leave!=null) S.mgSet.auto_leave=body.auto_leave?"1":"0"; if(body.enabled!=null) S.mgSet.mygroups_enabled=body.enabled?"1":"0"; return demoMG(); }
@@ -2307,7 +2362,19 @@ async function pollMeeting(){
 }
 
 /* --------------------------------------------- bài đăng */
+async function loadTpl(){
+  let d; try{ d=await api("/post-template"); }catch(e){ return; }
+  ST.tpl=d; if(document.activeElement!==$("#tplText")) $("#tplText").value=d.template; $("#tplOn").checked=d.enabled;
+  $("#tplStats").textContent=`Bài theo mẫu: ${d.stats.approved} bài chờ xếp lịch · ${d.stats.scheduled} bài đã lên lịch · hôm nay đã đăng ${d.stats.posted_today} bài. Số liên hệ cuối bài: ${d.phone.replace(/^📞\s*/,"")}.`;
+  tplPrevShow(d.preview); }
+function tplPrevShow(list){ $("#tplPreview").innerHTML=list.map((x,i)=>`<div><h5>Bản thử ${i+1}</h5><article>${esc(x)}</article></div>`).join(""); }
+$("#tplSave").addEventListener("click",async()=>{ try{ const d=await api("/post-template","PUT",{template:$("#tplText").value}); toast("Đã lưu mẫu. Lan làm bài theo mẫu mới từ lượt sau"); ST.tpl=d; tplPrevShow(d.preview); }catch(err){ toast(err.message); } });
+$("#tplPrev").addEventListener("click",async()=>{ try{ const r=await api("/post-template/preview","POST",{template:$("#tplText").value}); tplPrevShow(r.preview); }catch(err){ toast(err.message); } });
+$("#tplReset").addEventListener("click",()=>{ if(ST.tpl){ $("#tplText").value=ST.tpl.default; toast("Đã đưa về mẫu gốc, bấm Lưu mẫu để dùng"); } });
+$("#tplOn").addEventListener("change",async e=>{ try{ await api("/post-template","PUT",{enabled:e.target.checked}); toast(e.target.checked?"Bài đăng nhóm chỉ theo mẫu của sếp":"Đã tắt: Lan viết bài nhóm theo từng sản phẩm như trước"); loadTpl(); }catch(err){ toast(err.message); } });
+$("#tplMake").addEventListener("click",async e=>{ const b=e.currentTarget; b.disabled=true; try{ const r=await api("/post-template/make","POST",{count:3}); toast(`Lan đã làm ${r.count} bài theo mẫu, chờ Tuấn xếp lịch`); loadTpl(); loadPosts(); }catch(err){ toast(err.message); } b.disabled=false; });
 async function loadPosts(){
+  loadTpl();
   const [posts,products,sales]=await Promise.all([api("/posts"),api("/products"),api("/sales")]); ST.posts=posts; ST.products=products; ST.sales=sales;
   const sel=$("#gProduct"), cur=sel.value; sel.innerHTML=`<option value="">Lan tự chọn</option>`+products.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(""); sel.value=cur;
   renderBoard();
@@ -2943,8 +3010,7 @@ async function loadMyGroups(){
           <label class="f" for="mgRest">Nhóm mới vào nghỉ (ngày) rồi mới đăng<input type="number" id="mgRest" min="0" max="30" value="${esc(st.new_group_rest_days||7)}"></label>
           <label class="f" for="mgLeave">Thoát tối đa (nhóm/nick/ngày)<input type="number" id="mgLeave" min="0" max="10" value="${esc(st.leave_per_nick_day||3)}"></label>
           <label class="f" for="mgMin">Nhóm quản lý: ít nhất (bài/ngày)<input type="number" id="mgMin" min="0" max="20" value="${esc(st.admin_posts_min||5)}"></label>
-          <label class="f" for="mgMax">Nhóm quản lý: nhiều nhất (bài/ngày)<input type="number" id="mgMax" min="1" max="20" value="${esc(st.admin_posts_max||10)}"></label>
-          <label class="f" for="mgShare">Tỉ lệ bài bán hàng ở nhóm quản lý (%)<input type="number" id="mgShare" min="0" max="100" step="10" value="${esc(st.admin_sell_share||50)}"></label></div>
+          <label class="f" for="mgMax">Nhóm quản lý: nhiều nhất (bài/ngày)<input type="number" id="mgMax" min="1" max="20" value="${esc(st.admin_posts_max||10)}"></label></div>
         <label class="row small"><input type="checkbox" id="mgAuto" ${st.auto_leave!=="0"?"checked":""}> Tự thoát nhóm không liên quan hoặc tương tác kém (không bao giờ thoát nhóm mình quản lý, nhóm đã ra khách, nhóm sếp giữ)</label>
         <label class="row small"><input type="checkbox" id="mgOn" ${st.mygroups_enabled!=="0"?"checked":""}> Rà soát mỗi ngày và chăm sóc nhóm quản lý</label>
         <div><button class="btn sm primary" type="submit">Lưu</button></div></form></details>`;
@@ -2957,7 +3023,7 @@ $("#mgBody").addEventListener("click",async e=>{ let b;
       await api(`/my-groups/${b.dataset.mgleave}/leave`,"POST",{account_id:+b.dataset.acc}); toast("Sale sẽ mở Chrome của nick và thoát nhóm này"); setTimeout(loadMyGroups,3000); return; }
   }catch(err){ toast(err.message); } });
 $("#mgBody").addEventListener("submit",async e=>{ e.preventDefault();
-  try{ await api("/my-groups/settings","PUT",{time:$("#mgTime").value,rest_days:+$("#mgRest").value,leave_per_nick_day:+$("#mgLeave").value,admin_min:+$("#mgMin").value,admin_max:+$("#mgMax").value,sell_share:+$("#mgShare").value,auto_leave:$("#mgAuto").checked,enabled:$("#mgOn").checked});
+  try{ await api("/my-groups/settings","PUT",{time:$("#mgTime").value,rest_days:+$("#mgRest").value,leave_per_nick_day:+$("#mgLeave").value,admin_min:+$("#mgMin").value,admin_max:+$("#mgMax").value,auto_leave:$("#mgAuto").checked,enabled:$("#mgOn").checked});
     toast("Đã lưu cài đặt"); loadMyGroups(); }catch(err){ toast(err.message); } });
 
 /* --------------------------------------------- tìm nhóm mới */
