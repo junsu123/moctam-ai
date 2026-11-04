@@ -271,6 +271,13 @@ def execute(act: dict) -> str:
         r = group_finder.start_discover(None, kws or None, notify=act.get("_via", "web"))
         return (f"Giao sale {_name('sale-' + str(r['sale_id']))} (nick {r['account']}) lướt Facebook rồi tìm nhóm theo: {', '.join(r['keywords'])}"
                 f"{_busy_note(r['sale_id'])}. Tìm xong em báo lại sếp.")
+    if t == "teach_mai":
+        import prospect_rules
+        r = prospect_rules.add_lesson(act.get("text") or "")
+        sg = r["suggest"]
+        n = sum(len(sg.get(k) or []) for k in ("keywords", "ads_keywords", "must", "exclude", "bonus", "groups"))
+        return ("Mai đã học bài sếp dạy và ghi vào sổ kiến thức" + (f"; Mai thấy {n} điều cài được vào điều kiện tìm khách, "
+                "sếp mở trang Tìm khách sỉ → Sếp dạy Mai để bấm Áp dụng" if n else ""))
     if t == "review_my_groups":
         import my_groups
         n = my_groups.start_sync(act.get("_via", "web"))
@@ -450,6 +457,7 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - meeting {topic}: triệu tập họp
 - find_groups {keywords: [..]}: giao sale lướt Facebook tìm nhóm theo chủ đề
 - join_groups {}: các nick xin vào nhóm mới
+- teach_mai {text}: sếp dạy Mai cách/điều kiện tìm khách sỉ trên Facebook (lưu nguyên lời sếp vào text)
 - review_my_groups {}: đọc danh sách nhóm nick đã tham gia sẵn, Tuấn đánh giá nhóm nào nên đăng, thoát nhóm kém
 - find_prospects {keywords: [..], urls: [..], directions: [..]}: directions 5 = quét thư viện quảng cáo Facebook (trang đang chạy
   quảng cáo), 6 = đọc bài và bình luận trong nhóm tìm người hỏi nguồn hàng, 1-4 = tìm trang/shop. Mai tìm khách sỉ (người đang bán online, livestream trên Facebook/TikTok/Shopee),
@@ -553,8 +561,11 @@ def _rule_plan(text: str) -> dict:
     want_review_groups = re.search(r"(rà soát|xem lại|đánh giá|dọn|thoát|rời)\s*(các\s*)?(nhóm|group)", low) and not want_find
     want_ads = re.search(r"(quét|tìm|xem|soi)\b.{0,25}(quảng cáo|chạy ads|chạy quảng cáo|thư viện quảng cáo)", low)
     want_demand = re.search(r"(bình luận|comment|cmt|bài)\s*(trong|ở|của)\s*(các\s*)?(nhóm|group|hội)|hỏi nguồn|tìm nguồn hàng|cần nhập hàng", low)
+    teach_mai = re.search(r"\b(dạy|hướng dẫn|chỉ)\s+(cho\s+)?mai\b|\bmai\s+(học|nhớ|ghi nhớ)\b|điều kiện tìm khách", low)
     if acts and all(a["type"] == "setting" for a in acts):
         pass
+    elif teach_mai:
+        acts.append({"type": "teach_mai", "text": t})
     elif want_review_groups and not links:
         acts.append({"type": "review_my_groups"})
     elif (want_ads or want_demand) and not want_write and not want_find:

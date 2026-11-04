@@ -614,6 +614,76 @@ class PRPatch(BaseModel):
     approach: str | None = None
 
 
+class PRCriteria(BaseModel):
+    must: list[str] | None = None
+    exclude: list[str] | None = None
+    bonus: list[str] | None = None
+    bonus_points: int | None = None
+    fit: list[str] | None = None
+    regions: list[str] | None = None
+    followers_min: int | None = None
+    followers_max: int | None = None
+    recent_days: int | None = None
+    skip_types: list[str] | None = None
+    crm_min_grade: str | None = None
+    search_kinds: list[str] | None = None
+    note: str | None = None
+    keywords: dict[str, list[str]] | None = None
+    rescore: bool = True
+
+
+@app.put("/api/prospects/criteria")
+def pr_criteria(p: PRCriteria):
+    """Sếp đặt điều kiện tìm khách sỉ: Mai học (lưu sổ kiến thức) và chấm lại các khách đã tìm."""
+    import prospect
+    import prospect_rules
+    prospect_rules.save({k: v for k, v in p.model_dump().items() if v is not None and k not in ("keywords", "rescore")})
+    if p.keywords is not None:
+        kw = {str(d): [x.strip() for x in v if x.strip()][:12] for d, v in p.keywords.items() if str(d) in ("1", "2", "3", "4", "5")}
+        db.set_setting("prospect_keywords", json.dumps({d: v for d, v in kw.items() if v}, ensure_ascii=False))
+    res = prospect_rules.rescore_all() if p.rescore else None
+    return {**prospect.overview(), "rescore": res}
+
+
+@app.post("/api/prospects/rescore")
+def pr_rescore():
+    import prospect
+    import prospect_rules
+    return {**prospect.overview(), "rescore": prospect_rules.rescore_all()}
+
+
+class PRLesson(BaseModel):
+    text: str
+
+
+@app.post("/api/prospects/lessons")
+def pr_lesson_add(p: PRLesson):
+    import prospect_rules
+    try:
+        return prospect_rules.add_lesson(p.text)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/prospects/lessons/{lid}/apply")
+def pr_lesson_apply(lid: int):
+    import prospect
+    import prospect_rules
+    try:
+        r = prospect_rules.apply_lesson(lid)
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    return {**prospect.overview(), "groups_added": r["groups_added"], "rescore": prospect_rules.rescore_all()}
+
+
+@app.delete("/api/prospects/lessons/{lid}")
+def pr_lesson_del(lid: int):
+    import prospect
+    import prospect_rules
+    prospect_rules.delete_lesson(lid)
+    return prospect.overview()
+
+
 @app.patch("/api/prospects/{pid}")
 def pr_patch(pid: int, p: PRPatch):
     import prospect

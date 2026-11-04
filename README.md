@@ -162,6 +162,19 @@ Sửa chủ đề hôm nay, kho chủ đề, giờ tìm, số nhóm thêm/xin v�
 
 Mục **Bán hàng → Tìm khách sỉ**. **Mục tiêu số 1 của Mai: tìm ra số điện thoại** của người đang bán hàng online để sếp liên lạc. Mai **tập trung Facebook**; TikTok và Shopee có công tắc riêng ở dòng **Nguồn tìm** đầu trang (đang hoạt động / không hoạt động, mặc định không hoạt động; cũng có thể nói với CEO “bật TikTok”, “tắt Shopee”).
 
+**Điều kiện tìm khách sỉ của sếp** (trang Tìm khách sỉ, khung bên trái): sếp đặt điều kiện, Mai áp dụng cho mọi tài khoản tìm được và chấm lại các khách cũ ngay khi sếp lưu:
+- **Bắt buộc phải có** ít nhất 1 chữ (VD ship, inbox): thiếu thì *Không đạt* (hạng D, không vào Khách hàng).
+- **Loại ngay nếu có** (VD quần áo, mỹ phẩm): có là *Không đạt*.
+- **Ưu tiên**: mỗi chữ khớp cộng điểm (mặc định 5, tối đa 20); **Khu vực ưu tiên** cộng thêm; **Ngành hàng phù hợp thêm**: khớp thì đủ điểm hợp ngành.
+- Người theo dõi từ/đến, bài mới nhất trong N ngày, loại người bán bỏ qua (affiliate, KOC, cửa hàng truyền thống...).
+- Hạng tối thiểu để vào mục Khách hàng (A, B hoặc C; vẫn phải có SĐT).
+- **Cách tìm trên Facebook**: Trang, Bài viết, Bài viết gần đây, Mọi người; và **từ khóa** gõ vào ô tìm kiếm cho từng hướng.
+- **Sếp dặn thêm**: lời dặn tự do, Mai đọc khi tìm và khi viết kịch bản.
+
+Điều kiện được ghi vào sổ kiến thức của Mai và đưa vào lời dặn của Mai. Mỗi khách hiện rõ dòng “Đúng điều kiện của sếp” hoặc “Không đạt điều kiện của sếp: ...”.
+
+**Sếp dạy Mai kỹ năng tìm kiếm Facebook** (khung bên phải, hoặc nhắn CEO “Dạy Mai: ...”): sếp viết như chỉ việc cho nhân viên, từ khóa để trong ngoặc kép, dùng chữ “ưu tiên”, “loại”, “bắt buộc phải có”; dán link nhóm để Mai đọc bình luận nhóm đó. Mai lưu nguyên bài dạy vào sổ kiến thức (nguồn: Sếp dạy), rồi tóm lại điều Mai hiểu: từ khóa, chữ phải có, chữ loại, ưu tiên, khu vực, cách tìm (VD “Bài viết gần đây”), nhóm cần đọc. Sếp xem và bấm **Áp dụng** thì các điều đó thành điều kiện tìm khách (từ khóa sếp dạy được tìm trước) và Mai chấm lại các khách đã tìm. Có khóa Claude thì Claude giúp Mai đọc bài dạy; chưa có thì Mai đọc theo mẫu câu.
+
 **Đọc bình luận trong nhóm** (công tắc “Bình luận trong nhóm”): mỗi lượt Mai mở 3 nhóm trong danh sách Hội nhóm (nhóm lâu chưa đọc trước), lướt bài mới nhất, đọc cả bài và bình luận. Ai viết “tìm nguồn”, “cần nhập”, “xin giá sỉ”, “ai có nguồn” kèm tên hàng hợp ngành (trà, ngũ cốc, granola, đồ ăn healthy, thực phẩm) thì được lưu với đúng câu họ viết làm bằng chứng. Người chào bán sỉ (“nhận sỉ”, “cung cấp sỉ”, “tuyển đại lý”) là nhà cung cấp nên bỏ qua; bài của chính nick mình cũng bỏ qua. Họ tự ghi SĐT thì lấy luôn; người đang tìm nguồn trà, ngũ cốc tối thiểu hạng B, có SĐT thì hạng A. Chưa để SĐT thì việc tiếp theo là sếp/Hà trả lời bài hoặc nhắn tin xin SĐT bằng tay. Mai chỉ đọc, không bình luận, và không mở mục thông tin cá nhân của họ.
 
 **Quét trang chạy quảng cáo** (công tắc “Trang chạy quảng cáo”): Mai mở Thư viện quảng cáo Facebook (Việt Nam, quảng cáo đang hoạt động), tìm theo từ khóa sản phẩm (sửa ở “Từ khóa hướng 5”), chỉ giữ quảng cáo hợp ngành, rồi mở trang của người chạy quảng cáo để tìm SĐT. Đang chạy quảng cáo bán hàng được tính ít nhất 16/20 điểm bán hàng; hotline ghi trong quảng cáo cũng được lấy.
@@ -629,6 +642,7 @@ backend/
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
   errors.py      Sổ lỗi: ghi lỗi từ mọi màn hình và việc tự động, gộp lỗi trùng, gợi ý cách xử lý
   my_groups.py   Nhóm có sẵn trong nick: đọc danh sách nhóm, Tuấn đánh giá, tự thoát nhóm kém, nhóm mới vào nghỉ, chăm sóc nhóm quản lý
+  prospect_rules.py  Điều kiện tìm khách sỉ sếp đặt, bài sếp dạy Mai, chấm lại theo điều kiện
   prospect.py    Mai tìm khách sỉ: tìm, đọc trang công khai, phân loại người bán, chấm điểm 100 có bằng chứng, lưu CRM
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm
   group_review.py  Tuấn đánh giá nhóm theo chuẩn nhóm tương tác cao: chấm điểm, Nên vào / Cân nhắc / Bỏ qua, lý do

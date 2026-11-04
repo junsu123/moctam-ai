@@ -643,6 +643,21 @@ label.f{font-weight:600;color:var(--muted)}
 .mg-prog .bar{width:120px;height:6px}
 @media (max-width:560px){ .mg-list li{grid-template-columns:minmax(0,1fr)} .mg .card-h{flex-direction:column} }
 /* Tìm khách sỉ */
+.pr-rules{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;align-items:start;margin:0 0 14px}
+.pr-rules .card{margin:0}
+#prCrit summary{cursor:pointer}
+#prCrit summary > span{display:inline}
+#prCritSum{display:block;margin-top:3px;line-height:1.45;font-weight:400}
+.pr-crit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.pr-crit-grid textarea{min-height:64px}
+.pr-checks{display:flex;flex-wrap:wrap;gap:6px 14px}
+.pr-lessons{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.pr-lessons li{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:13px}
+.pr-lessons .txt{white-space:pre-wrap;overflow-wrap:anywhere}
+.pr-lessons .mai{margin-top:6px;background:var(--panel-2);border-radius:8px;padding:6px 8px;font-size:12.5px}
+.pr-lessons .sg{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.pr-lessons .sg span{font-size:11.5px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+@media (max-width:900px){ .pr-rules{grid-template-columns:minmax(0,1fr)} .pr-crit-grid{grid-template-columns:minmax(0,1fr)} }
 .pr-src{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px;font-size:13px}
 .pr-src > b{margin-right:2px}
 .pr-src .src{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:5px 6px 5px 12px;font:inherit;color:inherit;cursor:pointer}
@@ -931,6 +946,14 @@ label.f{font-weight:600;color:var(--muted)}
           <label class="f" for="prUrls">Dán link để Mai phân tích (Facebook, TikTok, Shopee; mỗi dòng 1 link)<textarea id="prUrls" rows="2" placeholder="https://www.facebook.com/tenshop&#10;https://www.tiktok.com/@tenshop"></textarea></label>
           <div class="row" style="justify-content:space-between"><span class="small muted">Mai mở bằng Chrome của 1 nick sale, chỉ đọc trang công khai.</span><button class="btn sm primary" type="submit">Phân tích</button></div>
         </form>
+      </div>
+      <div class="pr-rules">
+        <details class="card" id="prCrit"><summary><span><b>Điều kiện tìm khách sỉ của sếp</b><span class="small muted" id="prCritSum"></span></span></summary><div id="prCritBody"></div></details>
+        <section class="card" id="prTeach"><h3 style="margin:0 0 4px">Sếp dạy Mai kỹ năng tìm kiếm Facebook</h3>
+          <p class="small muted" style="margin:0 0 8px">Viết như đang chỉ việc cho nhân viên. Từ khóa để trong ngoặc kép. Dùng chữ “ưu tiên”, “loại”, “bắt buộc phải có” để Mai hiểu là điều kiện. Dán link nhóm để Mai đọc bình luận nhóm đó.</p>
+          <form id="prTeachF" class="stack"><textarea id="prTeachIn" rows="4" aria-label="Bài dạy cho Mai" placeholder="VD: Gõ “cần nhập trà túi lọc” rồi chọn Bài viết gần đây. Ưu tiên shop có livestream, ở Hà Nội. Loại các shop bán “quần áo”, “mỹ phẩm”. Bắt buộc phải có “ship” hoặc “inbox”."></textarea>
+            <div><button class="btn sm primary" type="submit">Dạy Mai</button></div></form>
+          <ul class="pr-lessons" id="prLessons"></ul></section>
       </div>
       <div class="pr-filters row wrap" id="prFilters">
         <select id="prPf" aria-label="Nền tảng"><option value="">Mọi nền tảng</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="shopee">Shopee</option></select>
@@ -1465,6 +1488,23 @@ const Demo = (() => {
   function demoMG(){ return {items:S.mg,counts:{},verdicts:{},settings:S.mgSet,last:{detail:"Tuấn rà soát nhóm: nick Linh Nguyễn đang ở 4 nhóm (1 nhóm quản lý); đánh giá 4 nhóm: nên đăng 1, đăng ít 0, không đạt 1; đã thoát Quảng Cáo Facebook 2019 (nhóm gần như không còn hoạt động).",created_at:"2026-11-04 09:21:00"},
     nicks:[{id:1,name:"Linh Nguyễn",sale:"Linh",synced_at:"2026-11-04 09:21:00",groups:3,admin:1,post:1,leave:0},{id:2,name:"Phương Sỉ Tận Gốc",sale:"Phương",synced_at:"2026-11-04 09:24:00",groups:2,admin:0,post:1,leave:1}]}; }
   const PR_TYPES={buyer:"Người đang tìm nguồn hàng",ads:"Đang chạy quảng cáo",owner:"Chủ shop tự nhập hàng",live:"Người bán hàng livestream",multi:"Người bán hàng đa nền tảng",marketplace:"Nhà bán hàng trên sàn TMĐT",ctv:"Cộng tác viên",affiliate:"Affiliate",koc:"KOC/KOL",store:"Cửa hàng truyền thống",unknown:"Chưa rõ"};
+  S.prCrit={must:["ship","inbox"],exclude:["quần áo","mỹ phẩm"],bonus:["livestream","zalo"],bonus_points:5,fit:[],regions:["Hà Nội"],followers_min:0,followers_max:0,recent_days:30,skip_types:["affiliate"],crm_min_grade:"C",search_kinds:["pages","posts","posts_recent"],note:""};
+  S.prLessons=[{id:1,text:"Gõ “cần nhập trà túi lọc” và “tìm nguồn ngũ cốc” rồi chọn Bài viết gần đây. Ưu tiên shop có livestream. Loại các shop bán “quần áo”, “mỹ phẩm”.",applied:1,created_at:"2026-11-04 20:10:00",
+    suggest:{keywords:["cần nhập trà túi lọc","tìm nguồn ngũ cốc"],exclude:["quần áo","mỹ phẩm"],bonus:["livestream"],search_kinds:["posts_recent"],summary:"Em đã ghi bài này vào sổ kiến thức và sẽ làm theo khi đi tìm khách."}}];
+  const SKIND={pages:"Trang",posts:"Bài viết",posts_recent:"Bài viết gần đây",people:"Mọi người"};
+  const critText=()=>{ const c=S.prCrit, p=[]; if(c.must.length) p.push("Phải có ít nhất 1 trong: "+c.must.join(", ")); if(c.exclude.length) p.push("Loại ngay nếu có: "+c.exclude.join(", "));
+    if(c.bonus.length) p.push(`Ưu tiên (+${c.bonus_points} điểm mỗi chữ): `+c.bonus.join(", ")); if(c.regions.length) p.push("Khu vực ưu tiên: "+c.regions.join(", ")); if(c.recent_days) p.push(`Bài mới nhất trong ${c.recent_days} ngày`);
+    if(c.skip_types.length) p.push("Bỏ qua: "+c.skip_types.map(k=>PR_TYPES[k]||k).join(", ")); p.push(`Hạng từ ${c.crm_min_grade} trở lên và có SĐT thì vào mục Khách hàng`); p.push("Cách tìm trên Facebook: "+c.search_kinds.map(k=>SKIND[k]).join(", ")); return p.join(". ")+"."; };
+  function demoUnderstand(text){ const q=[...text.matchAll(/[“"']([^”"']{2,60})[”"']/g)].map(m=>m[1].trim()); const out={keywords:[],must:[],exclude:[],bonus:[],search_kinds:[]};
+    text.split(/[\n.;]+/).forEach(line=>{ const l=line.toLowerCase(), qs=[...line.matchAll(/[“"']([^”"']{2,60})[”"']/g)].map(m=>m[1].trim());
+      const after=rx=>{ const m=line.split(rx); return m.length>1?m[1].split(/,| và | hoặc /).map(x=>x.trim().replace(/^(các|những|người|shop|có|đang|bán)\s+/i,"").replace(/^(các|những|người|shop|có|đang|bán)\s+/i,"")).filter(x=>x.length>1&&x.length<=40):[]; };
+      if(/loại|bỏ qua|không lấy|tránh/.test(l)) out.exclude.push(...(qs.length?qs:after(/loại|bỏ qua|không lấy|tránh/i)));
+      else if(/phải có|bắt buộc|chỉ lấy/.test(l)) out.must.push(...(qs.length?qs:after(/phải có|bắt buộc|chỉ lấy/i)));
+      else if(/ưu tiên/.test(l)){ (qs.length?qs:after(/ưu tiên/i)).forEach(x=>/^(ở|tại|khu vực)\s+/i.test(x)?(out.regions=out.regions||[]).push(x.replace(/^(ở|tại|khu vực)\s+/i,"")):out.bonus.push(x)); }
+      else out.keywords.push(...qs);
+      if(/gần đây|mới nhất/.test(l)) out.search_kinds.push("posts_recent"); });
+    const n=out.keywords.length+out.must.length+out.exclude.length+out.bonus.length;
+    out.summary="Em đã ghi bài này vào sổ kiến thức và sẽ làm theo khi đi tìm khách."+(n?` Em thấy ${n} điều cài được vào phần mềm, sếp xem và bấm Áp dụng nhé.`:""); return out; }
   function demoPR(qs){ const q=new URLSearchParams(qs||""), g=q.get("grade")||"", pf=q.get("platform")||"", ty=q.get("seller_type")||"", st=q.get("status")||"", ph=q.get("phone")||"";
     const isSeller=x=>["A","B","C"].includes(x.grade);
     const rank={A:0,B:1,C:2,D:3};
@@ -1476,6 +1516,7 @@ const Demo = (() => {
       no_phone:S.pr.filter(x=>!x.phone&&isSeller(x)&&x.status==="verified"&&!["affiliate","koc","store"].includes(x.seller_type)).length,
       channels:[{key:"comment",label:"Bình luận dưới bài sale đăng",phones:S.leads.filter(l=>l.origin==="comment"&&l.phone).length,total:S.leads.filter(l=>l.origin==="comment").length},
         ...[["demand","Người hỏi nguồn hàng trong nhóm",6],["ads","Trang đang chạy quảng cáo",5],["pages","Tìm trang, shop livestream",0],["link","Sếp dán link",-1]].map(([k,l,dir])=>{ const xs=S.pr.filter(x=>dir===0?x.direction>=1&&x.direction<=4:dir===-1?!x.direction:x.direction===dir); return {key:k,label:l,phones:xs.filter(x=>x.phone&&isSeller(x)).length,total:xs.length}; })],
+      criteria:S.prCrit,lessons:S.prLessons,search_kinds:SKIND,criteria_text:critText(),
       platforms_on:["facebook",...["tiktok","shopee"].filter(k=>S.prSet["prospect_"+k]==="1")],
       directions:{5:"Trang đang chạy quảng cáo bán thực phẩm, đồ uống (thư viện quảng cáo Facebook)",6:"Người đang hỏi tìm nguồn hàng trong nhóm (đọc bài và bình luận)",1:"Người livestream bán trà, ngũ cốc, thực phẩm",2:"Người bán sản phẩm tương tự hoặc bổ trợ",3:"Người bán nhiều nhóm hàng tiêu dùng, có thể mở rộng danh mục",4:"Người tuyển đại lý, tìm nguồn hàng, nhận phân phối, bán sỉ"},
       types:PR_TYPES,platforms:{facebook:"Facebook",tiktok:"TikTok",shopee:"Shopee"},keywords:S.prKw,settings:S.prSet,last:S.prLast||{detail:"Mai tìm khách sỉ xong: tìm được 2 SĐT khách đang bán hàng (xem 9 tài khoản: A 1, B 2, C 1, D 1). Đã chuyển sếp: Bếp Nhà Mây 0903000111 (A), Mộc Gia Mart 0903000222 (B).",created_at:"2026-11-04 14:43:00"}}; }
@@ -1760,6 +1801,17 @@ const Demo = (() => {
       const e={id:id(),source:"ui",...body,hint:h?h[1]:null,screen:body.screen||(h&&h[2])||null,count:1,status:"new",created_at:now(),last_at:now()}; S.errors.unshift(e); return {id:e.id}; }
     if(method==="POST"&&P==="/errors/seen"){ S.errors.forEach(e=>{ if(e.status==="new") e.status="seen"; }); return {ok:true}; }
     if(method==="POST"&&P==="/errors/resolve-all"){ S.errors.forEach(e=>e.status="resolved"); return {ok:true}; }
+    if(P==="/prospects/criteria"){ const {keywords,rescore,...rest}=body; Object.assign(S.prCrit,rest); if(keywords) S.prKw={...S.prKw,...keywords};
+      S.pr.forEach(x=>{ const txt=(x.account_name+" "+(x.products||"")+" "+(x.evidence||[]).map(e=>e.text).join(" ")).toLowerCase(); const ex=S.prCrit.exclude.filter(w=>txt.includes(w.toLowerCase()));
+        const fail=[ex.length?"có chữ sếp loại: "+ex.join(", "):"",S.prCrit.skip_types.includes(x.seller_type)?`là ${PR_TYPES[x.seller_type]} (sếp bỏ qua)`:""].filter(Boolean).join("; ");
+        x.evidence=(x.evidence||[]).filter(e=>e.kind!=="rule_fail"); if(fail){ x._g=x._g||x.grade; x.grade="D"; x.rule_fail=fail; x.next_action="Không đạt điều kiện của sếp: "+fail; x.evidence.unshift(ev("rule_fail","Không đạt điều kiện của sếp: "+fail)); }
+        else if(x.rule_fail){ x.grade=x._g||x.grade; x.rule_fail=null; } });
+      return {...demoPR(""),rescore:{checked:S.pr.length,fail:S.pr.filter(x=>x.rule_fail).length,crm:0}}; }
+    if(P==="/prospects/lessons"&&method==="POST"){ const l={id:id(),text:body.text,applied:0,created_at:now(),suggest:demoUnderstand(body.text)}; S.prLessons.unshift(l); S.xp.mai=(S.xp.mai||0)+5; log("mai","Học kiến thức mới","Sếp dạy: "+body.text.slice(0,120)); return l; }
+    if((m=P.match(/^\/prospects\/lessons\/(\d+)\/apply$/))){ const l=S.prLessons.find(x=>x.id==m[1]); const sg=l.suggest;
+      for(const k of ["must","exclude","bonus","regions"]) S.prCrit[k]=[...new Set([...S.prCrit[k],...(sg[k]||[])])]; S.prCrit.search_kinds=[...new Set([...S.prCrit.search_kinds,...(sg.search_kinds||[])])];
+      if((sg.keywords||[]).length) S.prKw[1]=[...new Set([...sg.keywords,...S.prKw[1]])]; l.applied=1; return {...demoPR(""),groups_added:0,rescore:{checked:S.pr.length}}; }
+    if((m=P.match(/^\/prospects\/lessons\/(\d+)$/))&&method==="DELETE"){ S.prLessons=S.prLessons.filter(x=>x.id!=m[1]); return demoPR(""); }
     if(P==="/my-groups/sync"){ S.status.tuan={state:"working",text:"Rà soát nhóm trong các nick"}; setTimeout(()=>{ S.status.tuan={state:"idle",text:"Xong rà soát nhóm"}; },2500); return {nicks:2}; }
     if(P==="/my-groups/settings"){ const m={time:"mygroups_time",rest_days:"new_group_rest_days",leave_per_nick_day:"leave_per_nick_day",admin_min:"admin_posts_min",admin_max:"admin_posts_max",sell_share:"admin_sell_share"};
       for(const [k,v] of Object.entries(m)) if(body[k]!=null) S.mgSet[v]=String(body[k]); if(body.auto_leave!=null) S.mgSet.auto_leave=body.auto_leave?"1":"0"; if(body.enabled!=null) S.mgSet.mygroups_enabled=body.enabled?"1":"0"; return demoMG(); }
@@ -2722,7 +2774,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-askceo]")
   setTimeout(()=>{ $("#ceoIn").value=`${b.dataset.askceo} `; $("#ceoIn").focus(); },300); });
 
 /* --------------------------------------------- Mai: tìm khách sỉ */
-const PR_EV={ads:"Quảng cáo",demand:"Hỏi nguồn hàng",sell:"Bán hàng",live:"Livestream",import:"Nhập hàng",fit_core:"Ngành hàng",fit_food:"Ngành hàng",affiliate:"Affiliate",owner:"Chủ shop",ctv:"CTV",koc:"KOC",shared_live:"Chỉ chia sẻ live",contact:"Liên hệ",shop_link:"Gian hàng",found:"Kết quả tìm"};
+const PR_EV={rule:"Điều kiện sếp",rule_fail:"Không đạt",ads:"Quảng cáo",demand:"Hỏi nguồn hàng",sell:"Bán hàng",live:"Livestream",import:"Nhập hàng",fit_core:"Ngành hàng",fit_food:"Ngành hàng",affiliate:"Affiliate",owner:"Chủ shop",ctv:"CTV",koc:"KOC",shared_live:"Chỉ chia sẻ live",contact:"Liên hệ",shop_link:"Gian hàng",found:"Kết quả tìm"};
 const PR_PARTS=[["sales","Bán hàng",20],["live","Livestream",20],["fit","Hợp ngành",20],["import","Tự nhập hàng",15],["engage","Hoạt động",10],["contact","Liên hệ",10],["expand","Mở rộng",5]];
 const PR_PF={facebook:"Facebook",tiktok:"TikTok",shopee:"Shopee"};
 ST.prF={grade:"",platform:"",seller_type:"",status:"",phone:""};
@@ -2769,8 +2821,36 @@ function prSettings(d){
         <label class="f" for="prGn">Nhóm đọc bình luận mỗi lượt<input type="number" id="prGn" min="0" max="10" value="${esc(st.prospect_groups_per_run||3)}"></label></div>
       <div class="row wrap" style="gap:14px"><label class="row small"><input type="checkbox" id="prOn" ${on("enabled")}> Tự đi tìm mỗi ngày</label>
         <label class="row small"><input type="checkbox" id="prCrm" ${on("auto_crm")}> Có SĐT thì tự vào Khách hàng và báo sếp qua Telegram</label><label class="row small"><input type="checkbox" id="prAi" ${on("ai_script")}> Nhờ Claude viết kịch bản (chỉ dựa trên bằng chứng)</label></div>
-      <div class="pr-dirs">${[5,1,2,3,4].map(i=>`<label class="f" for="prK${i}">Hướng ${i}: ${esc(d.directions[i])} (mỗi dòng 1 từ khóa${i===5?" sản phẩm":""})<textarea id="prK${i}" rows="3">${esc(((d.keywords||{})[i]||[]).join("\n"))}</textarea></label>`).join("")}</div>
+      <p class="small muted" style="margin:0">Từ khóa tìm kiếm và điều kiện chọn khách nằm ở mục “Điều kiện tìm khách sỉ của sếp” phía trên.</p>
       <div><button class="btn sm primary" type="submit">Lưu cài đặt</button></div></form></div>`;
+}
+const SG_LBL={keywords:"Từ khóa tìm",ads_keywords:"Từ khóa quảng cáo",must:"Phải có",exclude:"Loại",bonus:"Ưu tiên",fit:"Ngành hàng",regions:"Khu vực",groups:"Nhóm đọc bình luận",search_kinds:"Cách tìm"};
+function prCrit(d){
+  const c=d.criteria||{}, ta=(id,label,v,ph)=>`<label class="f" for="${id}">${label}<textarea id="${id}" rows="3" placeholder="${ph||""}">${esc((v||[]).join("\n"))}</textarea></label>`;
+  const types=Object.entries(d.types||{}).filter(([k])=>!["unknown","ads"].includes(k));
+  return `<form id="prCritF" class="stack">
+    <div class="pr-crit-grid">
+      ${ta("crMust","Bắt buộc phải có ít nhất 1 chữ (mỗi dòng 1 chữ)",c.must,"ship\ninbox")}
+      ${ta("crEx","Loại ngay nếu có",c.exclude,"quần áo\nmỹ phẩm")}
+      ${ta("crBonus","Ưu tiên (mỗi chữ khớp được cộng điểm)",c.bonus,"livestream\nzalo")}
+      ${ta("crFit","Ngành hàng phù hợp thêm (đủ điểm phù hợp ngành)",c.fit,"trà sữa\nđồ uống healthy")}
+      ${ta("crReg","Khu vực ưu tiên",c.regions,"Hà Nội\nTP.HCM")}
+      <div class="stack"><label class="f" for="crPts">Điểm cộng cho mỗi chữ ưu tiên<input type="number" id="crPts" min="1" max="20" value="${esc(c.bonus_points||5)}"></label>
+        <div class="grid2"><label class="f" for="crFmin">Người theo dõi từ<input type="number" id="crFmin" min="0" value="${esc(c.followers_min||0)}"></label>
+        <label class="f" for="crFmax">đến (0 = không giới hạn)<input type="number" id="crFmax" min="0" value="${esc(c.followers_max||0)}"></label></div>
+        <div class="grid2"><label class="f" for="crDays">Bài mới nhất trong (ngày, 0 = bỏ qua)<input type="number" id="crDays" min="0" max="365" value="${esc(c.recent_days||0)}"></label>
+        <label class="f" for="crGrade">Vào mục Khách hàng từ hạng<select id="crGrade">${["A","B","C"].map(g=>`<option ${c.crm_min_grade===g?"selected":""}>${g}</option>`).join("")}</select></label></div></div>
+    </div>
+    <div><b class="small">Cách tìm trên Facebook</b><div class="pr-checks">${Object.entries(d.search_kinds||{}).map(([k,v])=>`<label class="row small"><input type="checkbox" name="crKind" value="${k}" ${(c.search_kinds||[]).includes(k)?"checked":""}> ${esc(v)}</label>`).join("")}</div></div>
+    <div><b class="small">Bỏ qua các loại người bán</b><div class="pr-checks">${types.map(([k,v])=>`<label class="row small"><input type="checkbox" name="crSkip" value="${k}" ${(c.skip_types||[]).includes(k)?"checked":""}> ${esc(v)}</label>`).join("")}</div></div>
+    <div><b class="small">Từ khóa gõ vào ô tìm kiếm (mỗi dòng 1 từ khóa)</b><div class="pr-dirs" style="margin-top:6px">${[1,2,3,4,5].map(i=>`<label class="f" for="prK${i}">Hướng ${i}: ${esc(d.directions[i])}<textarea id="prK${i}" rows="3">${esc(((d.keywords||{})[i]||[]).join("\n"))}</textarea></label>`).join("")}</div></div>
+    <label class="f" for="crNote">Sếp dặn thêm Mai (Mai đọc khi tìm và khi viết kịch bản)<textarea id="crNote" rows="2">${esc(c.note||"")}</textarea></label>
+    <div class="row wrap"><button class="btn sm primary" type="submit">Lưu và cho Mai chấm lại</button><span class="small muted">Mai ghi điều kiện vào sổ kiến thức và chấm lại các khách đã tìm.</span></div></form>`;
+}
+function prLessons(d){
+  return (d.lessons||[]).map(l=>{ const sg=l.suggest||{}; const chips=Object.keys(SG_LBL).filter(k=>(sg[k]||[]).length).map(k=>`<span>${SG_LBL[k]}: ${esc((sg[k]||[]).map(x=>(d.search_kinds||{})[x]||x).join(", "))}</span>`).join("");
+    return `<li><div class="txt">${esc(l.text)}</div><div class="mai"><b>Mai:</b> ${esc(sg.summary||"Em đã ghi vào sổ kiến thức.")}${chips?`<div class="sg">${chips}</div>`:""}</div>
+      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="small muted">${fmtTime(l.created_at)} ${fmtDate(l.created_at)}</span><span class="row" style="gap:4px">${chips?(l.applied?'<span class="chip ok">Đã áp dụng</span>':`<button class="btn sm primary" type="button" data-lapply="${l.id}">Áp dụng</button>`):""}<button class="btn sm ghost danger" type="button" data-ldel="${l.id}">Xóa</button></span></div></li>`; }).join("")||'<li class="small muted" style="border:0;padding:0">Chưa có bài dạy nào.</li>';
 }
 async function loadProspects(soft){
   const f=ST.prF, qs=new URLSearchParams(Object.entries(f).filter(([k,v])=>v)).toString();
@@ -2790,6 +2870,9 @@ async function loadProspects(soft){
   $("#prLast").textContent=d.last?`${fmtTime(d.last.created_at)} ${fmtDate(d.last.created_at)}: ${d.last.detail}`:"Mai chưa đi tìm lần nào.";
   $("#prList").innerHTML=d.items.length?d.items.map(x=>prCard(x,d)).join(""):`<div class="card empty">${Object.values(f).some(Boolean)?"Không có tài khoản nào khớp bộ lọc.":"Chưa có khách nào. Bấm “Mai đi tìm ngay” hoặc dán link một shop để Mai phân tích."}</div>`;
   if(!soft||!$("#prSetBody").innerHTML) $("#prSetBody").innerHTML=prSettings(d);
+  $("#prCritSum").textContent=d.criteria_text||"";
+  if(!soft||!$("#prCritBody").innerHTML) $("#prCritBody").innerHTML=prCrit(d);
+  if(!$("#prTeach").contains(document.activeElement)) $("#prLessons").innerHTML=prLessons(d);
 }
 $("#prSrc").addEventListener("click",async e=>{ const b=e.target.closest("[data-prsrc]"); if(!b) return; const k=b.dataset.prsrc, v=b.getAttribute("aria-pressed")!=="true";
   const nm={groups:"Đọc bình luận trong nhóm",ads:"Quét trang chạy quảng cáo"}[k]||PR_PF[k];
@@ -2810,8 +2893,24 @@ $("#prList").addEventListener("click",async e=>{ const t=e.target; let b;
     if((b=t.closest("[data-prst]"))){ await api(`/prospects/${b.dataset.id}`,"PATCH",{status:b.dataset.prst}); toast({contacted:"Đã ghi nhận đã liên hệ",rejected:"Đã loại khỏi danh sách",verified:"Đã đưa lại vào danh sách theo dõi"}[b.dataset.prst]); return loadProspects(true); }
     if((b=t.closest("[data-prre]"))){ const r=await api(`/prospects/${b.dataset.prre}/recheck`,"POST"); toast(`Mai sẽ mở lại trang này bằng Chrome của nick ${r.account}`); return; }
   }catch(err){ toast(err.message); } });
-$("#prSetBody").addEventListener("submit",async e=>{ e.preventDefault(); const kw={}; [1,2,3,4,5].forEach(i=>kw[i]=$("#prK"+i).value.split("\n").map(s=>s.trim()).filter(Boolean));
-  try{ await api("/prospects/settings","PUT",{time:$("#prTime").value,inspect_per_run:+$("#prN").value,fb_keywords:+$("#prFk").value,groups_per_run:+$("#prGn").value,enabled:$("#prOn").checked,auto_crm:$("#prCrm").checked,ai_script:$("#prAi").checked,keywords:kw});
+$("#prCritBody").addEventListener("submit",async e=>{ e.preventDefault(); const L=id=>$("#"+id).value.split("\n").map(s=>s.trim()).filter(Boolean);
+  const kw={}; [1,2,3,4,5].forEach(i=>kw[i]=L("prK"+i)); const btn=e.target.querySelector("button[type=submit]"); btn.disabled=true;
+  try{ const r=await api("/prospects/criteria","PUT",{must:L("crMust"),exclude:L("crEx"),bonus:L("crBonus"),bonus_points:+$("#crPts").value,fit:L("crFit"),regions:L("crReg"),
+      followers_min:+$("#crFmin").value,followers_max:+$("#crFmax").value,recent_days:+$("#crDays").value,crm_min_grade:$("#crGrade").value,
+      search_kinds:[...document.querySelectorAll("[name=crKind]:checked")].map(x=>x.value),skip_types:[...document.querySelectorAll("[name=crSkip]:checked")].map(x=>x.value),note:$("#crNote").value,keywords:kw});
+    const rs=r.rescore||{}; toast(`Mai đã học điều kiện mới, chấm lại ${rs.checked||0} khách: ${rs.fail||0} không đạt${rs.crm?`, ${rs.crm} khách mới vào mục Khách hàng`:""}`); loadProspects(); }catch(err){ toast(err.message); }
+  btn.disabled=false; });
+$("#prTeachF").addEventListener("submit",async e=>{ e.preventDefault(); const v=$("#prTeachIn").value.trim(); if(v.length<10) return toast("Sếp viết dài hơn một chút để Mai hiểu");
+  const btn=e.target.querySelector("button"); btn.disabled=true; btn.textContent="Mai đang đọc…";
+  try{ await api("/prospects/lessons","POST",{text:v}); $("#prTeachIn").value=""; toast("Mai đã học bài này và ghi vào sổ kiến thức"); document.activeElement.blur(); loadProspects(true); }catch(err){ toast(err.message); }
+  btn.disabled=false; btn.textContent="Dạy Mai"; });
+$("#prLessons").addEventListener("click",async e=>{ let b;
+  try{
+    if((b=e.target.closest("[data-lapply]"))){ const r=await api(`/prospects/lessons/${b.dataset.lapply}/apply`,"POST"); toast(`Đã cài vào điều kiện tìm khách${r.groups_added?`, thêm ${r.groups_added} nhóm để Mai đọc bình luận`:""}. Mai chấm lại ${(r.rescore||{}).checked||0} khách`); return loadProspects(); }
+    if((b=e.target.closest("[data-ldel]"))){ if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } await api(`/prospects/lessons/${b.dataset.ldel}`,"DELETE"); return loadProspects(); }
+  }catch(err){ toast(err.message); } });
+$("#prSetBody").addEventListener("submit",async e=>{ e.preventDefault();
+  try{ await api("/prospects/settings","PUT",{time:$("#prTime").value,inspect_per_run:+$("#prN").value,fb_keywords:+$("#prFk").value,groups_per_run:+$("#prGn").value,enabled:$("#prOn").checked,auto_crm:$("#prCrm").checked,ai_script:$("#prAi").checked});
     toast("Đã lưu cài đặt tìm khách"); loadProspects(); }catch(err){ toast(err.message); } });
 
 /* --------------------------------------------- nhóm trong các nick (Tuấn rà soát) */

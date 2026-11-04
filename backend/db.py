@@ -239,6 +239,9 @@ CREATE TABLE IF NOT EXISTS prospects (
   status TEXT DEFAULT 'verified', lead_id INTEGER, found_by INTEGER, phone_tries INTEGER DEFAULT 0, note TEXT, verified_at TEXT, created_at TEXT, updated_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_prospect_url ON prospects(account_url);
+CREATE TABLE IF NOT EXISTS prospect_lessons (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, suggest TEXT, applied INTEGER DEFAULT 0, knowledge_id INTEGER, created_at TEXT
+);
 CREATE INDEX IF NOT EXISTS idx_prospect_grade ON prospects(grade);
 CREATE TABLE IF NOT EXISTS knowledge (
   id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id TEXT, topic TEXT, question TEXT, content TEXT, keywords TEXT, source TEXT,
@@ -308,7 +311,8 @@ MIGRATIONS = [
     ("sales", "fired_gen", "TEXT"), ("leads", "is_sample", "INTEGER DEFAULT 0"),
     ("groups", "is_sample", "INTEGER DEFAULT 0"), ("products", "is_sample", "INTEGER DEFAULT 0"),
     ("leads", "phone_at", "TEXT"), ("leads", "boss_status", "TEXT"), ("leads", "remind_at", "TEXT"),
-    ("prospects", "phone_tries", "INTEGER DEFAULT 0"),
+    ("prospects", "phone_tries", "INTEGER DEFAULT 0"), ("prospects", "rule_bonus", "INTEGER DEFAULT 0"),
+    ("prospects", "rule_note", "TEXT"), ("prospects", "rule_fail", "TEXT"),
     ("account_groups", "role", "TEXT DEFAULT 'member'"), ("account_groups", "origin", "TEXT"), ("account_groups", "joined_at", "TEXT"),
     ("account_groups", "verdict", "TEXT"), ("account_groups", "verdict_note", "TEXT"), ("account_groups", "left_at", "TEXT"),
     ("account_groups", "seen_at", "TEXT"), ("groups", "managed", "INTEGER DEFAULT 0"), ("groups", "pinned", "INTEGER DEFAULT 0"),

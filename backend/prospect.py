@@ -366,6 +366,7 @@ def analyze(url: str, body: str, articles: list[str], links: list[str], platform
         "followers": followers, "phones": phones, "zalo": zalo, "email": emails[0] if emails else None, "messenger": msgr,
         "shop_links": shop_links, "platforms": sorted(platforms), "affiliate_only": aff_only, "evidence": ev[:14],
         "import_signals": "; ".join(e["text"] for e in ev if e["kind"] == "import")[:300], "enough": enough,
+        "_text": alltext[:8000],
     }
 
 
@@ -531,8 +532,11 @@ def save(cand: dict, a: dict | None, direction: int | None, keyword: str, found_
                 live_freq=a["live_freq"], followers=a["followers"], phone=(a["phones"] or [None])[0], zalo=a["zalo"], email=a["email"],
                 import_signals=a["import_signals"], evidence=json.dumps(a["evidence"], ensure_ascii=False),
                 score=a["score"], grade=a["grade"], parts=json.dumps(a["parts"]),
-                suggested=json.dumps(prods, ensure_ascii=False), status=status, verified_at=now, updated_at=now)
+                suggested=json.dumps(prods, ensure_ascii=False), status=status, verified_at=now, updated_at=now,
+                rule_bonus=a.get("rule_bonus") or 0, rule_note=a.get("rule_note"), rule_fail=a.get("rule_fail"))
     data["next_action"] = next_action(row, a)
+    if a.get("rule_fail"):
+        data["next_action"] = "Không đạt điều kiện của sếp: " + a["rule_fail"]
     ld = lead_dup(a["phones"], url)
     if ld:
         data["lead_id"] = ld["id"]
@@ -558,8 +562,9 @@ def save(cand: dict, a: dict | None, direction: int | None, keyword: str, found_
             except Exception as e:
                 print("[prospect escalate]", e)
     new_crm = False
-    if (a["phones"] and a["grade"] in ("A", "B", "C") and a["enough"] and not a.get("affiliate_only") and not r.get("lead_id")
-            and s().get("prospect_auto_crm", "1") == "1"):
+    import prospect_rules
+    if (a["phones"] and prospect_rules.grade_ok(a["grade"]) and a["enough"] and not a.get("affiliate_only") and not r.get("lead_id")
+            and not a.get("rule_fail") and s().get("prospect_auto_crm", "1") == "1"):
         new_crm = bool(to_crm(pid, escalate=True))
     return {**db.one("SELECT * FROM prospects WHERE id=?", (pid,)), "_crm_new": new_crm}
 
@@ -605,9 +610,16 @@ def ads_url(q: str) -> str:
             f"&search_type=keyword_unordered&q={quote(q)}")
 
 
+RECENT_FILTER = "eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D"  # Bài viết gần đây
+
+
 def search_url(platform: str, q: str, kind: str = "pages") -> str:
     if kind == "ads":
         return ads_url(q)
+    if kind == "posts_recent":
+        return f"{_fb_base()}/search/posts/?q={quote(q)}&filters={RECENT_FILTER}"
+    if kind == "people":
+        return f"{_fb_base()}/search/people/?q={quote(q)}"
     if platform == "tiktok":
         return f"{TIKTOK_BASE}/search/user?q={quote(q)}"
     if platform == "shopee":
@@ -693,8 +705,11 @@ def inspect(page, url: str, extra: str = "", dig: bool = True) -> tuple[dict | N
 
 
 def fit_text(text: str) -> bool:
+    import prospect_rules
     p = plain(text or "")
-    return bool(RX["fit_core"].search(p) or RX["fit_food"].search(p))
+    if prospect_rules.excluded(text):
+        return False
+    return bool(RX["fit_core"].search(p) or RX["fit_food"].search(p) or prospect_rules.fit_words_hit(text))
 
 
 def _ad_text(snippet: str, name: str) -> str:
@@ -857,7 +872,8 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
             ads = step.get("kind") == "ads"
             workflows.set_status("mai", "working", f"Quét thư viện quảng cáo Facebook: {q}" if ads else f"Tìm trên {PLATFORM_TXT[pf]}: {q}")
             workflows.set_status(agent, "working", f"Mở {'thư viện quảng cáo' if ads else 'trang tìm kiếm ' + PLATFORM_TXT[pf]} cho Mai")
-            kinds = ["ads"] if ads else ["pages", "posts"] if pf == "facebook" else ["users"]
+            import prospect_rules
+            kinds = ["ads"] if ads else prospect_rules.get()["search_kinds"] if pf == "facebook" else ["users"]
             for kind in kinds:
                 try:
                     rows, blk = _search(page, pf, q, kind)
@@ -914,6 +930,9 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
                 a = analyze(c, sig["text"], [], [], "facebook")
             if a is not None and sig:
                 a = apply_signal(a, sig)
+            if a is not None:  # điều kiện tìm khách sỉ sếp đặt
+                import prospect_rules
+                a = prospect_rules.apply(a, cand.get("name") or a.get("page_name") or "", (sig or {}).get("text", ""))
             if blk or a is None:
                 if blk:
                     blocked.add(pf)
@@ -986,6 +1005,11 @@ def retry_no_phone(limit: int = 3) -> list[dict]:
                    AND status='verified' AND COALESCE(phone_tries,0) < 3
                    AND COALESCE(seller_type,'') NOT IN ('affiliate','koc','store','buyer') AND COALESCE(verified_at,'') < ?
                    ORDER BY score DESC LIMIT ?""", (cut, limit))
+
+
+def _rules():
+    import prospect_rules
+    return prospect_rules
 
 
 def channels(days: int = 7) -> list[dict]:
@@ -1111,7 +1135,8 @@ def overview(grade: str = "", platform: str = "", stype: str = "", status: str =
             "phones_today": db.one("SELECT COUNT(*) n FROM prospects WHERE COALESCE(phone,'')!='' AND grade IN ('A','B','C') AND created_at>=?",
                                    (db.today(),))["n"],
             "no_phone": db.one("SELECT COUNT(*) n FROM prospects WHERE COALESCE(phone,'')='' AND grade IN ('A','B','C') AND status='verified'")["n"],
-            "platforms_on": platforms_on(), "channels": channels(),
+            "platforms_on": platforms_on(), "channels": channels(), "criteria": _rules().get(), "lessons": _rules().lessons(),
+            "search_kinds": _rules().SEARCH_KINDS, "criteria_text": _rules().summary(),
             "directions": DIRECTIONS, "types": SELLER_TYPES, "platforms": PLATFORM_TXT, "keywords": keywords(),
             "settings": {k: st for k, st in s().items() if k.startswith("prospect_")},
             "last": db.one("SELECT detail, created_at FROM activity WHERE agent_id='mai' AND action='Tìm khách sỉ' ORDER BY id DESC LIMIT 1")}

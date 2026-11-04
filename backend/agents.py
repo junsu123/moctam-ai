@@ -138,7 +138,17 @@ def system_prompt(agent_id: str, settings: dict | None = None, with_learning: bo
             f"Bạn tên là {a['name']}, vị trí: {a['role']} ({a['short']}).\n"
             f"Tính cách: {a['personality']}\n"
             "Luôn trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, đúng vai." + (_learned(agent_id) if with_learning else "")
-            + _orders(agent_id) + _hot_products())
+            + _orders(agent_id) + _hot_products() + _mai_rules(agent_id))
+
+
+def _mai_rules(agent_id: str) -> str:
+    if agent_id != "mai":
+        return ""
+    try:
+        import prospect_rules
+        return prospect_rules.prompt_block()
+    except Exception:
+        return ""
 
 
 def _hot_products() -> str:
