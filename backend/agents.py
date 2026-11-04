@@ -119,7 +119,23 @@ def system_prompt(agent_id: str, settings: dict | None = None, with_learning: bo
             f"Bạn tên là {a['name']}, vị trí: {a['role']} ({a['short']}).\n"
             f"Tính cách: {a['personality']}\n"
             "Luôn trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, đúng vai." + (_learned(agent_id) if with_learning else "")
-            + _orders(agent_id))
+            + _orders(agent_id) + _hot_products())
+
+
+def _hot_products() -> str:
+    """Sản phẩm sếp tích "đang bán chạy": mọi agent ưu tiên chào mời."""
+    try:
+        import db
+        rows = db.q("SELECT name, wholesale_price, retail_price, moq, hot_note FROM products WHERE hot=1 ORDER BY hot_since DESC, id")
+    except Exception:
+        return ""
+    if not rows:
+        return ""
+    return ("\n\nSẢN PHẨM ĐANG BÁN CHẠY (sếp đánh dấu, tập trung chào mời trước các sản phẩm này khi viết bài, tư vấn, trả lời "
+            "khách, đề xuất trong họp; khách hỏi chung chung thì giới thiệu các sản phẩm này đầu tiên):\n"
+            + "\n".join(f"- {r['name']}: giá sỉ {r['wholesale_price'] or '?'}, lẻ gợi ý {r['retail_price'] or '?'}, "
+                         f"nhập tối thiểu {r['moq'] or '?'}" + (f". Lưu ý của sếp: {r['hot_note']}" if r["hot_note"] else "")
+                         for r in rows))
 
 
 def _orders(agent_id: str) -> str:

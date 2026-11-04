@@ -211,6 +211,7 @@ CREATE TABLE IF NOT EXISTS sales (
 
 # Cột thêm cho cơ sở dữ liệu tạo từ phiên bản trước
 MIGRATIONS = [
+    ("products", "hot", "INTEGER DEFAULT 0"), ("products", "hot_note", "TEXT DEFAULT ''"), ("products", "hot_since", "TEXT"),
     # chỉ số tương tác của nhóm (sale khảo sát) và đánh giá của Tuấn
     ("group_candidates", "posts_today", "REAL"), ("group_candidates", "posts_month", "INTEGER"), ("group_candidates", "new_members_week", "INTEGER"), ("group_candidates", "avg_reactions", "REAL"), ("group_candidates", "avg_comments", "REAL"), ("group_candidates", "sampled_posts", "INTEGER"), ("group_candidates", "last_post_hours", "REAL"), ("group_candidates", "selling_ratio", "REAL"), ("group_candidates", "no_selling", "INTEGER DEFAULT 0"), ("group_candidates", "rules_note", "TEXT"), ("group_candidates", "scouted_at", "TEXT"), ("group_candidates", "eng_score", "REAL"), ("group_candidates", "verdict", "TEXT"), ("group_candidates", "review_note", "TEXT"), ("group_candidates", "reviewed_at", "TEXT"),
     ("groups", "posts_today", "REAL"), ("groups", "posts_month", "INTEGER"), ("groups", "new_members_week", "INTEGER"), ("groups", "avg_reactions", "REAL"), ("groups", "avg_comments", "REAL"), ("groups", "sampled_posts", "INTEGER"), ("groups", "last_post_hours", "REAL"), ("groups", "selling_ratio", "REAL"), ("groups", "no_selling", "INTEGER DEFAULT 0"), ("groups", "rules_note", "TEXT"), ("groups", "scouted_at", "TEXT"), ("groups", "eng_score", "REAL"), ("groups", "verdict", "TEXT"), ("groups", "review_note", "TEXT"), ("groups", "reviewed_at", "TEXT"),
@@ -279,6 +280,7 @@ DEFAULT_SETTINGS = {
     "ceo_autopilot": "1",
     "discover_enabled": "1", "discover_time": "10:30", "discover_keywords_per_day": "3", "discover_add_per_day": "5",
     "join_enabled": "1", "join_per_nick_day": "2", "browse_minutes": "2",
+    "hot_share": "0.7",  # tỉ lệ bài Lan viết về sản phẩm đang bán chạy (khi sếp có tích sản phẩm bán chạy)
     "scout_per_run": "6", "review_posts_day": "10", "review_avg_reactions": "20", "review_avg_comments": "5",
     "review_growth_week": "0.5", "review_min_members": "1000", "review_join_score": "60", "review_consider_score": "40",
     "review_use_best_groups": "1", "group_keywords": "", "ceo_kw_today": "",

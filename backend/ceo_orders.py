@@ -183,6 +183,26 @@ def _write_and_report(n, pid, tt, angle, note, via):
     followup(msg, via)
 
 
+def _find_product(pid=None, name=None) -> dict | None:
+    if str(pid or "").isdigit():
+        p = db.one("SELECT * FROM products WHERE id=?", (int(pid),))
+        if p:
+            return p
+    return _product_in(str(name or ""))
+
+
+def _product_in(text: str) -> dict | None:
+    """Sản phẩm được nhắc tới trong câu (khớp nhiều từ nhất trong tên)."""
+    low = (text or "").lower()
+    best, hit = None, 0
+    for p in db.q("SELECT * FROM products"):
+        words = [w for w in p["name"].lower().split() if len(w) > 2][:4]
+        n = sum(w in low for w in words)
+        if words and n >= min(2, len(words)) and n > hit:
+            best, hit = p, n
+    return best
+
+
 def execute(act: dict) -> str:
     """Thực hiện một việc trong danh sách được phép. Trả về một câu mô tả kết quả."""
     import workflows
@@ -196,6 +216,18 @@ def execute(act: dict) -> str:
         prod = db.one("SELECT name FROM products WHERE id=?", (pid,))["name"] if pid else "các sản phẩm"
         return f"Giao Lan viết {n} bài {({'group': 'đăng nhóm', 'profile': 'trang cá nhân', 'page': 'Fanpage'})[tt]} về {prod}" + \
             (", viết xong em duyệt rồi cho Tuấn xếp lịch và báo lại sếp" if autopilot() else ", viết xong em báo lại sếp")
+    if t == "set_hot":
+        p = _find_product(act.get("product_id"), act.get("product"))
+        if not p:
+            return "Chưa rõ sản phẩm nào. Sếp nói đúng tên sản phẩm trong mục Sản phẩm giúp em"
+        on = act.get("hot", True) not in (False, 0, "0", "false")
+        import products
+        products.set_hot(p["id"], on, by="ceo")
+        if act.get("note") is not None and on:
+            db.run("UPDATE products SET hot_note=? WHERE id=?", (str(act["note"])[:200], p["id"]))
+        hot = [r["name"] for r in db.q("SELECT name FROM products WHERE hot=1")]
+        return (f"Đánh dấu {p['name']} đang bán chạy: Lan viết nhiều bài hơn về sản phẩm này, Hà và sale chào sản phẩm này trước"
+                if on else f"Thôi ưu tiên {p['name']}") + (f". Đang tập trung: {', '.join(hot)}" if hot else "")
     if t == "plan":
         plan = workflows.plan_distribution()
         return f"Giao Tuấn xếp lịch: {len(plan)} bài đã có giờ đăng" if plan else "Tuấn xếp lịch: chưa có bài đã duyệt hoặc nhóm nào đủ điều kiện"
@@ -338,7 +370,7 @@ def status_text() -> str:
 # ---------------------------------------------------------------- hiểu lệnh
 def _context() -> str:
     import group_finder
-    prods = db.q("SELECT id, name FROM products ORDER BY id")
+    prods = db.q("SELECT id, name, hot FROM products ORDER BY id")
     sales = _sales()
     od = orders()
     return json.dumps({
@@ -347,7 +379,7 @@ def _context() -> str:
                    "ha": "Hà, chăm sóc khách, soạn tin", "khoa": "Khoa, số liệu"},
         "sales": [{"id": r["id"], "ten": r["name"], "nick": r["fb_name"], "dang_nhap": r["login_status"] == "ok",
                    "tu_dang": bool(r["auto_post"])} for r in sales],
-        "san_pham": [{"id": p["id"], "ten": p["name"]} for p in prods],
+        "san_pham": [{"id": p["id"], "ten": p["name"], "dang_ban_chay": bool(p["hot"])} for p in prods],
         "chu_de_tim_nhom_hom_nay": group_finder.today_keywords(),
         "chi_dao_dang_ap_dung": [{"id": o["id"], "cho": o["agent"], "noi_dung": o["text"]} for o in od[:15]],
         "cai_dat_duoc_doi": {k: f"{v[3]} (hiện: {s().get(k)})" for k, v in SETTINGS_OK.items()},
@@ -358,6 +390,7 @@ def _context() -> str:
 ACTIONS_DOC = """Các việc được phép (type và tham số):
 - write_posts {count 1-10, product_id?, target: group|profile|page, angle?, note?}: giao Lan viết bài
 - plan {}: giao Tuấn xếp lịch đăng các bài đã duyệt
+- set_hot {product_id, hot: true|false, note?}: đánh dấu / bỏ đánh dấu sản phẩm đang bán chạy (cả đội tập trung chào mời)
 - daily_work {}: cả đội làm việc hằng ngày
 - meeting {topic}: triệu tập họp
 - find_groups {keywords: [..]}: giao sale lướt Facebook tìm nhóm theo chủ đề
@@ -444,7 +477,12 @@ def _rule_plan(text: str) -> dict:
     want_write = re.search(r"\b(viết|soạn|làm|lên|tạo)\s*(thêm\s*)?(\d+)?\s*(bài|content|nội dung|post)", low)
     want_plan = re.search(r"xếp lịch|lên lịch|sắp lịch|lịch đăng|đăng bài\b(?!.*viết)", low)
     want_status = re.search(r"tình hình|báo cáo|thế nào|ra sao|bao nhiêu khách|đang làm gì|làm được gì", low)
-    if want_status and not critique and not (want_find or want_write or want_plan):
+    want_hot = re.search(r"bán chạy|đẩy mạnh|tập trung (bán|chào|đẩy)|ưu tiên (bán|chào)|(thôi|bỏ|ngừng|dừng) (ưu tiên|đẩy|tập trung)|"
+                         r"sản phẩm (hot|chủ lực)|đang hot", low)
+    if want_hot and not want_write and (hp := _product_in(t)):
+        off = re.search(r"(thôi|bỏ|hết|không còn|ngừng|dừng)\s*(đánh dấu\s*)?(ưu tiên|bán chạy|đẩy|tập trung|hot)", low)
+        acts.append({"type": "set_hot", "product_id": hp["id"], "hot": not off})
+    elif want_status and not critique and not (want_find or want_write or want_plan):
         acts.append({"type": "status"})
     elif agent and critique and not want_find and not re.search(r"(viết|soạn|làm|tạo)\s*(thêm\s*)?\d+\s*(bài|content|post)", low):
         acts.append({"type": "teach", "agent": agent, "text": t})  # sếp chê một agent -> sửa cách làm của agent đó

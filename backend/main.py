@@ -183,6 +183,8 @@ class Product(BaseModel):
     moq: str = ""
     selling_points: str = ""
     image_folder: str = ""
+    hot: bool = False
+    hot_note: str = ""
 
 
 class ProductPatch(BaseModel):
@@ -194,25 +196,52 @@ class ProductPatch(BaseModel):
     moq: str | None = None
     selling_points: str | None = None
     image_folder: str | None = None
+    hot: bool | None = None
+    hot_note: str | None = None
+
+
+def _set_hot(pid: int, hot: bool, by: str = "boss"):
+    import products as P
+    P.set_hot(pid, hot, by)
 
 
 @app.get("/api/products")
 def products():
-    return [{**p, "folder": media_folder.folder_info(p)} for p in db.q("SELECT * FROM products ORDER BY id")]
+    return [{**p, "folder": media_folder.folder_info(p)}
+            for p in db.q("SELECT * FROM products ORDER BY hot DESC, id")]
 
 
 @app.post("/api/products")
 def add_product(p: Product):
+    if not p.name.strip():
+        raise HTTPException(400, "Nhập tên sản phẩm")
+    if db.one("SELECT id FROM products WHERE lower(name)=lower(?)", (p.name.strip(),)):
+        raise HTTPException(400, "Đã có sản phẩm cùng tên. Sửa sản phẩm đó thay vì thêm mới")
     pid = db.run("""INSERT INTO products(name, category, description, wholesale_price, retail_price, moq,
-                    selling_points, image_folder, created_at) VALUES (?,?,?,?,?,?,?,?,?)""",
-                 (p.name, p.category, p.description, p.wholesale_price, p.retail_price, p.moq, p.selling_points,
-                  p.image_folder.strip().strip('"'), db.now()))
-    return db.one("SELECT * FROM products WHERE id=?", (pid,))
+                    selling_points, image_folder, hot_note, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                 (p.name.strip(), p.category, p.description, p.wholesale_price, p.retail_price, p.moq, p.selling_points,
+                  p.image_folder.strip().strip('"'), p.hot_note.strip(), db.now()))
+    db.log("minh", "Thêm sản phẩm", f"{p.name.strip()}: Lan có thể viết bài, Hà tư vấn sản phẩm này từ giờ")
+    if p.hot:
+        _set_hot(pid, True)
+    prod = db.one("SELECT * FROM products WHERE id=?", (pid,))
+    return {**prod, "folder": media_folder.folder_info(prod)}
 
 
 @app.patch("/api/products/{pid}")
 def patch_product(pid: int, p: ProductPatch):
-    fields = {k: (v.strip().strip('"') if k == "image_folder" else v) for k, v in p.model_dump().items() if v is not None}
+    if not db.one("SELECT id FROM products WHERE id=?", (pid,)):
+        raise HTTPException(404, "Không tìm thấy sản phẩm")
+    data = p.model_dump()
+    hot = data.pop("hot")
+    fields = {k: (v.strip().strip('"') if k == "image_folder" else v.strip() if isinstance(v, str) else v)
+              for k, v in data.items() if v is not None}
+    if "name" in fields and not fields["name"]:
+        raise HTTPException(400, "Tên sản phẩm không được để trống")
+    if "name" in fields and db.one("SELECT id FROM products WHERE lower(name)=lower(?) AND id!=?", (fields["name"], pid)):
+        raise HTTPException(400, "Đã có sản phẩm khác cùng tên")
+    if hot is not None:
+        _set_hot(pid, hot)
     if fields:
         fields["is_sample"] = 0  # sếp đã sửa -> thành dữ liệu thật
         db.run(f"UPDATE products SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), pid))
@@ -252,8 +281,14 @@ def used_image(path: str):
 
 @app.delete("/api/products/{pid}")
 def del_product(pid: int):
+    p = db.one("SELECT name FROM products WHERE id=?", (pid,))
+    if not p:
+        raise HTTPException(404, "Không tìm thấy sản phẩm")
+    drafts = db.one("SELECT COUNT(*) n FROM posts WHERE product_id=? AND status IN ('draft','approved')", (pid,))["n"]
+    db.run("UPDATE posts SET status='rejected' WHERE product_id=? AND status IN ('draft','approved')", (pid,))
     db.run("DELETE FROM products WHERE id=?", (pid,))
-    return {"ok": True}
+    db.log("minh", "Xóa sản phẩm", f"{p['name']}" + (f", bỏ {drafts} bài nháp/chờ đăng của sản phẩm này" if drafts else ""))
+    return {"ok": True, "drafts_removed": drafts}
 
 
 # ------------------------------------------------------------------ hội nhóm

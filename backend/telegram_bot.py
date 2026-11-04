@@ -244,6 +244,9 @@ def morning_text() -> str:
         lines.append(e(company.brief_text()))
     sched = db.one("SELECT COUNT(*) n FROM posts WHERE status='scheduled' AND scheduled_for LIKE ?", (db.today() + "%",))["n"]
     lines.append(f"• Lịch đăng hôm nay: {sched} bài · Quét bình luận lúc {db.get_settings().get('scan_times')}")
+    hot = db.q("SELECT name FROM products WHERE hot=1 ORDER BY hot_since DESC, id")
+    if hot:
+        lines.append("• 🔥 Sản phẩm đang bán chạy, cả đội tập trung chào: " + e(", ".join(p["name"] for p in hot)))
     try:
         import group_finder
         st = db.get_settings()

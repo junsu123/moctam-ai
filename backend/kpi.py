@@ -211,7 +211,7 @@ def consult_note(lead: dict) -> str:
     """Hà soạn kịch bản tư vấn ngắn cho sếp (Haiku, ~0,0003 USD/khách)."""
     from agents import system_prompt
     from llm import llm
-    products = db.q("SELECT name, wholesale_price, retail_price, moq FROM products")
+    products = db.q("SELECT name, wholesale_price, retail_price, moq, hot dang_ban_chay FROM products ORDER BY hot DESC, id")
     post = db.one("SELECT p.title, pr.name pname FROM posts p LEFT JOIN products pr ON pr.id=p.product_id WHERE p.id=?",
                   (lead.get("post_id"),)) if lead.get("post_id") else None
     def mock():
@@ -224,7 +224,7 @@ def consult_note(lead: dict) -> str:
     prompt = f"""Sếp sắp gọi điện cho khách sỉ này. Soạn kịch bản ngắn (dưới 70 chữ) gồm: câu mở đầu, báo giá sản phẩm khách quan tâm,
 2 câu hỏi để hiểu nhu cầu, 1 đề nghị chốt (gửi mẫu/ưu đãi đơn đầu nếu hợp lý). Không bịa chính sách.
 Khách: {lead.get('name')} | Bình luận/nhu cầu: {lead.get('need')} | Bài nguồn: {(post or {}).get('title') or ''} ({(post or {}).get('pname') or ''})
-Sản phẩm: {products}"""
+Sản phẩm (dang_ban_chay=1: sếp muốn ưu tiên chào thêm nếu hợp nhu cầu khách): {products}"""
     return llm.chat(system_prompt("ha", db.get_settings()), prompt, mock=mock, max_tokens=260, task="replies")
 
 

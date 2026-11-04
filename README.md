@@ -133,6 +133,24 @@ Sửa chủ đề hôm nay, kho chủ đề, giờ tìm, số nhóm thêm/xin v�
 
 **Lưu ý:** xin vào nhiều nhóm trong thời gian ngắn dễ bị Facebook hạn chế; nên giữ 1–2 nhóm/nick/ngày.
 
+## Sản phẩm và sản phẩm đang bán chạy
+
+Trang **Sản phẩm** là tài liệu bán hàng của cả đội:
+
+- **Thêm sản phẩm** ở form cuối trang (tên, dòng, giá sỉ, giá lẻ gợi ý, nhập tối thiểu, mô tả, điểm mạnh, thư mục ảnh).
+  Không thêm được 2 sản phẩm trùng tên.
+- **Sửa thông tin**: bấm ở thẻ sản phẩm, sửa trực tiếp rồi **Lưu thay đổi**. Agent dùng thông tin mới từ việc tiếp theo.
+- **Xóa sản phẩm**: bấm 2 lần để xác nhận. Bài nháp và bài chờ đăng của sản phẩm đó bị bỏ theo; bài đã đăng vẫn giữ.
+
+**🔥 Đang bán chạy:** bấm nút 🔥 trên thẻ (hoặc tích khi thêm/sửa, hoặc nhắn CEO "Bột ngũ cốc đang bán chạy, tập trung chào nhé",
+"Thôi ưu tiên trà sen"). Có thể ghi thêm lưu ý khi chào (VD: "tặng 5 hộp khi nhập từ 100 hộp"). Khi có sản phẩm bán chạy:
+
+- Lan viết khoảng **70% số bài** về các sản phẩm này (cài đặt `hot_share`), phần còn lại xoay vòng sản phẩm khác để không bỏ quên.
+- Mọi agent nhận danh sách sản phẩm bán chạy và lưu ý của sếp trong lời dặn: Hà soạn tin và kịch bản tư vấn chào các sản phẩm
+  này trước khi khách hỏi chung chung, Minh và CEO đề xuất trong họp.
+- Tuấn up bài của sản phẩm bán chạy trước.
+- Báo cáo sáng trên Telegram nhắc các sản phẩm đang đẩy.
+
 ## Ảnh sản phẩm: chọn ngẫu nhiên, không đăng trùng
 
 Mỗi sản phẩm có **một thư mục ảnh riêng** trên máy chạy phần mềm (trang **Sản phẩm** → ô *Thư mục ảnh* → **Lưu**),
@@ -473,6 +491,7 @@ backend/
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm
   group_review.py  Tuấn đánh giá nhóm theo chuẩn nhóm tương tác cao: chấm điểm, Nên vào / Cân nhắc / Bỏ qua, lý do
   ceo_orders.py  Sếp giao việc cho CEO: hiểu lệnh, chia việc cho agent, sửa agent, chỉ đạo lâu dài, CEO tự duyệt bài
+  products.py    Sản phẩm đang bán chạy: đánh dấu, danh sách để các agent ưu tiên chào mời
   ceo.py         CEO: sa thải theo luật, tuyển người thay, tăng người theo mốc doanh thu và tiềm năng Facebook
   company.py     Công ty: vốn, chi phí, doanh thu, đánh giá KPI tháng, sa thải, giải thể
   kpi.py         KPI: nhận diện SĐT, tiến độ, chia theo nick, lịch sử; chuyển khách cho sếp, kịch bản tư vấn

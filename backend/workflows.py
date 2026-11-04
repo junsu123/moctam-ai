@@ -352,10 +352,11 @@ def plan_bumps(force: bool = False) -> int:
     total = 0
     import accounts
     for sale in accounts.working():  # mỗi nick up bài của chính nick đó
-        posts = db.q("""SELECT id FROM posts WHERE status='posted' AND account_id=? AND COALESCE(bump_enabled,1)=1
-                        AND COALESCE(permalink_status,'') != 'removed' AND posted_at >= ? AND posted_at <= ?
-                        AND id NOT IN (SELECT post_id FROM bumps WHERE created_at LIKE ? AND status != 'skipped')
-                        ORDER BY COALESCE(last_bump_at, '') ASC, posted_at DESC LIMIT ?""",
+        posts = db.q("""SELECT p.id FROM posts p LEFT JOIN products pr ON pr.id=p.product_id
+                        WHERE p.status='posted' AND p.account_id=? AND COALESCE(p.bump_enabled,1)=1
+                        AND COALESCE(p.permalink_status,'') != 'removed' AND p.posted_at >= ? AND p.posted_at <= ?
+                        AND p.id NOT IN (SELECT post_id FROM bumps WHERE created_at LIKE ? AND status != 'skipped')
+                        ORDER BY COALESCE(pr.hot, 0) DESC, COALESCE(p.last_bump_at, '') ASC, p.posted_at DESC LIMIT ?""",
                      (sale["id"], cutoff, fresh, today + "%", per_nick))
         t = now + timedelta(minutes=random.randint(1, 6))
         end = datetime.strptime(f"{today} {sale['active_to'] or '22:00'}", "%Y-%m-%d %H:%M")
@@ -397,13 +398,14 @@ def draft_reply(lead_id: int, message: str = "") -> str:
     if not lead:
         return ""
     set_status("ha", "working", f"Đang soạn tin cho {lead['name']}")
-    products = db.q("SELECT name, wholesale_price, moq FROM products")
+    products = [{**p, "dang_ban_chay": bool(p.pop("hot"))} for p in
+                db.q("SELECT name, wholesale_price, moq, hot FROM products ORDER BY hot DESC, id")]
     prompt = f"""Soạn tin nhắn Messenger/Zalo trả lời khách sỉ tiềm năng.
 Khách: {lead['name']} | Kinh doanh: {lead['business_type']} | Nguồn: {lead['source']}
 Nhu cầu: {lead['need']} | Trạng thái: {lead['status']} | Ghi chú: {lead['note'] or ''}
 Tin nhắn mới nhất của khách: {message or '(chưa có, đây là tin chủ động)'}
-Danh sách sản phẩm: {products}
-Tin ngắn (dưới 90 chữ), thân thiện, gợi ý 1 bước tiếp theo rõ ràng (gửi bảng giá/mẫu thử/hẹn gọi), kết bằng 1 câu hỏi."""
+Danh sách sản phẩm (dang_ban_chay = sếp muốn ưu tiên chào): {products}
+Nếu khách chưa nói rõ sản phẩm, gợi ý sản phẩm đang bán chạy trước. Tin ngắn (dưới 90 chữ), thân thiện, gợi ý 1 bước tiếp theo rõ ràng (gửi bảng giá/mẫu thử/hẹn gọi), kết bằng 1 câu hỏi."""
     reply = llm.chat(system_prompt("ha", db.get_settings()), prompt, mock=lambda: mock_brain.lead_reply(lead, message),
                      max_tokens=350, task="replies")
     rid = db.run("INSERT INTO replies(lead_id, text, created_at) VALUES (?,?,?)", (lead_id, reply, db.now()))

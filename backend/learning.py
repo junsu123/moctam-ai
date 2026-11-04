@@ -105,6 +105,14 @@ def choose_angle() -> str:
 
 
 def choose_product(products: list[dict]) -> dict:
+    """Chọn sản phẩm để viết bài. Sản phẩm sếp tích "đang bán chạy" được ưu tiên (mặc định 70% số bài),
+    trong nhóm đó vẫn chọn theo hiệu quả đã học; phần còn lại xoay vòng các sản phẩm khác để không bỏ quên."""
+    hot = [p for p in products if p.get("hot")]
+    if hot and len(hot) < len(products):
+        share = float(db.get_settings().get("hot_share") or 0.7)
+        products = hot if random.random() < share else [p for p in products if not p.get("hot")]
+    elif hot:
+        products = hot
     pid = choose("product_id", [p["id"] for p in products])
     return next((p for p in products if str(p["id"]) == pid), random.choice(products))
 

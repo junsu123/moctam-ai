@@ -353,6 +353,14 @@ tbody tr.sel td{background:var(--accent-soft)}
 .pipe span{font-size:12px;color:var(--muted)}
 .score{font-weight:700;font-variant-numeric:tabular-nums}
 .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.prod.hot{border-color:var(--honey);box-shadow:0 0 0 2px color-mix(in srgb,var(--honey) 25%,transparent)}
+.prod-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hot-btn{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:3px 10px;font:600 12px var(--f-body,inherit);cursor:pointer;white-space:nowrap}
+.hot-btn[aria-pressed="true"]{background:var(--honey-soft);color:var(--honey);border-color:var(--honey)}
+.hot-note{background:var(--honey-soft);color:var(--ink);border-radius:8px;padding:6px 9px;font-size:12.5px}
+.hot-bar{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:var(--panel-2);font-size:13.5px}
+.hot-bar b{color:var(--honey)}
+.prod form .grid2{margin-top:4px}
 .prod .cat{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12.5px}
 .kv dt{color:var(--muted)} .kv dd{margin:0}
@@ -578,6 +586,7 @@ tbody tr.sel td{background:var(--accent-soft)}
     <!-- SẢN PHẨM -->
     <section class="view" id="v-products" hidden>
       <div class="vh"><div><h1>Sản phẩm</h1><p>Thông tin này là "tài liệu bán hàng" các agent dùng khi viết bài và tư vấn. Ghi giá sỉ, giá lẻ gợi ý và điểm mạnh càng rõ, bài càng thuyết phục.</p></div></div>
+      <div class="hot-bar" id="hotBar"></div>
       <div class="products" id="prodGrid"></div>
       <form class="card" id="prodForm">
         <h3>Thêm sản phẩm</h3>
@@ -589,6 +598,8 @@ tbody tr.sel td{background:var(--accent-soft)}
           <label class="f" for="pRp">Giá lẻ gợi ý<input type="text" id="pRp"></label>
           <label class="f" for="pDesc">Mô tả<input type="text" id="pDesc"></label>
           <label class="f" for="pSell" style="grid-column:1/-1">Điểm mạnh khi bán<input type="text" id="pSell"></label>
+          <label class="row small" style="grid-column:1/-1"><input type="checkbox" id="pHot"> 🔥 Sản phẩm đang bán chạy: cả đội tập trung chào mời</label>
+          <label class="f" for="pHotNote" style="grid-column:1/-1">Lưu ý khi chào sản phẩm bán chạy (không bắt buộc)<input type="text" id="pHotNote" placeholder="VD: đang vào mùa Tết, tặng 5 hộp khi nhập từ 100 hộp"></label>
           <label class="f" for="pFolder" style="grid-column:1/-1">Thư mục ảnh của sản phẩm trên máy này (sale chọn ngẫu nhiên ảnh trong đây để đăng)<input type="text" id="pFolder" placeholder="VD: D:\AnhSanPham\Tra gung mat ong"></label>
         </div>
         <div><button class="btn primary" type="submit">Thêm sản phẩm</button></div>
@@ -875,9 +886,9 @@ const Demo = (() => {
   const S = {
     settings:{attach_images:"1",images_min:"2",images_max:"4",image_reuse_days:"14",kpi_min:"5",kpi_max:"10",kpi_check_time:"15:00",escalate_all_phone:"1",escalate_complex:"1",escalate_after_hours:"2",scan_enabled:"1",scan_times:"11:30,16:30,20:45",scan_max_age_days:"7",auto_reply_comments:"1",reply_max_per_nick:"10",reply_texts:"Dạ anh/chị để lại SĐT hoặc Zalo giúp em, bên em gọi tư vấn giá sỉ ngay ạ\nEm cảm ơn ạ, anh/chị cho em xin SĐT/Zalo để em gửi bảng giá sỉ và tư vấn kỹ hơn nhé",tg_token:"",tg_morning:"09:00",tg_evening:"21:30",tg_alert_leads:"1",tg_alert_kpi:"1",tg_alert_nick:"1",learn_enabled:"1",learn_time:"23:15",learn_explore:"0.25",bump_enabled:"1",bump_folder:"D:\\AnhSanPham",bump_time:"19:30",bump_max_age_days:"7",bump_max_per_nick:"8",bump_gap_minutes:"6",bump_texts:"Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng",cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 09xx.xxx.xxx",ai_live:false,model:"mô phỏng"},
     products:[
-      {id:1,image_folder:"D:\\AnhSanPham\\Tra gung mat ong",name:"Trà gừng mật ong túi lọc",category:"Trà túi lọc",description:"Gừng sẻ sấy lạnh phối mật ong, hộp 20 túi x 2g.",wholesale_price:"38.000đ/hộp",retail_price:"65.000đ",moq:"50 hộp",selling_points:"Ấm bụng, dễ uống, bán chạy mùa lạnh; in nhãn riêng (OEM) được"},
+      {id:1,hot:1,hot_note:"Đang vào mùa lạnh, khách hỏi nhiều; tặng 5 hộp khi nhập từ 100 hộp",image_folder:"D:\\AnhSanPham\\Tra gung mat ong",name:"Trà gừng mật ong túi lọc",category:"Trà túi lọc",description:"Gừng sẻ sấy lạnh phối mật ong, hộp 20 túi x 2g.",wholesale_price:"38.000đ/hộp",retail_price:"65.000đ",moq:"50 hộp",selling_points:"Ấm bụng, dễ uống, bán chạy mùa lạnh; in nhãn riêng (OEM) được"},
       {id:2,image_folder:"D:\\AnhSanPham\\Tra hoa dau biec",name:"Trà hoa đậu biếc - cỏ ngọt",category:"Trà túi lọc",description:"Hoa đậu biếc sấy khô phối cỏ ngọt, hộp 25 túi.",wholesale_price:"35.000đ/hộp",retail_price:"60.000đ",moq:"50 hộp",selling_points:"Màu xanh đẹp lên video, hợp livestream pha chế"},
-      {id:3,image_folder:"D:\\AnhSanPham\\Bot ngu coc",name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",category:"Bột ngũ cốc",description:"Hũ 500g, không đường hóa học, rang xay tại xưởng.",wholesale_price:"85.000đ/hũ",retail_price:"150.000đ",moq:"30 hũ",selling_points:"Biên lợi nhuận cao, khách mua lặp lại, hợp bán sàn"},
+      {id:3,hot:1,image_folder:"D:\\AnhSanPham\\Bot ngu coc",name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",category:"Bột ngũ cốc",description:"Hũ 500g, không đường hóa học, rang xay tại xưởng.",wholesale_price:"85.000đ/hũ",retail_price:"150.000đ",moq:"30 hũ",selling_points:"Biên lợi nhuận cao, khách mua lặp lại, hợp bán sàn"},
       {id:4,name:"Bột cần tây sấy lạnh",category:"Bột thiên nhiên",description:"Túi 100g, sấy lạnh giữ màu xanh tự nhiên.",wholesale_price:"75.000đ/túi",retail_price:"135.000đ",moq:"30 túi",selling_points:"Trend giữ dáng, nội dung TikTok/Reels dễ làm"},
       {id:5,name:"Bột diếp cá - rau má",category:"Bột thiên nhiên",description:"Túi 100g, nguyên chất 100%.",wholesale_price:"60.000đ/túi",retail_price:"110.000đ",moq:"30 túi",selling_points:"Hợp tệp mẹ bỉm, chị em quan tâm làn da"},
       {id:6,name:"Cà phê hòa tan 3in1 vị đậm",category:"Cà phê hòa tan",description:"Hộp 18 gói x 17g, vị đậm kiểu phố.",wholesale_price:"42.000đ/hộp",retail_price:"75.000đ",moq:"50 hộp",selling_points:"Giá dễ chốt, combo quà tặng, bán quanh năm"}],
@@ -927,7 +938,7 @@ const Demo = (() => {
   }
   function genPosts(n, pid, target, angle){
     const prods = pid ? S.products.filter(p=>p.id==pid) : S.products; const out=[];
-    for(let i=0;i<n;i++){ const p = prods[i%prods.length] || prods[0]; const ks=Object.keys(ANG); out.push(makePost(pid?p:S.products[Math.floor(Math.random()*S.products.length)], angle||ks[Math.floor(Math.random()*ks.length)], target)); }
+    for(let i=0;i<n;i++){ const p = prods[i%prods.length] || prods[0]; const ks=Object.keys(ANG); const hotP=S.products.filter(x=>x.hot); const pool=hotP.length&&Math.random()<0.7?hotP:S.products; out.push(makePost(pid?p:pool[Math.floor(Math.random()*pool.length)], angle||ks[Math.floor(Math.random()*ks.length)], target)); }
     S.posts.unshift(...out); log("lan","Viết bài",`Đã viết ${out.length} bài nháp chờ sếp duyệt`); return out;
   }
   genPosts(6,null,"group"); S.posts[5].status="approved";
@@ -1115,7 +1126,7 @@ const Demo = (() => {
       if(P==="/agents") return AGENT_DEFS.map(a=>({...a,kind:"core",level:lvl(S.xp[a.id]||0),status:S.status[a.id],tasks:S.tasks.filter(t=>t.agent_id===a.id&&t.status!=="done")})).concat(saleAgents().map(a=>({...a,level:lvl(S.xp[a.id]||0),tasks:[]})));
       if(P==="/sales") return S.sales.map(saleOut);
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
-      if(P==="/products") return S.products.map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g),joins:g.joins||{},today:gfToday(g)}));
+      if(P==="/products") return S.products.slice().sort((a,b)=>(b.hot||0)-(a.hot||0)||a.id-b.id).map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g),joins:g.joins||{},today:gfToday(g)}));
       if(P==="/posts") return S.posts; if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,tg_token:S.settings.tg_token?"••••••":"",models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
       if(P==="/company") return demoCompany();
       if(P==="/errors") return demoErrors(qs);
@@ -1180,7 +1191,8 @@ const Demo = (() => {
       if((m=P.match(/^\/posts\/(\d+)\/publish-page$/))) return {ok:false,error:"Bản xem trước không kết nối Facebook. Chạy backend và nhập Page Access Token trong Cài đặt."};
       if((m=P.match(/^\/leads\/(\d+)\/reply$/))){ S.status.ha={state:"working",text:"Đang soạn tin nhắn"}; await wait(900); S.status.ha={state:"idle",text:"Chờ duyệt tin"}; return {reply:reply(S.leads.find(l=>l.id==m[1]),body.message)}; }
       if(P==="/leads"){ const l={id:id(),...body,score:60,status:"new",created_at:now()}; S.leads.unshift(l); log("ha","Khách mới",l.name); return l; }
-      if(P==="/products"){ const x={id:id(),...body}; S.products.push(x); return x; }
+      if(P==="/products"){ if(!(body.name||"").trim()) throw new Error("Nhập tên sản phẩm"); if(S.products.some(p=>p.name.toLowerCase()===body.name.trim().toLowerCase())) throw new Error("Đã có sản phẩm cùng tên. Sửa sản phẩm đó thay vì thêm mới");
+        const x={id:id(),...body,name:body.name.trim(),hot:body.hot?1:0,images:"[]"}; S.products.push(x); log("minh","Thêm sản phẩm",`${x.name}: Lan có thể viết bài, Hà tư vấn sản phẩm này từ giờ`); return x; }
       if(P==="/groups"){ const u=demoGroupUrl(body.url); if(u.err) throw new Error(u.err); const x={id:id(),...body,url:u.url,leads_count:0,last_posted_at:null}; S.groups.push(x); log("tuan","Thêm nhóm",x.name); return x; }
       if(P==="/run/daily-work"){ genPosts(3,null,"group"); const pl=plan(); return {drafts:3,scheduled:pl.length,follow_ups:S.leads.filter(l=>l.status==="new").length}; }
     }
@@ -1191,7 +1203,8 @@ const Demo = (() => {
     }
     if(method==="PATCH"&&(m=P.match(/^\/groups\/(\d+)$/))){ const g=S.groups.find(x=>x.id==m[1]); if(body.url!=null){ const u=demoGroupUrl(body.url); if(u.err) throw new Error(u.err); body.url=u.url; }
       const had=!!g.url; Object.assign(g,body); if(!had&&g.url) S.posts.filter(p=>p.group_id===g.id&&p.status==="failed").forEach(p=>Object.assign(p,{status:"approved",error:null,sale_id:null,scheduled_for:null})); return {...g,ready:ready(g)}; }
-    if(method==="PATCH"&&(m=P.match(/^\/products\/(\d+)$/))){ const pr=S.products.find(x=>x.id==m[1]); Object.assign(pr,body); return {...pr,folder:pr.image_folder?{...demoFolder(pr),count:20,fresh:20,posts_left:10}:demoFolder(pr)}; }
+    if(method==="PATCH"&&(m=P.match(/^\/products\/(\d+)$/))){ const pr=S.products.find(x=>x.id==m[1]); if(body.name!=null&&!body.name.trim()) throw new Error("Tên sản phẩm không được để trống");
+      if(body.hot!=null&&!!pr.hot!==!!body.hot) log("minh","Sản phẩm bán chạy",`${pr.name}: ${body.hot?"đang bán chạy, cả đội tập trung chào mời":"thôi ưu tiên"}`); if(body.hot!=null) body.hot=body.hot?1:0; Object.assign(pr,body); return {...pr,folder:pr.image_folder?{...demoFolder(pr),count:20,fresh:20,posts_left:10}:demoFolder(pr)}; }
     if(method==="PATCH"&&(m=P.match(/^\/lessons\/(\d+)$/))){ const l=S.lessons.find(x=>x.id==m[1]); if(body.status==="retired") S.lessons=S.lessons.filter(x=>x!==l); else Object.assign(l,body); return l||{}; }
     if(method==="PATCH"&&(m=P.match(/^\/accounts\/(\d+)$/))){ const a=S.accounts.find(x=>x.id==m[1]); if(!a) throw new Error("Không tìm thấy nick");
       for(const k of ["active_from","active_to"]) if(body[k]!=null&&!/^\d{2}:\d{2}$/.test(body[k])) throw new Error("Giờ phải có dạng HH:MM");
@@ -1258,7 +1271,7 @@ const Demo = (() => {
     if(method==="DELETE"&&(m=P.match(/^\/sales\/(\d+)$/))){ S.sales=S.sales.filter(x=>x.id!=m[1]); S.accounts=S.accounts.filter(a=>a.sale_id!=m[1]); return {ok:true}; }
     if(method==="DELETE"&&(m=P.match(/^\/accounts\/(\d+)$/))){ const a=S.accounts.find(x=>x.id==m[1]); if(!a) throw new Error("Không tìm thấy nick"); if(S.busyAcc[a.sale_id]===a.id) throw new Error("Nick đang làm việc, chờ xong ca rồi xóa");
       S.accounts=S.accounts.filter(x=>x!==a); S.posts.filter(p=>p.account_id===a.id&&p.status==="scheduled").forEach(p=>Object.assign(p,{status:"approved",sale_id:null,sale_name:null,account_id:null,account_name:null,scheduled_for:null})); syncSale(a.sale_id); return {ok:true}; }
-    if(method==="DELETE"){ if((m=P.match(/^\/products\/(\d+)$/))) S.products=S.products.filter(x=>x.id!=m[1]); if((m=P.match(/^\/groups\/(\d+)$/))) S.groups=S.groups.filter(x=>x.id!=m[1]); return {ok:true}; }
+    if(method==="DELETE"){ if((m=P.match(/^\/products\/(\d+)$/))){ const n=S.posts.filter(p=>p.product_id==m[1]&&["draft","approved"].includes(p.status)); n.forEach(p=>p.status="rejected"); S.products=S.products.filter(x=>x.id!=m[1]); return {ok:true,drafts_removed:n.length}; } if((m=P.match(/^\/groups\/(\d+)$/))) S.groups=S.groups.filter(x=>x.id!=m[1]); return {ok:true}; }
     throw new Error("Không hỗ trợ trong bản xem trước: "+path);
   }
   return {handle};
@@ -2246,13 +2259,34 @@ function folderBox(p){
   return `<div class="imgfolder"><label class="f" for="pf-${p.id}">Thư mục ảnh
       <div class="row"><input type="text" class="grow" id="pf-${p.id}" value="${esc(p.image_folder||"")}" placeholder="VD: D:\\AnhSanPham\\${esc(p.name)}"><button type="button" class="btn sm" data-pfsave="${p.id}">Lưu</button></div></label>${st}</div>`;
 }
+const CATS=["Trà túi lọc","Bột ngũ cốc","Bột thiên nhiên","Cà phê hòa tan","Khác"];
+function prodEdit(p){
+  const cats=CATS.includes(p.category)?CATS:[p.category,...CATS];
+  return `<form class="stack" data-pedit="${p.id}">
+    <label class="f" for="en-${p.id}">Tên sản phẩm<input type="text" id="en-${p.id}" value="${esc(p.name)}" required></label>
+    <div class="grid2"><label class="f" for="ec-${p.id}">Dòng<select id="ec-${p.id}">${cats.filter(Boolean).map(c=>`<option ${c===p.category?"selected":""}>${esc(c)}</option>`).join("")}</select></label>
+      <label class="f" for="em-${p.id}">Nhập tối thiểu<input type="text" id="em-${p.id}" value="${esc(p.moq||"")}"></label>
+      <label class="f" for="ew-${p.id}">Giá sỉ<input type="text" id="ew-${p.id}" value="${esc(p.wholesale_price||"")}"></label>
+      <label class="f" for="er-${p.id}">Giá lẻ gợi ý<input type="text" id="er-${p.id}" value="${esc(p.retail_price||"")}"></label></div>
+    <label class="f" for="ed-${p.id}">Mô tả<textarea id="ed-${p.id}" rows="2">${esc(p.description||"")}</textarea></label>
+    <label class="f" for="es-${p.id}">Điểm mạnh khi bán<textarea id="es-${p.id}" rows="2">${esc(p.selling_points||"")}</textarea></label>
+    <label class="row small"><input type="checkbox" id="eh-${p.id}" ${p.hot?"checked":""}> 🔥 Đang bán chạy: cả đội tập trung chào mời</label>
+    <label class="f" for="eo-${p.id}">Lưu ý khi chào (không bắt buộc)<input type="text" id="eo-${p.id}" value="${esc(p.hot_note||"")}" placeholder="VD: đang vào mùa, có quà cho đơn đầu"></label>
+    <div class="actions"><button class="btn sm primary" type="submit">Lưu thay đổi</button><button class="btn sm ghost" type="button" data-pcancel>Hủy</button></div></form>`;
+}
 async function loadProducts(){
   ST.products=await api("/products");
-  $("#prodGrid").innerHTML=ST.products.map(p=>`<div class="card prod"><div class="cat">${esc(p.category)}</div><h3>${esc(p.name)}</h3><p class="small muted">${esc(p.description)}</p>
-   <dl class="kv"><dt>Giá sỉ</dt><dd class="num"><b>${esc(p.wholesale_price)}</b></dd><dt>Giá lẻ gợi ý</dt><dd class="num">${esc(p.retail_price)}</dd><dt>Nhập tối thiểu</dt><dd>${esc(p.moq)}</dd><dt>Điểm mạnh</dt><dd>${esc(p.selling_points)}</dd></dl>
+  const hot=ST.products.filter(p=>p.hot);
+  $("#hotBar").innerHTML=hot.length?`🔥 Cả đội đang tập trung chào: <b>${hot.map(p=>esc(p.name)).join(", ")}</b>. Lan viết phần lớn bài về các sản phẩm này, Hà và sale chào trước, Tuấn up bài của chúng trước.`
+    :`Chưa có sản phẩm nào được tích <b>Đang bán chạy</b>. Bấm nút 🔥 ở sản phẩm muốn đẩy để cả đội tập trung chào mời.`;
+  if(ST.editProd&&!ST.products.some(p=>p.id===ST.editProd)) ST.editProd=null;
+  $("#prodGrid").innerHTML=ST.products.map(p=>`<div class="card prod${p.hot?" hot":""}" data-prod="${p.id}"><div class="prod-h"><div class="cat">${esc(p.category)}${p.is_sample?' · <span class="chip warn">Mẫu</span>':""}</div>
+     <button type="button" class="hot-btn" data-phot="${p.id}" aria-pressed="${p.hot?"true":"false"}" title="Tích để cả đội tập trung chào mời sản phẩm này">🔥 ${p.hot?"Đang bán chạy":"Đánh dấu bán chạy"}</button></div>
+   ${ST.editProd===p.id?prodEdit(p):`<h3>${esc(p.name)}</h3>${p.hot&&p.hot_note?`<div class="hot-note">${esc(p.hot_note)}</div>`:""}<p class="small muted">${esc(p.description)}</p>
+   <dl class="kv"><dt>Giá sỉ</dt><dd class="num"><b>${esc(p.wholesale_price)}</b></dd><dt>Giá lẻ gợi ý</dt><dd class="num">${esc(p.retail_price)}</dd><dt>Nhập tối thiểu</dt><dd>${esc(p.moq)}</dd><dt>Điểm mạnh</dt><dd>${esc(p.selling_points)}</dd></dl>`}
    ${folderBox(p)}
    ${JSON.parse(p.images||"[]").length?`<div><span class="small muted">Ảnh tải lên (chỉ dùng khi chưa có thư mục ảnh)</span><div class="thumbs" style="margin-top:4px">${JSON.parse(p.images||"[]").map(src=>`<figure><img src="${src.startsWith("data:")?src:"/"+esc(src)}" alt="Ảnh ${esc(p.name)}"><button type="button" data-delimg="${esc(src)}" data-p="${p.id}" aria-label="Xóa ảnh">×</button></figure>`).join("")}</div></div>`:""}
-   <div class="row"><label class="btn sm ghost" for="up-${p.id}">Tải ảnh lên</label><input type="file" id="up-${p.id}" data-up="${p.id}" accept="image/png,image/jpeg,image/webp" multiple hidden><button class="btn sm ghost danger" data-pr="${p.id}">Xóa sản phẩm</button></div></div>`).join("");
+   <div class="row"><label class="btn sm ghost" for="up-${p.id}">Tải ảnh lên</label><input type="file" id="up-${p.id}" data-up="${p.id}" accept="image/png,image/jpeg,image/webp" multiple hidden>${ST.editProd===p.id?"":`<button class="btn sm" type="button" data-pedit-open="${p.id}">Sửa thông tin</button>`}<button class="btn sm ghost danger" data-pr="${p.id}">Xóa sản phẩm</button></div></div>`).join("");
 }
 $("#prodGrid").addEventListener("change",async e=>{ const pid=e.target.dataset.up; if(!pid) return;
   for(const f of e.target.files){ const data=await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(f); });
@@ -2261,9 +2295,17 @@ $("#prodGrid").addEventListener("change",async e=>{ const pid=e.target.dataset.u
 $("#prodGrid").addEventListener("click",async e=>{ const fs=e.target.closest("[data-pfsave]");
   if(fs){ const id=fs.dataset.pfsave; fs.disabled=true; const r=await api(`/products/${id}`,"PATCH",{image_folder:$(`#pf-${id}`).value});
     toast(r.folder.exists&&r.folder.source==="product"?`Đã lưu: ${r.folder.count} ảnh, sale sẽ chọn ngẫu nhiên khi đăng`:(r.folder.error||"Đã lưu")); return loadProducts(); }
+  const h=e.target.closest("[data-phot]"); if(h){ const p=ST.products.find(x=>x.id==h.dataset.phot); h.disabled=true;
+    try{ await api(`/products/${p.id}`,"PATCH",{hot:!p.hot}); toast(!p.hot?`Đã đánh dấu ${p.name} đang bán chạy. Cả đội sẽ tập trung chào sản phẩm này.`:`Thôi ưu tiên ${p.name}`); }catch(err){ toast(err.message); } return loadProducts(); }
+  const eo=e.target.closest("[data-pedit-open]"); if(eo){ ST.editProd=+eo.dataset.peditOpen; loadProducts(); setTimeout(()=>{ const i=$(`#en-${ST.editProd}`); i&&i.focus(); },50); return; }
+  if(e.target.closest("[data-pcancel]")){ ST.editProd=null; return loadProducts(); }
   const d=e.target.closest("[data-delimg]"); if(d){ await api(`/products/${d.dataset.p}/images?path=${encodeURIComponent(d.dataset.delimg)}`,"DELETE"); return loadProducts(); }
-  const b=e.target.closest("[data-pr]"); if(!b) return; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } await api(`/products/${b.dataset.pr}`,"DELETE"); loadProducts(); });
-$("#prodForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/products","POST",{name:$("#pName").value,category:$("#pCat").value,description:$("#pDesc").value,wholesale_price:$("#pWp").value,retail_price:$("#pRp").value,moq:$("#pMoq").value,selling_points:$("#pSell").value,image_folder:$("#pFolder").value}); e.target.reset(); toast("Đã thêm sản phẩm"); loadProducts(); });
+  const b=e.target.closest("[data-pr]"); if(!b) return; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } const r=await api(`/products/${b.dataset.pr}`,"DELETE"); toast(r.drafts_removed?`Đã xóa sản phẩm và ${r.drafts_removed} bài nháp/chờ đăng của nó`:"Đã xóa sản phẩm"); loadProducts(); });
+$("#prodGrid").addEventListener("submit",async e=>{ const f=e.target.closest("[data-pedit]"); if(!f) return; e.preventDefault(); const id=+f.dataset.pedit;
+  try{ await api(`/products/${id}`,"PATCH",{name:$(`#en-${id}`).value,category:$(`#ec-${id}`).value,moq:$(`#em-${id}`).value,wholesale_price:$(`#ew-${id}`).value,retail_price:$(`#er-${id}`).value,description:$(`#ed-${id}`).value,selling_points:$(`#es-${id}`).value,hot:$(`#eh-${id}`).checked,hot_note:$(`#eo-${id}`).value});
+    ST.editProd=null; toast("Đã lưu sản phẩm. Các agent dùng thông tin mới từ việc tiếp theo."); }catch(err){ toast(err.message); }
+  loadProducts(); });
+$("#prodForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/products","POST",{name:$("#pName").value,category:$("#pCat").value,description:$("#pDesc").value,wholesale_price:$("#pWp").value,retail_price:$("#pRp").value,moq:$("#pMoq").value,selling_points:$("#pSell").value,image_folder:$("#pFolder").value,hot:$("#pHot").checked,hot_note:$("#pHotNote").value}); e.target.reset(); toast("Đã thêm sản phẩm. Lan và Hà dùng sản phẩm này từ việc tiếp theo."); }catch(err){ toast(err.message); } loadProducts(); });
 
 /* --------------------------------------------- cài đặt */
 const MODEL_NAME={"claude-haiku-5-5":"Haiku 5.5 (rẻ nhất)","claude-sonnet-5-5":"Sonnet 5.5 (cân bằng)","claude-opus-5-5":"Opus 5.5 (cao cấp)"};
