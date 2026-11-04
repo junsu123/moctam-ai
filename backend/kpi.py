@@ -225,6 +225,11 @@ def consult_note(lead: dict) -> str:
 2 câu hỏi để hiểu nhu cầu, 1 đề nghị chốt (gửi mẫu/ưu đãi đơn đầu nếu hợp lý). Không bịa chính sách.
 Khách: {lead.get('name')} | Bình luận/nhu cầu: {lead.get('need')} | Bài nguồn: {(post or {}).get('title') or ''} ({(post or {}).get('pname') or ''})
 Sản phẩm (dang_ban_chay=1: sếp muốn ưu tiên chào thêm nếu hợp nhu cầu khách): {products}"""
+    try:
+        import knowledge
+        prompt += knowledge.block("ha", f"{lead.get('need') or ''} tư vấn gọi điện khách sỉ")
+    except Exception:
+        pass
     return llm.chat(system_prompt("ha", db.get_settings()), prompt, mock=mock, max_tokens=260, task="replies")
 
 

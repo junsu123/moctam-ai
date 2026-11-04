@@ -1508,6 +1508,97 @@ def learning_run():
     return {"ok": True}
 
 
+# ------------------------------------------------------------------ sổ kiến thức
+@app.get("/api/knowledge")
+def knowledge_get(agent: str = "", q: str = ""):
+    import knowledge
+    return knowledge.overview(agent, q)
+
+
+class KnowIn(BaseModel):
+    agent_id: str = "all"
+    topic: str
+    content: str
+    question: str = ""
+    kind: str = "guide"
+
+
+@app.post("/api/knowledge")
+def knowledge_add(k: KnowIn):
+    """Sếp dạy kiến thức: agent dùng ngay từ việc tiếp theo."""
+    import knowledge
+    if k.agent_id not in knowledge.ROLE_NAME:
+        raise HTTPException(400, "Chọn agent để dạy")
+    if len(k.content.strip()) < 15:
+        raise HTTPException(400, "Nội dung kiến thức quá ngắn")
+    if not k.topic.strip():
+        raise HTTPException(400, "Nhập chủ đề")
+    iid = knowledge.save(k.agent_id, k.topic, k.content, question=k.question, source="boss", confidence=1.0,
+                         kind="faq" if k.kind == "faq" else "guide")
+    db.log("minh", "Sếp dạy kiến thức", f"{knowledge.ROLE_NAME[k.agent_id]}: {k.topic[:80]}")
+    return {"ok": True, "id": iid, **knowledge.overview()}
+
+
+class KnowPatch(BaseModel):
+    topic: str | None = None
+    content: str | None = None
+    question: str | None = None
+
+
+@app.patch("/api/knowledge/{kid}")
+def knowledge_patch(kid: int, p: KnowPatch):
+    fields = {k: v.strip() for k, v in p.model_dump().items() if v is not None}
+    if fields:
+        db.run(f"UPDATE knowledge SET {', '.join(k + '=?' for k in fields)}, updated_at=? WHERE id=?", (*fields.values(), db.now(), kid))
+    return db.one("SELECT * FROM knowledge WHERE id=?", (kid,))
+
+
+@app.delete("/api/knowledge/{kid}")
+def knowledge_delete(kid: int):
+    db.run("DELETE FROM knowledge WHERE id=?", (kid,))
+    return {"ok": True}
+
+
+@app.post("/api/knowledge/study")
+def knowledge_study():
+    import knowledge
+    threading.Thread(target=knowledge.study_all, daemon=True).start()
+    return {"ok": True}
+
+
+class KnowAsk(BaseModel):
+    question: str
+
+
+@app.post("/api/knowledge/ask")
+def knowledge_ask(a: KnowAsk):
+    """Sếp hỏi đội: tra sổ kiến thức trước, chưa có mới hỏi Claude và lưu lại."""
+    import knowledge
+    if not a.question.strip():
+        raise HTTPException(400, "Nhập câu hỏi")
+    return knowledge.ask("ceo", a.question)
+
+
+class KnowSettings(BaseModel):
+    knowledge_enabled: bool | None = None
+    study_time: str | None = None
+    study_per_agent: int | None = None
+
+
+@app.put("/api/knowledge/settings")
+def knowledge_settings(k: KnowSettings):
+    import knowledge
+    if k.knowledge_enabled is not None:
+        db.set_setting("knowledge_enabled", "1" if k.knowledge_enabled else "0")
+    if k.study_time is not None:
+        if not re.fullmatch(r"\d{2}:\d{2}", k.study_time):
+            raise HTTPException(400, "Giờ phải có dạng HH:MM")
+        db.set_setting("study_time", k.study_time)
+    if k.study_per_agent is not None:
+        db.set_setting("study_per_agent", str(max(1, min(5, k.study_per_agent))))
+    return knowledge.overview()
+
+
 class Teach(BaseModel):
     agent_id: str
     text: str

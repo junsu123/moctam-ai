@@ -137,7 +137,7 @@ def save_token(t: str) -> dict:
 # Việc đã hoàn thành (theo nhật ký hoạt động) được gom lại và gửi sếp mỗi phút một tin, để không bị dội tin nhắn.
 DONE_ACTIONS = {
     "Đã đăng": "📝", "Đăng thử": "🧪", "Up bài": "⬆️", "Xong ca trên nick": "🔁", "Quét bình luận": "🔎",
-    "Tìm nhóm mới": "🧭", "Khảo sát nhóm": "🔬", "Đánh giá lại nhóm": "🧐", "Xin vào nhóm": "🚪", "Đăng nhập": "🔑", "Khách mới từ bình luận": "🙋",
+    "Tìm nhóm mới": "🧭", "Học kiến thức mới": "📚", "Khảo sát nhóm": "🔬", "Đánh giá lại nhóm": "🧐", "Xin vào nhóm": "🚪", "Đăng nhập": "🔑", "Khách mới từ bình luận": "🙋",
     "Viết bài": "✍️", "Viết bài (lô)": "✍️", "Xếp lịch": "🗓️", "Lịch up bài": "🗓️", "Thêm nhóm": "➕",
     "Thêm nhóm mới tìm được": "➕", "Thêm link nhóm": "🔗", "Soạn tin": "💬", "Danh sách bám khách": "📋",
     "Khách mới": "🙋", "Khách để lại SĐT": "📞", "Tự học": "🎓", "Báo cáo": "📊", "Kết thúc họp": "🤝",

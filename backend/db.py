@@ -179,6 +179,15 @@ CREATE TABLE IF NOT EXISTS group_candidates (
   privacy TEXT, joined INTEGER DEFAULT 0, keyword TEXT, relevance REAL DEFAULT 0, score REAL DEFAULT 0, found_by INTEGER,
   status TEXT DEFAULT 'new', group_id INTEGER, found_at TEXT, last_seen_at TEXT
 );
+CREATE TABLE IF NOT EXISTS knowledge (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id TEXT, topic TEXT, question TEXT, content TEXT, keywords TEXT, source TEXT,
+  confidence REAL DEFAULT 0.8, uses INTEGER DEFAULT 0, last_used_at TEXT, status TEXT DEFAULT 'active', created_at TEXT, updated_at TEXT,
+  kind TEXT DEFAULT 'guide'
+);
+CREATE INDEX IF NOT EXISTS idx_knowledge_agent ON knowledge(agent_id, status);
+CREATE TABLE IF NOT EXISTS knowledge_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id TEXT, kind TEXT, question TEXT, item_id INTEGER, created_at TEXT
+);
 CREATE TABLE IF NOT EXISTS group_searches (
   id INTEGER PRIMARY KEY AUTOINCREMENT, keyword TEXT, sale_id INTEGER, results INTEGER, new INTEGER, searched_at TEXT
 );
@@ -280,6 +289,8 @@ DEFAULT_SETTINGS = {
     "ceo_autopilot": "1",
     "discover_enabled": "1", "discover_time": "10:30", "discover_keywords_per_day": "3", "discover_add_per_day": "5",
     "join_enabled": "1", "join_per_nick_day": "2", "browse_minutes": "2",
+    "knowledge_enabled": "1", "study_time": "07:00", "study_per_agent": "2", "knowledge_answer_threshold": "0.8",
+    "study_last_date": "", "model_knowledge": "claude-haiku-5-5",
     "hot_share": "0.7",  # tỉ lệ bài Lan viết về sản phẩm đang bán chạy (khi sếp có tích sản phẩm bán chạy)
     "scout_per_run": "6", "review_posts_day": "10", "review_avg_reactions": "20", "review_avg_comments": "5",
     "review_growth_week": "0.5", "review_min_members": "1000", "review_join_score": "60", "review_consider_score": "40",

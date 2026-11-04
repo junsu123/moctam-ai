@@ -216,6 +216,23 @@ def execute(act: dict) -> str:
         prod = db.one("SELECT name FROM products WHERE id=?", (pid,))["name"] if pid else "các sản phẩm"
         return f"Giao Lan viết {n} bài {({'group': 'đăng nhóm', 'profile': 'trang cá nhân', 'page': 'Fanpage'})[tt]} về {prod}" + \
             (", viết xong em duyệt rồi cho Tuấn xếp lịch và báo lại sếp" if autopilot() else ", viết xong em báo lại sếp")
+    if t == "ask":
+        import knowledge
+        q = (act.get("question") or "").strip()
+        r = knowledge.ask("ceo", q)
+        if r["source"] == "memory":
+            return f"{r['answer']} (em trả lời bằng kiến thức đội đã học, không cần hỏi Claude)"
+        if r["source"] == "claude":
+            return f"{r['answer']} (em vừa tra cứu và đã lưu vào sổ kiến thức, lần sau tự trả lời)"
+        if r["source"] == "none":
+            return ("Câu này đội chưa học tới. Em đã ghi vào danh sách câu hỏi cần học, đội sẽ tìm hiểu trong buổi tự học tới "
+                    "(cần có khóa Claude ở Cài đặt để tra cứu)")
+        return "Em chưa tra cứu được câu này, sếp thử lại sau giúp em"
+    if t == "study_now":
+        import knowledge
+        import threading
+        threading.Thread(target=knowledge.study_all, daemon=True).start()
+        return "Cho cả đội tự học kiến thức mới ngay bây giờ, học xong em báo lại"
     if t == "set_hot":
         p = _find_product(act.get("product_id"), act.get("product"))
         if not p:
@@ -390,6 +407,8 @@ def _context() -> str:
 ACTIONS_DOC = """Các việc được phép (type và tham số):
 - write_posts {count 1-10, product_id?, target: group|profile|page, angle?, note?}: giao Lan viết bài
 - plan {}: giao Tuấn xếp lịch đăng các bài đã duyệt
+- ask {question}: sếp HỎI kiến thức/cách làm (không phải giao việc). CEO tra sổ kiến thức của đội trước, chưa có mới tra cứu
+- study_now {}: cho cả đội tự học kiến thức mới ngay
 - set_hot {product_id, hot: true|false, note?}: đánh dấu / bỏ đánh dấu sản phẩm đang bán chạy (cả đội tập trung chào mời)
 - daily_work {}: cả đội làm việc hằng ngày
 - meeting {topic}: triệu tập họp
@@ -476,7 +495,8 @@ def _rule_plan(text: str) -> dict:
     want_join = re.search(r"\b(xin|gia nhập|tham gia|join|vào)\b\s*(thêm\s*|các\s*|những\s*)?" + GROUP_NOUN, low)
     want_write = re.search(r"\b(viết|soạn|làm|lên|tạo)\s*(thêm\s*)?(\d+)?\s*(bài|content|nội dung|post)", low)
     want_plan = re.search(r"xếp lịch|lên lịch|sắp lịch|lịch đăng|đăng bài\b(?!.*viết)", low)
-    want_status = re.search(r"tình hình|báo cáo|thế nào|ra sao|bao nhiêu khách|đang làm gì|làm được gì", low)
+    how_q = re.match(r"(làm sao|làm thế nào|làm cách nào|cách nào|tại sao|vì sao|có nên|nên làm gì|thế nào là)\b", low)
+    want_status = re.search(r"tình hình|báo cáo|thế nào|ra sao|bao nhiêu khách|đang làm gì|làm được gì", low) and not how_q
     want_hot = re.search(r"bán chạy|đẩy mạnh|tập trung (bán|chào|đẩy)|ưu tiên (bán|chào)|(thôi|bỏ|ngừng|dừng) (ưu tiên|đẩy|tập trung)|"
                          r"sản phẩm (hot|chủ lực)|đang hot", low)
     if want_hot and not want_write and (hp := _product_in(t)):
@@ -521,12 +541,19 @@ def _rule_plan(text: str) -> dict:
                 acts.append({"type": "hire", "reason": t})
         if not acts and re.search(r"\b(từ nay|từ giờ|từ bây giờ|luôn luôn|bắt buộc|cấm|không được|đừng bao giờ|mỗi bài|bài nào cũng|mọi bài)\b", low):
             acts.append({"type": "order", "agent": agent or "all", "text": t})
+        if re.search(r"(học|tìm hiểu)\s*(thêm\s*)?(kiến thức|cái mới|điều mới)", low) and not acts:
+            acts.append({"type": "study_now"})
+        if not acts and (t.rstrip().endswith("?") or re.match(r"(làm sao|làm thế nào|làm cách nào|cách nào|tại sao|vì sao|có nên|"
+                                                                r"nên làm gì|thế nào là|là gì|bao nhiêu|khi nào|ở đâu|hỏi)\b", low)):
+            acts.append({"type": "ask", "question": t})
         if not acts and agent and critique:
             acts.append({"type": "teach", "agent": agent, "text": t})
         if not acts and agent:
             acts.append({"type": "task", "agent": agent, "title": t})
     if acts and all(a["type"] == "status" for a in acts):
         reply = "Dạ sếp, tình hình hôm nay:"
+    elif acts and all(a["type"] == "ask" for a in acts):
+        reply = "Dạ sếp,"
     elif acts:
         reply = "Dạ em nhận việc."
     else:

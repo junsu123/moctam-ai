@@ -44,6 +44,14 @@ def _sale_report(r: dict) -> str:
     return msg + f". Tình trạng: {LOGIN_TXT.get(r['login_status'], r['login_status'])}."
 
 
+def _kb(agent_id: str, topic: str) -> str:
+    try:
+        import knowledge
+        return knowledge.block(agent_id, topic, k=3)
+    except Exception:
+        return ""
+
+
 def _say(mid: int, agent_id: str, phase: str, content: str):
     workflows.set_status(agent_id, "talking", content[:60])
     db.run("INSERT INTO meeting_messages(meeting_id, agent_id, phase, content, created_at) VALUES (?,?,?,?,?)",
@@ -117,7 +125,7 @@ def _run(mid: int, topic: str):
             order = DEBATERS[:] if rnd == 0 else random.sample(DEBATERS, len(DEBATERS))
             for a in order:
                 _boss_check(mid)
-                _say(mid, a, "debate", llm.chat(system_prompt(a, s),
+                _say(mid, a, "debate", llm.chat(system_prompt(a, s) + _kb(a, topic),
                      f"Biên bản cuộc họp đến giờ:\n{_transcript(mid)}\n\n"
                      f"Chủ đề tranh luận: \"{topic}\". Đây là vòng {rnd + 1}. Nêu quan điểm của bạn theo đúng tính cách "
                      f"({'nêu lập trường ban đầu' if rnd == 0 else 'phản biện hoặc đồng tình với 1 người cụ thể, gọi tên họ'}). "

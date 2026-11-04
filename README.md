@@ -292,6 +292,26 @@ rút ra bài học… Cấp độ hiện trên nhân vật 3D. Trang Đào tạo
 luật nhóm và việc dừng khi checkpoint là do sếp đặt; bài học đề xuất tăng tần suất, lách luật hay hứa công dụng chữa
 bệnh bị tự động loại.
 
+## Sổ kiến thức: tự học mỗi ngày, ít phụ thuộc Claude
+
+Ngoài bài học rút từ kết quả (phần trên), mỗi agent có **sổ kiến thức** (trang **Đào tạo → Sổ kiến thức của đội**):
+
+1. **Tự học mỗi ngày** (mặc định 07:00, trước họp sáng): mỗi agent học 2 kiến thức mới hợp với việc đang làm, theo thứ tự:
+   câu hỏi còn bỏ ngỏ (câu sếp hỏi mà đội chưa biết) → việc thực tế hôm nay (sản phẩm đang bán chạy, chủ đề tìm nhóm, câu
+   khách hay hỏi) → giáo trình theo vai trò (Lan: viết bài bán sỉ; Tuấn: nhóm Facebook; Hà: tư vấn, xử lý từ chối; Khoa: chỉ số;
+   Minh: điều hành; CEO: chiến lược; sale: nuôi nick an toàn). Có khóa Claude: mỗi agent 1 lần gọi Haiku/ngày (khoảng 0,001 USD).
+   Chưa có khóa: học từ thư viện kiến thức có sẵn trong phần mềm.
+2. **Tra sổ trước khi làm**: khi viết bài, soạn tin, tư vấn, họp, kiến thức liên quan được đưa vào lời dặn của agent.
+3. **Biết rồi thì tự trả lời, không gọi Claude**: Hà gặp câu khách đã từng hỏi (VD "nhập nhiều có chiết khấu không?") thì tự
+   soạn tin từ sổ; sếp hỏi CEO điều đội đã biết thì CEO trả lời ngay từ sổ.
+4. **Chưa biết mới hỏi Claude, và luôn lưu lại**: mỗi lần hỏi Claude, câu trả lời dùng lại được được ghi vào sổ (Hà soạn tin
+   thì rút ra câu hỏi chung của khách và cách trả lời). Chưa có khóa thì câu hỏi được ghi vào "Câu chờ học" để học sau.
+
+Trang Đào tạo cho biết: số kiến thức, số học hôm nay, số lần tự trả lời bằng sổ và số lần phải hỏi Claude trong 30 ngày,
+**tỉ lệ tự lực**. Sếp hỏi đội ngay ở ô **Hỏi**, tìm, lọc theo agent, xóa kiến thức sai, **dạy kiến thức** mới (tích "trả lời
+khách" để Hà tự dùng khi khách hỏi đúng ý đó). Trên Telegram: hỏi CEO bằng câu hỏi (VD "Khách chê giá cao thì trả lời sao?"),
+hoặc nhắn "Cho cả đội học thêm kiến thức". Kiến thức học mỗi ngày được báo trong tin "Việc vừa hoàn thành".
+
 ## Công ty: vốn, sa thải, giải thể
 
 Trang **Công ty** quản lý vốn, chi phí nuôi agent, doanh thu và luật sống còn. Bấm **Thành lập công ty** (mặc định vốn 10.000.000đ)
@@ -496,6 +516,7 @@ backend/
   company.py     Công ty: vốn, chi phí, doanh thu, đánh giá KPI tháng, sa thải, giải thể
   kpi.py         KPI: nhận diện SĐT, tiến độ, chia theo nick, lịch sử; chuyển khách cho sếp, kịch bản tư vấn
   telegram_bot.py  Bot Telegram: ghép nối, báo cáo, phiếu khách có nút bấm, lệnh /baocao /kpi /khach /hop
+  knowledge.py   Sổ kiến thức: tự học mỗi ngày, tra sổ trước khi làm, chỉ hỏi Claude khi chưa biết và lưu lại câu trả lời
   learning.py    Tự học: thống kê hiệu quả, chọn góc/sản phẩm/giờ, sổ tay bài học, cấp độ, phản tỉnh mỗi đêm
   fb_selectors.json  Chữ hiển thị trên giao diện Facebook (sửa khi Facebook đổi giao diện)
   llm.py         Kết nối Claude (tự chuyển sang mô phỏng khi chưa có key)

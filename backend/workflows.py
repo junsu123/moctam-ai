@@ -85,7 +85,16 @@ Liên hệ: {settings.get('contact_info')}
 Yêu cầu thêm của sếp: {note or 'không'}
 Bài dài 110-180 chữ, emoji vừa phải, mở đầu gây chú ý, kết bằng lời kêu gọi bình luận/inbox.
 Câu chữ phải khác các bài khác (bài số {i + 1}, mã {random.randint(100, 999)}). Không hứa công dụng chữa bệnh.
-Trả về JSON: {{"title": "...", "content": "...", "hashtags": "#... #... (không dấu)", "image_idea": "1 câu mô tả ảnh nên chụp"}}"""
+Trả về JSON: {{"title": "...", "content": "...", "hashtags": "#... #... (không dấu)", "image_idea": "1 câu mô tả ảnh nên chụp"}}""" + \
+        _kb("lan", f"viết bài {p['name']} {p['category']} {mock_brain.ANGLES.get(ang, ang)} {WHERE[target_type]} {note or ''}")
+
+
+def _kb(agent_id: str, query: str) -> str:
+    try:
+        import knowledge
+        return knowledge.block(agent_id, query)
+    except Exception:
+        return ""
 
 
 def _save_post(p: dict, ang: str, target_type: str, data) -> dict:
@@ -398,6 +407,17 @@ def draft_reply(lead_id: int, message: str = "") -> str:
     if not lead:
         return ""
     set_status("ha", "working", f"Đang soạn tin cho {lead['name']}")
+    import knowledge
+    q = (message or lead.get("need") or "").strip()
+    hit = knowledge.known_answer("ha", q, kind="faq") if q and db.get_settings().get("knowledge_enabled", "1") == "1" else None
+    if hit:  # câu khách hỏi đã biết cách trả lời: tự soạn từ sổ kiến thức, không gọi Claude
+        knowledge._used([hit["id"]])
+        knowledge._log("ha", "memory", q, hit["id"])
+        reply = f"Dạ em chào {lead['name']} ạ! {hit['content'].strip()} Anh/chị cho em xin SĐT hoặc Zalo để em gửi bảng giá và ảnh thật nhé?"
+        rid = db.run("INSERT INTO replies(lead_id, text, created_at) VALUES (?,?,?)", (lead_id, reply, db.now()))
+        db.log("ha", "Soạn tin", f"Soạn tin cho khách {lead['name']} bằng kiến thức đã học (không cần hỏi Claude): {hit['topic'][:60]}")
+        set_status("ha", "idle", "Chờ sếp duyệt tin nhắn")
+        return {"reply": reply, "reply_id": rid, "source": "memory"}
     products = [{**p, "dang_ban_chay": bool(p.pop("hot"))} for p in
                 db.q("SELECT name, wholesale_price, moq, hot FROM products ORDER BY hot DESC, id")]
     prompt = f"""Soạn tin nhắn Messenger/Zalo trả lời khách sỉ tiềm năng.
@@ -406,12 +426,23 @@ Nhu cầu: {lead['need']} | Trạng thái: {lead['status']} | Ghi chú: {lead['n
 Tin nhắn mới nhất của khách: {message or '(chưa có, đây là tin chủ động)'}
 Danh sách sản phẩm (dang_ban_chay = sếp muốn ưu tiên chào): {products}
 Nếu khách chưa nói rõ sản phẩm, gợi ý sản phẩm đang bán chạy trước. Tin ngắn (dưới 90 chữ), thân thiện, gợi ý 1 bước tiếp theo rõ ràng (gửi bảng giá/mẫu thử/hẹn gọi), kết bằng 1 câu hỏi."""
-    reply = llm.chat(system_prompt("ha", db.get_settings()), prompt, mock=lambda: mock_brain.lead_reply(lead, message),
-                     max_tokens=350, task="replies")
+    prompt += knowledge.block("ha", q)
+    if llm.live:  # nhờ Claude soạn, đồng thời rút ra kiến thức dùng lại được để lần sau tự trả lời
+        data = llm.json(system_prompt("ha", db.get_settings()), prompt + """
+Trả về JSON {"reply": "tin nhắn gửi khách", "faq": {"question": "câu hỏi chung của khách (bỏ tên riêng), để trống nếu khách không hỏi gì cụ thể",
+"answer": "cách trả lời chung dùng lại được cho khách khác (không tên riêng, dưới 60 chữ)", "topic": "chủ đề ngắn"}}""",
+                        mock=None, max_tokens=500, task="replies")
+        reply = (data or {}).get("reply") if isinstance(data, dict) else None
+        faq = (data or {}).get("faq") if isinstance(data, dict) else None
+        if isinstance(faq, dict) and (faq.get("question") or "").strip() and (faq.get("answer") or "").strip():
+            knowledge.learn_answer("ha", faq["question"], faq["answer"], topic=faq.get("topic") or "")
+        reply = reply or mock_brain.lead_reply(lead, message)
+    else:
+        reply = mock_brain.lead_reply(lead, message)
     rid = db.run("INSERT INTO replies(lead_id, text, created_at) VALUES (?,?,?)", (lead_id, reply, db.now()))
     db.log("ha", "Soạn tin", f"Soạn tin nhắn cho khách {lead['name']}")
     set_status("ha", "idle", "Chờ sếp duyệt tin nhắn")
-    return {"reply": reply, "reply_id": rid}
+    return {"reply": reply, "reply_id": rid, "source": "claude" if llm.live else "mock"}
 
 
 def follow_up_list() -> list[dict]:

@@ -65,6 +65,8 @@ def _tick():
     # Tìm hội nhóm mới theo chủ đề CEO chọn, xin vào nhóm
     import group_finder
     group_finder.tick(now)
+    import knowledge
+    knowledge.tick(now)
     # KPI: chuyển khách cần sếp, nhắc lại; báo cáo Telegram
     kpi.check_escalations()
     telegram_bot.tick()
