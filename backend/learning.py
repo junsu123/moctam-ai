@@ -263,8 +263,8 @@ def skills(agent_id: str) -> list[dict]:
             return _pct(d.get("done", 0), sum(d.values()))
         out.append({"label": "Việc giao được hoàn thành", "unit": "%", "now_prev": win(done)})
     if agent_id == "mai":
-        out.append({"label": "Khách sỉ hạng A/B tìm được", "unit": "", "now_prev": win(lambda a, b: one(
-            "SELECT COUNT(*) n FROM prospects WHERE grade IN ('A','B') AND created_at BETWEEN ? AND ?", (a, b)))})
+        out.append({"label": "SĐT khách sỉ tìm được", "unit": "", "now_prev": win(lambda a, b: one(
+            "SELECT COUNT(*) n FROM prospects WHERE COALESCE(phone,'')!='' AND grade IN ('A','B','C') AND created_at BETWEEN ? AND ?", (a, b)))})
         def conv(a, b):
             r = db.one("""SELECT COUNT(*) n, SUM(CASE WHEN l.status IN ('contacted','quoted','ordered') THEN 1 ELSE 0 END) d
                           FROM prospects p JOIN leads l ON l.id=p.lead_id WHERE p.created_at BETWEEN ? AND ?""", (a, b))
@@ -540,7 +540,7 @@ def default_goal(agent_id: str) -> str | None:
     if agent_id == "minh":
         return "Theo dõi để các việc giao trong cuộc họp được hoàn thành trong ngày."
     if agent_id == "mai":
-        return "Tìm ít nhất 2 khách sỉ hạng A/B có bằng chứng bán hàng thật và link nguồn."
+        return "Tìm ít nhất 3 SĐT của người đang bán hàng online (có bằng chứng và link nguồn) để sếp gọi."
     if agent_id == "ceo":
         try:
             import ceo, company

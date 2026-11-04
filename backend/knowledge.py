@@ -47,7 +47,8 @@ CURRICULUM = {
             "khi nào nên tuyển thêm nhân sự bán hàng", "cách xây thương hiệu xưởng trên Facebook"],
     "sale": ["cách nuôi nick Facebook an toàn", "dấu hiệu nick sắp bị checkpoint và cách tránh",
              "cách trả lời bình luận xin số điện thoại tự nhiên", "cách tham gia nhóm mới không bị từ chối"],
-    "mai": ["thang chấm điểm khách sỉ 100 điểm và cách xếp hạng A B C D", "phân biệt chủ shop tự nhập hàng với affiliate, KOC, CTV",
+    "mai": ["cách tìm số điện thoại kinh doanh công khai của shop trên Facebook", "từ khóa Facebook để tìm người bán hàng có để lại SĐT",
+            "thang chấm điểm khách sỉ 100 điểm và cách xếp hạng A B C D", "phân biệt chủ shop tự nhập hàng với affiliate, KOC, CTV",
             "dấu hiệu một tài khoản đang livestream bán hàng thật", "dấu hiệu người bán có khả năng nhập hàng về bán lại",
             "cách tìm người bán trà, ngũ cốc, đồ ăn healthy trên TikTok Shop", "cách đọc gian hàng Shopee để đánh giá người bán",
             "nhận diện người bán đa nền tảng Facebook TikTok Shopee", "các từ khóa người bán dùng khi tìm nguồn hàng, tuyển đại lý",
@@ -115,6 +116,10 @@ LIBRARY = {
          "mọi bình luận.", "xin sdt binh luan"),
     ],
     "mai": [
+        ("cách tìm số điện thoại kinh doanh công khai của shop trên Facebook", "Tìm SĐT của shop trên Facebook ở đâu?",
+         "Theo thứ tự: phần Giới thiệu đầu trang (hotline, Zalo), mục Giới thiệu → Thông tin liên hệ, bài ghim, bài tuyển CTV/đại lý "
+         "hay bài chốt đơn ('liên hệ 09...', 'Zalo 09...'), nút gọi điện, link zalo.me. Chỉ lấy số shop tự công khai để bán hàng; "
+         "số trong bình luận của người khác hay thông tin cá nhân thì không lấy.", "tim so dien thoai sdt shop facebook gioi thieu lien he"),
         ("thang chấm điểm khách sỉ 100 điểm và cách xếp hạng A B C D", "Chấm điểm khách sỉ thế nào?",
          "Thang 100: hoạt động bán hàng 20, livestream 20, phù hợp ngành hàng 20, khả năng tự nhập hàng 15, hoạt động và tương tác "
          "10, khả năng liên hệ 10, khả năng mở rộng sản phẩm 5. Hạng A 80–100, B 60–79, C 40–59, D dưới 40. Mỗi điểm phải có "

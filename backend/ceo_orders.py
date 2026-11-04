@@ -26,6 +26,8 @@ SETTINGS_OK = {
     "meeting_time": ("time", 0, 0, "giờ họp sáng"), "auto_meeting": ("bool", 0, 0, "tự họp mỗi sáng"),
     "bump_enabled": ("bool", 0, 0, "tự up bài"), "scan_enabled": ("bool", 0, 0, "tự quét bình luận"),
     "discover_enabled": ("bool", 0, 0, "tự tìm nhóm"), "join_enabled": ("bool", 0, 0, "tự xin vào nhóm"),
+    "prospect_tiktok": ("bool", 0, 0, "Mai tìm khách trên TikTok"), "prospect_shopee": ("bool", 0, 0, "Mai tìm khách trên Shopee"),
+    "prospect_enabled": ("bool", 0, 0, "Mai tự tìm khách sỉ mỗi ngày"), "prospect_time": ("time", 0, 0, "giờ Mai đi tìm khách sỉ"),
 }
 REVIEW_BAD = re.compile(r"chữa (khỏi|bệnh|dứt)|trị (bệnh|dứt điểm|khỏi)|điều trị|khỏi hẳn|thần dược|thay thế thuốc|"
                         r"cam kết (giảm|khỏi|trị)|giảm \d+ ?kg|100 ?% (khỏi|hiệu quả)|đặc trị|chữa được", re.I)
@@ -519,11 +521,17 @@ def _rule_plan(text: str) -> dict:
     want_hot = re.search(r"bán chạy|đẩy mạnh|tập trung (bán|chào|đẩy)|ưu tiên (bán|chào)|(thôi|bỏ|ngừng|dừng) (ưu tiên|đẩy|tập trung)|"
                          r"sản phẩm (hot|chủ lực)|đang hot", low)
     links = re.findall(r"https?://\S+", t)
+    for pf, key in (("tiktok|tik tok", "prospect_tiktok"), ("shopee|shoppe|shope", "prospect_shopee")):
+        m = re.search(rf"\b(bật|mở|cho (?:chạy|tìm)|tắt|dừng|ngừng|thôi|bỏ)\b[^.?!]{{0,25}}?\b({pf})\b", low)
+        if m and not links:
+            acts.append({"type": "setting", "key": key, "value": "0" if m.group(1) in ("tắt", "dừng", "ngừng", "thôi", "bỏ") else "1"})
     want_prospect = (re.search(r"\b(tìm|kiếm|săn|lùng|phân tích|xem|đánh giá|chấm điểm)\b.{0,25}?(khách sỉ|khách nhập|người bán|"
                                r"người livestream|nhà bán|shop|đại lý|khách tiềm năng)", low) or
                      (agent == "mai" and re.search(r"\b(tìm|kiếm|săn|phân tích|xem)\b", low)) or
                      (links and re.search(r"tiktok|shopee|facebook\.com/(?!groups)", " ".join(links)) and not want_join))
-    if want_prospect and not want_find:
+    if acts and all(a["type"] == "setting" for a in acts):
+        pass
+    elif want_prospect and not want_find:
         acts.append({"type": "find_prospects", "urls": links, "keywords": []})
     elif want_hot and not want_write and (hp := _product_in(t)):
         off = re.search(r"(thôi|bỏ|hết|không còn|ngừng|dừng)\s*(đánh dấu\s*)?(ưu tiên|bán chạy|đẩy|tập trung|hot)", low)

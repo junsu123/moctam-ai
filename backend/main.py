@@ -454,9 +454,9 @@ def gf_ignore(cid: int):
 
 # ------------------------------------------------------------------ Mai: tìm khách sỉ
 @app.get("/api/prospects")
-def pr_get(grade: str = "", platform: str = "", seller_type: str = "", status: str = ""):
+def pr_get(grade: str = "", platform: str = "", seller_type: str = "", status: str = "", phone: str = ""):
     import prospect
-    return prospect.overview(grade, platform, seller_type, status)
+    return prospect.overview(grade, platform, seller_type, status, phone)
 
 
 class PRRun(BaseModel):
@@ -495,6 +495,7 @@ class PRSettings(BaseModel):
     enabled: bool | None = None
     time: str | None = None
     inspect_per_run: int | None = None
+    fb_keywords: int | None = None
     facebook: bool | None = None
     tiktok: bool | None = None
     shopee: bool | None = None
@@ -512,6 +513,8 @@ def pr_settings(p: PRSettings):
         db.set_setting("prospect_time", p.time)
     if p.inspect_per_run is not None:
         db.set_setting("prospect_inspect_per_run", str(max(1, min(20, p.inspect_per_run))))
+    if p.fb_keywords is not None:
+        db.set_setting("prospect_fb_keywords", str(max(1, min(4, p.fb_keywords))))
     for k in ("enabled", "facebook", "tiktok", "shopee", "auto_crm", "ai_script"):
         v = getattr(p, k)
         if v is not None:

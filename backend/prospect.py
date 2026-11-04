@@ -3,6 +3,10 @@
 Mục tiêu (sếp đặt): người livestream bán hàng, bán qua Facebook/TikTok, TikTok Shop, Shopee, bán đa nền tảng, có nhu cầu tìm
 nguồn hàng mới, có khả năng nhập hàng về bán lại. Không tập trung cửa hàng truyền thống không bán online.
 
+MỤC TIÊU SỐ 1 (sếp chốt): tìm ra SỐ ĐIỆN THOẠI kinh doanh được công khai để sếp liên lạc. Tập trung Facebook trước;
+TikTok, Shopee chỉ chạy khi sếp bật (mặc định tắt). Người chưa có SĐT: Mai đào thêm trang Giới thiệu / Liên hệ, đọc thêm
+bài, và lần sau quay lại tìm tiếp (tối đa 3 lần). Có SĐT + đang bán hàng -> vào mục Khách hàng và chuyển sếp qua Telegram.
+
 Quy trình mỗi lượt (1 nick sale mở Chrome, Mai nghiên cứu):
  1. Tìm tài khoản theo 4 hướng (từ khóa sửa được):
     H1 người livestream bán trà/ngũ cốc/thực phẩm; H2 người bán sản phẩm tương tự/bổ trợ; H3 người bán nhiều nhóm hàng tiêu
@@ -397,10 +401,13 @@ def next_action(row: dict, a: dict) -> str:
         act = "Chỉ xem/chia sẻ livestream của người khác, không thấy tự bán hàng: không phải khách sỉ"
     if a["seller_type"] == "store":
         act = "Cửa hàng truyền thống, không thấy bán online: không ưu tiên"
-    if a["grade"] in ("A", "B") and not (a["phones"] or a["zalo"] or a["email"]):
-        act += ". Chưa có SĐT công khai: nhắn qua trang bằng tay"
+    if a["grade"] in ("A", "B", "C") and not a["phones"] and not a.get("affiliate_only") and a["seller_type"] != "store":
+        act = ("Chưa tìm thấy SĐT công khai (đã đọc cả trang Giới thiệu). Mai sẽ quay lại tìm tiếp; sếp có thể nhắn trang để xin SĐT"
+               if a.get("dug") else "Chưa có SĐT công khai: Mai sẽ quay lại tìm tiếp")
     if not a["enough"]:
         act = "Chưa đủ bằng chứng (trang ít nội dung công khai): kiểm tra lại sau"
+    if a["phones"] and a["grade"] in ("A", "B", "C") and a["enough"] and not a.get("affiliate_only"):
+        act = f"Gọi hoặc nhắn Zalo {a['phones'][0]} theo kịch bản" + (" trong 24 giờ" if a["grade"] == "A" else "")
     return act
 
 
@@ -471,26 +478,46 @@ def save(cand: dict, a: dict | None, direction: int | None, keyword: str, found_
     r = db.one("SELECT * FROM prospects WHERE id=?", (pid,))
     if not r.get("approach") and a["grade"] in ("A", "B", "C") and a["enough"]:
         db.run("UPDATE prospects SET approach=? WHERE id=?", (script(r, a, prods), pid))
+    db.run("UPDATE prospects SET phone_tries=COALESCE(phone_tries,0)+1 WHERE id=?", (pid,))
+    if r.get("lead_id") and r.get("phone"):  # đã ở Khách hàng nhưng trước đó chưa có SĐT: bổ sung số và chuyển sếp
+        ld = db.one("SELECT phone FROM leads WHERE id=?", (r["lead_id"],))
+        if ld and not ld["phone"]:
+            db.run("UPDATE leads SET phone=?, phone_at=?, updated_at=? WHERE id=?", (r["phone"], now, now, r["lead_id"]))
+            try:
+                import kpi
+                kpi.escalate(r["lead_id"], f"Mai tìm được SĐT khách sỉ hạng {r['grade']} ({r['score']} điểm)")
+            except Exception as e:
+                print("[prospect escalate]", e)
     new_crm = False
-    if a["grade"] in ("A", "B") and a["enough"] and not r.get("lead_id") and s().get("prospect_auto_crm", "1") == "1":
-        new_crm = bool(to_crm(pid))
+    if (a["phones"] and a["grade"] in ("A", "B", "C") and a["enough"] and not a.get("affiliate_only") and not r.get("lead_id")
+            and s().get("prospect_auto_crm", "1") == "1"):
+        new_crm = bool(to_crm(pid, escalate=True))
     return {**db.one("SELECT * FROM prospects WHERE id=?", (pid,)), "_crm_new": new_crm}
 
 
-def to_crm(pid: int) -> int | None:
+def to_crm(pid: int, escalate: bool = False) -> int | None:
     """Bước 10: lưu vào mục Khách hàng để sếp/Hà liên hệ bằng tay."""
     r = db.one("SELECT * FROM prospects WHERE id=?", (pid,))
     if not r:
         return None
     if r.get("lead_id"):
         return r["lead_id"]
-    note = f"Mai tìm ({PLATFORM_TXT.get(r['platform'])}, hạng {r['grade']} {r['score']}đ). {r['next_action'] or ''}"
+    ev = "; ".join(e["text"][:90] for e in json.loads(r.get("evidence") or "[]")[:2])
+    note = f"Mai tìm ({PLATFORM_TXT.get(r['platform'])}, hạng {r['grade']} {r['score']}đ). Bằng chứng: {ev}. {r['account_url']}"
     lid = db.run("""INSERT INTO leads(name, contact, channel, source, business_type, need, score, status, note, phone, origin,
                     created_at, updated_at) VALUES (?,?,?,?,?,?,?,'new',?,?,'prospect',?,?)""",
                  (r["shop_name"] or r["account_name"], r["account_url"], PLATFORM_TXT.get(r["platform"], r["platform"]),
                   f"Tìm khách sỉ · {DIRECTIONS.get(r['direction'] or 0, 'dán link')}", SELLER_TYPES.get(r["seller_type"], ""),
                   (r["products"] or r["categories"] or "")[:300], r["score"] or 0, note[:500], r["phone"], db.now(), db.now()))
     db.run("UPDATE prospects SET lead_id=? WHERE id=?", (lid, pid))
+    if r.get("approach"):
+        db.run("UPDATE leads SET consult_note=? WHERE id=?", (r["approach"], lid))
+    if escalate and r.get("phone"):  # có SĐT: chuyển sếp qua Telegram (thẻ khách có nút Đã gọi / Nhắc lại)
+        try:
+            import kpi
+            kpi.escalate(lid, f"Mai tìm được SĐT khách sỉ hạng {r['grade']} ({r['score']} điểm) trên {PLATFORM_TXT.get(r['platform'])}")
+        except Exception as e:
+            print("[prospect escalate]", e)
     return lid
 
 
@@ -536,7 +563,7 @@ def _search(page, platform: str, q: str, kind: str = "pages") -> tuple[list[dict
     return out, False
 
 
-def inspect(page, url: str) -> tuple[dict | None, bool]:
+def inspect(page, url: str, extra: str = "") -> tuple[dict | None, bool]:
     """Mở trang công khai của tài khoản, đọc chữ và vài bài gần nhất. Trả về (phân tích, bị chặn?)."""
     import browser_poster as B
     plat = platform_of(url)
@@ -552,9 +579,39 @@ def inspect(page, url: str) -> tuple[dict | None, bool]:
     body = page.inner_text("body")[:15000]
     arts = page.evaluate(FEED_JS)
     links = page.evaluate(LINKS_JS)
+    name = (page.evaluate("() => ((document.querySelector('h1') || {}).innerText || document.title || '').trim()") or "")[:80]
+    body += ("\n" + extra) if extra else ""
     a = analyze(url, body, arts, links, plat)
-    a["page_name"] = (page.evaluate("() => ((document.querySelector('h1') || {}).innerText || document.title || '').trim()") or "")[:80]
+    if not a["phones"] and plat == "facebook":  # mục tiêu là SĐT: đọc thêm bài và mở trang Giới thiệu / Liên hệ
+        for _ in range(3):
+            page.mouse.wheel(0, random.randint(1200, 1800))
+            page.wait_for_timeout(int(random.uniform(1.5, 3) * 1000))
+        arts = page.evaluate(FEED_JS) or arts
+        for au in about_urls(url):
+            try:
+                page.goto(au, wait_until="domcontentloaded", timeout=60000)
+                page.wait_for_timeout(int(random.uniform(2.5, 4.5) * 1000))
+                B._check_blocked(page)
+                txt = page.inner_text("body")[:6000]
+                body += "\n" + txt
+                links += page.evaluate(LINKS_JS)
+                if PHONE_RX.search(txt) or any(l.lower().startswith("tel:") for l in links):
+                    break
+            except B.Blocked:
+                raise
+            except Exception as e:
+                print("[prospect about]", au, e)
+        a = analyze(url, body, arts, links, plat)
+        a["dug"] = True
+    a["page_name"] = name
     return a, False
+
+
+def about_urls(url: str) -> list[str]:
+    """Trang Giới thiệu / Thông tin liên hệ của một Trang hoặc trang cá nhân Facebook."""
+    if "profile.php" in url:
+        return [url + "&sk=about_contact_and_basic_info", url + "&sk=about"]
+    return [url.rstrip("/") + "/about_contact_and_basic_info", url.rstrip("/") + "/about"]
 
 
 def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None = None, notify: str | None = None):
@@ -564,7 +621,7 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
     acc, sale_row, agent = B._ctx_names(acc_id)
     limit = int(s().get("prospect_inspect_per_run") or 8)
     ctx, page = B._open(pw, acc_id)
-    res = {"found": 0, "inspected": 0, "grades": {"A": 0, "B": 0, "C": 0, "D": 0}, "manual": 0, "blocked": [], "dup": set(), "new": []}
+    res = {"found": 0, "inspected": 0, "grades": {"A": 0, "B": 0, "C": 0, "D": 0}, "manual": 0, "blocked": [], "dup": set(), "new": [], "phones": []}
     blocked = set()
     try:
         if not B._logged_in(ctx):
@@ -572,6 +629,9 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
         queue = []  # (cand, direction, keyword)
         if urls:
             queue = [({"href": u, "name": ""}, None, "dán link") for u in urls]
+        else:  # quay lại tìm SĐT cho người đang bán hàng nhưng lần trước chưa thấy số
+            for r in retry_no_phone():
+                queue.append(({"href": r["account_url"], "name": r["account_name"], "_retry": True}, r["direction"], r["keyword"]))
         for step in plan or []:
             pf, q = step["platform"], step["keyword"]
             if pf in blocked:
@@ -607,6 +667,8 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
                 continue
             seen.add(c)
             pf = platform_of(c)
+            if pf != "facebook" and s().get(f"prospect_{pf}", "0") != "1" and not urls:
+                continue
             if pf in blocked:
                 save(cand, None, d, q, acc_id, status="needs_manual")
                 res["manual"] += 1
@@ -614,8 +676,9 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
             nm = cand.get("name") or c
             workflows.set_status("mai", "working", f"Đang nghiên cứu: {nm[:50]}")
             workflows.set_status(agent, "working", f"Mở trang {nm[:40]} cho Mai xem")
+            snip = cand.get("snippet") or ""
             try:
-                a, blk = inspect(page, c)
+                a, blk = inspect(page, c, snip if PHONE_RX.search(snip) else "")
             except B.Blocked:
                 raise
             except Exception as e:
@@ -631,6 +694,8 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
             if not cand.get("name"):
                 cand["name"] = a.get("page_name") or c
             r = save(cand, a, d, q, acc_id)
+            if r.get("phone") and r.get("lead_id"):
+                res["phones"].append(r)
             res["inspected"] += 1
             res["grades"][r["grade"] or "D"] += 1
             res["new"].append(r)
@@ -650,24 +715,19 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
 
 def _report(res: dict, notify: str | None, by_link: bool):
     g = res["grades"]
-    good = [r for r in res["new"] if r.get("_crm_new")]
-    msg = (f"Mai {'phân tích link xong' if by_link else 'tìm khách sỉ xong'}: xem {res['inspected']} tài khoản, hạng A {g['A']}, B {g['B']}, "
-           f"C {g['C']}, D {g['D']}" + (f"; {res['manual']} tài khoản cần sếp xem tay" if res["manual"] else "")
+    ph = [r for r in res["phones"] if r.get("_crm_new") or by_link]
+    head = (f"Mai {'phân tích link xong' if by_link else 'tìm khách sỉ xong'}: tìm được {len(res['phones'])} SĐT khách đang bán hàng"
+            if res["phones"] else f"Mai {'phân tích link xong' if by_link else 'tìm khách sỉ xong'}: chưa tìm được SĐT mới")
+    msg = (head + f" (xem {res['inspected']} tài khoản: A {g['A']}, B {g['B']}, C {g['C']}, D {g['D']})"
+           + (f"; {res['manual']} tài khoản cần sếp xem tay" if res["manual"] else "")
            + (f"; {', '.join(sorted(set(res['blocked'])))} yêu cầu đăng nhập/xác minh nên dừng (không vượt qua)" if res["blocked"] else "")
            + (f"; bỏ qua {len(res['dup'])} tài khoản đã có trong danh sách" if res["dup"] else "") + ".")
-    if good:
-        msg += " Khách A/B mới vào mục Khách hàng: " + ", ".join(f"{r['shop_name'] or r['account_name']} ({r['grade']} {r['score']}đ)" for r in good[:4]) + "."
-    db.log("mai", "Tìm khách sỉ", msg[:600])
+    if ph:
+        msg += " Đã chuyển sếp: " + ", ".join(f"{r['shop_name'] or r['account_name']} {r['phone']} ({r['grade']})" for r in ph[:5]) + "."
+    db.log("mai", "Tìm khách sỉ", msg[:700])
     if notify:
         import ceo_orders
         ceo_orders.followup(msg, notify)
-    try:
-        import telegram_bot as T
-        if T.report_enabled():
-            for r in [x for x in res["new"] if x["grade"] == "A"][:5]:
-                T.send(alert_text(r))
-    except Exception as e:
-        print("[prospect tg]", e)
 
 
 def alert_text(r: dict) -> str:
@@ -683,10 +743,24 @@ def alert_text(r: dict) -> str:
 
 
 # ---------------------------------------------------------------- giao việc
-def plan_for_run(directions: list[int] | None = None, kw: list[str] | None = None) -> list[dict]:
+def retry_no_phone(limit: int = 3) -> list[dict]:
+    """Người đang bán hàng (A/B/C) mà lần trước chưa thấy SĐT: quay lại tìm, cách nhau ít nhất 3 ngày, tối đa 3 lần."""
+    cut = (db.clock() - timedelta(days=3)).strftime("%Y-%m-%d %H:%M:%S")
+    return db.q("""SELECT * FROM prospects WHERE platform='facebook' AND grade IN ('A','B','C') AND COALESCE(phone,'')=''
+                   AND status='verified' AND COALESCE(phone_tries,0) < 3
+                   AND COALESCE(seller_type,'') NOT IN ('affiliate','koc','store') AND COALESCE(verified_at,'') < ?
+                   ORDER BY score DESC LIMIT ?""", (cut, limit))
+
+
+def platforms_on() -> list[str]:
     st = s()
+    return ["facebook"] + [p for p in ("tiktok", "shopee") if st.get(f"prospect_{p}", "0") == "1"]
+
+
+def plan_for_run(directions: list[int] | None = None, kw: list[str] | None = None) -> list[dict]:
+    """Facebook trước: mỗi hướng 2 từ khóa (đổi vòng mỗi ngày). TikTok, Shopee chỉ khi sếp bật."""
     kws = keywords()
-    pfs = [p for p in ("facebook", "tiktok", "shopee") if st.get(f"prospect_{p}", "1") == "1"]
+    pfs = platforms_on()
     out = []
     if kw:
         for q in kw:
@@ -694,14 +768,14 @@ def plan_for_run(directions: list[int] | None = None, kw: list[str] | None = Non
                 out.append({"platform": pf, "direction": (directions or [None])[0], "keyword": q})
         return out
     day = int(db.today().replace("-", "")) % 97
+    per = max(1, min(4, int(s().get("prospect_fb_keywords") or 2)))
     for d in directions or [1, 2, 3, 4]:
         pool = kws.get(d) or DEFAULT_KEYWORDS[d]
-        q = pool[day % len(pool)]
-        out.append({"platform": "facebook", "direction": d, "keyword": q})
-    for pf in ("tiktok", "shopee"):
-        if pf in pfs:
-            d = (directions or [1])[day % len(directions or [1])]
-            out.append({"platform": pf, "direction": d, "keyword": (kws.get(d) or DEFAULT_KEYWORDS[d])[0]})
+        for i in range(min(per, len(pool))):
+            out.append({"platform": "facebook", "direction": d, "keyword": pool[(day * per + i) % len(pool)]})
+    for pf in pfs[1:]:
+        d = (directions or [1])[day % len(directions or [1])]
+        out.append({"platform": pf, "direction": d, "keyword": (kws.get(d) or DEFAULT_KEYWORDS[d])[0]})
     return out
 
 
@@ -718,7 +792,13 @@ def start(directions: list[int] | None = None, kw: list[str] | None = None, urls
     db.set_setting("prospect_last_account", str(acc["id"]))
     job_ = {"kind": "prospect", "account": acc["id"], "notify": notify}
     if urls:
-        job_["urls"] = [u for u in urls if u.strip()][:20]
+        on = platforms_on()
+        off = [u for u in urls if platform_of(u) not in on]
+        urls = [u for u in urls if u.strip() and platform_of(u) in on]
+        if not urls:
+            names = sorted({PLATFORM_TXT[platform_of(u)] for u in off})
+            raise ValueError(f"{', '.join(names)} đang tắt. Bật lại ở trang Tìm khách sỉ (mục Nguồn tìm) rồi dán link")
+        job_["urls"] = urls[:20]
     else:
         job_["plan"] = plan_for_run(directions, kw)
     B.submit(acc["sale_id"], job_)
@@ -740,7 +820,7 @@ def tick(now):
 
 
 # ---------------------------------------------------------------- giao diện
-def overview(grade: str = "", platform: str = "", stype: str = "", status: str = "") -> dict:
+def overview(grade: str = "", platform: str = "", stype: str = "", status: str = "", phone: str = "") -> dict:
     where, args = ["COALESCE(status,'') != 'rejected'" if status != "rejected" else "status='rejected'"], []
     for col, v in (("grade", grade), ("platform", platform), ("seller_type", stype)):
         if v:
@@ -749,8 +829,13 @@ def overview(grade: str = "", platform: str = "", stype: str = "", status: str =
     if status and status != "rejected":
         where.append("status=?")
         args.append(status)
+    if phone == "yes":
+        where.append("COALESCE(phone,'')!=''")
+    elif phone == "no":
+        where.append("COALESCE(phone,'')=''")
     rows = db.q(f"""SELECT * FROM prospects WHERE {' AND '.join(where)}
-                    ORDER BY CASE grade WHEN 'A' THEN 0 WHEN 'B' THEN 1 WHEN 'C' THEN 2 WHEN 'D' THEN 3 ELSE 4 END,
+                    ORDER BY CASE WHEN COALESCE(phone,'')!='' AND grade IN ('A','B','C') THEN 0 ELSE 1 END,
+                    CASE grade WHEN 'A' THEN 0 WHEN 'B' THEN 1 WHEN 'C' THEN 2 WHEN 'D' THEN 3 ELSE 4 END,
                     score DESC, id DESC LIMIT 200""", tuple(args))
     for r in rows:
         for k in ("evidence", "suggested", "parts"):
@@ -763,6 +848,11 @@ def overview(grade: str = "", platform: str = "", stype: str = "", status: str =
     return {"items": rows, "counts": cnt,
             "manual": db.one("SELECT COUNT(*) n FROM prospects WHERE status='needs_manual'")["n"],
             "crm": db.one("SELECT COUNT(*) n FROM prospects WHERE lead_id IS NOT NULL")["n"],
+            "phones": db.one("SELECT COUNT(*) n FROM prospects WHERE COALESCE(phone,'')!='' AND grade IN ('A','B','C') AND status!='rejected'")["n"],
+            "phones_today": db.one("SELECT COUNT(*) n FROM prospects WHERE COALESCE(phone,'')!='' AND grade IN ('A','B','C') AND created_at>=?",
+                                   (db.today(),))["n"],
+            "no_phone": db.one("SELECT COUNT(*) n FROM prospects WHERE COALESCE(phone,'')='' AND grade IN ('A','B','C') AND status='verified'")["n"],
+            "platforms_on": platforms_on(),
             "directions": DIRECTIONS, "types": SELLER_TYPES, "platforms": PLATFORM_TXT, "keywords": keywords(),
             "settings": {k: st for k, st in s().items() if k.startswith("prospect_")},
             "last": db.one("SELECT detail, created_at FROM activity WHERE agent_id='mai' AND action='Tìm khách sỉ' ORDER BY id DESC LIMIT 1")}

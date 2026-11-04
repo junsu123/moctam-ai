@@ -236,7 +236,7 @@ CREATE TABLE IF NOT EXISTS prospects (
   live_url TEXT, products TEXT, categories TEXT, seller_type TEXT, tags TEXT, direction INTEGER, keyword TEXT,
   recent_activity TEXT, live_freq TEXT, followers INTEGER, phone TEXT, zalo TEXT, email TEXT, import_signals TEXT,
   evidence TEXT, score INTEGER, grade TEXT, parts TEXT, suggested TEXT, approach TEXT, next_action TEXT,
-  status TEXT DEFAULT 'verified', lead_id INTEGER, found_by INTEGER, note TEXT, verified_at TEXT, created_at TEXT, updated_at TEXT
+  status TEXT DEFAULT 'verified', lead_id INTEGER, found_by INTEGER, phone_tries INTEGER DEFAULT 0, note TEXT, verified_at TEXT, created_at TEXT, updated_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_prospect_url ON prospects(account_url);
 CREATE INDEX IF NOT EXISTS idx_prospect_grade ON prospects(grade);
@@ -308,6 +308,7 @@ MIGRATIONS = [
     ("sales", "fired_gen", "TEXT"), ("leads", "is_sample", "INTEGER DEFAULT 0"),
     ("groups", "is_sample", "INTEGER DEFAULT 0"), ("products", "is_sample", "INTEGER DEFAULT 0"),
     ("leads", "phone_at", "TEXT"), ("leads", "boss_status", "TEXT"), ("leads", "remind_at", "TEXT"),
+    ("prospects", "phone_tries", "INTEGER DEFAULT 0"),
 ]
 
 DEFAULT_SETTINGS = {
@@ -394,8 +395,8 @@ DEFAULT_SETTINGS = {
     "tg_alert_nick": "1",
     "tg_alert_kpi": "1",
     "tg_report_done": "1",
-    "prospect_enabled": "1", "prospect_time": "14:30", "prospect_inspect_per_run": "8", "prospect_facebook": "1",
-    "prospect_tiktok": "1", "prospect_shopee": "1", "prospect_auto_crm": "1", "prospect_ai_script": "1", "prospect_keywords": "",
+    "prospect_enabled": "1", "prospect_time": "14:30", "prospect_inspect_per_run": "10", "prospect_facebook": "1",
+    "prospect_tiktok": "0", "prospect_shopee": "0", "prospect_fb_keywords": "2", "prospect_auto_crm": "1", "prospect_ai_script": "1", "prospect_keywords": "",
     "tg_sent_log": "{}",
     "attach_images": "1",
 }
@@ -481,6 +482,9 @@ def init():
     import accounts
     set_tz(get_settings().get("app_tz") or os.getenv("APP_TZ") or DEFAULT_TZ)
     accounts.migrate()
+    if get_settings().get("prospect_fb_first") != "1":  # sếp chốt: tập trung Facebook, TikTok/Shopee mặc định tắt
+        for k, v in (("prospect_tiktok", "0"), ("prospect_shopee", "0"), ("prospect_fb_first", "1")):
+            set_setting(k, v)
     try:
         import content_style
         content_style.migrate()  # bài Claude viết trước đây -> kho bài để Lan học phong cách

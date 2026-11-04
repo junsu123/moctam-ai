@@ -136,21 +136,27 @@ Sửa chủ đề hôm nay, kho chủ đề, giờ tìm, số nhóm thêm/xin v�
 
 ## Mai tìm khách sỉ (người đang bán hàng online)
 
-Mục **Bán hàng → Tìm khách sỉ**. Mai tìm người **đang bán hàng thật** có thể nhập trà túi lọc, ngũ cốc về bán lại: người livestream bán hàng, bán qua Facebook, TikTok, TikTok Shop, Shopee, bán đa nền tảng, đang tìm nguồn hàng hay tuyển đại lý. Cửa hàng truyền thống không thấy bán online thì xếp cuối. **Chất lượng quan trọng hơn số lượng**: mỗi người có link nguồn, bằng chứng, điểm và việc nên làm tiếp.
+Mục **Bán hàng → Tìm khách sỉ**. **Mục tiêu số 1 của Mai: tìm ra số điện thoại** của người đang bán hàng online để sếp liên lạc. Mai **tập trung Facebook**; TikTok và Shopee có công tắc riêng ở dòng **Nguồn tìm** đầu trang (đang hoạt động / không hoạt động, mặc định không hoạt động; cũng có thể nói với CEO “bật TikTok”, “tắt Shopee”).
+
+**Cách Mai tìm SĐT**: đọc phần giới thiệu và các bài gần nhất của Trang (hotline, “Zalo 09...”, “liên hệ 09...”, nút gọi điện, link zalo.me); chưa thấy thì đọc thêm bài và mở **Giới thiệu → Thông tin liên hệ**; vẫn chưa có thì 3 ngày sau quay lại tìm (tối đa 3 lần). Số tìm được từ bài đăng công khai của chính họ trong kết quả tìm kiếm cũng được tính. Chỉ lấy SĐT kinh doanh do shop tự công khai.
+
+**Có SĐT và đang bán hàng (hạng A/B/C, không phải affiliate)** → tự vào mục **Khách hàng** (tính vào KPI khách có SĐT) và **chuyển sếp qua Telegram ngay** bằng thẻ khách (SĐT, link trang, kịch bản tiếp cận, nút Đã gọi / Nhắc lại). Trang Tìm khách sỉ đưa khách có SĐT lên đầu, có bộ lọc “Chỉ khách có SĐT” và nút chép số.
+
+Mai tìm người **đang bán hàng thật** có thể nhập trà túi lọc, ngũ cốc về bán lại: người livestream bán hàng, bán qua Facebook, TikTok, TikTok Shop, Shopee, bán đa nền tảng, đang tìm nguồn hàng hay tuyển đại lý. Cửa hàng truyền thống không thấy bán online thì xếp cuối. **Chất lượng quan trọng hơn số lượng**: mỗi người có link nguồn, bằng chứng, điểm và việc nên làm tiếp.
 
 **Cách Mai làm mỗi lượt** (mặc định 14:30 mỗi ngày, hoặc bấm “Mai đi tìm ngay”, hoặc nói với CEO “tìm khách sỉ đang livestream bán trà”):
 
-1. Mai mượn Chrome của một nick sale đang rảnh (luân phiên các nick) để mở trang công khai. Tìm theo 4 hướng, mỗi hướng một từ khóa đổi vòng mỗi ngày (sửa được trong “Cách Mai tìm và cài đặt”):
+1. Mai mượn Chrome của một nick sale đang rảnh (luân phiên các nick) để mở trang công khai. Tìm trên Facebook theo 4 hướng, mỗi hướng 2 từ khóa đổi vòng mỗi ngày (sửa được trong “Cách Mai tìm và cài đặt”):
    - Hướng 1: người livestream bán trà, ngũ cốc, thực phẩm.
    - Hướng 2: người bán sản phẩm tương tự hoặc bổ trợ.
    - Hướng 3: người bán nhiều nhóm hàng tiêu dùng, có thể mở rộng danh mục.
    - Hướng 4: người công khai tuyển đại lý, tìm nguồn hàng, nhận phân phối, bán sỉ.
-2. Facebook: tìm Trang và bài đăng công khai. TikTok, Shopee: mở trang tìm kiếm công khai; **gặp đăng nhập hay captcha thì dừng** và ghi “cần sếp xem tay” (không vượt qua cơ chế bảo vệ).
-3. Mở từng tài khoản (mặc định tối đa 8/lượt), chỉ đọc phần giới thiệu và vài bài gần nhất: đang bán gì, bài mới nhất bao lâu, có tự phát trực tiếp không, link gian hàng ở nền tảng khác, SĐT/Zalo/email **kinh doanh được công khai trên trang**.
+2. Facebook: tìm Trang và bài đăng công khai. TikTok, Shopee (chỉ khi sếp bật): mở trang tìm kiếm công khai; **gặp đăng nhập hay captcha thì dừng** và ghi “cần sếp xem tay” (không vượt qua cơ chế bảo vệ).
+3. Mở từng tài khoản (mặc định tối đa 10/lượt), chỉ đọc phần giới thiệu và vài bài gần nhất: đang bán gì, bài mới nhất bao lâu, có tự phát trực tiếp không, link gian hàng ở nền tảng khác, SĐT/Zalo/email **kinh doanh được công khai trên trang**.
 4. Phân loại riêng từng kiểu (không gộp): chủ shop tự nhập hàng, người bán livestream, bán đa nền tảng, nhà bán trên sàn, cộng tác viên, affiliate, KOC/KOL, cửa hàng truyền thống.
 5. Kiểm tra trùng theo link, SĐT, tên; người đã có trong mục Khách hàng thì không đưa lại.
 6. Chấm điểm, đề xuất sản phẩm của xưởng hợp với họ (ưu tiên sản phẩm đang bán chạy), viết kịch bản tiếp cận, ghi việc nên làm tiếp.
-7. Hạng A/B tự vào mục **Khách hàng** (nguồn “Tìm khách sỉ”) để sếp hoặc Hà **nhắn tay**. Khách hạng A được báo ngay qua Telegram kèm bằng chứng.
+7. Có SĐT thì vào mục **Khách hàng** (nguồn “Tìm khách sỉ”) và chuyển sếp qua Telegram để **gọi/nhắn tay**.
 
 **Thang điểm 100**
 
@@ -172,7 +178,7 @@ Hạng **A** 80–100 (liên hệ trong 24 giờ), **B** 60–79 (theo dõi thê
 
 Mỗi thẻ khách có nút: Chép kịch bản, Vào Khách hàng, Đã liên hệ, Kiểm tra lại, Loại. Mai cũng báo cáo số khách A/B tìm được trong cuộc họp sáng, và tự học các kiến thức tìm khách (phân biệt chủ shop với affiliate, dấu hiệu livestream thật...) lúc rảnh.
 
-Chạy thật với TikTok, Shopee: hai nền tảng này thường bắt đăng nhập hoặc captcha với trình duyệt tự động, nên phần lớn tài khoản sẽ ở trạng thái “cần sếp xem tay”; có thể tắt từng nền tảng trong cài đặt.
+Chạy thật với TikTok, Shopee: hai nền tảng này thường bắt đăng nhập hoặc captcha với trình duyệt tự động, nên phần lớn tài khoản sẽ ở trạng thái “cần sếp xem tay”. Vì vậy mặc định tắt; khi tắt, link TikTok/Shopee sếp dán cũng không được mở.
 
 ## Sản phẩm và sản phẩm đang bán chạy
 

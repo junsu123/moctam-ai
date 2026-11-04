@@ -322,7 +322,7 @@ def lead_text(l: dict, reminder: bool = False) -> str:
     return "\n".join([
         title,
         f"👤 <b>{e(l['name'])}</b> · điểm {l.get('score') or 0}",
-        f"📞 <b>{e(kpi.fmt_phone(l.get('phone'))) or 'Chưa có SĐT'}</b>" + (f" · {e(l['contact'])}" if l.get("contact") and not l.get("phone") else ""),
+        f"📞 <b>{e(kpi.fmt_phone(l.get('phone'))) or 'Chưa có SĐT'}</b>" + (f" · {e(l['contact'])}" if l.get("contact") and (not l.get("phone") or l.get("origin") == "prospect") else ""),
         f"💬 {e((l.get('need') or '')[:300])}",
         f"📍 {src}",
         f"❓ {e(l.get('escalate_reason') or '')}",

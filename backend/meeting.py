@@ -36,13 +36,14 @@ LOGIN_TXT = {"ok": "nick hoạt động bình thường", "not_logged_in": "nick
 def _mai_report() -> str:
     since = (db.clock() - __import__("datetime").timedelta(days=7)).strftime("%Y-%m-%d")
     r = db.one("""SELECT COUNT(*) n, SUM(grade='A') a, SUM(grade='B') b, SUM(status='needs_manual') m,
-                  SUM(lead_id IS NOT NULL) crm FROM prospects WHERE created_at>=?""", (since,))
+                  SUM(lead_id IS NOT NULL) crm, SUM(COALESCE(phone,'')!='' AND grade IN ('A','B','C')) ph
+                  FROM prospects WHERE created_at>=?""", (since,))
     if not r or not r["n"]:
         return ""
     top = db.one("""SELECT COALESCE(shop_name, account_name) nm, score FROM prospects WHERE grade='A' AND status='verified'
                     AND created_at>=? ORDER BY score DESC LIMIT 1""", (since,))
-    txt = (f"7 ngày qua em nghiên cứu {r['n']} tài khoản bán hàng online: {r['a'] or 0} khách hạng A, {r['b'] or 0} hạng B, "
-           f"{r['crm'] or 0} khách đã vào mục Khách hàng.")
+    txt = (f"7 ngày qua em tìm được {r['ph'] or 0} số điện thoại của người đang bán hàng online (nghiên cứu {r['n']} tài khoản Facebook; "
+           f"{r['a'] or 0} khách hạng A, {r['b'] or 0} hạng B). Các số này đã chuyển sếp qua Telegram.")
     if top:
         txt += f" Đáng liên hệ nhất là {top['nm']} ({top['score']} điểm), nhờ chị Hà hoặc sếp nhắn tay theo kịch bản."
     if r["m"]:
