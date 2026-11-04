@@ -549,6 +549,11 @@ def patch_post(pid: int, p: PostPatch):
     # --- tín hiệu học từ sếp
     if p.content is not None and p.content.strip() != (old["content"] or "").strip():
         learning.record_feedback(pid, "edit", old["content"], p.content)
+        try:
+            import content_style
+            content_style.on_boss_edit(pid, p.content)  # Lan học câu chữ sếp sửa
+        except Exception as e:
+            print("[content_style]", e)
     if p.status == "approved" and old["status"] == "draft":
         edited = db.one("SELECT id FROM feedback WHERE post_id=? AND kind='edit'", (pid,))
         if not edited:
@@ -1506,6 +1511,54 @@ def learning_overview():
 def learning_run():
     learning.nightly_async()
     return {"ok": True}
+
+
+# ------------------------------------------------------------------ kho bài & phong cách viết của Lan
+@app.get("/api/content-style")
+def content_style_get():
+    import content_style
+    return content_style.overview()
+
+
+class StyleSet(BaseModel):
+    mode: str | None = None
+    min: int | None = None
+
+
+@app.put("/api/content-style")
+def content_style_put(st: StyleSet):
+    import content_style
+    if st.mode is not None:
+        if st.mode not in ("auto", "always", "off"):
+            raise HTTPException(400, "Chế độ không hợp lệ")
+        db.set_setting("self_write_mode", st.mode)
+    if st.min is not None:
+        db.set_setting("self_write_min", str(max(5, min(200, st.min))))
+    return content_style.overview()
+
+
+class StylePreview(BaseModel):
+    product_id: int | None = None
+    angle: str | None = None
+    target: str = "group"
+
+
+@app.post("/api/content-style/preview")
+def content_style_preview(r: StylePreview):
+    """Lan viết thử 1 bài theo phong cách đã học (chỉ xem, không lưu, không gọi Claude)."""
+    import content_style
+    import mock_brain
+    ok, why = content_style.ready()
+    if not ok:
+        raise HTTPException(400, why)
+    p = db.one("SELECT * FROM products WHERE id=?", (r.product_id,)) if r.product_id else learning.choose_product(db.q("SELECT * FROM products"))
+    if not p:
+        raise HTTPException(400, "Chưa có sản phẩm")
+    ang = r.angle if r.angle in mock_brain.ANGLES else learning.choose_angle()
+    d = content_style.compose(p, ang, r.target if r.target in ("group", "profile", "page") else "group", dry=True)
+    if not d:
+        raise HTTPException(400, "Lan chưa ghép được bài khác đủ xa các bài cũ, cần học thêm bài Claude viết")
+    return {**d, "product": p["name"], "angle": mock_brain.ANGLES.get(ang, ang)}
 
 
 # ------------------------------------------------------------------ sổ kiến thức

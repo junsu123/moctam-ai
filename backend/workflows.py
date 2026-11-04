@@ -86,7 +86,16 @@ Yêu cầu thêm của sếp: {note or 'không'}
 Bài dài 110-180 chữ, emoji vừa phải, mở đầu gây chú ý, kết bằng lời kêu gọi bình luận/inbox.
 Câu chữ phải khác các bài khác (bài số {i + 1}, mã {random.randint(100, 999)}). Không hứa công dụng chữa bệnh.
 Trả về JSON: {{"title": "...", "content": "...", "hashtags": "#... #... (không dấu)", "image_idea": "1 câu mô tả ảnh nên chụp"}}""" + \
-        _kb("lan", f"viết bài {p['name']} {p['category']} {mock_brain.ANGLES.get(ang, ang)} {WHERE[target_type]} {note or ''}")
+        _kb("lan", f"viết bài {p['name']} {p['category']} {mock_brain.ANGLES.get(ang, ang)} {WHERE[target_type]} {note or ''}") + \
+        _style_hint()
+
+
+def _style_hint() -> str:
+    try:
+        import content_style
+        return content_style.style_hint()
+    except Exception:
+        return ""
 
 
 def _kb(agent_id: str, query: str) -> str:
@@ -98,13 +107,41 @@ def _kb(agent_id: str, query: str) -> str:
 
 
 def _save_post(p: dict, ang: str, target_type: str, data) -> dict:
+    import content_style
     if not isinstance(data, dict) or not data.get("content"):
         data = mock_brain.post(p, ang, target_type, db.get_settings())
+    src = "self" if data.get("_self") else "mock" if content_style.is_mock(data) else "claude"
     pid = db.run("""INSERT INTO posts(agent_id, product_id, target_type, angle, title, content, hashtags,
-                    image_idea, status, created_at) VALUES ('lan',?,?,?,?,?,?,?,'draft',?)""",
+                    image_idea, status, created_at, source) VALUES ('lan',?,?,?,?,?,?,?,'draft',?,?)""",
                  (p["id"], target_type, ang, data.get("title", ""), data["content"],
-                  data.get("hashtags", ""), data.get("image_idea", ""), db.now()))
+                  data.get("hashtags", ""), data.get("image_idea", ""), db.now(), src))
+    content_style.record_post(pid, p, ang, target_type, data, src)  # bài Claude viết: lưu kho, Lan học phong cách
     return db.one("SELECT * FROM posts WHERE id=?", (pid,))
+
+
+def _self_write(p: dict, ang: str, tt: str, note: str = "") -> dict | None:
+    """Lan tự viết theo phong cách đã học nếu đủ vốn (không gọi Claude)."""
+    try:
+        import content_style
+        if content_style.should_self_write(note):
+            return content_style.compose(p, ang, tt)
+    except Exception as e:
+        print("[self write]", e)
+    return None
+
+
+def _write_one(p: dict, ang: str, tt: str, settings: dict, note: str, i: int) -> dict:
+    data = _self_write(p, ang, tt, note)
+    if data:
+        return data
+    return llm.json(system_prompt("lan", settings), _post_prompt(p, ang, tt, settings, note, i),
+                    mock=lambda: mock_brain.post(p, ang, tt, settings), max_tokens=900, task="posts")
+
+
+def _write_note(made: list) -> str:
+    n_self = sum(1 for x in made if x and x.get("source") == "self")
+    n_ai = sum(1 for x in made if x and x.get("source") == "claude")
+    return f" (Lan tự viết {n_self}, nhờ Claude {n_ai})" if n_self else ""
 
 
 def _plan_items(count: int, product_id: int | None, target_type: str, angle: str | None):
@@ -130,11 +167,8 @@ def generate_posts(count: int = 3, product_id: int | None = None, target_type: s
     set_status("lan", "working", f"Đang viết {count} bài đăng")
     created = []
     for i, p, ang, tt in items:
-        data = llm.json(system_prompt("lan", settings), _post_prompt(p, ang, tt, settings, note, i),
-                        mock=lambda p=p, ang=ang, tt=tt: mock_brain.post(p, ang, tt, settings),
-                        max_tokens=900, task="posts")
-        created.append(_save_post(p, ang, tt, data))
-    db.log("lan", "Viết bài", f"Đã viết {len(created)} bài nháp chờ sếp duyệt")
+        created.append(_save_post(p, ang, tt, _write_one(p, ang, tt, settings, note, i)))
+    db.log("lan", "Viết bài", f"Đã viết {len(created)} bài nháp chờ sếp duyệt" + _write_note(created))
     set_status("lan", "idle", f"Vừa viết xong {len(created)} bài")
     return created
 
@@ -147,11 +181,21 @@ def generate_posts_batch(plan: list[tuple[str, int]]) -> dict:
     if not items:
         return {"mode": "none", "count": 0}
     if settings.get("use_batch") != "1" or not llm.live:
-        made = [_save_post(p, ang, tt, llm.json(system_prompt("lan", settings), _post_prompt(p, ang, tt, settings, "", i),
-                mock=lambda p=p, ang=ang, tt=tt: mock_brain.post(p, ang, tt, settings), max_tokens=900, task="posts"))
-                for i, p, ang, tt in items]
-        db.log("lan", "Viết bài", f"Đã viết {len(made)} bài nháp chờ sếp duyệt")
+        made = [_save_post(p, ang, tt, _write_one(p, ang, tt, settings, "", i)) for i, p, ang, tt in items]
+        db.log("lan", "Viết bài", f"Đã viết {len(made)} bài nháp chờ sếp duyệt" + _write_note(made))
         return {"mode": "now", "count": len(made)}
+    # Lan tự viết phần bài đủ sức tự viết, phần còn lại gửi lô cho Claude
+    own, rest = [], []
+    for it in items:
+        d = _self_write(it[1], it[2], it[3])
+        (own.append((it, d)) if d else rest.append(it))
+    for (i, p, ang, tt), d in own:
+        _save_post(p, ang, tt, d)
+    if own:
+        db.log("lan", "Viết bài", f"Lan tự viết {len(own)} bài theo phong cách đã học (không gọi Claude)")
+    items = rest
+    if not items:
+        return {"mode": "self", "count": len(own)}
     sysmsg = system_prompt("lan", settings)
     reqs, meta = [], {}
     for k, (i, p, ang, tt) in enumerate(items):
@@ -172,6 +216,7 @@ def generate_posts_batch_fallback(items, settings):
     made = [_save_post(p, ang, tt, llm.json(system_prompt("lan", settings), _post_prompt(p, ang, tt, settings, "", i),
             mock=lambda p=p, ang=ang, tt=tt: mock_brain.post(p, ang, tt, settings), max_tokens=900, task="posts"))
             for i, p, ang, tt in items]
+    db.log("lan", "Viết bài", f"Đã viết {len(made)} bài nháp chờ sếp duyệt")
     return {"mode": "now", "count": len(made)}
 
 

@@ -292,6 +292,25 @@ rút ra bài học… Cấp độ hiện trên nhân vật 3D. Trang Đào tạo
 luật nhóm và việc dừng khi checkpoint là do sếp đặt; bài học đề xuất tăng tần suất, lách luật hay hứa công dụng chữa
 bệnh bị tự động loại.
 
+## Kho bài và phong cách viết: Lan học để tự viết content
+
+- **Lưu toàn bộ bài Claude viết** vào kho bài (bảng `content_library`), ghi rõ agent chịu trách nhiệm (Lan), sản phẩm, góc viết,
+  nơi đăng. Kho không bị xóa khi "Bắt đầu chạy thật". Bài sếp sửa rồi lưu cũng vào kho (nguồn "Sếp sửa", học nặng hơn).
+  Bài cũ do Claude viết trước bản này được tự đưa vào kho; bài mẫu có sẵn của phần mềm thì không.
+- **Ghi nhớ phong cách**: mỗi bài được tách thành câu mở đầu, ý lợi ích, dòng giá, dịch vụ xưởng, câu kêu gọi, đoạn kể chuyện,
+  hashtag. Tên sản phẩm, giá, nhập tối thiểu, dòng sản phẩm được thay bằng chỗ trống để dùng cho sản phẩm khác; câu nhắc
+  riêng một loại hàng chỉ dùng lại cho đúng sản phẩm đó; dòng mô tả/điểm mạnh sản phẩm thì lấy từ trang Sản phẩm.
+  Câu ở bài được duyệt, có bình luận, có khách được cộng điểm; bài bị loại bị trừ điểm (cập nhật mỗi đêm).
+  Hồ sơ phong cách: độ dài, số dòng, emoji hay dùng, gạch đầu dòng, hashtag; được nhắc lại khi Claude viết để giữ đồng nhất.
+- **Tự viết**: đủ vốn (mặc định 12 bài Claude viết, 4 câu mở đầu, 2 câu kêu gọi) thì Lan tự ghép bài mới không gọi Claude,
+  chọn câu theo góc viết và điểm, không trùng bài cũ (bài quá giống thì để Claude viết).
+  - **Tự động** (mặc định): tỉ lệ tự viết tăng dần theo số bài đã học (tối đa 80%), giảm nếu bài tự viết bị loại nhiều hơn bài
+    Claude viết; bài có yêu cầu riêng của sếp vẫn nhờ Claude. Chưa có khóa Claude: tự viết khi đủ vốn.
+  - **Luôn tự viết** / **Tắt**.
+- Trang **Đào tạo → Lan học phong cách viết**: số bài đã lưu, tiến độ học, tỉ lệ tự viết, so sánh tỉ lệ duyệt và khách giữa bài
+  Claude viết và bài Lan tự viết, câu mở đầu và câu kêu gọi hay dùng, kho bài, nút **Lan viết thử 1 bài** (xem trước, không lưu).
+  Thẻ bài ở mục Bài đăng ghi "Lan tự viết" / "Claude viết" / "Sếp sửa".
+
 ## Sổ kiến thức: tự học mỗi ngày, ít phụ thuộc Claude
 
 Ngoài bài học rút từ kết quả (phần trên), mỗi agent có **sổ kiến thức** (trang **Đào tạo → Sổ kiến thức của đội**):
@@ -516,6 +535,7 @@ backend/
   company.py     Công ty: vốn, chi phí, doanh thu, đánh giá KPI tháng, sa thải, giải thể
   kpi.py         KPI: nhận diện SĐT, tiến độ, chia theo nick, lịch sử; chuyển khách cho sếp, kịch bản tư vấn
   telegram_bot.py  Bot Telegram: ghép nối, báo cáo, phiếu khách có nút bấm, lệnh /baocao /kpi /khach /hop
+  content_style.py  Kho bài Claude viết, phong cách viết của Lan, Lan tự ghép bài mới theo phong cách đã học
   knowledge.py   Sổ kiến thức: tự học mỗi ngày, tra sổ trước khi làm, chỉ hỏi Claude khi chưa biết và lưu lại câu trả lời
   learning.py    Tự học: thống kê hiệu quả, chọn góc/sản phẩm/giờ, sổ tay bài học, cấp độ, phản tỉnh mỗi đêm
   fb_selectors.json  Chữ hiển thị trên giao diện Facebook (sửa khi Facebook đổi giao diện)

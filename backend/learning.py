@@ -552,6 +552,12 @@ def nightly(force: bool = False) -> list[dict]:
             res.append(reflect(a))
             workflows.set_status(a, "idle", "Vừa học xong bài học hôm nay")
         total = sum(r["added"] for r in res)
+        try:  # Lan ôn lại kho bài: cập nhật bài nào được duyệt, có khách để chấm điểm câu chữ
+            import content_style
+            content_style.refresh_quality()
+            content_style.profile(refresh=True)
+        except Exception as e:
+            print("[content_style]", e)
         db.set_setting("learn_last_date", db.today())
         db.log("khoa", "Tự học", f"Cả đội rút ra {total} bài học mới, đặt mục tiêu cho ngày mai")
         return res

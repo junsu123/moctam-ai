@@ -48,7 +48,7 @@ def post(product: dict, angle: str, target_type: str, settings: dict) -> dict:
         body += ["", f"Liên hệ: {settings.get('contact_info', '')}"]
     plain = unicodedata.normalize("NFD", cat).encode("ascii", "ignore").decode().replace(" ", "").lower()
     tags = "#nguonhangsi #taxuong #banhangonline #" + plain.replace("đ", "d")
-    return {"title": title, "content": "\n".join(body), "hashtags": tags,
+    return {"title": title, "content": "\n".join(body), "hashtags": tags, "_mock": True,
             "image_idea": f"Ảnh thật {name} đặt trên bàn gỗ trong xưởng, có tay người pha/đóng gói, chữ to: GIÁ SỈ TẬN XƯỞNG"}
 
 
