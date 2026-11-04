@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 
 import db
 
-AGENT_ALIASES = {"minh": "minh", "lan": "lan", "tuan": "tuan", "tuấn": "tuan", "ha": "ha", "hà": "ha", "khoa": "khoa",
+AGENT_ALIASES = {"minh": "minh", "lan": "lan", "tuan": "tuan", "tuấn": "tuan", "ha": "ha", "hà": "ha", "khoa": "khoa", "mai": "mai",
                  "đức": "ceo", "duc": "ceo", "ceo": "ceo", "trưởng phòng": "minh"}
 SETTINGS_OK = {
     "posts_per_day": ("int", 1, 20, "số bài Lan viết mỗi ngày"), "kpi_min": ("int", 1, 50, "KPI tối thiểu khách có SĐT/ngày"),
@@ -267,6 +267,18 @@ def execute(act: dict) -> str:
         r = group_finder.start_discover(None, kws or None, notify=act.get("_via", "web"))
         return (f"Giao sale {_name('sale-' + str(r['sale_id']))} (nick {r['account']}) lướt Facebook rồi tìm nhóm theo: {', '.join(r['keywords'])}"
                 f"{_busy_note(r['sale_id'])}. Tìm xong em báo lại sếp.")
+    if t == "find_prospects":
+        import group_finder
+        import prospect
+        if not group_finder._working_accounts():
+            return "Mai chưa đi tìm khách được vì cần 1 nick sale để mở trang. " + why_no_sales()
+        urls = [u for u in (act.get("urls") or []) if str(u).strip()]
+        kws = [k.strip() for k in (act.get("keywords") or []) if str(k).strip()]
+        r = prospect.start(None, kws or None, urls or None, notify=act.get("_via", "web"))
+        what = f"phân tích {len(r['urls'])} link sếp gửi" if r.get("urls") else \
+            ("tìm khách sỉ theo: " + ", ".join(kws) if kws else "tìm khách sỉ theo 4 hướng (livestream, bán hàng tương tự, "
+             "bán đa ngành, tuyển đại lý/tìm nguồn)")
+        return f"Giao Mai {what}, dùng Chrome của nick {r['account']} để xem trang công khai{_busy_note(r['sale_id'])}. Xong em báo lại sếp."
     if t == "join_groups":
         import group_finder
         if not group_finder._working_sales():
@@ -374,6 +386,11 @@ def status_text() -> str:
     k = kpi.day_stats(db.today())
     parts = [f"Hôm nay {k['leads_phone']}/{k['target_min']} khách có SĐT", f"{st['drafts']} bài nháp",
              f"{st['approved']} bài đã duyệt/lên lịch", f"{st['posted_total']} bài đã đăng", f"{st['leads_new']} khách mới chưa liên hệ"]
+    pr = db.one("SELECT SUM(grade='A') a, SUM(grade='B') b, SUM(status='needs_manual') m FROM prospects WHERE created_at>=?",
+                (db.today(),))
+    if pr and (pr["a"] or pr["b"] or pr["m"]):
+        parts.append(f"Mai tìm được {pr['a'] or 0} khách sỉ hạng A, {pr['b'] or 0} hạng B hôm nay"
+                     + (f", {pr['m']} tài khoản cần sếp xem tay" if pr["m"] else ""))
     try:
         import company
         b = company.brief_text()
@@ -393,7 +410,7 @@ def _context() -> str:
     return json.dumps({
         "hom_nay": db.today(),
         "agents": {"minh": "Minh, trưởng phòng, chủ trì họp", "lan": "Lan, viết bài", "tuan": "Tuấn, chọn nhóm và xếp lịch đăng",
-                   "ha": "Hà, chăm sóc khách, soạn tin", "khoa": "Khoa, số liệu"},
+                   "ha": "Hà, chăm sóc khách, soạn tin", "khoa": "Khoa, số liệu", "mai": "Mai, tìm khách sỉ (người bán online, livestream) trên Facebook, TikTok, Shopee"},
         "sales": [{"id": r["id"], "ten": r["name"], "nick": r["fb_name"], "dang_nhap": r["login_status"] == "ok",
                    "tu_dang": bool(r["auto_post"])} for r in sales],
         "san_pham": [{"id": p["id"], "ten": p["name"], "dang_ban_chay": bool(p["hot"])} for p in prods],
@@ -414,6 +431,8 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - meeting {topic}: triệu tập họp
 - find_groups {keywords: [..]}: giao sale lướt Facebook tìm nhóm theo chủ đề
 - join_groups {}: các nick xin vào nhóm mới
+- find_prospects {keywords: [..], urls: [..]}: Mai tìm khách sỉ (người đang bán online, livestream trên Facebook/TikTok/Shopee),
+  chấm điểm A/B/C/D, hạng A/B vào mục Khách hàng. urls = link sếp gửi để Mai phân tích. Không tự nhắn tin cho khách.
 - scan_comments {}: sale quét bình luận tìm khách
 - learn_now {}: cả đội tự rút kinh nghiệm ngay
 - teach {agent: lan|tuan|ha|khoa|minh|<tên sale>, text}: sửa cách làm của MỘT agent bị sếp chê (ghi thành bài học bắt buộc,
@@ -499,7 +518,14 @@ def _rule_plan(text: str) -> dict:
     want_status = re.search(r"tình hình|báo cáo|thế nào|ra sao|bao nhiêu khách|đang làm gì|làm được gì", low) and not how_q
     want_hot = re.search(r"bán chạy|đẩy mạnh|tập trung (bán|chào|đẩy)|ưu tiên (bán|chào)|(thôi|bỏ|ngừng|dừng) (ưu tiên|đẩy|tập trung)|"
                          r"sản phẩm (hot|chủ lực)|đang hot", low)
-    if want_hot and not want_write and (hp := _product_in(t)):
+    links = re.findall(r"https?://\S+", t)
+    want_prospect = (re.search(r"\b(tìm|kiếm|săn|lùng|phân tích|xem|đánh giá|chấm điểm)\b.{0,25}?(khách sỉ|khách nhập|người bán|"
+                               r"người livestream|nhà bán|shop|đại lý|khách tiềm năng)", low) or
+                     (agent == "mai" and re.search(r"\b(tìm|kiếm|săn|phân tích|xem)\b", low)) or
+                     (links and re.search(r"tiktok|shopee|facebook\.com/(?!groups)", " ".join(links)) and not want_join))
+    if want_prospect and not want_find:
+        acts.append({"type": "find_prospects", "urls": links, "keywords": []})
+    elif want_hot and not want_write and (hp := _product_in(t)):
         off = re.search(r"(thôi|bỏ|hết|không còn|ngừng|dừng)\s*(đánh dấu\s*)?(ưu tiên|bán chạy|đẩy|tập trung|hot)", low)
         acts.append({"type": "set_hot", "product_id": hp["id"], "hot": not off})
     elif want_status and not critique and not (want_find or want_write or want_plan):

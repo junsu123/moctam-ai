@@ -452,6 +452,122 @@ def gf_ignore(cid: int):
     return {"ok": True}
 
 
+# ------------------------------------------------------------------ Mai: tìm khách sỉ
+@app.get("/api/prospects")
+def pr_get(grade: str = "", platform: str = "", seller_type: str = "", status: str = ""):
+    import prospect
+    return prospect.overview(grade, platform, seller_type, status)
+
+
+class PRRun(BaseModel):
+    directions: list[int] | None = None
+    keywords: list[str] | None = None
+
+
+@app.post("/api/prospects/run")
+def pr_run(r: PRRun):
+    import prospect
+    try:
+        return prospect.start([d for d in (r.directions or []) if d in prospect.DIRECTIONS] or None,
+                              [k.strip() for k in (r.keywords or []) if k.strip()] or None)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class PRUrls(BaseModel):
+    urls: list[str]
+
+
+@app.post("/api/prospects/analyze")
+def pr_analyze(r: PRUrls):
+    """Sếp dán link (Facebook, TikTok, Shopee): Mai mở bằng Chrome của 1 nick sale rồi phân tích."""
+    import prospect
+    urls = [u.strip() for u in re.split(r"[\s,]+", " ".join(r.urls)) if re.match(r"(https?://\S+|(www\.|m\.)?(facebook|fb|tiktok|shopee)\.\w+/\S*)", u.strip(), re.I)]
+    if not urls:
+        raise HTTPException(400, "Dán ít nhất 1 link trang Facebook, TikTok hoặc Shopee")
+    try:
+        return prospect.start(urls=urls)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class PRSettings(BaseModel):
+    enabled: bool | None = None
+    time: str | None = None
+    inspect_per_run: int | None = None
+    facebook: bool | None = None
+    tiktok: bool | None = None
+    shopee: bool | None = None
+    auto_crm: bool | None = None
+    ai_script: bool | None = None
+    keywords: dict[str, list[str]] | None = None
+
+
+@app.put("/api/prospects/settings")
+def pr_settings(p: PRSettings):
+    import prospect
+    if p.time is not None:
+        if not re.fullmatch(r"\d{2}:\d{2}", p.time):
+            raise HTTPException(400, "Giờ phải có dạng HH:MM")
+        db.set_setting("prospect_time", p.time)
+    if p.inspect_per_run is not None:
+        db.set_setting("prospect_inspect_per_run", str(max(1, min(20, p.inspect_per_run))))
+    for k in ("enabled", "facebook", "tiktok", "shopee", "auto_crm", "ai_script"):
+        v = getattr(p, k)
+        if v is not None:
+            db.set_setting(f"prospect_{k}", "1" if v else "0")
+    if p.keywords is not None:
+        kw = {str(d): [x.strip() for x in v if x.strip()][:12] for d, v in p.keywords.items() if str(d) in ("1", "2", "3", "4")}
+        db.set_setting("prospect_keywords", json.dumps({d: v for d, v in kw.items() if v}, ensure_ascii=False))
+    return prospect.overview()
+
+
+class PRPatch(BaseModel):
+    status: str | None = None
+    note: str | None = None
+    approach: str | None = None
+
+
+@app.patch("/api/prospects/{pid}")
+def pr_patch(pid: int, p: PRPatch):
+    import prospect
+    r = db.one("SELECT * FROM prospects WHERE id=?", (pid,))
+    if not r:
+        raise HTTPException(404, "Không tìm thấy")
+    if p.status is not None:
+        if p.status not in ("verified", "needs_manual", "contacted", "rejected"):
+            raise HTTPException(400, "Trạng thái không hợp lệ")
+        db.run("UPDATE prospects SET status=?, updated_at=? WHERE id=?", (p.status, db.now(), pid))
+        if p.status == "contacted" and r.get("lead_id"):
+            db.run("UPDATE leads SET status='contacted', updated_at=? WHERE id=? AND status='new'", (db.now(), r["lead_id"]))
+    for k in ("note", "approach"):
+        v = getattr(p, k)
+        if v is not None:
+            db.run(f"UPDATE prospects SET {k}=?, updated_at=? WHERE id=?", (v.strip()[:2000], db.now(), pid))
+    return db.one("SELECT * FROM prospects WHERE id=?", (pid,))
+
+
+@app.post("/api/prospects/{pid}/crm")
+def pr_crm(pid: int):
+    import prospect
+    lid = prospect.to_crm(pid)
+    if not lid:
+        raise HTTPException(404, "Không tìm thấy")
+    return {"lead_id": lid}
+
+
+@app.post("/api/prospects/{pid}/recheck")
+def pr_recheck(pid: int):
+    import prospect
+    r = db.one("SELECT account_url FROM prospects WHERE id=?", (pid,))
+    if not r:
+        raise HTTPException(404, "Không tìm thấy")
+    try:
+        return prospect.start(urls=[r["account_url"]])
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
 @app.post("/api/groups")
 def add_group(g: Group):
     url, err = browser_poster.check_group_url(g.url)

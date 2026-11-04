@@ -231,6 +231,15 @@ CREATE TABLE IF NOT EXISTS content_snippets (
   text TEXT, score REAL DEFAULT 1, seen INTEGER DEFAULT 1, uses INTEGER DEFAULT 0, created_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_snip_kind ON content_snippets(kind);
+CREATE TABLE IF NOT EXISTS prospects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, platform TEXT, account_name TEXT, shop_name TEXT, account_url TEXT, shop_url TEXT,
+  live_url TEXT, products TEXT, categories TEXT, seller_type TEXT, tags TEXT, direction INTEGER, keyword TEXT,
+  recent_activity TEXT, live_freq TEXT, followers INTEGER, phone TEXT, zalo TEXT, email TEXT, import_signals TEXT,
+  evidence TEXT, score INTEGER, grade TEXT, parts TEXT, suggested TEXT, approach TEXT, next_action TEXT,
+  status TEXT DEFAULT 'verified', lead_id INTEGER, found_by INTEGER, note TEXT, verified_at TEXT, created_at TEXT, updated_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_prospect_url ON prospects(account_url);
+CREATE INDEX IF NOT EXISTS idx_prospect_grade ON prospects(grade);
 CREATE TABLE IF NOT EXISTS knowledge (
   id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id TEXT, topic TEXT, question TEXT, content TEXT, keywords TEXT, source TEXT,
   confidence REAL DEFAULT 0.8, uses INTEGER DEFAULT 0, last_used_at TEXT, status TEXT DEFAULT 'active', created_at TEXT, updated_at TEXT,
@@ -385,6 +394,8 @@ DEFAULT_SETTINGS = {
     "tg_alert_nick": "1",
     "tg_alert_kpi": "1",
     "tg_report_done": "1",
+    "prospect_enabled": "1", "prospect_time": "14:30", "prospect_inspect_per_run": "8", "prospect_facebook": "1",
+    "prospect_tiktok": "1", "prospect_shopee": "1", "prospect_auto_crm": "1", "prospect_ai_script": "1", "prospect_keywords": "",
     "tg_sent_log": "{}",
     "attach_images": "1",
 }
@@ -483,7 +494,7 @@ def sample_counts() -> dict:
 
 # ---------------------------------------------------------------- bắt đầu chạy thật
 RESET_TABLES = {  # bảng: mô tả cho sếp
-    "posts": "bài đăng", "bumps": "lượt up bài", "image_usage": "lịch sử dùng ảnh", "leads": "khách hàng",
+    "posts": "bài đăng", "prospects": "khách sỉ Mai tìm", "bumps": "lượt up bài", "image_usage": "lịch sử dùng ảnh", "leads": "khách hàng",
     "replies": "tin nhắn Hà soạn", "comment_seen": "bình luận đã quét", "meetings": "cuộc họp",
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",

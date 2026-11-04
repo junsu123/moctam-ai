@@ -13,6 +13,7 @@ Một "công ty" gồm 5 nhân viên AI làm thay phần việc của đội sal
 | **Tuấn** | Hội nhóm | Ghép bài đã duyệt với nhóm phù hợp, tôn trọng luật nhóm và số ngày giãn cách, xếp giờ đăng |
 | **Hà** | Chăm sóc khách | Chấm điểm khách, soạn tin nhắn trả lời, nhắc bám khách sau 2 ngày |
 | **Khoa** | Phân tích | Đo số bài, số khách, nhóm hiệu quả nhất; đưa số liệu vào cuộc họp |
+| **Mai** | Tìm khách sỉ | Tìm người đang bán hàng online (livestream, Facebook, TikTok Shop, Shopee, đa nền tảng), chấm điểm 100 có bằng chứng, đưa khách hạng A/B vào mục Khách hàng; không tự nhắn tin |
 | **Sale 1…8** | Nhân viên sale | Mỗi sale giữ **3–5 tài khoản Facebook**, mỗi nick một hồ sơ Chrome riêng; làm theo ca từng nick: đăng bài vào nhóm và trang cá nhân, up bài, quét bình luận, rồi chuyển nick kế tiếp |
 
 ## Một ngày làm việc
@@ -132,6 +133,46 @@ Sửa chủ đề hôm nay, kho chủ đề, giờ tìm, số nhóm thêm/xin v�
 **Sale đi tìm ngay** / **Xin vào nhóm ngay** chạy luôn không cần chờ giờ. Báo cáo sáng trên Telegram có chủ đề hôm nay.
 
 **Lưu ý:** xin vào nhiều nhóm trong thời gian ngắn dễ bị Facebook hạn chế; nên giữ 1–2 nhóm/nick/ngày.
+
+## Mai tìm khách sỉ (người đang bán hàng online)
+
+Mục **Bán hàng → Tìm khách sỉ**. Mai tìm người **đang bán hàng thật** có thể nhập trà túi lọc, ngũ cốc về bán lại: người livestream bán hàng, bán qua Facebook, TikTok, TikTok Shop, Shopee, bán đa nền tảng, đang tìm nguồn hàng hay tuyển đại lý. Cửa hàng truyền thống không thấy bán online thì xếp cuối. **Chất lượng quan trọng hơn số lượng**: mỗi người có link nguồn, bằng chứng, điểm và việc nên làm tiếp.
+
+**Cách Mai làm mỗi lượt** (mặc định 14:30 mỗi ngày, hoặc bấm “Mai đi tìm ngay”, hoặc nói với CEO “tìm khách sỉ đang livestream bán trà”):
+
+1. Mai mượn Chrome của một nick sale đang rảnh (luân phiên các nick) để mở trang công khai. Tìm theo 4 hướng, mỗi hướng một từ khóa đổi vòng mỗi ngày (sửa được trong “Cách Mai tìm và cài đặt”):
+   - Hướng 1: người livestream bán trà, ngũ cốc, thực phẩm.
+   - Hướng 2: người bán sản phẩm tương tự hoặc bổ trợ.
+   - Hướng 3: người bán nhiều nhóm hàng tiêu dùng, có thể mở rộng danh mục.
+   - Hướng 4: người công khai tuyển đại lý, tìm nguồn hàng, nhận phân phối, bán sỉ.
+2. Facebook: tìm Trang và bài đăng công khai. TikTok, Shopee: mở trang tìm kiếm công khai; **gặp đăng nhập hay captcha thì dừng** và ghi “cần sếp xem tay” (không vượt qua cơ chế bảo vệ).
+3. Mở từng tài khoản (mặc định tối đa 8/lượt), chỉ đọc phần giới thiệu và vài bài gần nhất: đang bán gì, bài mới nhất bao lâu, có tự phát trực tiếp không, link gian hàng ở nền tảng khác, SĐT/Zalo/email **kinh doanh được công khai trên trang**.
+4. Phân loại riêng từng kiểu (không gộp): chủ shop tự nhập hàng, người bán livestream, bán đa nền tảng, nhà bán trên sàn, cộng tác viên, affiliate, KOC/KOL, cửa hàng truyền thống.
+5. Kiểm tra trùng theo link, SĐT, tên; người đã có trong mục Khách hàng thì không đưa lại.
+6. Chấm điểm, đề xuất sản phẩm của xưởng hợp với họ (ưu tiên sản phẩm đang bán chạy), viết kịch bản tiếp cận, ghi việc nên làm tiếp.
+7. Hạng A/B tự vào mục **Khách hàng** (nguồn “Tìm khách sỉ”) để sếp hoặc Hà **nhắn tay**. Khách hạng A được báo ngay qua Telegram kèm bằng chứng.
+
+**Thang điểm 100**
+
+| Mục | Điểm | Mai cho điểm khi thấy |
+|---|---|---|
+| Hoạt động bán hàng | 20 | Chữ bán hàng trên trang: giá, inbox, ship COD, chốt đơn, combo, còn hàng... (bài cũ hơn 30 ngày thì giảm một nửa) |
+| Livestream | 20 | Bài **của chính họ** “đang/đã phát trực tiếp” trong 7 ngày (20), trong 30 ngày (14), lâu hơn hoặc chỉ có lịch live (8) |
+| Phù hợp ngành hàng | 20 | Trà, cà phê, ngũ cốc, đồ uống, healthy (20); thực phẩm, đồ ăn vặt, đặc sản (12); hàng tiêu dùng khác (5) |
+| Khả năng tự nhập hàng | 15 | Nhập hàng, hàng mới về, kho, giá sỉ, tuyển đại lý/CTV, tìm nguồn hàng; có gian hàng riêng |
+| Hoạt động và tương tác | 10 | Bài mới trong 3 ngày có bình luận; trang không bán hàng thì tối đa 3 |
+| Khả năng liên hệ | 10 | SĐT kinh doanh (5), Zalo (3), email (2), nút nhắn tin (2) |
+| Mở rộng sản phẩm | 5 | Bán nhiều nhóm hàng hoặc nhiều nền tảng |
+
+Hạng **A** 80–100 (liên hệ trong 24 giờ), **B** 60–79 (theo dõi thêm rồi tiếp cận), **C** 40–59 (lưu theo dõi), **D** dưới 40 (không ưu tiên).
+
+**Nguyên tắc Mai luôn giữ**: không tạo dữ liệu giả; mục nào không có chữ làm bằng chứng thì 0 điểm; không đoán số đơn hay doanh thu từ lượt xem; người chỉ xem hoặc chia sẻ livestream của người khác không phải người bán; affiliate chưa có bằng chứng tự nhập hàng thì không chào giá sỉ (chỉ hỏi thăm mô hình kinh doanh); không thu thập thông tin riêng tư; không vượt qua đăng nhập, captcha, giới hạn truy cập; **không tự nhắn tin**; kịch bản không hứa giá, chiết khấu hay chính sách (Claude chỉ được viết lại dựa trên bằng chứng).
+
+**Sếp dán link**: dán link Facebook, TikTok, Shopee vào ô “Dán link để Mai phân tích” (hoặc gửi link cho CEO qua Telegram). Mai mở và chấm như trên; trang bắt đăng nhập thì ghi “cần sếp xem tay”.
+
+Mỗi thẻ khách có nút: Chép kịch bản, Vào Khách hàng, Đã liên hệ, Kiểm tra lại, Loại. Mai cũng báo cáo số khách A/B tìm được trong cuộc họp sáng, và tự học các kiến thức tìm khách (phân biệt chủ shop với affiliate, dấu hiệu livestream thật...) lúc rảnh.
+
+Chạy thật với TikTok, Shopee: hai nền tảng này thường bắt đăng nhập hoặc captcha với trình duyệt tự động, nên phần lớn tài khoản sẽ ở trạng thái “cần sếp xem tay”; có thể tắt từng nền tảng trong cài đặt.
 
 ## Sản phẩm và sản phẩm đang bán chạy
 
@@ -553,6 +594,7 @@ backend/
   browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, ca làm việc theo nick, đăng bài, lấy link bài, up bài
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
   errors.py      Sổ lỗi: ghi lỗi từ mọi màn hình và việc tự động, gộp lỗi trùng, gợi ý cách xử lý
+  prospect.py    Mai tìm khách sỉ: tìm, đọc trang công khai, phân loại người bán, chấm điểm 100 có bằng chứng, lưu CRM
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm
   group_review.py  Tuấn đánh giá nhóm theo chuẩn nhóm tương tác cao: chấm điểm, Nên vào / Cân nhắc / Bỏ qua, lý do
   ceo_orders.py  Sếp giao việc cho CEO: hiểu lệnh, chia việc cho agent, sửa agent, chỉ đạo lâu dài, CEO tự duyệt bài

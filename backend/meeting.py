@@ -33,6 +33,23 @@ LOGIN_TXT = {"ok": "nick hoạt động bình thường", "not_logged_in": "nick
              "checkpoint": "nick đang bị Facebook kiểm tra (checkpoint), em đã dừng đăng"}
 
 
+def _mai_report() -> str:
+    since = (db.clock() - __import__("datetime").timedelta(days=7)).strftime("%Y-%m-%d")
+    r = db.one("""SELECT COUNT(*) n, SUM(grade='A') a, SUM(grade='B') b, SUM(status='needs_manual') m,
+                  SUM(lead_id IS NOT NULL) crm FROM prospects WHERE created_at>=?""", (since,))
+    if not r or not r["n"]:
+        return ""
+    top = db.one("""SELECT COALESCE(shop_name, account_name) nm, score FROM prospects WHERE grade='A' AND status='verified'
+                    AND created_at>=? ORDER BY score DESC LIMIT 1""", (since,))
+    txt = (f"7 ngày qua em nghiên cứu {r['n']} tài khoản bán hàng online: {r['a'] or 0} khách hạng A, {r['b'] or 0} hạng B, "
+           f"{r['crm'] or 0} khách đã vào mục Khách hàng.")
+    if top:
+        txt += f" Đáng liên hệ nhất là {top['nm']} ({top['score']} điểm), nhờ chị Hà hoặc sếp nhắn tay theo kịch bản."
+    if r["m"]:
+        txt += f" Có {r['m']} tài khoản TikTok/Shopee bắt đăng nhập, em đã dừng và chờ sếp xem tay."
+    return txt
+
+
 def _sale_report(r: dict) -> str:
     t = db.today() + "%"
     c = lambda st, col: db.one(f"SELECT COUNT(*) n FROM posts WHERE sale_id=? AND status=? AND {col} LIKE ?",
@@ -114,6 +131,10 @@ def _run(mid: int, topic: str):
                  f"Hãy báo cáo công việc phần của bạn trong cuộc họp (2-3 câu, có con số cụ thể từ số liệu, "
                  "nêu 1 vướng mắc hoặc đề xuất).",
                  mock=lambda a=a: mock_brain.report(a, st), max_tokens=220, task="meeting"))
+        mr = _mai_report()  # Mai báo khách sỉ tìm được (số liệu thật)
+        if mr:
+            _boss_check(mid)
+            _say(mid, "mai", "report", mr)
         # 2b. Nhân viên sale báo cáo nick của mình (số liệu thật, không cần AI)
         for r in db.q("SELECT * FROM sales ORDER BY id LIMIT 8"):
             _boss_check(mid)

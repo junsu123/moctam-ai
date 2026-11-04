@@ -9,7 +9,7 @@ from agents import system_prompt
 from llm import llm, month_spent, parse_json
 
 # Trạng thái hiện tại của từng agent (hiển thị trên văn phòng 3D)
-STATUS = {a: {"state": "idle", "text": "Đang sẵn sàng"} for a in ["ceo", "minh", "lan", "tuan", "ha", "khoa"]}
+STATUS = {a: {"state": "idle", "text": "Đang sẵn sàng"} for a in ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai"]}
 
 
 TARGET_NAME = {"group": "Hội nhóm", "profile": "Trang cá nhân", "page": "Fanpage"}
@@ -40,6 +40,8 @@ def stats() -> dict:
         "groups_ready": sum(1 for g in groups if group_ready(g)),
         "leads": leads,
         "leads_new": c("SELECT COUNT(*) n FROM leads WHERE status='new'"),
+        "prospects_a": c("SELECT COUNT(*) n FROM prospects WHERE grade='A' AND status='verified'"),
+        "prospects_manual": c("SELECT COUNT(*) n FROM prospects WHERE status='needs_manual'"),
         "leads_hot": c("SELECT COUNT(*) n FROM leads WHERE score>=75 AND status NOT IN ('ordered','lost')"),
         "leads_ordered": c("SELECT COUNT(*) n FROM leads WHERE status='ordered'"),
         "best_group": best["name"] if best and best["l"] else None,

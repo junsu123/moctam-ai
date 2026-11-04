@@ -626,6 +626,49 @@ label.f{font-weight:600;color:var(--muted)}
   .chatlog{max-height:240px}
   .board{grid-template-columns:minmax(0,1fr)}
 }
+/* Tìm khách sỉ */
+.pr-top{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px;align-items:stretch;margin-bottom:12px}
+.pr-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pr-stat{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:10px 12px;text-align:left;cursor:pointer;font:inherit;color:inherit;display:flex;flex-direction:column;gap:2px;min-width:0}
+.pr-stat b{font-size:22px;line-height:1.1;font-family:var(--display,inherit)}
+.pr-stat span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-stat.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.pr-stat .g{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;font-size:12.5px;font-weight:800;margin-right:6px;vertical-align:2px}
+.g-A{background:#1f7a4d;color:#fff}.g-B{background:#5b9b3f;color:#fff}.g-C{background:var(--honey-soft);color:var(--honey)}.g-D{background:var(--panel-2);color:var(--muted)}.g-M{background:var(--danger-soft);color:var(--danger)}
+.pr-paste{margin:0;display:flex;flex-direction:column;gap:8px}
+.pr-paste textarea{min-height:58px}
+.pr-filters{gap:8px;margin:4px 0 12px;align-items:center}
+.pr-filters select{width:auto;min-width:0;max-width:100%}
+.pr-list{display:flex;flex-direction:column;gap:12px}
+.pr-card{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px}
+.pr-grade{grid-row:span 2;display:flex;flex-direction:column;align-items:center;gap:2px;padding-top:2px}
+.pr-grade .g{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:21px;font-weight:800}
+.pr-grade small{font-size:11.5px;color:var(--muted);font-weight:600}
+.pr-head{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;min-width:0}
+.pr-head a.nm{font-weight:700;font-size:15px;color:var(--ink);text-decoration:none;overflow-wrap:anywhere}
+.pr-head a.nm:hover{text-decoration:underline}
+.pr-meta{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.pr-body{grid-column:2;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px 18px;margin-top:8px}
+.pr-body h5{margin:0 0 5px;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.pr-ev{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.pr-ev li{font-size:12.5px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px;align-items:baseline}
+.pr-ev li span.k{font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;background:var(--panel-2);color:var(--muted);white-space:nowrap}
+.pr-ev li q{quotes:"“" "”";overflow-wrap:anywhere}
+.pr-parts{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:3px 8px;font-size:12px;align-items:center}
+.pr-parts .bar{height:6px}
+.pr-contact{display:flex;flex-wrap:wrap;gap:6px;font-size:12.5px}
+.pr-contact a,.pr-contact span{background:var(--panel-2);border-radius:8px;padding:2px 8px;color:var(--ink);text-decoration:none;overflow-wrap:anywhere}
+.pr-script{font-size:13px;background:var(--honey-soft);border-radius:10px;padding:9px 11px;white-space:pre-wrap;overflow-wrap:anywhere}
+.pr-next{grid-column:2;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
+.pr-next .act{font-size:13px;font-weight:600}
+.pr-next .act::before{content:"➜ ";color:var(--accent)}
+.pr-card.manual{background:linear-gradient(0deg,var(--panel),var(--panel)),var(--danger-soft)}
+#prSet{margin-top:16px}
+#prSet summary{cursor:pointer}
+.pr-dirs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:900px){ .pr-top{grid-template-columns:minmax(0,1fr)} .pr-body{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:560px){ .pr-stats{grid-template-columns:repeat(3,minmax(0,1fr))} .pr-stat b{font-size:18px} .pr-card{grid-template-columns:minmax(0,1fr);padding:12px}
+  .pr-stat span{white-space:normal;line-height:1.25} .pr-grade{grid-row:auto;flex-direction:row;gap:8px} .pr-grade .g{width:34px;height:34px;font-size:17px} .pr-body,.pr-next{grid-column:1} .pr-dirs{grid-template-columns:minmax(0,1fr)} }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -641,6 +684,7 @@ label.f{font-weight:600;color:var(--muted)}
       <span class="nav-g">Bán hàng</span>
       <button data-v="posts" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Bài đăng<span class="badge" id="draftBadge" hidden></span></button>
       <button data-v="leads" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>Khách hàng</button>
+      <button data-v="prospects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21M8 10.5h5M10.5 8v5"/></svg>Tìm khách sỉ<span class="badge" id="prBadge" hidden></span></button>
       <button data-v="kpi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>KPI & Báo cáo<span class="badge" id="bossBadge" hidden></span></button>
       <span class="nav-g">Facebook</span>
       <button data-v="sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M8 9.5l2.5 2.5L16 7"/></svg>Nhân viên sale<span class="badge" id="saleBadge" hidden>!</span></button>
@@ -831,6 +875,27 @@ label.f{font-weight:600;color:var(--muted)}
         </div>
         <div class="card" id="leadDetail"><div class="empty">Chọn một khách để Hà soạn tin nhắn.</div></div>
       </div>
+    </section>
+
+    <!-- TÌM KHÁCH SỈ (Mai) -->
+    <section class="view" id="v-prospects" hidden>
+      <div class="vh"><div><h1>Tìm khách sỉ</h1><p>Mai tìm người <b>đang bán hàng online</b> (livestream, Facebook, TikTok Shop, Shopee, đa nền tảng) có thể nhập trà túi lọc, ngũ cốc về bán lại. Mỗi người có link nguồn, bằng chứng, điểm 100 và việc nên làm tiếp. Hạng A/B tự vào mục Khách hàng; Mai <b>không tự nhắn tin</b> cho ai.</p></div>
+        <div class="row wrap"><button class="btn primary" type="button" id="prRun">Mai đi tìm ngay</button></div></div>
+      <div class="pr-top">
+        <div class="pr-stats" id="prStats" role="group" aria-label="Lọc theo hạng"></div>
+        <form class="card pr-paste" id="prPaste">
+          <label class="f" for="prUrls">Dán link để Mai phân tích (Facebook, TikTok, Shopee; mỗi dòng 1 link)<textarea id="prUrls" rows="2" placeholder="https://www.facebook.com/tenshop&#10;https://www.tiktok.com/@tenshop"></textarea></label>
+          <div class="row" style="justify-content:space-between"><span class="small muted">Mai mở bằng Chrome của 1 nick sale, chỉ đọc trang công khai.</span><button class="btn sm primary" type="submit">Phân tích</button></div>
+        </form>
+      </div>
+      <div class="pr-filters row wrap" id="prFilters">
+        <select id="prPf" aria-label="Nền tảng"><option value="">Mọi nền tảng</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="shopee">Shopee</option></select>
+        <select id="prType" aria-label="Loại người bán"><option value="">Mọi loại người bán</option></select>
+        <select id="prSt" aria-label="Trạng thái"><option value="">Đang theo dõi</option><option value="needs_manual">Cần sếp xem tay</option><option value="contacted">Đã liên hệ</option><option value="rejected">Đã loại</option></select>
+        <span class="small muted grow" id="prLast"></span>
+      </div>
+      <div id="prList" class="pr-list"><p class="muted small">Đang tải…</p></div>
+      <details class="card" id="prSet"><summary><b>Cách Mai tìm và cài đặt</b></summary><div id="prSetBody"></div></details>
     </section>
 
     <!-- SẢN PHẨM -->
@@ -1179,6 +1244,7 @@ const AGENT_DEFS = [
  {id:"tuan",name:"Tuấn",role:"Chuyên viên Hội nhóm",short:"Chọn nhóm, lên lịch đăng, tránh vi phạm luật nhóm",personality:"Thực tế, cẩn thận, thuộc luật từng nhóm, ghét spam.",look:{skin:"#e8b88f",shirt:"#2e9e6b",pants:"#2c3a33",hair:"#1d1d1d",hairStyle:"cap",accessory:"cap",accent:"#bff0d4"},desk:2},
  {id:"ha",name:"Hà",role:"Chăm sóc & Chốt khách",short:"Phân loại khách, soạn tin nhắn, bám đuổi đơn sỉ",personality:"Ngọt ngào nhưng bám khách rất chặt.",look:{skin:"#f3cfae",shirt:"#f08a24",pants:"#3b3b52",hair:"#2a1810",hairStyle:"bun",accessory:"headset",accent:"#ffe2c2"},desk:3},
  {id:"khoa",name:"Khoa",role:"Phân tích số liệu",short:"Đo hiệu quả bài, nhóm, sản phẩm; báo cáo hằng ngày",personality:"Ít nói, chỉ tin vào con số.",look:{skin:"#eec29b",shirt:"#7a4fc9",pants:"#25223a",hair:"#3a2a20",hairStyle:"spiky",accessory:"none",accent:"#d9c8ff"},desk:4},
+ {id:"mai",name:"Mai",role:"Chuyên viên Tìm khách sỉ",short:"Tìm người đang bán online, livestream trên Facebook, TikTok, Shopee; chấm điểm và lưu vào CRM",personality:"Tỉ mỉ, chỉ tin bằng chứng có link, không đoán doanh thu.",look:{skin:"#f4cdb0",shirt:"#0f8b8d",pants:"#2b3440",hair:"#1f1410",hairStyle:"long",accessory:"glasses",accent:"#bfeeee"},desk:14},
 ];
 const AGENT = Object.fromEntries(AGENT_DEFS.map(a => [a.id, a]));
 
@@ -1238,7 +1304,7 @@ const Demo = (() => {
       cta:[{text:"👉 Bình luận \"GIÁ\" mình gửi bảng giá sỉ ngay nhé!",score:7.1,uses:4},{text:"Để lại SĐT/Zalo dưới bình luận, xưởng gọi tư vấn trong 15 phút 📞",score:5.4,uses:2}],point:[]},
     recent:S.posts.slice(0,6).map((p,i)=>({id:p.id,source:i%3===0?"self":"claude",product_name:p.product_name,title:p.title,content:p.content.slice(0,400),status:p.status==="posted"?"approved":"draft",leads:p.leads||0,created_at:p.created_at}))});
   S.kbLog={memory:31,claude:12,study:18}; S.kbSet={knowledge_enabled:"1",study_time:"07:00",study_per_agent:"2",idle_learning:"1",idle_study_per_day:"6"};
-  const KB_ROLES={ceo:"CEO Đức",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",sale:"Nhân viên sale",all:"Cả đội"};
+  const KB_ROLES={ceo:"CEO Đức",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",sale:"Nhân viên sale",all:"Cả đội"};
   const kbPlain=t=>(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d");
   const kbHit=q=>{ const w=kbPlain(q).split(/\W+/).filter(x=>x.length>2); let best=null,bs=0; S.kb.filter(k=>k.status==="active").forEach(k=>{ const h=kbPlain(k.topic+" "+k.question); const sc=w.filter(x=>h.includes(x)).length/(w.length||1); if(sc>bs){bs=sc;best=k;} }); return bs>=0.6?best:null; };
   const demoKB=(agent,q)=>{ const act=S.kb.filter(k=>k.status==="active"); const m=S.kbLog; let items=S.kb.slice().reverse(); if(agent) items=items.filter(k=>k.agent_id===agent); if(q){ const w=kbPlain(q).split(/\W+/).filter(x=>x.length>1); items=items.filter(k=>w.every(x=>kbPlain(k.topic+" "+k.question+" "+k.content).includes(x))); }
@@ -1275,8 +1341,8 @@ const Demo = (() => {
   const SALE_LOOKS=[{skin:"#f3cfae",shirt:"#d64545",pants:"#2d2d3a",hair:"#2a1810",hairStyle:"long",accessory:"none"},{skin:"#e8b88f",shirt:"#2f86c9",pants:"#25303a",hair:"#1d1d1d",hairStyle:"spiky",accessory:"glasses"},{skin:"#f6d2b3",shirt:"#e0a12a",pants:"#3a2d2a",hair:"#5a3520",hairStyle:"bun",accessory:"none"},{skin:"#eec29b",shirt:"#1f9a8a",pants:"#22332f",hair:"#2b2018",hairStyle:"side",accessory:"headset"},{skin:"#f2c9a0",shirt:"#a24fb5",pants:"#2c2236",hair:"#3b2414",hairStyle:"long",accessory:"beret"},{skin:"#e9bd96",shirt:"#5b7f2a",pants:"#2a3020",hair:"#141414",hairStyle:"cap",accessory:"cap"},{skin:"#f3d0b0",shirt:"#c4572b",pants:"#30262a",hair:"#4a2a1a",hairStyle:"bun",accessory:"glasses"},{skin:"#e6b48a",shirt:"#3b5bb5",pants:"#232a3a",hair:"#2a1d14",hairStyle:"spiky",accessory:"none"}];
   const saleAgents=()=>S.sales.map((r,i)=>({id:`sale-${r.id}`,sale_id:r.id,kind:"sale",name:r.name,role:`Sale · nick ${r.fb_name||r.name}`,short:"Đăng bài lên trang cá nhân và hội nhóm bằng tài khoản Facebook mình quản lý",personality:"Chăm chỉ, đúng giờ, báo ngay khi tài khoản gặp sự cố.",look:SALE_LOOKS[(r.id-1)%8],desk:5+i,login_status:r.login_status,sample:!!r.is_sample,
     status:(S.status[`sale-${r.id}`]&&S.status[`sale-${r.id}`].state!=="idle")?S.status[`sale-${r.id}`]:{state:"idle",text:{ok:"Nick sẵn sàng",not_logged_in:"Chờ sếp đăng nhập Facebook",checkpoint:"Nick bị checkpoint, đã dừng"}[r.login_status]}}));
-  S.xp={minh:140,lan:310,tuan:230,ha:180,khoa:95,"sale-1":120,"sale-2":75,"sale-3":20}; S.learnRunning=false;
-  S.goals={minh:"Theo dõi để 4 việc giao trong cuộc họp được hoàn thành trong ngày.",lan:"Viết ít nhất 2 bài góc 'Sản phẩm dễ livestream' và thử 1 bài góc OEM để so sánh.",tuan:"Xếp ít nhất một nửa số bài vào giờ vàng 20h, 11h.",ha:"Liên hệ hết 2 khách mới trước 11h.",khoa:"Đảm bảo bài đăng hôm qua đều có số bình luận và số khách."};
+  S.xp={minh:140,lan:310,tuan:230,ha:180,khoa:95,mai:160,"sale-1":120,"sale-2":75,"sale-3":20}; S.learnRunning=false;
+  S.goals={minh:"Theo dõi để 4 việc giao trong cuộc họp được hoàn thành trong ngày.",lan:"Viết ít nhất 2 bài góc 'Sản phẩm dễ livestream' và thử 1 bài góc OEM để so sánh.",tuan:"Xếp ít nhất một nửa số bài vào giờ vàng 20h, 11h.",ha:"Liên hệ hết 2 khách mới trước 11h.",khoa:"Đảm bảo bài đăng hôm qua đều có số bình luận và số khách.",mai:"Tìm ít nhất 2 khách sỉ hạng A/B có bằng chứng bán hàng thật và link nguồn."};
   S.lessons=[
     {id:901,agent_id:"lan",text:"Ưu tiên góc 'Sản phẩm dễ livestream' (điểm 8,4/bài); hạn chế góc 'Câu chuyện xưởng' (1,2/bài).",evidence:"9 và 6 bài trong 30 ngày",source:"auto",confidence:0.8,pinned:0},
     {id:902,agent_id:"lan",text:"Sếp thường rút ngắn bài; nên viết khoảng 120 chữ.",evidence:"5 lần sửa, còn 64% độ dài",source:"auto",confidence:0.75,pinned:0},
@@ -1293,11 +1359,50 @@ const Demo = (() => {
     lan:[{label:"Bài sếp duyệt ngay",unit:"%",now:68,prev:45},{label:"Khách mỗi bài",unit:"",now:0.9,prev:0.6},{label:"Bài học mới",unit:"",now:4,prev:2}],
     tuan:[{label:"Khách mỗi bài",unit:"",now:0.9,prev:0.6},{label:"Đăng thành công",unit:"%",now:94,prev:88},{label:"Bài học mới",unit:"",now:2,prev:1}],
     ha:[{label:"Tỉ lệ chốt đơn",unit:"%",now:38,prev:25},{label:"Tin nhắn đã gửi",unit:"",now:21,prev:14},{label:"Bài học mới",unit:"",now:2,prev:0}],
-    khoa:[{label:"Bài có số liệu kết quả",unit:"%",now:40,prev:35},{label:"Bài học mới",unit:"",now:1,prev:1}]};
+    khoa:[{label:"Bài có số liệu kết quả",unit:"%",now:40,prev:35},{label:"Bài học mới",unit:"",now:1,prev:1}],
+    mai:[{label:"Khách sỉ hạng A/B tìm được",unit:"",now:5,prev:2},{label:"Khách Mai tìm đã liên hệ được",unit:"%",now:60,prev:40}]};
   const lvl=xp=>1+Math.floor(Math.sqrt(xp/50)), lxp=l=>50*(l-1)**2;
+  /* Mai: khách sỉ tìm được (tên shop là ví dụ, không có thật) */
+  const ev=(kind,text,url)=>({kind,text,url});
+  S.prSet={prospect_enabled:"1",prospect_time:"14:30",prospect_inspect_per_run:"8",prospect_facebook:"1",prospect_tiktok:"1",prospect_shopee:"1",prospect_auto_crm:"1",prospect_ai_script:"1"};
+  S.prKw={1:["livestream bán trà","live bán ngũ cốc","livestream đồ ăn healthy","live bán thực phẩm sạch"],2:["shop trà túi lọc","bán bột ngũ cốc online","shop đồ ăn healthy","shop cà phê online"],3:["shop tạp hóa online","shop mẹ và bé online","bán hàng đa kênh shopee tiktok"],4:["tuyển đại lý thực phẩm","tìm nguồn hàng trà","nhận phân phối thực phẩm","tìm nguồn hàng sỉ ngũ cốc"]};
+  S.pr=[
+    {id:1,platform:"facebook",account_name:"Bếp Nhà Mây (ví dụ)",shop_name:"Bếp Nhà Mây – Ngũ cốc & Trà",account_url:"https://www.facebook.com/bepnhamay.vidu",shop_url:"https://shopee.vn/shop/100000001",seller_type:"live",tags:"live,multi,owner",direction:1,keyword:"live bán ngũ cốc",
+     recent_activity:"Bài mới nhất cách đây 3 giờ",live_freq:"3/5 bài gần nhất là phát trực tiếp",followers:18000,phone:"0903000111",zalo:"https://zalo.me/0903000111",email:null,products:"Shop mình chuyên ngũ cốc hạt, trà thảo mộc, granola",categories:"Trà, cà phê, đồ uống, ngũ cốc, healthy",
+     import_signals:"Hàng mới về mỗi tuần, shop nhập số lượng lớn nên giá tốt",score:92,grade:"A",parts:{sales:20,live:20,fit:20,import:12,engage:10,contact:8,expand:2},status:"verified",lead_id:21,
+     evidence:[ev("live","Bếp Nhà Mây đã phát trực tiếp · Live chốt đơn granola, freeship từ 2 hũ","https://www.facebook.com/bepnhamay.vidu"),ev("sell","Nhận đơn ship COD toàn quốc, inbox chốt đơn","https://www.facebook.com/bepnhamay.vidu"),ev("import","Hàng mới về mỗi tuần, shop nhập số lượng lớn nên giá tốt","https://www.facebook.com/bepnhamay.vidu"),ev("fit_core","Shop mình chuyên ngũ cốc hạt, trà thảo mộc, granola","https://www.facebook.com/bepnhamay.vidu"),ev("contact","SĐT công khai trên trang: 0903000111","https://www.facebook.com/bepnhamay.vidu"),ev("shop_link","Link gian hàng/tài khoản khác: https://shopee.vn/shop/100000001","https://shopee.vn/shop/100000001")],
+     suggested:[{id:3,name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",why:"đúng nhóm hàng họ đang bán"},{id:1,name:"Trà gừng mật ong túi lọc",why:"sản phẩm xưởng đang bán chạy"}],
+     approach:"Chào Bếp Nhà Mây, em là Hà bên Xưởng Trà & Bột. Em thấy bên mình đang livestream bán ngũ cốc trên Facebook. Bên em là xưởng sản xuất bột ngũ cốc 25 loại hạt và trà gừng mật ong túi lọc, có giá sỉ cho người bán online và có sẵn ảnh, video thật để đăng bán. Nếu shop quan tâm, em gửi bảng giá để mình xem trước ạ?",
+     next_action:"Sếp hoặc Hà nhắn/gọi trong 24 giờ theo kịch bản (nhắn tay, không gửi tự động)",created_at:"2026-11-04 14:42:00"},
+    {id:2,platform:"facebook",account_name:"Mộc Gia Mart (ví dụ)",shop_name:"Mộc Gia Mart – Tạp hóa online",account_url:"https://www.facebook.com/mocgiamart.vidu",shop_url:"https://www.tiktok.com/@mocgiamart.vidu",seller_type:"multi",tags:"multi,marketplace,owner",direction:3,keyword:"bán hàng đa kênh shopee tiktok",
+     recent_activity:"Bài mới nhất cách đây 6 giờ",live_freq:"",followers:7400,phone:"0903000222",zalo:null,email:"mocgia.vidu@gmail.com",products:"Đồ ăn vặt, bánh kẹo, đồ dùng mẹ và bé",categories:"Thực phẩm, đồ ăn vặt, đặc sản; Hàng tiêu dùng khác",
+     import_signals:"Tìm nhà cung cấp đồ uống, trà để mở thêm danh mục",score:71,grade:"B",parts:{sales:20,live:0,fit:12,import:15,engage:7,contact:9,expand:5},status:"verified",lead_id:22,
+     evidence:[ev("import","Tìm nhà cung cấp đồ uống, trà để mở thêm danh mục","https://www.facebook.com/mocgiamart.vidu"),ev("sell","Hàng về bánh kẹo, inbox nhận báo giá, ship COD","https://www.facebook.com/mocgiamart.vidu"),ev("fit_food","Đồ ăn vặt, bánh kẹo, đồ dùng mẹ và bé","https://www.facebook.com/mocgiamart.vidu"),ev("shop_link","Link gian hàng/tài khoản khác: https://www.tiktok.com/@mocgiamart.vidu","https://www.tiktok.com/@mocgiamart.vidu")],
+     suggested:[{id:1,name:"Trà gừng mật ong túi lọc",why:"đúng nhóm hàng họ đang tìm thêm"},{id:3,name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",why:"sản phẩm xưởng đang bán chạy"}],
+     approach:"Chào Mộc Gia Mart, em là Hà bên Xưởng Trà & Bột. Em thấy shop đang tìm thêm nhà cung cấp trà, đồ uống. Bên em là xưởng sản xuất trà túi lọc và bột ngũ cốc, có giá sỉ cho người bán online. Shop có muốn em gửi bảng giá và ảnh sản phẩm để tham khảo không ạ?",
+     next_action:"Theo dõi thêm 1 tuần (xem bài mới, có livestream không) rồi tiếp cận",created_at:"2026-11-04 14:40:00"},
+    {id:3,platform:"facebook",account_name:"Ăn Lành Cùng Thảo (ví dụ)",shop_name:"Ăn Lành Cùng Thảo",account_url:"https://www.facebook.com/anlanhcungthao.vidu",seller_type:"affiliate",tags:"affiliate,koc",direction:2,keyword:"shop đồ ăn healthy",
+     recent_activity:"Bài mới nhất cách đây 1 ngày",live_freq:"",followers:42000,phone:null,zalo:null,email:null,products:"Review granola, trà detox",categories:"Trà, cà phê, đồ uống, ngũ cốc, healthy",
+     import_signals:"",score:47,grade:"C",parts:{sales:14,live:0,fit:20,import:0,engage:10,contact:2,expand:1},status:"verified",lead_id:null,
+     evidence:[ev("affiliate","Unbox granola siêu ngon. Link mua ở bình luận nha","https://www.facebook.com/anlanhcungthao.vidu"),ev("koc","Hợp tác quảng cáo, booking inbox","https://www.facebook.com/anlanhcungthao.vidu"),ev("fit_core","Review trà detox mới, uống thử 1 tuần","https://www.facebook.com/anlanhcungthao.vidu")],
+     suggested:[{id:3,name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",why:"đúng nhóm hàng họ đang bán"}],approach:"",
+     next_action:"Affiliate/KOC, chưa có bằng chứng tự nhập hàng: chỉ theo dõi, không chào giá sỉ",created_at:"2026-11-04 14:38:00"},
+    {id:4,platform:"tiktok",account_name:"Mẹ Bin Shop (ví dụ)",account_url:"https://www.tiktok.com/@mebinshop.vidu",status:"needs_manual",direction:1,keyword:"livestream bán trà",evidence:[ev("found","Mẹ Bin Shop · Live bán trà sữa hạt mỗi tối","https://www.tiktok.com/@mebinshop.vidu")],suggested:[],parts:{},
+     next_action:"Sếp mở link xem tay (nền tảng yêu cầu đăng nhập/xác minh, phần mềm không vượt qua)",created_at:"2026-11-04 14:36:00"},
+    {id:5,platform:"facebook",account_name:"Tạp hóa Cô Ba (ví dụ)",account_url:"https://www.facebook.com/taphoacoba.vidu",seller_type:"store",tags:"store",direction:3,keyword:"shop tạp hóa online",recent_activity:"Bài mới nhất cách đây 75 ngày",score:14,grade:"D",parts:{sales:0,live:0,fit:5,import:3,engage:0,contact:4,expand:2},status:"verified",
+     evidence:[ev("found","Cửa hàng tại chợ Bến Thành, mở cửa từ 6h sáng","https://www.facebook.com/taphoacoba.vidu")],suggested:[],approach:"",next_action:"Cửa hàng truyền thống, không thấy bán online: không ưu tiên",created_at:"2026-11-04 14:35:00"}];
+  const PR_TYPES={owner:"Chủ shop tự nhập hàng",live:"Người bán hàng livestream",multi:"Người bán hàng đa nền tảng",marketplace:"Nhà bán hàng trên sàn TMĐT",ctv:"Cộng tác viên",affiliate:"Affiliate",koc:"KOC/KOL",store:"Cửa hàng truyền thống",unknown:"Chưa rõ"};
+  function demoPR(qs){ const q=new URLSearchParams(qs||""), g=q.get("grade")||"", pf=q.get("platform")||"", ty=q.get("seller_type")||"", st=q.get("status")||"";
+    const rank={A:0,B:1,C:2,D:3};
+    const items=S.pr.filter(x=>(st==="rejected"?x.status==="rejected":x.status!=="rejected")&&(!st||st==="rejected"||x.status===st)&&(!g||x.grade===g)&&(!pf||x.platform===pf)&&(!ty||x.seller_type===ty))
+      .sort((a,b)=>(rank[a.grade]??4)-(rank[b.grade]??4)||(b.score||0)-(a.score||0));
+    const counts={}; S.pr.filter(x=>x.status!=="rejected").forEach(x=>{ const k=x.grade||x.status; counts[k]=(counts[k]||0)+1; });
+    return {items,counts,manual:S.pr.filter(x=>x.status==="needs_manual").length,crm:S.pr.filter(x=>x.lead_id).length,
+      directions:{1:"Người livestream bán trà, ngũ cốc, thực phẩm",2:"Người bán sản phẩm tương tự hoặc bổ trợ",3:"Người bán nhiều nhóm hàng tiêu dùng, có thể mở rộng danh mục",4:"Người tuyển đại lý, tìm nguồn hàng, nhận phân phối, bán sỉ"},
+      types:PR_TYPES,platforms:{facebook:"Facebook",tiktok:"TikTok",shopee:"Shopee"},keywords:S.prKw,settings:S.prSet,last:S.prLast||{detail:"Mai tìm khách sỉ xong: xem 8 tài khoản, hạng A 1, B 1, C 1, D 1; 1 tài khoản cần sếp xem tay; TikTok yêu cầu đăng nhập/xác minh nên dừng (không vượt qua).",created_at:"2026-11-04 14:43:00"}}; }
   const DEMO_LEARN={ceo:["Đang học: cách định giá sỉ theo bậc số lượng","Ôn lại: khi nào nên tuyển thêm nhân sự bán hàng"],minh:["Đang học: cách điều hành họp giao ban 15 phút","Ôn lại: cách giao việc có hạn và người chịu trách nhiệm"],
     lan:["Luyện viết bài về Trà gừng mật ong theo phong cách đã học","Đang học: cách viết câu mở đầu giữ chân người đọc"],tuan:["Đang học: dấu hiệu nhóm tương tác thật và nhóm ảo","Xem lại nhóm cần cân nhắc: Chợ Sỉ Thực Phẩm Khô"],
-    ha:["Luyện trả lời khách: chiết khấu nhập số lượng lớn","Đang học: xử lý khách chê giá cao"],khoa:["Xem lại số liệu bài đăng 7 ngày qua","Đang học: cách tính chi phí trên mỗi khách có SĐT"]};
+    ha:["Luyện trả lời khách: chiết khấu nhập số lượng lớn","Đang học: xử lý khách chê giá cao"],mai:["Đang học: phân biệt chủ shop tự nhập hàng với affiliate, KOC","Xem lại bằng chứng khách tiềm năng: Bếp Nhà Mây"],khoa:["Xem lại số liệu bài đăng 7 ngày qua","Đang học: cách tính chi phí trên mỗi khách có SĐT"]};
   function demoFolder(p){ if(!p.image_folder) return {exists:false,source:"",count:0,fresh:0,samples:[]}; const n=[24,18,9,15,6,12][(p.id-1)%6]||10, fr=[17,11,2,9,4,7][(p.id-1)%6]||5; return {path:p.image_folder,exists:true,source:"product",count:n,fresh:fr,posts_left:Math.floor(fr/2),samples:[],error:null}; }
   S.co={status:"active",founded_at:"2026-10-12",day:23,trial_days:60,capital:10000000,orders:[{id:1,lead_name:"Nguyễn Thu Hà",amount:2850000,via:"telegram",created_at:"2026-10-29 15:20:00"},{id:2,lead_name:"Shop Mộc An",amount:4200000,via:"app",created_at:"2026-11-02 10:05:00",note:"Ngũ cốc 50 hũ"}]};
   S.ceoSt={mode:"auto",potential_on:true,milestones:[{amount:50000000,hires:1},{amount:100000000,hires:1}],
@@ -1404,6 +1509,7 @@ const Demo = (() => {
     const c=f=>S.posts.filter(f).length;
     return {drafts:c(p=>p.status==="draft"),approved:c(p=>["approved","scheduled"].includes(p.status)),posted_total:c(p=>p.status==="posted"),posted_today:c(p=>p.status==="posted"),
       groups:S.groups.length,groups_ready:S.groups.filter(ready).length,leads:S.leads.length,leads_new:S.leads.filter(l=>l.status==="new").length,
+      prospects_a:S.pr.filter(x=>x.grade==="A"&&x.status==="verified").length,prospects_manual:S.pr.filter(x=>x.status==="needs_manual").length,
       leads_hot:S.leads.filter(l=>l.score>=75&&!["ordered","lost"].includes(l.status)).length,leads_ordered:S.leads.filter(l=>l.status==="ordered").length,
       errors_new:S.errors.filter(e=>e.status==="new").length,autopilot:S.settings.ceo_autopilot!=="0",tasks_open:S.tasks.filter(t=>t.status!=="done").length,ai_live:false,failed:c(p=>p.status==="failed"),kpi:demoKpi().today,company:S.co.status==="setup"?null:{status:S.co.status,day:S.co.day,trial_days:S.co.trial_days,capital:S.co.capital,capital_left:demoCompany().finance.left,revenue:demoCompany().finance.revenue,orders:S.co.orders.length,at_risk:demoCompany().sales.filter(r=>r.review&&["warn","danger"].includes(r.review.risk)).map(r=>`${r.name} (${r.review.leads_phone}/${r.review.target_so_far})`)},bumps_today:S.posts.reduce((n,p)=>n+(p.bump_count||0),0),sales_total:S.sales.length,sales_ok:S.sales.filter(x=>x.login_status==="ok"&&x.auto_post).length,sales_problem:S.sales.filter(x=>x.login_status!=="ok").length,nicks_total:S.accounts.length,nicks_ok:workingNicks().length,nicks_problem:S.accounts.filter(a=>a.enabled&&a.login_status!=="ok").length,best_group:"Tìm nguồn hàng sỉ - Đầu mối tận xưởng",lead_per_post:0};
   }
@@ -1468,6 +1574,7 @@ const Demo = (() => {
       if(P==="/sample-data") return {sales:S.sales.filter(x=>x.is_sample).length,leads:S.leads.filter(x=>x.is_sample).length,groups:S.groups.length,products:S.products.length};
       if(P==="/learning") return demoLearning();
       if(P==="/content-style") return demoStyle();
+      if(P==="/prospects") return demoPR(qs);
       if(P==="/knowledge"){ const u=new URLSearchParams(qs||""); return demoKB(u.get("agent")||"",u.get("q")||""); }
       if(P==="/kpi") return demoKpi();
       if(P==="/telegram") return demoTg();
@@ -1573,6 +1680,20 @@ const Demo = (() => {
       const e={id:id(),source:"ui",...body,hint:h?h[1]:null,screen:body.screen||(h&&h[2])||null,count:1,status:"new",created_at:now(),last_at:now()}; S.errors.unshift(e); return {id:e.id}; }
     if(method==="POST"&&P==="/errors/seen"){ S.errors.forEach(e=>{ if(e.status==="new") e.status="seen"; }); return {ok:true}; }
     if(method==="POST"&&P==="/errors/resolve-all"){ S.errors.forEach(e=>e.status="resolved"); return {ok:true}; }
+    if(P==="/prospects/run"||P==="/prospects/analyze"){ S.status.mai={state:"working",text:P.endsWith("analyze")?"Đang phân tích link sếp gửi":"Tìm trên Facebook: livestream bán trà"};
+      setTimeout(()=>{ const nid=Math.max(...S.pr.map(x=>x.id))+1;
+        S.pr.unshift({id:nid,platform:"facebook",account_name:"Trà Sen Nhà Cúc (ví dụ)",shop_name:"Trà Sen Nhà Cúc",account_url:"https://www.facebook.com/trasennhacuc.vidu",seller_type:"owner",tags:"owner",direction:2,keyword:"shop trà túi lọc",recent_activity:"Bài mới nhất cách đây 1 ngày",live_freq:"",phone:null,zalo:null,email:null,products:"Trà sen, trà hoa nhài đóng hộp",categories:"Trà, cà phê, đồ uống, ngũ cốc, healthy",import_signals:"Hàng mới về",score:63,grade:"B",parts:{sales:14,live:8,fit:20,import:9,engage:6,contact:2,expand:4},status:"verified",lead_id:null,
+          evidence:[ev("fit_core","Trà sen, trà hoa nhài đóng hộp làm quà","https://www.facebook.com/trasennhacuc.vidu"),ev("import","Hàng mới về, nhận đơn sỉ lẻ","https://www.facebook.com/trasennhacuc.vidu")],suggested:[{id:2,name:"Trà hoa đậu biếc - cỏ ngọt",why:"đúng nhóm hàng họ đang bán"}],
+          approach:"Chào Trà Sen Nhà Cúc, em là Hà bên Xưởng Trà & Bột. Em thấy bên mình đang bán trà đóng hộp. Bên em là xưởng sản xuất trà túi lọc, có giá sỉ cho người bán online. Shop có muốn em gửi bảng giá tham khảo không ạ?",
+          next_action:"Theo dõi thêm 1 tuần (xem bài mới, có livestream không) rồi tiếp cận. Chưa có SĐT công khai: nhắn qua trang bằng tay",created_at:now()});
+        S.prLast={detail:"Mai tìm khách sỉ xong: xem 6 tài khoản, hạng A 0, B 1, C 2, D 3; bỏ qua 4 tài khoản đã có trong danh sách.",created_at:now()};
+        S.status.mai={state:"idle",text:"Xong lượt tìm khách"}; log("mai","Tìm khách sỉ",S.prLast.detail); },2500);
+      return {account:"Linh Nguyễn",sale_id:1,urls:body.urls}; }
+    if(method==="PATCH"&&(m=P.match(/^\/prospects\/(\d+)$/))){ const x=S.pr.find(z=>z.id==m[1]); Object.assign(x,body); return x; }
+    if(method==="POST"&&(m=P.match(/^\/prospects\/(\d+)\/crm$/))){ const x=S.pr.find(z=>z.id==m[1]); if(!x.lead_id){ x.lead_id=id(); S.leads.unshift({id:x.lead_id,name:x.shop_name||x.account_name,contact:x.account_url,phone:x.phone,origin:"prospect",channel:"Facebook",source:"Tìm khách sỉ",business_type:PR_TYPES[x.seller_type]||"",need:x.products||"",score:x.score||0,status:"new",note:""}); } return {lead_id:x.lead_id}; }
+    if(method==="POST"&&(m=P.match(/^\/prospects\/(\d+)\/recheck$/))){ S.status.mai={state:"working",text:"Đang kiểm tra lại 1 tài khoản"}; setTimeout(()=>S.status.mai={state:"idle",text:"Xong"},2000); return {account:"Linh Nguyễn"}; }
+    if(method==="PUT"&&P==="/prospects/settings"){ for(const k of ["enabled","facebook","tiktok","shopee","auto_crm","ai_script"]) if(body[k]!=null) S.prSet["prospect_"+k]=body[k]?"1":"0";
+      if(body.time) S.prSet.prospect_time=body.time; if(body.inspect_per_run) S.prSet.prospect_inspect_per_run=String(body.inspect_per_run); if(body.keywords) S.prKw={...S.prKw,...body.keywords}; return demoPR(""); }
     if(method==="PATCH"&&(m=P.match(/^\/errors\/(\d+)$/))){ const e=S.errors.find(x=>x.id==m[1]); if(e) e.status=body.status; return {ok:true}; }
     if(method==="DELETE"&&P==="/errors/resolved"){ S.errors=S.errors.filter(e=>e.status!=="resolved"); return {ok:true}; }
     if(method==="POST"&&P==="/ceo/chat"){ S.chat.push({id:id(),role:"boss",text:body.text,via:"web",created_at:now()}); await wait(700); const [r,x]=demoCeoDo(body.text);
@@ -1752,7 +1873,8 @@ const World = (() => {
   // 5 bàn của đội lõi + 8 bàn cho nhân viên sale (2 dãy phía trước)
   const DESKS=[[-1.4,-2.8],[-9.4,-2.8],[-5.4,-2.8],[-9.4,2.6],[-5.4,2.6],
     [-11,6.2],[-8,6.2],[-5,6.2],[-2,6.2],[-11,9.6],[-8,9.6],[-5,9.6],[-2,9.6],
-    [-1.4,2.6]]; // 13: bàn CEO
+    [-1.4,2.6], // 13: bàn CEO
+    [0.9,6.2]]; // 14: bàn Mai (tìm khách sỉ)
   const deskObjs={};
   function buildDesk(i,color,isSale){ const [x,z]=DESKS[i]; const g=new THREE.Group(); scene.add(g); const P={parent:g};
     mesh(box(2,0.1,0.95),"#d8b48a",{...P,x,y:0.76,z:z+0.95}); for(const dx of [-0.9,0.9]) mesh(box(0.08,0.74,0.85),"#a7835c",{...P,x:x+dx,y:0.37,z:z+0.95});
@@ -1763,6 +1885,7 @@ const World = (() => {
     if(isSale){ mesh(box(0.34,0.6,0.04),"#1877f2",{...P,x:x-0.75,y:1.12,z:z+1.25}); } // biểu tượng nick Facebook trên bàn
     g.add(chair(x,z-0.05,0,"#3d4b44",true)); return g; }
   for(let i=0;i<5;i++) buildDesk(i,["#2f4b8f","#e2557a","#2e9e6b","#f08a24","#7a4fc9"][i]);
+  { const g=buildDesk(14,"#0f8b8d"); const [x,z]=DESKS[14]; mesh(new THREE.TorusGeometry(0.13,0.03,8,18),"#0f8b8d",{parent:g,x:x-0.7,y:1.02,z:z+0.75}); } // kính lúp trên bàn Mai
   { const g=buildDesk(13,"#d4af37"); const [x,z]=DESKS[13]; // bàn CEO: biển tên mạ vàng + cờ nhỏ
     mesh(box(0.7,0.18,0.05),"#d4af37",{parent:g,x:x-0.55,y:0.9,z:z+0.5}); mesh(box(0.66,0.12,0.02),"#1f2a3a",{parent:g,x:x-0.55,y:0.9,z:z+0.47,shadow:false});
     mesh(new THREE.CylinderGeometry(0.015,0.015,0.5,6),"#888",{parent:g,x:x+0.55,y:1.05,z:z+0.6}); mesh(box(0.28,0.18,0.01),"#c0392b",{parent:g,x:x+0.69,y:1.2,z:z+0.6}); }
@@ -1930,7 +2053,7 @@ function show(v){
   if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
   if(v==="ceo") loadCeoChat(true);
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
-  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
 $("#nav").addEventListener("click",e=>{ if(e.target.closest("#navMore")){ const o=!document.body.classList.contains("nav-open"); document.body.classList.toggle("nav-open",o); $("#navMore").setAttribute("aria-expanded",o); return; }
@@ -1960,6 +2083,8 @@ async function refresh(){
     const np=s.nicks_problem??s.sales_problem??0; const prob=np+(s.failed||0); $("#saleBadge").hidden=!np; $("#saleAlert").hidden=!prob;
     $("#saleAlertTxt").textContent=[np?`${np} nick cần sếp đăng nhập lại hoặc xử lý checkpoint`:"",s.failed?`${s.failed} bài đăng lỗi`:""].filter(Boolean).join(" · ");
     $("#liveBadge").hidden=!dash.meeting_running;
+    { const pb=$("#prBadge"), pn=(s.prospects_a||0)+(s.prospects_manual||0); pb.hidden=!pn; pb.textContent=pn; pb.title=`${s.prospects_a||0} khách hạng A chưa liên hệ, ${s.prospects_manual||0} tài khoản cần sếp xem tay`; }
+    if(ST.view==="prospects"&&!document.querySelector("#v-prospects :focus")) loadProspects(true);
     if(dash.meeting_running && ST.meetingId!==dash.meeting_running){ ST.meetingId=dash.meeting_running; ST.lastMsg=0; ST.msgs=[]; }
   }catch(e){ console.error(e); }
 }
@@ -2485,7 +2610,7 @@ $("#groupForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ aw
 
 /* --------------------------------------------- sếp giao việc cho CEO */
 async function renderOrders(){ const box=$("#ceoOrders"); if(!box) return; let d; try{ d=await api("/ceo/chat"); }catch(e){ return; }
-  const AG={all:"Cả đội",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",ceo:"CEO"};
+  const AG={all:"Cả đội",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",ceo:"CEO"};
   box.innerHTML=d.orders.length?`<h4 style="margin:4px 0 6px;font-size:13px">Chỉ đạo lâu dài của sếp (CEO đưa vào lời dặn của agent)</h4><ul class="recent">${d.orders.map(o=>`<li><b>${esc(AG[o.agent]||o.agent)}</b><span>${esc(o.text)}</span><span class="muted small">${fmtDate(o.created_at)}</span><button type="button" class="btn sm ghost danger" data-orderoff="${o.id}">Bỏ</button></li>`).join("")}</ul>`:""; }
 document.addEventListener("click",async e=>{ const b=e.target.closest("[data-orderoff]"); if(!b) return; await api(`/ceo/orders/${b.dataset.orderoff}`,"DELETE"); toast("Đã bỏ chỉ đạo"); renderOrders(); });
 async function loadCeoChat(force){
@@ -2508,6 +2633,85 @@ $("#ceoForm").addEventListener("submit",async e=>{ e.preventDefault(); const v=$
 $("#ceoSugg").addEventListener("click",e=>{ const b=e.target.closest("[data-sugg]"); if(!b) return; $("#ceoIn").value=b.dataset.sugg; $("#ceoIn").focus(); });
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-askceo]"); if(!b) return; $("#drawer").hidden=true; location.hash="ceo";
   setTimeout(()=>{ $("#ceoIn").value=`${b.dataset.askceo} `; $("#ceoIn").focus(); },300); });
+
+/* --------------------------------------------- Mai: tìm khách sỉ */
+const PR_EV={sell:"Bán hàng",live:"Livestream",import:"Nhập hàng",fit_core:"Ngành hàng",fit_food:"Ngành hàng",affiliate:"Affiliate",owner:"Chủ shop",ctv:"CTV",koc:"KOC",shared_live:"Chỉ chia sẻ live",contact:"Liên hệ",shop_link:"Gian hàng",found:"Kết quả tìm"};
+const PR_PARTS=[["sales","Bán hàng",20],["live","Livestream",20],["fit","Hợp ngành",20],["import","Tự nhập hàng",15],["engage","Hoạt động",10],["contact","Liên hệ",10],["expand","Mở rộng",5]];
+const PR_PF={facebook:"Facebook",tiktok:"TikTok",shopee:"Shopee"};
+ST.prF={grade:"",platform:"",seller_type:"",status:""};
+function prCard(x,d){
+  const man=x.status==="needs_manual", g=man?"M":(x.grade||"D");
+  const tags=(x.tags||"").split(",").filter(t=>t&&t!==x.seller_type).map(t=>`<span class="chip">${esc(d.types[t]||t)}</span>`).join("");
+  const meta=[PR_PF[x.platform]||x.platform,x.recent_activity,x.live_freq,x.followers?`${num(x.followers)} người theo dõi`:"",x.direction?`Hướng ${x.direction}: “${esc(x.keyword||"")}”`:x.keyword==="dán link"?"Sếp dán link":""].filter(Boolean).map(v=>typeof v==="string"&&v.startsWith("Hướng")?v:esc(v)).join(" · ");
+  const ct=[x.phone?`<a href="tel:${esc(x.phone)}">📞 ${esc(x.phone)}</a>`:"",x.zalo?`<a href="${esc(/^http/.test(x.zalo)?x.zalo:"https://zalo.me/"+x.zalo)}" target="_blank" rel="noopener">Zalo</a>`:"",x.email?`<a href="mailto:${esc(x.email)}">${esc(x.email)}</a>`:"",
+    x.shop_url?`<a href="${esc(x.shop_url)}" target="_blank" rel="noopener">Gian hàng ↗</a>`:"",x.live_url?`<a href="${esc(x.live_url)}" target="_blank" rel="noopener">Livestream ↗</a>`:""].filter(Boolean).join("");
+  const parts=x.parts&&Object.keys(x.parts).length?`<div class="pr-parts">${PR_PARTS.map(([k,l,mx])=>{ const v=x.parts[k]||0, pc=Math.round(v/mx*100);
+    return `<span>${l}</span><div class="bar"><i class="${pc>=70?"":pc>=35?"warn":"bad"}" style="width:${pc}%"></i></div><b>${v}/${mx}</b>`; }).join("")}</div>`:"";
+  const evs=(x.evidence||[]).slice(0,7).map(e=>`<li><span class="k">${esc(PR_EV[e.kind]||e.kind)}</span><span><q>${esc(e.text)}</q>${e.url&&e.url!==x.account_url?` <a href="${esc(e.url)}" target="_blank" rel="noopener" class="small">nguồn ↗</a>`:""}</span></li>`).join("");
+  const sug=(x.suggested||[]).map(p=>`<li><b>${esc(p.name)}</b> <span class="muted small">${esc(p.why)}</span></li>`).join("");
+  const crm=x.lead_id?`<span class="chip ok">Đã ở Khách hàng</span>`:man?"":`<button class="btn sm" type="button" data-prcrm="${x.id}">Vào Khách hàng</button>`;
+  return `<article class="pr-card${man?" manual":""}" data-pr="${x.id}">
+    <div class="pr-grade"><span class="g g-${g}">${man?"?":esc(x.grade||"–")}</span><small>${man?"xem tay":`${x.score||0} điểm`}</small></div>
+    <div class="pr-head"><a class="nm" href="${esc(x.account_url)}" target="_blank" rel="noopener">${esc(x.shop_name||x.account_name||x.account_url)} ↗</a>
+      ${x.seller_type&&!man?`<span class="chip ${x.seller_type==="affiliate"||x.seller_type==="koc"||x.seller_type==="store"?"warn":"ok"}">${esc(d.types[x.seller_type]||x.seller_type)}</span>`:""}${tags}
+      <div class="pr-meta" style="flex-basis:100%">${meta}</div></div>
+    <div class="pr-body">
+      <div>${evs?`<h5>Bằng chứng</h5><ul class="pr-ev">${evs}</ul>`:""}
+        ${x.products?`<p class="small" style="margin:8px 0 0"><b>Đang bán:</b> ${esc(x.products)}</p>`:""}
+        ${ct?`<h5 style="margin-top:10px">Liên hệ công khai</h5><div class="pr-contact">${ct}</div>`:""}</div>
+      <div>${parts?`<h5>Điểm tiềm năng</h5>${parts}`:man?`<p class="small">Nền tảng bắt đăng nhập hoặc xác minh nên Mai dừng, không vượt qua. Sếp mở link xem tay, nếu thấy hợp thì bấm “Kiểm tra lại” khi trang mở được hoặc ghi chú lại.</p>`:""}
+        ${sug?`<h5 style="margin-top:10px">Nên giới thiệu</h5><ul class="recent" style="margin:0">${sug}</ul>`:""}
+        ${x.approach?`<h5 style="margin-top:10px">Kịch bản tiếp cận (nhắn tay)</h5><div class="pr-script">${esc(x.approach)}</div>`:""}</div>
+    </div>
+    <div class="pr-next"><span class="act">${esc(x.next_action||"")}</span>
+      <div class="row wrap" style="gap:6px">${x.approach?`<button class="btn sm ghost" type="button" data-prcopy="${x.id}">Chép kịch bản</button>`:""}${crm}
+        ${x.status==="contacted"?`<span class="chip ok">Đã liên hệ</span>`:man||x.status==="rejected"?"":`<button class="btn sm ghost" type="button" data-prst="contacted" data-id="${x.id}">Đã liên hệ</button>`}
+        <button class="btn sm ghost" type="button" data-prre="${x.id}">Kiểm tra lại</button>
+        ${x.status==="rejected"?`<button class="btn sm ghost" type="button" data-prst="verified" data-id="${x.id}">Theo dõi lại</button>`:`<button class="btn sm ghost danger" type="button" data-prst="rejected" data-id="${x.id}">Loại</button>`}</div></div>
+  </article>`;
+}
+function prSettings(d){
+  const st=d.settings, on=k=>st["prospect_"+k]!=="0"?"checked":"";
+  return `<div class="stack" style="margin-top:10px">
+    <p class="small muted" style="margin:0">Mỗi ngày lúc ${esc(st.prospect_time||"14:30")}, Mai dùng Chrome của một nick sale tìm theo 4 hướng (mỗi hướng 1 từ khóa, đổi vòng mỗi ngày), mở xem tối đa ${esc(st.prospect_inspect_per_run||8)} tài khoản, đọc giới thiệu và vài bài gần nhất (chỉ đọc). Chấm 100 điểm: bán hàng 20, livestream 20, hợp ngành 20, tự nhập hàng 15, hoạt động 10, liên hệ 10, mở rộng 5. Hạng A ≥ 80, B 60–79, C 40–59, D dưới 40. Không có bằng chứng thì không cho điểm; người chỉ xem hoặc chia sẻ livestream không tính là người bán; affiliate chưa có bằng chứng tự nhập thì không chào giá sỉ. TikTok, Shopee bắt đăng nhập hay captcha thì Mai dừng và ghi “cần sếp xem tay”.</p>
+    <form id="prSetForm" class="stack">
+      <div class="grid3"><label class="f" for="prTime">Giờ đi tìm<input type="time" id="prTime" value="${esc(st.prospect_time||"14:30")}"></label>
+        <label class="f" for="prN">Tài khoản mở xem mỗi lượt<input type="number" id="prN" min="1" max="20" value="${esc(st.prospect_inspect_per_run||8)}"></label></div>
+      <div class="row wrap" style="gap:14px"><label class="row small"><input type="checkbox" id="prOn" ${on("enabled")}> Tự đi tìm mỗi ngày</label>
+        <label class="row small"><input type="checkbox" id="prFb" ${on("facebook")}> Facebook</label><label class="row small"><input type="checkbox" id="prTt" ${on("tiktok")}> TikTok</label><label class="row small"><input type="checkbox" id="prSp" ${on("shopee")}> Shopee</label>
+        <label class="row small"><input type="checkbox" id="prCrm" ${on("auto_crm")}> Hạng A/B tự vào Khách hàng</label><label class="row small"><input type="checkbox" id="prAi" ${on("ai_script")}> Nhờ Claude viết kịch bản (chỉ dựa trên bằng chứng)</label></div>
+      <div class="pr-dirs">${[1,2,3,4].map(i=>`<label class="f" for="prK${i}">Hướng ${i}: ${esc(d.directions[i])} (mỗi dòng 1 từ khóa)<textarea id="prK${i}" rows="3">${esc(((d.keywords||{})[i]||[]).join("\n"))}</textarea></label>`).join("")}</div>
+      <div><button class="btn sm primary" type="submit">Lưu cài đặt</button></div></form></div>`;
+}
+async function loadProspects(soft){
+  const f=ST.prF, qs=new URLSearchParams(Object.entries(f).filter(([k,v])=>v)).toString();
+  let d; try{ d=await api("/prospects"+(qs?"?"+qs:"")); }catch(e){ $("#prList").innerHTML=`<p class="err">${esc(e.message)}</p>`; return; }
+  ST.pr=d; const c=d.counts||{};
+  const stat=(k,lbl,cls,val)=>`<button type="button" class="pr-stat${(k==="M"?f.status==="needs_manual":f.grade===k)?" on":""}" data-prg="${k}"><b><span class="g ${cls}">${k==="M"?"?":k}</span>${val}</b><span>${lbl}</span></button>`;
+  $("#prStats").innerHTML=stat("A","Liên hệ ngay","g-A",c.A||0)+stat("B","Theo dõi rồi tiếp cận","g-B",c.B||0)+stat("C","Lưu theo dõi","g-C",c.C||0)+stat("D","Không ưu tiên","g-D",c.D||0)+stat("M","Cần sếp xem tay","g-M",d.manual||0)
+    +`<div class="pr-stat" style="cursor:default"><b>${d.crm||0}</b><span>Đã vào Khách hàng</span></div>`;
+  const ty=$("#prType"); if(ty.options.length<2) ty.insertAdjacentHTML("beforeend",Object.entries(d.types).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join(""));
+  $("#prLast").textContent=d.last?`${fmtTime(d.last.created_at)} ${fmtDate(d.last.created_at)}: ${d.last.detail}`:"Mai chưa đi tìm lần nào.";
+  $("#prList").innerHTML=d.items.length?d.items.map(x=>prCard(x,d)).join(""):`<div class="card empty">${Object.values(f).some(Boolean)?"Không có tài khoản nào khớp bộ lọc.":"Chưa có khách nào. Bấm “Mai đi tìm ngay” hoặc dán link một shop để Mai phân tích."}</div>`;
+  if(!soft||!$("#prSetBody").innerHTML) $("#prSetBody").innerHTML=prSettings(d);
+}
+$("#prStats").addEventListener("click",e=>{ const b=e.target.closest("[data-prg]"); if(!b) return; const k=b.dataset.prg, f=ST.prF;
+  if(k==="M"){ f.status=f.status==="needs_manual"?"":"needs_manual"; f.grade=""; } else { f.grade=f.grade===k?"":k; if(f.status==="needs_manual") f.status=""; }
+  $("#prSt").value=f.status; loadProspects(true); });
+$("#prFilters").addEventListener("change",()=>{ Object.assign(ST.prF,{platform:$("#prPf").value,seller_type:$("#prType").value,status:$("#prSt").value}); if(ST.prF.status==="needs_manual") ST.prF.grade=""; loadProspects(true); });
+$("#prRun").addEventListener("click",async e=>{ const b=e.currentTarget; b.disabled=true; try{ const r=await api("/prospects/run","POST",{}); toast(`Mai bắt đầu tìm khách, dùng Chrome của nick ${r.account}. Xong Mai báo lại`); refresh(); }catch(err){ toast(err.message); } b.disabled=false; });
+$("#prPaste").addEventListener("submit",async e=>{ e.preventDefault(); const v=$("#prUrls").value.trim(); if(!v) return;
+  try{ const r=await api("/prospects/analyze","POST",{urls:v.split(/\s+/)}); $("#prUrls").value=""; toast(`Mai đang mở ${(r.urls||[]).length} link bằng Chrome của nick ${r.account}`); refresh(); }catch(err){ toast(err.message); } });
+$("#prList").addEventListener("click",async e=>{ const t=e.target; let b;
+  try{
+    if((b=t.closest("[data-prcopy]"))){ const x=ST.pr.items.find(z=>z.id==b.dataset.prcopy); try{ await navigator.clipboard.writeText(x.approach); toast("Đã chép kịch bản. Nhớ đọc lại trước khi gửi"); }catch(_){ toast("Trình duyệt chặn chép, hãy bôi đen để chép"); } return; }
+    if((b=t.closest("[data-prcrm]"))){ await api(`/prospects/${b.dataset.prcrm}/crm`,"POST"); toast("Đã đưa vào mục Khách hàng để Hà chăm sóc"); return loadProspects(true); }
+    if((b=t.closest("[data-prst]"))){ await api(`/prospects/${b.dataset.id}`,"PATCH",{status:b.dataset.prst}); toast({contacted:"Đã ghi nhận đã liên hệ",rejected:"Đã loại khỏi danh sách",verified:"Đã đưa lại vào danh sách theo dõi"}[b.dataset.prst]); return loadProspects(true); }
+    if((b=t.closest("[data-prre]"))){ const r=await api(`/prospects/${b.dataset.prre}/recheck`,"POST"); toast(`Mai sẽ mở lại trang này bằng Chrome của nick ${r.account}`); return; }
+  }catch(err){ toast(err.message); } });
+$("#prSetBody").addEventListener("submit",async e=>{ e.preventDefault(); const kw={}; [1,2,3,4].forEach(i=>kw[i]=$("#prK"+i).value.split("\n").map(s=>s.trim()).filter(Boolean));
+  try{ await api("/prospects/settings","PUT",{time:$("#prTime").value,inspect_per_run:+$("#prN").value,enabled:$("#prOn").checked,facebook:$("#prFb").checked,tiktok:$("#prTt").checked,shopee:$("#prSp").checked,auto_crm:$("#prCrm").checked,ai_script:$("#prAi").checked,keywords:kw});
+    toast("Đã lưu cài đặt tìm khách"); loadProspects(); }catch(err){ toast(err.message); } });
 
 /* --------------------------------------------- tìm nhóm mới */
 const num=n=>(+n||0).toLocaleString("vi-VN");

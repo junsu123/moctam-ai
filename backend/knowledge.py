@@ -20,7 +20,7 @@ import db
 STOP = set("""co khong la cua va cho voi thi ma nay do em anh chi ben minh a nhe oi duoc nhung cac mot nao gi sao the nhu de khi
 neu vay roi con hay hoac ve tu tren duoi trong ngoai ra vao lai nua cung rat qua lam bi da se ban toi chung ta ho no
 nha nhi ah u uh ok vang da cai chiec bao nhieu may""".split())
-ROLE_NAME = {"ceo": "CEO Đức", "minh": "Minh", "lan": "Lan", "tuan": "Tuấn", "ha": "Hà", "khoa": "Khoa", "sale": "Nhân viên sale",
+ROLE_NAME = {"ceo": "CEO Đức", "minh": "Minh", "lan": "Lan", "tuan": "Tuấn", "ha": "Hà", "khoa": "Khoa", "mai": "Mai", "sale": "Nhân viên sale",
              "all": "Cả đội"}
 SOURCE_TXT = {"study": "Tự học", "claude": "Hỏi Claude", "boss": "Sếp dạy", "library": "Thư viện có sẵn", "experience": "Kinh nghiệm thực tế"}
 
@@ -47,6 +47,12 @@ CURRICULUM = {
             "khi nào nên tuyển thêm nhân sự bán hàng", "cách xây thương hiệu xưởng trên Facebook"],
     "sale": ["cách nuôi nick Facebook an toàn", "dấu hiệu nick sắp bị checkpoint và cách tránh",
              "cách trả lời bình luận xin số điện thoại tự nhiên", "cách tham gia nhóm mới không bị từ chối"],
+    "mai": ["thang chấm điểm khách sỉ 100 điểm và cách xếp hạng A B C D", "phân biệt chủ shop tự nhập hàng với affiliate, KOC, CTV",
+            "dấu hiệu một tài khoản đang livestream bán hàng thật", "dấu hiệu người bán có khả năng nhập hàng về bán lại",
+            "cách tìm người bán trà, ngũ cốc, đồ ăn healthy trên TikTok Shop", "cách đọc gian hàng Shopee để đánh giá người bán",
+            "nhận diện người bán đa nền tảng Facebook TikTok Shopee", "các từ khóa người bán dùng khi tìm nguồn hàng, tuyển đại lý",
+            "những nguyên tắc khi nghiên cứu khách: không bịa, không đoán doanh thu", "cách viết tin nhắn tiếp cận khách sỉ lần đầu",
+            "sản phẩm bổ trợ cho người đang bán đồ ăn healthy, mẹ và bé, đồ uống", "cách phân biệt cửa hàng truyền thống và người bán online"],
 }
 
 # Thư viện kiến thức có sẵn (dùng khi chưa có khóa Claude, hoặc làm nền ban đầu)
@@ -107,6 +113,28 @@ LIBRARY = {
         ("cách trả lời bình luận xin số điện thoại tự nhiên", "Xin SĐT khách dưới bình luận thế nào?",
          "Cảm ơn, trả lời đúng câu khách hỏi một ý ngắn, rồi xin SĐT/Zalo để gửi bảng giá và ảnh thật; tránh dán cùng một câu cho "
          "mọi bình luận.", "xin sdt binh luan"),
+    ],
+    "mai": [
+        ("thang chấm điểm khách sỉ 100 điểm và cách xếp hạng A B C D", "Chấm điểm khách sỉ thế nào?",
+         "Thang 100: hoạt động bán hàng 20, livestream 20, phù hợp ngành hàng 20, khả năng tự nhập hàng 15, hoạt động và tương tác "
+         "10, khả năng liên hệ 10, khả năng mở rộng sản phẩm 5. Hạng A 80–100, B 60–79, C 40–59, D dưới 40. Mỗi điểm phải có "
+         "bằng chứng (đoạn chữ + link); không có bằng chứng thì 0 điểm cho mục đó.", "cham diem thang 100 hang a b c d"),
+        ("phân biệt chủ shop tự nhập hàng với affiliate, KOC, CTV", "Làm sao biết là chủ shop hay affiliate?",
+         "Chủ shop: có kho, 'shop mình', 'hàng mới về', nhận đơn, ship COD, có gian hàng riêng. Affiliate: dẫn link Shopee/TikTok "
+         "(s.shopee, vt.tiktok), 'link ở bình luận', 'hoa hồng', không có kho. KOC/KOL: review, unbox, booking, nhiều người theo dõi. "
+         "CTV: 'bán không cần vốn', lấy hàng từ kho người khác. Không coi affiliate là khách nhập sỉ nếu chưa có bằng chứng tự nhập.",
+         "chu shop affiliate koc ctv phan biet"),
+        ("dấu hiệu một tài khoản đang livestream bán hàng thật", "Thế nào là đang livestream bán hàng?",
+         "Bài của chính tài khoản ghi 'đang phát trực tiếp'/'đã phát trực tiếp', có lịch live, chốt đơn trong live. Chia sẻ lại live "
+         "của người khác hoặc 'đang xem' KHÔNG tính. Tần suất live chỉ ghi khi đếm được từ các bài gần nhất.",
+         "livestream ban hang that dau hieu"),
+        ("những nguyên tắc khi nghiên cứu khách: không bịa, không đoán doanh thu", "Nguyên tắc khi tìm khách?",
+         "Không tạo dữ liệu giả; không suy diễn số đơn; không đánh giá doanh thu từ lượt xem; không nhầm người xem live với người bán; "
+         "chỉ lấy SĐT/Zalo/email kinh doanh được công khai; không vượt qua đăng nhập, captcha hay giới hạn của nền tảng; không tự "
+         "nhắn tin hàng loạt; không tự cam kết giá hay chính sách.", "nguyen tac khong bia doanh thu rieng tu"),
+        ("các từ khóa người bán dùng khi tìm nguồn hàng, tuyển đại lý", "Người bán tìm nguồn hàng hay dùng chữ gì?",
+         "'tìm nguồn hàng', 'cần nhập sỉ', 'nhận phân phối', 'tuyển đại lý', 'tuyển CTV', 'giá sỉ', 'lấy sỉ', 'kho hàng', "
+         "'hàng mới về'. Đây là dấu hiệu có khả năng nhập hàng mạnh nhất.", "tu khoa nguon hang dai ly si"),
     ],
 }
 
@@ -339,7 +367,7 @@ def study_agent(agent_id: str, n: int = 2) -> list[int]:
     return saved
 
 
-STUDY_AGENTS = ["lan", "tuan", "ha", "khoa", "minh", "ceo", "sale"]
+STUDY_AGENTS = ["lan", "tuan", "ha", "khoa", "mai", "minh", "ceo", "sale"]
 
 
 def study_all(n: int | None = None) -> dict:

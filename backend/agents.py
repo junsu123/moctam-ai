@@ -62,9 +62,21 @@ AGENTS = {
                   "hairStyle": "spiky", "accessory": "none", "accent": "#d9c8ff"},
         "desk": 4,
     },
+    "mai": {
+        "id": "mai",
+        "name": "Mai",
+        "role": "Chuyên viên Tìm khách sỉ",
+        "short": "Tìm người đang bán online, livestream trên Facebook, TikTok, Shopee; chấm điểm và lưu vào CRM",
+        "personality": "Tỉ mỉ như một nhà nghiên cứu: chỉ tin bằng chứng có link, không bao giờ đoán doanh thu hay số đơn. "
+                       "Phân biệt rõ chủ shop tự nhập hàng với affiliate, KOC, người chỉ xem livestream. "
+                       "Chất lượng khách quan trọng hơn số lượng.",
+        "look": {"skin": "#f4cdb0", "shirt": "#0f8b8d", "pants": "#2b3440", "hair": "#1f1410",
+                 "hairStyle": "long", "accessory": "glasses", "accent": "#bfeeee"},
+        "desk": 14,
+    },
 }
 
-ORDER = ["ceo", "minh", "lan", "tuan", "ha", "khoa"]
+ORDER = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai"]
 
 COMPANY_CONTEXT = """Bạn là nhân viên của một xưởng sản xuất thực phẩm thường tại Việt Nam
 (trà túi lọc, bột ngũ cốc, bột thiên nhiên sấy lạnh, cà phê hòa tan...).

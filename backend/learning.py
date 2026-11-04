@@ -25,7 +25,7 @@ import mock_brain
 LEAD_W = 5                 # 1 khách = 5 bình luận
 MAX_ACTIVE = 10            # số bài học tối đa đang dùng của mỗi agent (bài ghim không tính)
 PROMPT_LESSONS = 6         # số bài học đưa vào prompt (giữ chi phí thấp)
-CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa"]
+CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai"]
 BANNED = re.compile(r"(tăng|nâng).{0,20}(số bài|tần suất|giới hạn)|bỏ qua luật|lách|spam|chữa (khỏi|bệnh)|trị bệnh", re.I)
 _running = {"on": False}
 
@@ -262,6 +262,14 @@ def skills(agent_id: str) -> list[dict]:
             d = {x["status"]: x["n"] for x in r}
             return _pct(d.get("done", 0), sum(d.values()))
         out.append({"label": "Việc giao được hoàn thành", "unit": "%", "now_prev": win(done)})
+    if agent_id == "mai":
+        out.append({"label": "Khách sỉ hạng A/B tìm được", "unit": "", "now_prev": win(lambda a, b: one(
+            "SELECT COUNT(*) n FROM prospects WHERE grade IN ('A','B') AND created_at BETWEEN ? AND ?", (a, b)))})
+        def conv(a, b):
+            r = db.one("""SELECT COUNT(*) n, SUM(CASE WHEN l.status IN ('contacted','quoted','ordered') THEN 1 ELSE 0 END) d
+                          FROM prospects p JOIN leads l ON l.id=p.lead_id WHERE p.created_at BETWEEN ? AND ?""", (a, b))
+            return _pct(r["d"] or 0, r["n"] or 0)
+        out.append({"label": "Khách Mai tìm đã liên hệ được", "unit": "%", "now_prev": win(conv)})
     if agent_id in CORE:
         out.append({"label": "Bài học mới", "unit": "", "now_prev": win(lambda a, b: one(
             "SELECT COUNT(*) n FROM lessons WHERE agent_id=? AND created_at BETWEEN ? AND ?", (agent_id, a, b)))})
@@ -391,6 +399,12 @@ def evidence(agent_id: str) -> dict:
         e["quyet_dinh_gan_day"] = [{"loai": r["kind"], "noi_dung": r["title"], "ly_do": (r["reason"] or "")[:200]}
                                    for r in db.q("SELECT kind, title, reason FROM ceo_decisions ORDER BY id DESC LIMIT 5")]
         e["sale_bi_sa_thai"] = db.q("SELECT name, fire_reason FROM sales WHERE status='fired' ORDER BY fired_at DESC LIMIT 3")
+    elif agent_id == "mai":
+        e["theo_hang"] = db.q("SELECT grade hang, COUNT(*) n FROM prospects GROUP BY grade")
+        e["theo_loai_nguoi_ban"] = db.q("SELECT seller_type loai, COUNT(*) n, ROUND(AVG(score)) diem_tb FROM prospects GROUP BY seller_type")
+        e["theo_huong"] = db.q("SELECT direction huong, keyword tu_khoa, COUNT(*) n, SUM(grade IN ('A','B')) ab FROM prospects "
+                               "WHERE direction IS NOT NULL GROUP BY direction, keyword ORDER BY ab DESC LIMIT 8")
+        e["ket_qua_lien_he"] = db.q("SELECT l.status, COUNT(*) n FROM prospects p JOIN leads l ON l.id=p.lead_id GROUP BY l.status")
     return e
 
 
@@ -525,6 +539,8 @@ def default_goal(agent_id: str) -> str | None:
         return "Đảm bảo bài đăng hôm qua đều có số bình luận và số khách."
     if agent_id == "minh":
         return "Theo dõi để các việc giao trong cuộc họp được hoàn thành trong ngày."
+    if agent_id == "mai":
+        return "Tìm ít nhất 2 khách sỉ hạng A/B có bằng chứng bán hàng thật và link nguồn."
     if agent_id == "ceo":
         try:
             import ceo, company

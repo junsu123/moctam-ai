@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 
 import db
 
-CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa"]
+CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai"]
 _lock = threading.Lock()
 _busy: set[str] = set()      # agent đang chạy một buổi học có gọi Claude
 _session: dict[str, dict] = {}  # agent -> {"until": datetime, "kind": ...}
@@ -140,6 +140,11 @@ def _practice(aid: str) -> str | None:
             return f"Xem lại nhóm cần cân nhắc: {g['name'][:50]}"
     if aid == "khoa":
         return "Xem lại số liệu bài đăng 7 ngày qua"
+    if aid == "mai":
+        r = db.one("SELECT COALESCE(shop_name, account_name) n FROM prospects WHERE grade IN ('B','C') ORDER BY RANDOM() LIMIT 1")
+        if r and r["n"]:
+            return f"Xem lại bằng chứng khách tiềm năng: {r['n'][:45]}"
+        return "Ôn thang chấm điểm khách sỉ A/B/C/D"
     if aid.startswith("sale-"):
         return random.choice(["Ôn cách giữ nick an toàn", "Ôn cách trả lời bình luận xin số điện thoại",
                               "Xem lại các nhóm đã vào"])
