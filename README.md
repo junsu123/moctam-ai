@@ -3,6 +3,19 @@
 Một "công ty" gồm 5 nhân viên AI làm thay phần việc của đội sale đăng bài tìm khách sỉ
 (người bán online, chạy ads, livestream, bán sàn). Bạn là sếp: duyệt bài, nghe họp, ra quyết định.
 
+## Mục tiêu chính: tìm khách sỉ trên mạng, lấy được số điện thoại
+
+Mọi agent đều làm cho một mục tiêu: **tìm khách sỉ (người bán hàng online) và lấy SĐT để sếp liên lạc**. Mọi việc được đo bằng số khách sỉ có SĐT. Các kênh:
+
+| Kênh | Ai làm | Cách làm |
+|---|---|---|
+| Viết bài, đăng nhóm, đọc bình luận dưới bài mình | Lan, Tuấn, sale | Lan viết bài, sale đăng vào nhóm và trang cá nhân, quét bình luận, xin SĐT người hỏi giá |
+| Đọc bài và bình luận trong nhóm | Mai (mượn Chrome của sale) | Bắt người đang hỏi “tìm nguồn”, “cần nhập”, “xin giá sỉ” trà, ngũ cốc: khách nóng nhất |
+| Quét trang chạy quảng cáo | Mai | Thư viện quảng cáo Facebook: trang đang trả tiền quảng cáo bán thực phẩm, đồ uống là người bán thật, có ngân sách |
+| Tìm trang, shop livestream | Mai | Tìm trang theo 4 hướng, đọc trang Giới thiệu lấy SĐT kinh doanh công khai |
+
+Trang **Tìm khách sỉ** có dòng số SĐT tìm được theo từng kênh trong 7 ngày; CEO cũng báo con số này khi sếp hỏi tình hình.
+
 ## Đội ngũ
 
 | Agent | Vị trí | Việc làm hằng ngày |
@@ -137,6 +150,10 @@ Sửa chủ đề hôm nay, kho chủ đề, giờ tìm, số nhóm thêm/xin v�
 ## Mai tìm khách sỉ (người đang bán hàng online)
 
 Mục **Bán hàng → Tìm khách sỉ**. **Mục tiêu số 1 của Mai: tìm ra số điện thoại** của người đang bán hàng online để sếp liên lạc. Mai **tập trung Facebook**; TikTok và Shopee có công tắc riêng ở dòng **Nguồn tìm** đầu trang (đang hoạt động / không hoạt động, mặc định không hoạt động; cũng có thể nói với CEO “bật TikTok”, “tắt Shopee”).
+
+**Đọc bình luận trong nhóm** (công tắc “Bình luận trong nhóm”): mỗi lượt Mai mở 3 nhóm trong danh sách Hội nhóm (nhóm lâu chưa đọc trước), lướt bài mới nhất, đọc cả bài và bình luận. Ai viết “tìm nguồn”, “cần nhập”, “xin giá sỉ”, “ai có nguồn” kèm tên hàng hợp ngành (trà, ngũ cốc, granola, đồ ăn healthy, thực phẩm) thì được lưu với đúng câu họ viết làm bằng chứng. Người chào bán sỉ (“nhận sỉ”, “cung cấp sỉ”, “tuyển đại lý”) là nhà cung cấp nên bỏ qua; bài của chính nick mình cũng bỏ qua. Họ tự ghi SĐT thì lấy luôn; người đang tìm nguồn trà, ngũ cốc tối thiểu hạng B, có SĐT thì hạng A. Chưa để SĐT thì việc tiếp theo là sếp/Hà trả lời bài hoặc nhắn tin xin SĐT bằng tay. Mai chỉ đọc, không bình luận, và không mở mục thông tin cá nhân của họ.
+
+**Quét trang chạy quảng cáo** (công tắc “Trang chạy quảng cáo”): Mai mở Thư viện quảng cáo Facebook (Việt Nam, quảng cáo đang hoạt động), tìm theo từ khóa sản phẩm (sửa ở “Từ khóa hướng 5”), chỉ giữ quảng cáo hợp ngành, rồi mở trang của người chạy quảng cáo để tìm SĐT. Đang chạy quảng cáo bán hàng được tính ít nhất 16/20 điểm bán hàng; hotline ghi trong quảng cáo cũng được lấy.
 
 **Cách Mai tìm SĐT**: đọc phần giới thiệu và các bài gần nhất của Trang (hotline, “Zalo 09...”, “liên hệ 09...”, nút gọi điện, link zalo.me); chưa thấy thì đọc thêm bài và mở **Giới thiệu → Thông tin liên hệ**; vẫn chưa có thì 3 ngày sau quay lại tìm (tối đa 3 lần). Số tìm được từ bài đăng công khai của chính họ trong kết quả tìm kiếm cũng được tính. Chỉ lấy SĐT kinh doanh do shop tự công khai.
 

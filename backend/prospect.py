@@ -45,16 +45,22 @@ DIRECTIONS = {
     2: "Người bán sản phẩm tương tự hoặc bổ trợ",
     3: "Người bán nhiều nhóm hàng tiêu dùng, có thể mở rộng danh mục",
     4: "Người tuyển đại lý, tìm nguồn hàng, nhận phân phối, bán sỉ",
+    5: "Trang đang chạy quảng cáo bán thực phẩm, đồ uống (thư viện quảng cáo Facebook)",
+    6: "Người đang hỏi tìm nguồn hàng trong nhóm (đọc bài và bình luận)",
 }
 DEFAULT_KEYWORDS = {
     1: ["livestream bán trà", "live bán ngũ cốc", "livestream đồ ăn healthy", "live bán thực phẩm sạch"],
     2: ["shop trà túi lọc", "bán bột ngũ cốc online", "shop đồ ăn healthy", "shop cà phê online", "shop đồ ăn vặt healthy"],
     3: ["shop tạp hóa online", "shop mẹ và bé online", "shop đồ gia dụng bán online", "bán hàng đa kênh shopee tiktok"],
     4: ["tuyển đại lý thực phẩm", "tìm nguồn hàng trà", "nhận phân phối thực phẩm", "tìm nguồn hàng sỉ ngũ cốc", "tuyển ctv bán trà"],
+    5: ["trà túi lọc", "ngũ cốc dinh dưỡng", "granola", "trà thảo mộc", "bột ngũ cốc", "đồ ăn healthy", "cà phê hòa tan", "yến mạch"],
 }
 SELLER_TYPES = {"owner": "Chủ shop tự nhập hàng", "live": "Người bán hàng livestream", "multi": "Người bán hàng đa nền tảng",
                 "marketplace": "Nhà bán hàng trên sàn TMĐT", "ctv": "Cộng tác viên", "affiliate": "Affiliate",
-                "koc": "KOC/KOL", "store": "Cửa hàng truyền thống", "unknown": "Chưa rõ"}
+                "koc": "KOC/KOL", "store": "Cửa hàng truyền thống", "buyer": "Người đang tìm nguồn hàng",
+                "ads": "Đang chạy quảng cáo", "unknown": "Chưa rõ"}
+CHANNELS = {"comment": "Bình luận dưới bài sale đăng", "ads": "Trang đang chạy quảng cáo", "demand": "Người hỏi nguồn hàng trong nhóm",
+            "pages": "Tìm trang, shop livestream", "link": "Sếp dán link"}
 PLATFORM_TXT = {"facebook": "Facebook", "tiktok": "TikTok", "shopee": "Shopee"}
 GRADE_ACTION = {
     "A": "Sếp hoặc Hà nhắn/gọi trong 24 giờ theo kịch bản (nhắn tay, không gửi tự động)",
@@ -84,6 +90,12 @@ RX = {k: re.compile(v) for k, v in {
     "consumer": r"(my pham|gia dung|me va be|thoi trang|phu kien|do choi|cham soc|tap hoa|nha cua|do dung)",
     "store_only": r"(cua hang tai|dia chi cua hang|ghe cua hang|mo cua tu)",
 }.items()}
+# người ĐANG TÌM nguồn hàng (khách nóng) và người đang CHÀO BÁN sỉ (nhà cung cấp, không phải khách)
+DEMAND_RX = re.compile(r"((tim|can|xin|kiem|ai co|ai ban|can tim|muon tim|dang tim)\b.{0,20}\b(nguon|nha cung cap|ncc|xuong|"
+                       r"hang si|dai ly cap 1|nha phan phoi|nguon si|si)\b|can nhap|muon nhap|can lay si|muon lay si|xin nguon|"
+                       r"tim nguon|xin ib nguon|ai co nguon|xin gia si|can si)")
+SUPPLY_RX = re.compile(r"((chuyen|nhan|cung cap|phan phoi|ban) si\b|tuyen (dai ly|ctv|si)|xuong san xuat|kho si|"
+                       r"nha cung cap uy tin|nhan gia cong)")
 PHONE_RX = re.compile(r"(?<!\d)(?:\+?84|0)(?:[\s.\-]?\d){9}(?!\d)")
 EMAIL_RX = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]{2,}")
 FOLLOW_RX = re.compile(r"([\d.,]+\s*(?:K|N|k|n|M|tr|triệu)?)\s*(?:người theo dõi|followers?|follower|lượt thích|người thích)", re.I)
@@ -99,7 +111,7 @@ def s() -> dict:
 def keywords() -> dict:
     try:
         k = json.loads(s().get("prospect_keywords") or "{}")
-        return {int(d): v for d, v in k.items() if v} or DEFAULT_KEYWORDS
+        return {**DEFAULT_KEYWORDS, **{int(d): v for d, v in k.items() if v}}
     except Exception:
         return DEFAULT_KEYWORDS
 
@@ -131,6 +143,8 @@ def canon(url: str) -> str:
         return base
     if seg[0] == "profile.php":
         return f"{base}/profile.php?id={parse_qs(p.query).get('id', [''])[0]}"
+    if seg[0] == "groups" and "user" in seg and seg.index("user") + 1 < len(seg):  # thành viên nhóm -> trang cá nhân
+        return f"{base}/profile.php?id={seg[seg.index('user') + 1]}"
     if seg[0].startswith("@"):  # TikTok
         return f"{base}/{seg[0].lower()}"
     if seg[0] == "shop" and len(seg) > 1:  # Shopee /shop/123
@@ -159,6 +173,33 @@ EXTRACT_JS = r"""(pf) => {
   }
   return Object.values(out).slice(0, 60);
 }"""
+
+
+ADS_JS = r"""() => {
+  const out = [];
+  const marks = [...document.querySelectorAll('div,span')].filter(e => e.children.length <= 2 &&
+      /^(Library ID|ID thư viện|Mã thư viện)/i.test((e.innerText || '').trim()));
+  for (const m of marks) {
+    let card = m;
+    for (let i = 0; i < 14 && card; i++) {
+      card = card.parentElement; if (!card) break;
+      const a = [...card.querySelectorAll('a[href]')].find(x => (x.innerText || '').trim().length > 1 &&
+          !/ads\/library|l\.facebook|\/help|policies|\/ads\/about|privacy/.test(x.href));
+      if (a) { out.push({href: a.href, name: (a.innerText || '').trim().split('\n')[0], snippet: (card.innerText || '').slice(0, 700)}); break; }
+    }
+  }
+  return out.slice(0, 80);
+}"""
+GROUP_JS = r"""() => [...document.querySelectorAll('[role="article"]')].slice(0, 120).map(a => {
+  const c = a.cloneNode(true); c.querySelectorAll('[role="article"]').forEach(x => x.remove());
+  const au = [...c.querySelectorAll('a[href]')].find(x => { const tx = (x.innerText || '').trim();
+      return tx.length > 1 && !/^(\d+\s*(phút|giờ|ngày|tuần|tháng|năm|m|h|d|w|y)\b|Vừa xong|Just now|Thích|Like|Phản hồi|Reply|Xem thêm)/i.test(tx) &&
+        !/\/posts\/|\/photo|story_fbid|hashtag|\/permalink/.test(x.href) && !/\/groups\/[^/]+\/?(\?|$)/.test(x.href); });
+  const pl = a.querySelector('a[href*="/posts/"],a[href*="permalink"],a[href*="story_fbid"]');
+  let txt = a.innerText || ''; a.querySelectorAll('[role="article"]').forEach(x => { txt = txt.replace(x.innerText || '', ' '); });
+  return {author: au ? (au.textContent || '').trim().split('\n')[0] : '', href: au ? au.href : '', text: txt.slice(0, 900),
+          link: pl ? pl.href.split('?')[0] : '', comment: !!a.parentElement.closest('[role="article"]')};
+})"""
 
 
 def _fb_candidate(href: str) -> bool:
@@ -357,18 +398,44 @@ def suggest_products(a: dict) -> list[dict]:
     return out[:3]
 
 
+def cat_word(a: dict) -> str:
+    """Nhóm hàng họ đang bán, lấy từ chính bằng chứng (để kịch bản nói đúng)."""
+    ev = a.get("evidence", [])
+    first = plain(" ".join(e["text"] for e in ev if e["kind"] in ("ads", "demand")))
+    p = first + " || " + plain(" ".join(e["text"] for e in ev if e["kind"] in ("sell", "fit_core", "fit_food", "live")))
+    for rx, w in ((r"ngu coc|granola|yen mach", "ngũ cốc"), (r"\btra\b", "trà"), (r"ca phe|cafe|coffee", "cà phê"),
+                  (r"healthy|eat clean|an kieng", "đồ ăn healthy"), (r"hat dinh duong|hat dieu|\bhat\b", "hạt dinh dưỡng"),
+                  (r"do an vat|banh keo|an vat", "đồ ăn vặt"), (r"thuc pham", "thực phẩm")):
+        if re.search(rx, first):
+            return w
+    for rx, w in ((r"ngu coc|granola|yen mach", "ngũ cốc"), (r"\btra\b", "trà"), (r"ca phe|cafe|coffee", "cà phê"),
+                  (r"healthy|eat clean|an kieng", "đồ ăn healthy"), (r"do an vat|banh keo|an vat", "đồ ăn vặt"), (r"thuc pham", "thực phẩm")):
+        if re.search(rx, p):
+            return w
+    return "hàng online"
+
+
 def script(row: dict, a: dict, prods: list[dict]) -> str:
     st = s()
     who = row.get("shop_name") or row.get("account_name") or "shop"
     seen = ("đang livestream bán hàng" if a["parts"]["live"] >= 14 else
-            "đang bán " + (a["categories"][0].split(",")[0].lower() if a["categories"] else "hàng online"))
+            "đang bán " + cat_word(a))
     names = ", ".join(p["name"] for p in prods[:2]) or "trà túi lọc và bột ngũ cốc"
     base = (f"Chào {who}, em là Hà bên {st.get('company_name') or 'xưởng'}. Em thấy bên mình {seen} trên "
             f"{PLATFORM_TXT.get(row.get('platform'), 'mạng xã hội')}. Bên em là xưởng sản xuất {names}, có giá sỉ cho người bán online "
             "và có sẵn ảnh, video thật để đăng bán. Nếu shop quan tâm, em gửi bảng giá và thông tin sản phẩm để mình xem trước ạ.")
+    if "buyer" in a.get("tags", []):
+        base = (f"Chào {who}, em là Hà bên {st.get('company_name') or 'xưởng'}. Em thấy anh/chị đang tìm nguồn {cat_word(a)} trong nhóm. "
+                f"Bên em là xưởng sản xuất {names}, bán sỉ tận xưởng cho người bán online, có ảnh và video thật để đăng bán. "
+                "Anh/chị đang cần loại nào và số lượng khoảng bao nhiêu để em gửi bảng giá phù hợp ạ?")
+    elif "ads" in a.get("tags", []):
+        seen = "đang chạy quảng cáo bán " + cat_word(a)
+        base = (f"Chào {who}, em là Hà bên {st.get('company_name') or 'xưởng'}. Em thấy bên mình {seen} trên Facebook. "
+                f"Bên em là xưởng sản xuất {names}, có giá sỉ tận xưởng để shop thêm vào danh mục và có sẵn ảnh, video thật làm quảng cáo. "
+                "Nếu shop quan tâm, em gửi bảng giá để mình xem trước ạ.")
     if a.get("affiliate_only"):
         base = (f"Chào {who}, em là Hà bên {st.get('company_name') or 'xưởng'}. Em thấy bạn đang giới thiệu sản phẩm "
-                f"{(a['categories'][0].split(',')[0].lower() if a['categories'] else '')} rất hay. Bạn có đang tự nhập hàng về bán hay chủ yếu "
+                f"{cat_word(a)} rất hay. Bạn có đang tự nhập hàng về bán hay chủ yếu "
                 "làm tiếp thị liên kết ạ? Bên em là xưởng sản xuất " + names + ", nếu phù hợp em gửi thông tin để bạn tham khảo.")
     from llm import llm
     if llm.live and st.get("prospect_ai_script", "1") == "1":
@@ -406,6 +473,8 @@ def next_action(row: dict, a: dict) -> str:
                if a.get("dug") else "Chưa có SĐT công khai: Mai sẽ quay lại tìm tiếp")
     if not a["enough"]:
         act = "Chưa đủ bằng chứng (trang ít nội dung công khai): kiểm tra lại sau"
+    if "buyer" in a.get("tags", []) and not a["phones"]:
+        act = "Đang hỏi nguồn hàng nhưng chưa để SĐT: sếp/Hà trả lời bài viết hoặc nhắn tin xin SĐT (làm tay, nhanh trước khi người khác chào hàng)"
     if a["phones"] and a["grade"] in ("A", "B", "C") and a["enough"] and not a.get("affiliate_only"):
         act = f"Gọi hoặc nhắn Zalo {a['phones'][0]} theo kịch bản" + (" trong 24 giờ" if a["grade"] == "A" else "")
     return act
@@ -531,7 +600,14 @@ def _blocked(page) -> bool:
     return bool(BLOCK_RX.search(t)) or any(x in u for x in ("/login", "captcha", "verify", "checkpoint", "buyer/login"))
 
 
+def ads_url(q: str) -> str:
+    return (f"{_fb_base()}/ads/library/?active_status=active&ad_type=all&country=VN&media_type=all"
+            f"&search_type=keyword_unordered&q={quote(q)}")
+
+
 def search_url(platform: str, q: str, kind: str = "pages") -> str:
+    if kind == "ads":
+        return ads_url(q)
     if platform == "tiktok":
         return f"{TIKTOK_BASE}/search/user?q={quote(q)}"
     if platform == "shopee":
@@ -550,9 +626,18 @@ def _search(page, platform: str, q: str, kind: str = "pages") -> tuple[list[dict
     for _ in range(3):
         page.mouse.wheel(0, random.randint(1000, 1600))
         page.wait_for_timeout(int(random.uniform(1.5, 3) * 1000))
-    rows = page.evaluate(EXTRACT_JS, platform)
-    if platform == "facebook":
-        rows = [r for r in rows if _fb_candidate(r["href"])]
+    if kind == "ads":  # thư viện quảng cáo: mỗi thẻ quảng cáo -> trang đang chạy quảng cáo
+        rows = [r for r in page.evaluate(ADS_JS) if _fb_candidate(r["href"])]
+        cnt: dict[str, set] = {}
+        for r in rows:
+            cnt.setdefault(canon(r["href"]), set()).add(_ad_text(r["snippet"], r["name"]))
+        for r in rows:
+            r["signal"] = {"kind": "ads", "text": _ad_text(r["snippet"], r["name"]), "url": ads_url(q), "n": len(cnt[canon(r["href"])])}
+        rows = [r for r in rows if fit_text(r["snippet"])]  # chỉ giữ quảng cáo bán hàng hợp ngành
+    else:
+        rows = page.evaluate(EXTRACT_JS, platform)
+        if platform == "facebook":
+            rows = [r for r in rows if _fb_candidate(r["href"])]
     seen, out = set(), []
     for r in rows:
         c = canon(r["href"])
@@ -563,7 +648,7 @@ def _search(page, platform: str, q: str, kind: str = "pages") -> tuple[list[dict
     return out, False
 
 
-def inspect(page, url: str, extra: str = "") -> tuple[dict | None, bool]:
+def inspect(page, url: str, extra: str = "", dig: bool = True) -> tuple[dict | None, bool]:
     """Mở trang công khai của tài khoản, đọc chữ và vài bài gần nhất. Trả về (phân tích, bị chặn?)."""
     import browser_poster as B
     plat = platform_of(url)
@@ -582,7 +667,7 @@ def inspect(page, url: str, extra: str = "") -> tuple[dict | None, bool]:
     name = (page.evaluate("() => ((document.querySelector('h1') || {}).innerText || document.title || '').trim()") or "")[:80]
     body += ("\n" + extra) if extra else ""
     a = analyze(url, body, arts, links, plat)
-    if not a["phones"] and plat == "facebook":  # mục tiêu là SĐT: đọc thêm bài và mở trang Giới thiệu / Liên hệ
+    if not a["phones"] and plat == "facebook" and dig:  # mục tiêu là SĐT: đọc thêm bài và mở trang Giới thiệu / Liên hệ
         for _ in range(3):
             page.mouse.wheel(0, random.randint(1200, 1800))
             page.wait_for_timeout(int(random.uniform(1.5, 3) * 1000))
@@ -605,6 +690,117 @@ def inspect(page, url: str, extra: str = "") -> tuple[dict | None, bool]:
         a["dug"] = True
     a["page_name"] = name
     return a, False
+
+
+def fit_text(text: str) -> bool:
+    p = plain(text or "")
+    return bool(RX["fit_core"].search(p) or RX["fit_food"].search(p))
+
+
+def _ad_text(snippet: str, name: str) -> str:
+    """Bỏ phần khung của thẻ quảng cáo (ID thư viện, ngày chạy, nút) để còn nội dung quảng cáo."""
+    keep = [l for l in _lines(snippet) if not re.search(
+        r"(library id|id thu vien|ma thu vien|started running|bat dau chay|platforms|nen tang|see ad details|xem chi tiet|"
+        r"sponsored|duoc tai tro|this ad has|quang cao nay co|^active$|^dang hoat dong$|open dropdown)", plain(l)) and l.strip() != name]
+    return " · ".join(keep)[:400]
+
+
+def grade_of(score: int) -> str:
+    return "A" if score >= 80 else "B" if score >= 60 else "C" if score >= 40 else "D"
+
+
+def apply_signal(a: dict, sig: dict | None) -> dict:
+    """Thêm bằng chứng từ kênh tìm thấy họ: đang chạy quảng cáo, hoặc đang hỏi nguồn hàng trong nhóm."""
+    if not sig or not sig.get("text"):
+        return a
+    txt, p = sig["text"], plain(sig["text"])
+    label = {"ads": "Đang chạy quảng cáo" + (f" ({sig['n']} quảng cáo)" if (sig.get("n") or 0) > 1 else "") + ": ",
+             "demand": "Hỏi nguồn hàng: "}.get(sig["kind"], "")
+    ev = {"kind": sig["kind"], "text": (label + txt)[:220], "url": sig.get("url")}
+    a["evidence"] = [ev] + [e for e in a["evidence"] if e["text"] != ev["text"]]
+    parts, tags = a["parts"], list(a["tags"])
+    new_ph = [x for x in (norm_phone(m.group(0)) for m in PHONE_RX.finditer(txt)) if x and x not in a["phones"]]
+    if new_ph:
+        a["phones"] = (a["phones"] + new_ph)[:2]
+        parts["contact"] = min(10, parts["contact"] + 5)
+        a["evidence"].append({"kind": "contact", "text": f"SĐT họ tự ghi: {new_ph[0]}", "url": sig.get("url")})
+    fitp = 20 if RX["fit_core"].search(p) else 12 if RX["fit_food"].search(p) else 0
+    parts["fit"] = max(parts["fit"], fitp)
+    if sig["kind"] == "ads":  # trả tiền chạy quảng cáo bán hàng = đang bán thật, có ngân sách
+        parts["sales"] = max(parts["sales"], 16)
+        parts["engage"] = max(parts["engage"], 6)
+        tags.append("ads")
+        if a["seller_type"] in ("unknown", "store"):
+            a["seller_type"] = "owner"
+    else:  # đang hỏi nguồn hàng: dấu hiệu nhập hàng mạnh nhất
+        parts["import"] = 15
+        parts["engage"] = max(parts["engage"], 6)
+        tags.append("buyer")
+        if a["seller_type"] in ("unknown", "store", "affiliate", "koc"):
+            a["seller_type"] = "buyer"
+        a["affiliate_only"] = False
+        a["enough"] = True
+    a["tags"] = list(dict.fromkeys(tags))
+    a["score"] = sum(parts.values())
+    g = grade_of(a["score"])
+    if sig["kind"] == "demand" and fitp == 20:  # đang tìm nguồn trà, ngũ cốc: khách nóng nhất
+        g = min(g, "A" if a["phones"] else "B")
+    a["grade"] = g if a["enough"] else "D"
+    if a["phones"] and a["grade"] in ("A", "B", "C"):
+        a["seller_type"] = a["seller_type"] if a["seller_type"] != "unknown" else "buyer"
+    return a
+
+
+def our_names() -> set[str]:
+    """Tên nick của chính mình: không coi là khách."""
+    names = {plain(r["name"]) for r in db.q("SELECT name FROM fb_accounts")} | \
+            {plain(r["fb_name"] or "") for r in db.q("SELECT fb_name FROM sales")}
+    names.add(plain(s().get("company_name") or ""))
+    return {n for n in names if n}
+
+
+def pick_groups(n: int) -> list[dict]:
+    """Nhóm để đọc bài và bình luận: lâu chưa đọc trước, ưu tiên nhóm mang về khách."""
+    try:
+        last = json.loads(s().get("prospect_group_scan") or "{}")
+    except Exception:
+        last = {}
+    rows = db.q("""SELECT id, name, url, COALESCE(leads_count,0) leads FROM groups WHERE COALESCE(url,'')!=''
+                   AND COALESCE(is_sample,0)=0""")
+    rows.sort(key=lambda g: (last.get(str(g["id"]), ""), -g["leads"]))
+    return rows[:n]
+
+
+def scan_group(page, g: dict) -> list[dict]:
+    """Đọc bài mới và bình luận trong 1 nhóm: tìm người đang hỏi nguồn hàng hợp ngành. Chỉ đọc, không bình luận."""
+    import browser_poster as B
+    url = g["url"].split("?")[0].rstrip("/") + "/?sorting_setting=CHRONOLOGICAL"
+    page.goto(url, wait_until="domcontentloaded", timeout=60000)
+    page.wait_for_timeout(int(random.uniform(3.5, 6) * 1000))
+    B._check_blocked(page)
+    for _ in range(5):
+        page.mouse.wheel(0, random.randint(1200, 1800))
+        page.wait_for_timeout(int(random.uniform(2, 3.5) * 1000))
+    me = our_names()
+    out, seen = [], set()
+    for r in page.evaluate(GROUP_JS):
+        p = plain(r["text"])
+        if not r["href"] or not r["author"] or plain(r["author"]) in me:
+            continue
+        if not DEMAND_RX.search(p) or SUPPLY_RX.search(p) or not fit_text(r["text"]):
+            continue
+        c = canon(r["href"])
+        if c in seen:
+            continue
+        seen.add(c)
+        body = re.sub(r"^[\s·]*(\d{1,3}\s*(phút|giờ|ngày|tuần|tháng|năm|[mhdwy])\b|Vừa xong|Hôm qua)?[\s·]*", "",
+                      r["text"].replace(r["author"], "", 1).strip(), flags=re.I).strip()
+        out.append({"href": c, "name": r["author"][:80], "snippet": body[:500],
+                    "signal": {"kind": "demand", "text": body[:400], "url": r["link"] or g["url"],
+                               "where": ("bình luận" if r["comment"] else "bài viết") + f" trong nhóm {g['name']}"}})
+    db.set_setting("prospect_group_scan", json.dumps({**json.loads(s().get("prospect_group_scan") or "{}"),
+                                                      str(g["id"]): db.now()}))
+    return out
 
 
 def about_urls(url: str) -> list[str]:
@@ -633,12 +829,35 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
             for r in retry_no_phone():
                 queue.append(({"href": r["account_url"], "name": r["account_name"], "_retry": True}, r["direction"], r["keyword"]))
         for step in plan or []:
+            if step.get("kind") == "groups":  # đọc bài + bình luận trong nhóm: ai đang hỏi nguồn hàng
+                for g in pick_groups(int(s().get("prospect_groups_per_run") or 3)):
+                    workflows.set_status("mai", "working", f"Đọc bình luận nhóm {g['name'][:40]}: ai đang tìm nguồn hàng")
+                    workflows.set_status(agent, "working", f"Mở nhóm {g['name'][:40]} cho Mai đọc")
+                    try:
+                        rows = scan_group(page, g)
+                    except B.Blocked:
+                        raise
+                    except Exception as e:
+                        print("[prospect group]", g["name"], e)
+                        rows = []
+                    res["groups"] = res.get("groups", 0) + 1
+                    for r in rows:
+                        d0 = find_dup(r["href"], [], r["name"], "facebook")
+                        if d0 and (d0.get("phone") or not PHONE_RX.search(r["signal"]["text"])):
+                            res["dup"].add(r["href"])  # đã có (trừ khi lần này họ ghi thêm SĐT)
+                            continue
+                        queue.append((r, 6, g["name"][:80]))
+                        res["found"] += 1
+                        res["demand"] = res.get("demand", 0) + 1
+                    B._pause(page, 4, 9)
+                continue
             pf, q = step["platform"], step["keyword"]
             if pf in blocked:
                 continue
-            workflows.set_status("mai", "working", f"Tìm trên {PLATFORM_TXT[pf]}: {q}")
-            workflows.set_status(agent, "working", f"Mở trang tìm kiếm {PLATFORM_TXT[pf]} cho Mai")
-            kinds = ["pages", "posts"] if pf == "facebook" else ["users"]
+            ads = step.get("kind") == "ads"
+            workflows.set_status("mai", "working", f"Quét thư viện quảng cáo Facebook: {q}" if ads else f"Tìm trên {PLATFORM_TXT[pf]}: {q}")
+            workflows.set_status(agent, "working", f"Mở {'thư viện quảng cáo' if ads else 'trang tìm kiếm ' + PLATFORM_TXT[pf]} cho Mai")
+            kinds = ["ads"] if ads else ["pages", "posts"] if pf == "facebook" else ["users"]
             for kind in kinds:
                 try:
                     rows, blk = _search(page, pf, q, kind)
@@ -655,9 +874,15 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
                     if find_dup(r["href"], [], r["name"], pf):
                         res["dup"].add(canon(r["href"]))
                         continue
+                    if any(canon(x[0]["href"]) == canon(r["href"]) for x in queue):
+                        continue
                     queue.append((r, step["direction"], q))
                     res["found"] += 1
+                    if kind == "ads":
+                        res["ads"] = res.get("ads", 0) + 1
                 B._pause(page, 4, 9)
+        prio = {6: 0, 5: 1}
+        queue.sort(key=lambda x: prio.get(x[1], 3 if not x[0].get("_retry") else 2))  # khách nóng trước
         seen = set()
         for cand, d, q in queue:
             if res["inspected"] >= limit and not urls:
@@ -676,14 +901,19 @@ def job(pw, acc_id: int, plan: list[dict] | None = None, urls: list[str] | None 
             nm = cand.get("name") or c
             workflows.set_status("mai", "working", f"Đang nghiên cứu: {nm[:50]}")
             workflows.set_status(agent, "working", f"Mở trang {nm[:40]} cho Mai xem")
-            snip = cand.get("snippet") or ""
+            snip, sig = cand.get("snippet") or "", cand.get("signal")
             try:
-                a, blk = inspect(page, c, snip if PHONE_RX.search(snip) else "")
+                a, blk = inspect(page, c, snip if PHONE_RX.search(snip) and not sig else "",
+                                 dig=not (sig and sig["kind"] == "demand"))  # người hỏi nguồn: chỉ đọc trang, không mở mục thông tin cá nhân
             except B.Blocked:
                 raise
             except Exception as e:
                 print("[prospect inspect]", c, e)
                 a, blk = None, False
+            if a is None and not blk and sig:  # không mở được trang: vẫn lưu theo đúng chữ họ viết
+                a = analyze(c, sig["text"], [], [], "facebook")
+            if a is not None and sig:
+                a = apply_signal(a, sig)
             if blk or a is None:
                 if blk:
                     blocked.add(pf)
@@ -718,7 +948,13 @@ def _report(res: dict, notify: str | None, by_link: bool):
     ph = [r for r in res["phones"] if r.get("_crm_new") or by_link]
     head = (f"Mai {'phân tích link xong' if by_link else 'tìm khách sỉ xong'}: tìm được {len(res['phones'])} SĐT khách đang bán hàng"
             if res["phones"] else f"Mai {'phân tích link xong' if by_link else 'tìm khách sỉ xong'}: chưa tìm được SĐT mới")
-    msg = (head + f" (xem {res['inspected']} tài khoản: A {g['A']}, B {g['B']}, C {g['C']}, D {g['D']})"
+    extra = []
+    if res.get("groups"):
+        extra.append(f"đọc bình luận {res['groups']} nhóm, thấy {res.get('demand', 0)} người hỏi nguồn hàng")
+    if res.get("ads"):
+        extra.append(f"quét quảng cáo thấy {res['ads']} trang đang chạy quảng cáo hợp ngành")
+    msg = (head + f" (xem {res['inspected']} tài khoản: A {g['A']}, B {g['B']}, C {g['C']}, D {g['D']}"
+           + ("; " + "; ".join(extra) if extra else "") + ")"
            + (f"; {res['manual']} tài khoản cần sếp xem tay" if res["manual"] else "")
            + (f"; {', '.join(sorted(set(res['blocked'])))} yêu cầu đăng nhập/xác minh nên dừng (không vượt qua)" if res["blocked"] else "")
            + (f"; bỏ qua {len(res['dup'])} tài khoản đã có trong danh sách" if res["dup"] else "") + ".")
@@ -748,8 +984,23 @@ def retry_no_phone(limit: int = 3) -> list[dict]:
     cut = (db.clock() - timedelta(days=3)).strftime("%Y-%m-%d %H:%M:%S")
     return db.q("""SELECT * FROM prospects WHERE platform='facebook' AND grade IN ('A','B','C') AND COALESCE(phone,'')=''
                    AND status='verified' AND COALESCE(phone_tries,0) < 3
-                   AND COALESCE(seller_type,'') NOT IN ('affiliate','koc','store') AND COALESCE(verified_at,'') < ?
+                   AND COALESCE(seller_type,'') NOT IN ('affiliate','koc','store','buyer') AND COALESCE(verified_at,'') < ?
                    ORDER BY score DESC LIMIT ?""", (cut, limit))
+
+
+def channels(days: int = 7) -> list[dict]:
+    """Khách sỉ có SĐT theo từng kênh (7 ngày): để cả đội biết kênh nào ra khách."""
+    since = (db.clock() - timedelta(days=days)).strftime("%Y-%m-%d")
+    out = [{"key": "comment", "label": CHANNELS["comment"],
+            "phones": db.one("""SELECT COUNT(*) n FROM leads WHERE origin='comment' AND COALESCE(phone,'')!=''
+                                AND COALESCE(phone_at, created_at)>=?""", (since,))["n"],
+            "total": db.one("SELECT COUNT(*) n FROM leads WHERE origin='comment' AND created_at>=?", (since,))["n"]}]
+    for key, cond in (("demand", "direction=6"), ("ads", "direction=5"), ("pages", "direction BETWEEN 1 AND 4"),
+                      ("link", "direction IS NULL")):
+        r = db.one(f"""SELECT COUNT(*) n, SUM(COALESCE(phone,'')!='' AND grade IN ('A','B','C')) ph FROM prospects
+                       WHERE {cond} AND created_at>=?""", (since,))
+        out.append({"key": key, "label": CHANNELS[key], "phones": r["ph"] or 0, "total": r["n"] or 0})
+    return out
 
 
 def platforms_on() -> list[str]:
@@ -769,7 +1020,15 @@ def plan_for_run(directions: list[int] | None = None, kw: list[str] | None = Non
         return out
     day = int(db.today().replace("-", "")) % 97
     per = max(1, min(4, int(s().get("prospect_fb_keywords") or 2)))
-    for d in directions or [1, 2, 3, 4]:
+    if not directions and s().get("prospect_groups", "1") == "1":
+        out.append({"kind": "groups"})
+    if (not directions or 5 in directions) and s().get("prospect_ads", "1") == "1":
+        pool = kws.get(5) or DEFAULT_KEYWORDS[5]
+        for i in range(min(per, len(pool))):
+            out.append({"platform": "facebook", "direction": 5, "keyword": pool[(day * per + i) % len(pool)], "kind": "ads"})
+    if directions and 6 in directions and s().get("prospect_groups", "1") == "1":
+        out.insert(0, {"kind": "groups"})
+    for d in [x for x in (directions or [1, 2, 3, 4]) if x in (1, 2, 3, 4)]:
         pool = kws.get(d) or DEFAULT_KEYWORDS[d]
         for i in range(min(per, len(pool))):
             out.append({"platform": "facebook", "direction": d, "keyword": pool[(day * per + i) % len(pool)]})
@@ -852,7 +1111,7 @@ def overview(grade: str = "", platform: str = "", stype: str = "", status: str =
             "phones_today": db.one("SELECT COUNT(*) n FROM prospects WHERE COALESCE(phone,'')!='' AND grade IN ('A','B','C') AND created_at>=?",
                                    (db.today(),))["n"],
             "no_phone": db.one("SELECT COUNT(*) n FROM prospects WHERE COALESCE(phone,'')='' AND grade IN ('A','B','C') AND status='verified'")["n"],
-            "platforms_on": platforms_on(),
+            "platforms_on": platforms_on(), "channels": channels(),
             "directions": DIRECTIONS, "types": SELLER_TYPES, "platforms": PLATFORM_TXT, "keywords": keywords(),
             "settings": {k: st for k, st in s().items() if k.startswith("prospect_")},
             "last": db.one("SELECT detail, created_at FROM activity WHERE agent_id='mai' AND action='Tìm khách sỉ' ORDER BY id DESC LIMIT 1")}

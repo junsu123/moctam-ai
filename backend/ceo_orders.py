@@ -276,10 +276,12 @@ def execute(act: dict) -> str:
             return "Mai chưa đi tìm khách được vì cần 1 nick sale để mở trang. " + why_no_sales()
         urls = [u for u in (act.get("urls") or []) if str(u).strip()]
         kws = [k.strip() for k in (act.get("keywords") or []) if str(k).strip()]
-        r = prospect.start(None, kws or None, urls or None, notify=act.get("_via", "web"))
+        dirs = [int(d) for d in (act.get("directions") or []) if str(d).isdigit() and int(d) in prospect.DIRECTIONS]
+        r = prospect.start(dirs or None, kws or None, urls or None, notify=act.get("_via", "web"))
         what = f"phân tích {len(r['urls'])} link sếp gửi" if r.get("urls") else \
-            ("tìm khách sỉ theo: " + ", ".join(kws) if kws else "tìm khách sỉ theo 4 hướng (livestream, bán hàng tương tự, "
-             "bán đa ngành, tuyển đại lý/tìm nguồn)")
+            ("tìm khách sỉ theo: " + ", ".join(kws) if kws else
+             "tìm khách sỉ: " + "; ".join(prospect.DIRECTIONS[d].lower() for d in dirs) if dirs else
+             "tìm SĐT khách sỉ: đọc bình luận nhóm, quét trang chạy quảng cáo, tìm shop livestream và trang bán hàng")
         return f"Giao Mai {what}, dùng Chrome của nick {r['account']} để xem trang công khai{_busy_note(r['sale_id'])}. Xong em báo lại sếp."
     if t == "join_groups":
         import group_finder
@@ -390,6 +392,13 @@ def status_text() -> str:
              f"{st['approved']} bài đã duyệt/lên lịch", f"{st['posted_total']} bài đã đăng", f"{st['leads_new']} khách mới chưa liên hệ"]
     pr = db.one("SELECT SUM(grade='A') a, SUM(grade='B') b, SUM(status='needs_manual') m FROM prospects WHERE created_at>=?",
                 (db.today(),))
+    try:
+        import prospect
+        ch = [c for c in prospect.channels() if c["phones"]]
+        if ch:
+            parts.append("Khách sỉ có SĐT 7 ngày theo kênh: " + ", ".join(f"{c['label'].lower()} {c['phones']}" for c in ch))
+    except Exception:
+        pass
     if pr and (pr["a"] or pr["b"] or pr["m"]):
         parts.append(f"Mai tìm được {pr['a'] or 0} khách sỉ hạng A, {pr['b'] or 0} hạng B hôm nay"
                      + (f", {pr['m']} tài khoản cần sếp xem tay" if pr["m"] else ""))
@@ -433,7 +442,8 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - meeting {topic}: triệu tập họp
 - find_groups {keywords: [..]}: giao sale lướt Facebook tìm nhóm theo chủ đề
 - join_groups {}: các nick xin vào nhóm mới
-- find_prospects {keywords: [..], urls: [..]}: Mai tìm khách sỉ (người đang bán online, livestream trên Facebook/TikTok/Shopee),
+- find_prospects {keywords: [..], urls: [..], directions: [..]}: directions 5 = quét thư viện quảng cáo Facebook (trang đang chạy
+  quảng cáo), 6 = đọc bài và bình luận trong nhóm tìm người hỏi nguồn hàng, 1-4 = tìm trang/shop. Mai tìm khách sỉ (người đang bán online, livestream trên Facebook/TikTok/Shopee),
   chấm điểm A/B/C/D, hạng A/B vào mục Khách hàng. urls = link sếp gửi để Mai phân tích. Không tự nhắn tin cho khách.
 - scan_comments {}: sale quét bình luận tìm khách
 - learn_now {}: cả đội tự rút kinh nghiệm ngay
@@ -529,8 +539,13 @@ def _rule_plan(text: str) -> dict:
                                r"người livestream|nhà bán|shop|đại lý|khách tiềm năng)", low) or
                      (agent == "mai" and re.search(r"\b(tìm|kiếm|săn|phân tích|xem)\b", low)) or
                      (links and re.search(r"tiktok|shopee|facebook\.com/(?!groups)", " ".join(links)) and not want_join))
+    want_ads = re.search(r"(quét|tìm|xem|soi)\b.{0,25}(quảng cáo|chạy ads|chạy quảng cáo|thư viện quảng cáo)", low)
+    want_demand = re.search(r"(bình luận|comment|cmt|bài)\s*(trong|ở|của)\s*(các\s*)?(nhóm|group|hội)|hỏi nguồn|tìm nguồn hàng|cần nhập hàng", low)
     if acts and all(a["type"] == "setting" for a in acts):
         pass
+    elif (want_ads or want_demand) and not want_write and not want_find:
+        acts.append({"type": "find_prospects", "urls": [], "keywords": [],
+                     "directions": ([5] if want_ads else []) + ([6] if want_demand else [])})
     elif want_prospect and not want_find:
         acts.append({"type": "find_prospects", "urls": links, "keywords": []})
     elif want_hot and not want_write and (hp := _product_in(t)):

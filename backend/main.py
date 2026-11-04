@@ -496,6 +496,9 @@ class PRSettings(BaseModel):
     time: str | None = None
     inspect_per_run: int | None = None
     fb_keywords: int | None = None
+    groups_per_run: int | None = None
+    ads: bool | None = None
+    groups: bool | None = None
     facebook: bool | None = None
     tiktok: bool | None = None
     shopee: bool | None = None
@@ -515,12 +518,14 @@ def pr_settings(p: PRSettings):
         db.set_setting("prospect_inspect_per_run", str(max(1, min(20, p.inspect_per_run))))
     if p.fb_keywords is not None:
         db.set_setting("prospect_fb_keywords", str(max(1, min(4, p.fb_keywords))))
-    for k in ("enabled", "facebook", "tiktok", "shopee", "auto_crm", "ai_script"):
+    if p.groups_per_run is not None:
+        db.set_setting("prospect_groups_per_run", str(max(0, min(10, p.groups_per_run))))
+    for k in ("enabled", "facebook", "tiktok", "shopee", "auto_crm", "ai_script", "ads", "groups"):
         v = getattr(p, k)
         if v is not None:
             db.set_setting(f"prospect_{k}", "1" if v else "0")
     if p.keywords is not None:
-        kw = {str(d): [x.strip() for x in v if x.strip()][:12] for d, v in p.keywords.items() if str(d) in ("1", "2", "3", "4")}
+        kw = {str(d): [x.strip() for x in v if x.strip()][:12] for d, v in p.keywords.items() if str(d) in ("1", "2", "3", "4", "5")}
         db.set_setting("prospect_keywords", json.dumps({d: v for d, v in kw.items() if v}, ensure_ascii=False))
     return prospect.overview()
 

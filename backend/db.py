@@ -396,7 +396,7 @@ DEFAULT_SETTINGS = {
     "tg_alert_kpi": "1",
     "tg_report_done": "1",
     "prospect_enabled": "1", "prospect_time": "14:30", "prospect_inspect_per_run": "10", "prospect_facebook": "1",
-    "prospect_tiktok": "0", "prospect_shopee": "0", "prospect_fb_keywords": "2", "prospect_auto_crm": "1", "prospect_ai_script": "1", "prospect_keywords": "",
+    "prospect_tiktok": "0", "prospect_shopee": "0", "prospect_fb_keywords": "2", "prospect_ads": "1", "prospect_groups": "1", "prospect_groups_per_run": "3", "prospect_auto_crm": "1", "prospect_ai_script": "1", "prospect_keywords": "",
     "tg_sent_log": "{}",
     "attach_images": "1",
 }

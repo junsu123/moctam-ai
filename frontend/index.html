@@ -636,6 +636,12 @@ label.f{font-weight:600;color:var(--muted)}
 .pr-src .src[aria-pressed="true"] .sw{background:var(--accent);border-color:var(--accent)}
 .pr-src .src[aria-pressed="true"] .sw::after{transform:translateX(14px);background:#fff}
 .pr-src .st{font-size:11.5px;color:var(--muted)}
+.pr-ch{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 14px}
+.pr-ch div{border-left:3px solid var(--accent);background:var(--panel);border-radius:0 10px 10px 0;padding:6px 10px;min-width:0}
+.pr-ch div.zero{border-left-color:var(--line)}
+.pr-ch b{font-size:18px;display:block;line-height:1.2}
+.pr-ch span{font-size:11.5px;color:var(--muted);display:block}
+@media (max-width:900px){ .pr-ch{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .pr-phone-stat{grid-column:1 / -1;background:var(--accent-soft)!important;border-color:transparent!important;flex-direction:row!important;align-items:center;gap:12px!important}
 .pr-phone-stat > b{font-size:30px!important;color:var(--accent)}
 .pr-stat .g.g-A,.pr-stat .g.g-B{color:#fff!important}
@@ -894,9 +900,10 @@ label.f{font-weight:600;color:var(--muted)}
 
     <!-- TÌM KHÁCH SỈ (Mai) -->
     <section class="view" id="v-prospects" hidden>
-      <div class="vh"><div><h1>Tìm khách sỉ</h1><p>Mục tiêu của Mai: tìm <b>số điện thoại</b> của người đang bán hàng online (livestream, bán qua Facebook, đa nền tảng) để sếp gọi. Mai tập trung Facebook, đọc cả trang Giới thiệu để tìm SĐT kinh doanh được công khai. Có SĐT là vào mục Khách hàng và báo sếp qua Telegram ngay. Mai <b>không tự nhắn tin</b> cho ai.</p></div>
+      <div class="vh"><div><h1>Tìm khách sỉ</h1><p>Mục tiêu của cả đội: tìm khách sỉ trên mạng và lấy <b>số điện thoại</b> để sếp gọi. Mai đọc bình luận trong nhóm để bắt người đang hỏi nguồn hàng, quét thư viện quảng cáo Facebook tìm trang đang chạy quảng cáo bán thực phẩm, tìm shop livestream; đọc cả trang Giới thiệu để lấy SĐT kinh doanh công khai. Có SĐT là vào mục Khách hàng và báo sếp qua Telegram ngay. Mai <b>không tự nhắn tin</b> cho ai.</p></div>
         <div class="row wrap"><button class="btn primary" type="button" id="prRun">Mai đi tìm ngay</button></div></div>
       <div class="pr-src" id="prSrc" role="group" aria-label="Nguồn tìm"></div>
+      <div class="pr-ch" id="prCh" aria-label="Khách có SĐT theo kênh, 7 ngày"></div>
       <div class="pr-top">
         <div class="pr-stats" id="prStats" role="group" aria-label="Lọc theo hạng"></div>
         <form class="card pr-paste" id="prPaste">
@@ -1381,9 +1388,21 @@ const Demo = (() => {
   const lvl=xp=>1+Math.floor(Math.sqrt(xp/50)), lxp=l=>50*(l-1)**2;
   /* Mai: khách sỉ tìm được (tên shop là ví dụ, không có thật) */
   const ev=(kind,text,url)=>({kind,text,url});
-  S.prSet={prospect_enabled:"1",prospect_time:"14:30",prospect_inspect_per_run:"8",prospect_facebook:"1",prospect_tiktok:"0",prospect_shopee:"0",prospect_fb_keywords:"2",prospect_auto_crm:"1",prospect_ai_script:"1"};
-  S.prKw={1:["livestream bán trà","live bán ngũ cốc","livestream đồ ăn healthy","live bán thực phẩm sạch"],2:["shop trà túi lọc","bán bột ngũ cốc online","shop đồ ăn healthy","shop cà phê online"],3:["shop tạp hóa online","shop mẹ và bé online","bán hàng đa kênh shopee tiktok"],4:["tuyển đại lý thực phẩm","tìm nguồn hàng trà","nhận phân phối thực phẩm","tìm nguồn hàng sỉ ngũ cốc"]};
+  S.prSet={prospect_enabled:"1",prospect_time:"14:30",prospect_inspect_per_run:"8",prospect_facebook:"1",prospect_tiktok:"0",prospect_shopee:"0",prospect_fb_keywords:"2",prospect_ads:"1",prospect_groups:"1",prospect_groups_per_run:"3",prospect_auto_crm:"1",prospect_ai_script:"1"};
+  S.prKw={1:["livestream bán trà","live bán ngũ cốc","livestream đồ ăn healthy","live bán thực phẩm sạch"],2:["shop trà túi lọc","bán bột ngũ cốc online","shop đồ ăn healthy","shop cà phê online"],3:["shop tạp hóa online","shop mẹ và bé online","bán hàng đa kênh shopee tiktok"],4:["tuyển đại lý thực phẩm","tìm nguồn hàng trà","nhận phân phối thực phẩm","tìm nguồn hàng sỉ ngũ cốc"],5:["trà túi lọc","ngũ cốc dinh dưỡng","granola","trà thảo mộc","bột ngũ cốc","đồ ăn healthy"]};
   S.pr=[
+    {id:7,platform:"facebook",account_name:"Ngọc Hân (ví dụ)",account_url:"https://www.facebook.com/profile.php?id=100000000000007",seller_type:"buyer",tags:"buyer,owner",direction:6,keyword:"Chợ Sỉ Thực Phẩm Khô",
+     recent_activity:"Bài mới nhất cách đây 2 giờ",phone:"0903000444",products:"Đang bán đồ ăn healthy online",categories:"Trà, cà phê, đồ uống, ngũ cốc, healthy",score:71,grade:"A",parts:{sales:14,live:0,fit:20,import:15,engage:7,contact:5,expand:0},status:"verified",lead_id:24,
+     evidence:[ev("demand","Hỏi nguồn hàng: Mình đang tìm nguồn trà túi lọc, ngũ cốc giá sỉ để bán online, ai có xin gọi 0903 000 444","https://www.facebook.com/groups/vidu/posts/1"),ev("contact","SĐT họ tự ghi: 0903000444","https://www.facebook.com/groups/vidu/posts/1"),ev("sell","Bán hàng online đồ ăn healthy, ship toàn quốc","https://www.facebook.com/profile.php?id=100000000000007")],
+     suggested:[{id:1,name:"Trà gừng mật ong túi lọc",why:"đúng nhóm hàng họ đang tìm"},{id:3,name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",why:"đúng nhóm hàng họ đang tìm"}],
+     approach:"Chào Ngọc Hân, em là Hà bên Xưởng Trà & Bột. Em thấy chị đang tìm nguồn trà túi lọc trong nhóm. Bên em là xưởng sản xuất trà gừng mật ong túi lọc và bột ngũ cốc, bán sỉ tận xưởng cho người bán online, có ảnh và video thật để đăng bán. Chị đang cần loại nào và số lượng khoảng bao nhiêu để em gửi bảng giá phù hợp ạ?",
+     next_action:"Gọi hoặc nhắn Zalo 0903000444 theo kịch bản trong 24 giờ",created_at:"2026-11-04 14:44:00"},
+    {id:8,platform:"facebook",account_name:"Granola Nhà Gạo (ví dụ)",shop_name:"Granola Nhà Gạo",account_url:"https://www.facebook.com/granolanhagao.vidu",seller_type:"owner",tags:"ads,owner",direction:5,keyword:"granola",
+     recent_activity:"Bài mới nhất cách đây 1 ngày",phone:"0903000555",products:"Granola, ngũ cốc hạt",categories:"Trà, cà phê, đồ uống, ngũ cốc, healthy",score:66,grade:"B",parts:{sales:16,live:0,fit:20,import:9,engage:6,contact:10,expand:5},status:"verified",lead_id:25,
+     evidence:[ev("ads","Đang chạy quảng cáo (3 quảng cáo): Granola hạt giòn tan, giao toàn quốc, hotline 0903 000 555","https://www.facebook.com/ads/library/"),ev("sell","Combo 2 hũ granola giá 230k, freeship, inbox đặt hàng","https://www.facebook.com/granolanhagao.vidu")],
+     suggested:[{id:3,name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",why:"đúng nhóm hàng họ đang bán"}],
+     approach:"Chào Granola Nhà Gạo, em là Hà bên Xưởng Trà & Bột. Em thấy bên mình đang chạy quảng cáo bán ngũ cốc trên Facebook. Bên em là xưởng sản xuất bột ngũ cốc 25 loại hạt, có giá sỉ tận xưởng để shop thêm vào danh mục và có sẵn ảnh, video thật làm quảng cáo. Nếu shop quan tâm, em gửi bảng giá để mình xem trước ạ.",
+     next_action:"Gọi hoặc nhắn Zalo 0903000555 theo kịch bản",created_at:"2026-11-04 14:43:30"},
     {id:1,platform:"facebook",account_name:"Bếp Nhà Mây (ví dụ)",shop_name:"Bếp Nhà Mây – Ngũ cốc & Trà",account_url:"https://www.facebook.com/bepnhamay.vidu",shop_url:"https://shopee.vn/shop/100000001",seller_type:"live",tags:"live,multi,owner",direction:1,keyword:"live bán ngũ cốc",
      recent_activity:"Bài mới nhất cách đây 3 giờ",live_freq:"3/5 bài gần nhất là phát trực tiếp",followers:18000,phone:"0903000111",zalo:"https://zalo.me/0903000111",email:null,products:"Shop mình chuyên ngũ cốc hạt, trà thảo mộc, granola",categories:"Trà, cà phê, đồ uống, ngũ cốc, healthy",
      import_signals:"Hàng mới về mỗi tuần, shop nhập số lượng lớn nên giá tốt",score:92,grade:"A",parts:{sales:20,live:20,fit:20,import:12,engage:10,contact:8,expand:2},status:"verified",lead_id:21,
@@ -1414,7 +1433,7 @@ const Demo = (() => {
      next_action:"Sếp mở link xem tay (nền tảng yêu cầu đăng nhập/xác minh, phần mềm không vượt qua)",created_at:"2026-11-04 14:36:00"},
     {id:5,platform:"facebook",account_name:"Tạp hóa Cô Ba (ví dụ)",account_url:"https://www.facebook.com/taphoacoba.vidu",seller_type:"store",tags:"store",direction:3,keyword:"shop tạp hóa online",recent_activity:"Bài mới nhất cách đây 75 ngày",score:14,grade:"D",parts:{sales:0,live:0,fit:5,import:3,engage:0,contact:4,expand:2},status:"verified",
      evidence:[ev("found","Cửa hàng tại chợ Bến Thành, mở cửa từ 6h sáng","https://www.facebook.com/taphoacoba.vidu")],suggested:[],approach:"",next_action:"Cửa hàng truyền thống, không thấy bán online: không ưu tiên",created_at:"2026-11-04 14:35:00"}];
-  const PR_TYPES={owner:"Chủ shop tự nhập hàng",live:"Người bán hàng livestream",multi:"Người bán hàng đa nền tảng",marketplace:"Nhà bán hàng trên sàn TMĐT",ctv:"Cộng tác viên",affiliate:"Affiliate",koc:"KOC/KOL",store:"Cửa hàng truyền thống",unknown:"Chưa rõ"};
+  const PR_TYPES={buyer:"Người đang tìm nguồn hàng",ads:"Đang chạy quảng cáo",owner:"Chủ shop tự nhập hàng",live:"Người bán hàng livestream",multi:"Người bán hàng đa nền tảng",marketplace:"Nhà bán hàng trên sàn TMĐT",ctv:"Cộng tác viên",affiliate:"Affiliate",koc:"KOC/KOL",store:"Cửa hàng truyền thống",unknown:"Chưa rõ"};
   function demoPR(qs){ const q=new URLSearchParams(qs||""), g=q.get("grade")||"", pf=q.get("platform")||"", ty=q.get("seller_type")||"", st=q.get("status")||"", ph=q.get("phone")||"";
     const isSeller=x=>["A","B","C"].includes(x.grade);
     const rank={A:0,B:1,C:2,D:3};
@@ -1424,8 +1443,10 @@ const Demo = (() => {
     return {items,counts,manual:S.pr.filter(x=>x.status==="needs_manual").length,crm:S.pr.filter(x=>x.lead_id).length,
       phones:S.pr.filter(x=>x.phone&&isSeller(x)&&x.status!=="rejected").length,phones_today:S.pr.filter(x=>x.phone&&isSeller(x)).length,
       no_phone:S.pr.filter(x=>!x.phone&&isSeller(x)&&x.status==="verified"&&!["affiliate","koc","store"].includes(x.seller_type)).length,
+      channels:[{key:"comment",label:"Bình luận dưới bài sale đăng",phones:S.leads.filter(l=>l.origin==="comment"&&l.phone).length,total:S.leads.filter(l=>l.origin==="comment").length},
+        ...[["demand","Người hỏi nguồn hàng trong nhóm",6],["ads","Trang đang chạy quảng cáo",5],["pages","Tìm trang, shop livestream",0],["link","Sếp dán link",-1]].map(([k,l,dir])=>{ const xs=S.pr.filter(x=>dir===0?x.direction>=1&&x.direction<=4:dir===-1?!x.direction:x.direction===dir); return {key:k,label:l,phones:xs.filter(x=>x.phone&&isSeller(x)).length,total:xs.length}; })],
       platforms_on:["facebook",...["tiktok","shopee"].filter(k=>S.prSet["prospect_"+k]==="1")],
-      directions:{1:"Người livestream bán trà, ngũ cốc, thực phẩm",2:"Người bán sản phẩm tương tự hoặc bổ trợ",3:"Người bán nhiều nhóm hàng tiêu dùng, có thể mở rộng danh mục",4:"Người tuyển đại lý, tìm nguồn hàng, nhận phân phối, bán sỉ"},
+      directions:{5:"Trang đang chạy quảng cáo bán thực phẩm, đồ uống (thư viện quảng cáo Facebook)",6:"Người đang hỏi tìm nguồn hàng trong nhóm (đọc bài và bình luận)",1:"Người livestream bán trà, ngũ cốc, thực phẩm",2:"Người bán sản phẩm tương tự hoặc bổ trợ",3:"Người bán nhiều nhóm hàng tiêu dùng, có thể mở rộng danh mục",4:"Người tuyển đại lý, tìm nguồn hàng, nhận phân phối, bán sỉ"},
       types:PR_TYPES,platforms:{facebook:"Facebook",tiktok:"TikTok",shopee:"Shopee"},keywords:S.prKw,settings:S.prSet,last:S.prLast||{detail:"Mai tìm khách sỉ xong: tìm được 2 SĐT khách đang bán hàng (xem 9 tài khoản: A 1, B 2, C 1, D 1). Đã chuyển sếp: Bếp Nhà Mây 0903000111 (A), Mộc Gia Mart 0903000222 (B).",created_at:"2026-11-04 14:43:00"}}; }
   const DEMO_LEARN={ceo:["Đang học: cách định giá sỉ theo bậc số lượng","Ôn lại: khi nào nên tuyển thêm nhân sự bán hàng"],minh:["Đang học: cách điều hành họp giao ban 15 phút","Ôn lại: cách giao việc có hạn và người chịu trách nhiệm"],
     lan:["Luyện viết bài về Trà gừng mật ong theo phong cách đã học","Đang học: cách viết câu mở đầu giữ chân người đọc"],tuan:["Đang học: dấu hiệu nhóm tương tác thật và nhóm ảo","Xem lại nhóm cần cân nhắc: Chợ Sỉ Thực Phẩm Khô"],
@@ -1722,7 +1743,7 @@ const Demo = (() => {
     if(method==="POST"&&(m=P.match(/^\/prospects\/(\d+)\/crm$/))){ const x=S.pr.find(z=>z.id==m[1]); if(!x.lead_id){ x.lead_id=id(); S.leads.unshift({id:x.lead_id,name:x.shop_name||x.account_name,contact:x.account_url,phone:x.phone,origin:"prospect",channel:"Facebook",source:"Tìm khách sỉ",business_type:PR_TYPES[x.seller_type]||"",need:x.products||"",score:x.score||0,status:"new",note:""}); } return {lead_id:x.lead_id}; }
     if(method==="POST"&&(m=P.match(/^\/prospects\/(\d+)\/recheck$/))){ S.status.mai={state:"working",text:"Đang kiểm tra lại 1 tài khoản"}; setTimeout(()=>S.status.mai={state:"idle",text:"Xong"},2000); return {account:"Linh Nguyễn"}; }
     if(method==="PUT"&&P==="/prospects/settings"){ for(const k of ["enabled","facebook","tiktok","shopee","auto_crm","ai_script"]) if(body[k]!=null) S.prSet["prospect_"+k]=body[k]?"1":"0";
-      if(body.time) S.prSet.prospect_time=body.time; if(body.fb_keywords) S.prSet.prospect_fb_keywords=String(body.fb_keywords); if(body.inspect_per_run) S.prSet.prospect_inspect_per_run=String(body.inspect_per_run); if(body.keywords) S.prKw={...S.prKw,...body.keywords}; return demoPR(""); }
+      if(body.groups_per_run!=null) S.prSet.prospect_groups_per_run=String(body.groups_per_run); for(const k of ["ads","groups"]) if(body[k]!=null) S.prSet["prospect_"+k]=body[k]?"1":"0"; if(body.time) S.prSet.prospect_time=body.time; if(body.fb_keywords) S.prSet.prospect_fb_keywords=String(body.fb_keywords); if(body.inspect_per_run) S.prSet.prospect_inspect_per_run=String(body.inspect_per_run); if(body.keywords) S.prKw={...S.prKw,...body.keywords}; return demoPR(""); }
     if(method==="PATCH"&&(m=P.match(/^\/errors\/(\d+)$/))){ const e=S.errors.find(x=>x.id==m[1]); if(e) e.status=body.status; return {ok:true}; }
     if(method==="DELETE"&&P==="/errors/resolved"){ S.errors=S.errors.filter(e=>e.status!=="resolved"); return {ok:true}; }
     if(method==="POST"&&P==="/ceo/chat"){ S.chat.push({id:id(),role:"boss",text:body.text,via:"web",created_at:now()}); await wait(700); const [r,x]=demoCeoDo(body.text);
@@ -2664,14 +2685,14 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-askceo]")
   setTimeout(()=>{ $("#ceoIn").value=`${b.dataset.askceo} `; $("#ceoIn").focus(); },300); });
 
 /* --------------------------------------------- Mai: tìm khách sỉ */
-const PR_EV={sell:"Bán hàng",live:"Livestream",import:"Nhập hàng",fit_core:"Ngành hàng",fit_food:"Ngành hàng",affiliate:"Affiliate",owner:"Chủ shop",ctv:"CTV",koc:"KOC",shared_live:"Chỉ chia sẻ live",contact:"Liên hệ",shop_link:"Gian hàng",found:"Kết quả tìm"};
+const PR_EV={ads:"Quảng cáo",demand:"Hỏi nguồn hàng",sell:"Bán hàng",live:"Livestream",import:"Nhập hàng",fit_core:"Ngành hàng",fit_food:"Ngành hàng",affiliate:"Affiliate",owner:"Chủ shop",ctv:"CTV",koc:"KOC",shared_live:"Chỉ chia sẻ live",contact:"Liên hệ",shop_link:"Gian hàng",found:"Kết quả tìm"};
 const PR_PARTS=[["sales","Bán hàng",20],["live","Livestream",20],["fit","Hợp ngành",20],["import","Tự nhập hàng",15],["engage","Hoạt động",10],["contact","Liên hệ",10],["expand","Mở rộng",5]];
 const PR_PF={facebook:"Facebook",tiktok:"TikTok",shopee:"Shopee"};
 ST.prF={grade:"",platform:"",seller_type:"",status:"",phone:""};
 function prCard(x,d){
   const man=x.status==="needs_manual", g=man?"M":(x.grade||"D");
   const tags=(x.tags||"").split(",").filter(t=>t&&t!==x.seller_type).map(t=>`<span class="chip">${esc(d.types[t]||t)}</span>`).join("");
-  const meta=[PR_PF[x.platform]||x.platform,x.recent_activity,x.live_freq,x.followers?`${num(x.followers)} người theo dõi`:"",x.direction?`Hướng ${x.direction}: “${esc(x.keyword||"")}”`:x.keyword==="dán link"?"Sếp dán link":""].filter(Boolean).map(v=>typeof v==="string"&&v.startsWith("Hướng")?v:esc(v)).join(" · ");
+  const meta=[PR_PF[x.platform]||x.platform,x.recent_activity,x.live_freq,x.followers?`${num(x.followers)} người theo dõi`:"",x.direction===6?`Tìm thấy khi đọc nhóm “${x.keyword||""}”`:x.direction===5?`Thư viện quảng cáo, từ khóa “${x.keyword||""}”`:x.direction?`Hướng ${x.direction}: “${x.keyword||""}”`:x.keyword==="dán link"?"Sếp dán link":""].filter(Boolean).map(v=>esc(v)).join(" · ");
   const ct=[x.zalo?`<a href="${esc(/^http/.test(x.zalo)?x.zalo:"https://zalo.me/"+x.zalo)}" target="_blank" rel="noopener">Zalo</a>`:"",x.email?`<a href="mailto:${esc(x.email)}">${esc(x.email)}</a>`:"",
     x.shop_url?`<a href="${esc(x.shop_url)}" target="_blank" rel="noopener">Gian hàng ↗</a>`:"",x.live_url?`<a href="${esc(x.live_url)}" target="_blank" rel="noopener">Livestream ↗</a>`:""].filter(Boolean).join("");
   const parts=x.parts&&Object.keys(x.parts).length?`<div class="pr-parts">${PR_PARTS.map(([k,l,mx])=>{ const v=x.parts[k]||0, pc=Math.round(v/mx*100);
@@ -2703,14 +2724,15 @@ function prCard(x,d){
 function prSettings(d){
   const st=d.settings, on=k=>st["prospect_"+k]!=="0"?"checked":"";
   return `<div class="stack" style="margin-top:10px">
-    <p class="small muted" style="margin:0">Mỗi ngày lúc ${esc(st.prospect_time||"14:30")}, Mai dùng Chrome của một nick sale tìm trên Facebook theo 4 hướng (mỗi hướng ${esc(st.prospect_fb_keywords||2)} từ khóa, đổi vòng mỗi ngày), mở xem tối đa ${esc(st.prospect_inspect_per_run||10)} tài khoản, đọc giới thiệu và vài bài gần nhất (chỉ đọc). Chưa thấy SĐT thì Mai đọc thêm bài và mở trang Giới thiệu → Thông tin liên hệ; vẫn chưa có thì 3 ngày sau quay lại tìm (tối đa 3 lần). Chỉ lấy SĐT kinh doanh shop tự công khai. Chấm 100 điểm: bán hàng 20, livestream 20, hợp ngành 20, tự nhập hàng 15, hoạt động 10, liên hệ 10, mở rộng 5. Hạng A ≥ 80, B 60–79, C 40–59, D dưới 40. Không có bằng chứng thì không cho điểm; người chỉ xem hoặc chia sẻ livestream không tính là người bán; affiliate chưa có bằng chứng tự nhập thì không chào giá sỉ. TikTok, Shopee bắt đăng nhập hay captcha thì Mai dừng và ghi “cần sếp xem tay”.</p>
+    <p class="small muted" style="margin:0">Mỗi ngày lúc ${esc(st.prospect_time||"14:30")}, Mai dùng Chrome của một nick sale: đọc bài và bình luận mới trong ${esc(st.prospect_groups_per_run||3)} nhóm (ai hỏi “tìm nguồn”, “cần nhập”, “xin giá sỉ” trà, ngũ cốc là khách nóng nhất; người chào bán sỉ thì bỏ qua), quét thư viện quảng cáo Facebook (Việt Nam, quảng cáo đang chạy) theo từ khóa sản phẩm, rồi tìm trang, shop theo 4 hướng (mỗi hướng ${esc(st.prospect_fb_keywords||2)} từ khóa, đổi vòng mỗi ngày), mở xem tối đa ${esc(st.prospect_inspect_per_run||10)} tài khoản, đọc giới thiệu và vài bài gần nhất (chỉ đọc). Chưa thấy SĐT thì Mai đọc thêm bài và mở trang Giới thiệu → Thông tin liên hệ; vẫn chưa có thì 3 ngày sau quay lại tìm (tối đa 3 lần). Chỉ lấy SĐT kinh doanh shop tự công khai. Chấm 100 điểm: bán hàng 20, livestream 20, hợp ngành 20, tự nhập hàng 15, hoạt động 10, liên hệ 10, mở rộng 5. Hạng A ≥ 80, B 60–79, C 40–59, D dưới 40. Không có bằng chứng thì không cho điểm; người chỉ xem hoặc chia sẻ livestream không tính là người bán; affiliate chưa có bằng chứng tự nhập thì không chào giá sỉ. TikTok, Shopee bắt đăng nhập hay captcha thì Mai dừng và ghi “cần sếp xem tay”.</p>
     <form id="prSetForm" class="stack">
       <div class="grid3"><label class="f" for="prTime">Giờ đi tìm<input type="time" id="prTime" value="${esc(st.prospect_time||"14:30")}"></label>
         <label class="f" for="prN">Tài khoản mở xem mỗi lượt<input type="number" id="prN" min="1" max="20" value="${esc(st.prospect_inspect_per_run||10)}"></label>
-        <label class="f" for="prFk">Từ khóa Facebook mỗi hướng/lượt<input type="number" id="prFk" min="1" max="4" value="${esc(st.prospect_fb_keywords||2)}"></label></div>
+        <label class="f" for="prFk">Từ khóa Facebook mỗi hướng/lượt<input type="number" id="prFk" min="1" max="4" value="${esc(st.prospect_fb_keywords||2)}"></label>
+        <label class="f" for="prGn">Nhóm đọc bình luận mỗi lượt<input type="number" id="prGn" min="0" max="10" value="${esc(st.prospect_groups_per_run||3)}"></label></div>
       <div class="row wrap" style="gap:14px"><label class="row small"><input type="checkbox" id="prOn" ${on("enabled")}> Tự đi tìm mỗi ngày</label>
         <label class="row small"><input type="checkbox" id="prCrm" ${on("auto_crm")}> Có SĐT thì tự vào Khách hàng và báo sếp qua Telegram</label><label class="row small"><input type="checkbox" id="prAi" ${on("ai_script")}> Nhờ Claude viết kịch bản (chỉ dựa trên bằng chứng)</label></div>
-      <div class="pr-dirs">${[1,2,3,4].map(i=>`<label class="f" for="prK${i}">Hướng ${i}: ${esc(d.directions[i])} (mỗi dòng 1 từ khóa)<textarea id="prK${i}" rows="3">${esc(((d.keywords||{})[i]||[]).join("\n"))}</textarea></label>`).join("")}</div>
+      <div class="pr-dirs">${[5,1,2,3,4].map(i=>`<label class="f" for="prK${i}">Hướng ${i}: ${esc(d.directions[i])} (mỗi dòng 1 từ khóa${i===5?" sản phẩm":""})<textarea id="prK${i}" rows="3">${esc(((d.keywords||{})[i]||[]).join("\n"))}</textarea></label>`).join("")}</div>
       <div><button class="btn sm primary" type="submit">Lưu cài đặt</button></div></form></div>`;
 }
 async function loadProspects(soft){
@@ -2721,15 +2743,20 @@ async function loadProspects(soft){
   $("#prStats").innerHTML=`<button type="button" class="pr-stat pr-phone-stat${f.phone==="yes"?" on":""}" data-prph="yes"><b>${d.phones||0}</b><span><b style="font-size:14px;color:var(--ink)">số điện thoại đã tìm được</b><br>${d.phones_today||0} số hôm nay · ${d.no_phone||0} người đang bán chưa có SĐT, Mai sẽ quay lại tìm</span></button>`+stat("A","Liên hệ ngay","g-A",c.A||0)+stat("B","Theo dõi rồi tiếp cận","g-B",c.B||0)+stat("C","Lưu theo dõi","g-C",c.C||0)+stat("D","Không ưu tiên","g-D",c.D||0)+stat("M","Cần sếp xem tay","g-M",d.manual||0)
     +`<div class="pr-stat" style="cursor:default"><b>${d.crm||0}</b><span>Đã vào Khách hàng</span></div>`;
   const on=d.platforms_on||["facebook"];
-  $("#prSrc").innerHTML=`<b>Nguồn tìm:</b><button type="button" class="src" disabled aria-pressed="true">Facebook <span class="st">luôn bật, ưu tiên</span><span class="sw"></span></button>`
-    +["tiktok","shopee"].map(k=>`<button type="button" class="src" data-prsrc="${k}" aria-pressed="${on.includes(k)}">${PR_PF[k]} <span class="st">${on.includes(k)?"đang hoạt động":"không hoạt động"}</span><span class="sw"></span></button>`).join("");
+  const sv=k=>d.settings["prospect_"+k]!=="0";
+  const sw=(k,label,isOn)=>`<button type="button" class="src" data-prsrc="${k}" aria-pressed="${isOn}">${label} <span class="st">${isOn?"đang hoạt động":"không hoạt động"}</span><span class="sw"></span></button>`;
+  $("#prSrc").innerHTML=`<b>Nguồn tìm:</b><button type="button" class="src" disabled aria-pressed="true">Facebook: trang, shop <span class="st">luôn bật</span><span class="sw"></span></button>`
+    +sw("groups","Bình luận trong nhóm",sv("groups"))+sw("ads","Trang chạy quảng cáo",sv("ads"))
+    +["tiktok","shopee"].map(k=>sw(k,PR_PF[k],on.includes(k))).join("");
+  $("#prCh").innerHTML=(d.channels||[]).map(c=>`<div class="${c.phones?"":"zero"}" title="${c.total} người tìm được trong 7 ngày"><b>${c.phones}</b><span>SĐT · ${esc(c.label)}</span></div>`).join("");
   const ty=$("#prType"); if(ty.options.length<2) ty.insertAdjacentHTML("beforeend",Object.entries(d.types).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join(""));
   $("#prLast").textContent=d.last?`${fmtTime(d.last.created_at)} ${fmtDate(d.last.created_at)}: ${d.last.detail}`:"Mai chưa đi tìm lần nào.";
   $("#prList").innerHTML=d.items.length?d.items.map(x=>prCard(x,d)).join(""):`<div class="card empty">${Object.values(f).some(Boolean)?"Không có tài khoản nào khớp bộ lọc.":"Chưa có khách nào. Bấm “Mai đi tìm ngay” hoặc dán link một shop để Mai phân tích."}</div>`;
   if(!soft||!$("#prSetBody").innerHTML) $("#prSetBody").innerHTML=prSettings(d);
 }
 $("#prSrc").addEventListener("click",async e=>{ const b=e.target.closest("[data-prsrc]"); if(!b) return; const k=b.dataset.prsrc, v=b.getAttribute("aria-pressed")!=="true";
-  try{ await api("/prospects/settings","PUT",{[k]:v}); toast(`${PR_PF[k]}: ${v?"đã bật, Mai tìm thêm ở đây (gặp đăng nhập/captcha thì dừng)":"đã tắt, Mai không tìm ở đây nữa"}`); loadProspects(true); }catch(err){ toast(err.message); } });
+  const nm={groups:"Đọc bình luận trong nhóm",ads:"Quét trang chạy quảng cáo"}[k]||PR_PF[k];
+  try{ await api("/prospects/settings","PUT",{[k]:v}); toast(`${nm}: ${v?(PR_PF[k]?"đã bật, Mai tìm thêm ở đây (gặp đăng nhập/captcha thì dừng)":"đã bật"):"đã tắt, Mai không tìm ở đây nữa"}`); loadProspects(true); }catch(err){ toast(err.message); } });
 $("#prStats").addEventListener("click",e=>{ const ph=e.target.closest("[data-prph]"); if(ph){ ST.prF.phone=ST.prF.phone==="yes"?"":"yes"; $("#prPh").value=ST.prF.phone; return loadProspects(true); }
   const b=e.target.closest("[data-prg]"); if(!b) return; const k=b.dataset.prg, f=ST.prF;
   if(k==="M"){ f.status=f.status==="needs_manual"?"":"needs_manual"; f.grade=""; } else { f.grade=f.grade===k?"":k; if(f.status==="needs_manual") f.status=""; }
@@ -2746,8 +2773,8 @@ $("#prList").addEventListener("click",async e=>{ const t=e.target; let b;
     if((b=t.closest("[data-prst]"))){ await api(`/prospects/${b.dataset.id}`,"PATCH",{status:b.dataset.prst}); toast({contacted:"Đã ghi nhận đã liên hệ",rejected:"Đã loại khỏi danh sách",verified:"Đã đưa lại vào danh sách theo dõi"}[b.dataset.prst]); return loadProspects(true); }
     if((b=t.closest("[data-prre]"))){ const r=await api(`/prospects/${b.dataset.prre}/recheck`,"POST"); toast(`Mai sẽ mở lại trang này bằng Chrome của nick ${r.account}`); return; }
   }catch(err){ toast(err.message); } });
-$("#prSetBody").addEventListener("submit",async e=>{ e.preventDefault(); const kw={}; [1,2,3,4].forEach(i=>kw[i]=$("#prK"+i).value.split("\n").map(s=>s.trim()).filter(Boolean));
-  try{ await api("/prospects/settings","PUT",{time:$("#prTime").value,inspect_per_run:+$("#prN").value,fb_keywords:+$("#prFk").value,enabled:$("#prOn").checked,auto_crm:$("#prCrm").checked,ai_script:$("#prAi").checked,keywords:kw});
+$("#prSetBody").addEventListener("submit",async e=>{ e.preventDefault(); const kw={}; [1,2,3,4,5].forEach(i=>kw[i]=$("#prK"+i).value.split("\n").map(s=>s.trim()).filter(Boolean));
+  try{ await api("/prospects/settings","PUT",{time:$("#prTime").value,inspect_per_run:+$("#prN").value,fb_keywords:+$("#prFk").value,groups_per_run:+$("#prGn").value,enabled:$("#prOn").checked,auto_crm:$("#prCrm").checked,ai_script:$("#prAi").checked,keywords:kw});
     toast("Đã lưu cài đặt tìm khách"); loadProspects(); }catch(err){ toast(err.message); } });
 
 /* --------------------------------------------- tìm nhóm mới */

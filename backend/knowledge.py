@@ -47,7 +47,9 @@ CURRICULUM = {
             "khi nào nên tuyển thêm nhân sự bán hàng", "cách xây thương hiệu xưởng trên Facebook"],
     "sale": ["cách nuôi nick Facebook an toàn", "dấu hiệu nick sắp bị checkpoint và cách tránh",
              "cách trả lời bình luận xin số điện thoại tự nhiên", "cách tham gia nhóm mới không bị từ chối"],
-    "mai": ["cách tìm số điện thoại kinh doanh công khai của shop trên Facebook", "từ khóa Facebook để tìm người bán hàng có để lại SĐT",
+    "mai": ["cách dùng thư viện quảng cáo Facebook để tìm người bán thực phẩm đang chạy quảng cáo",
+            "cách nhận ra bài và bình luận hỏi tìm nguồn hàng trong nhóm Facebook",
+            "cách tìm số điện thoại kinh doanh công khai của shop trên Facebook", "từ khóa Facebook để tìm người bán hàng có để lại SĐT",
             "thang chấm điểm khách sỉ 100 điểm và cách xếp hạng A B C D", "phân biệt chủ shop tự nhập hàng với affiliate, KOC, CTV",
             "dấu hiệu một tài khoản đang livestream bán hàng thật", "dấu hiệu người bán có khả năng nhập hàng về bán lại",
             "cách tìm người bán trà, ngũ cốc, đồ ăn healthy trên TikTok Shop", "cách đọc gian hàng Shopee để đánh giá người bán",
@@ -116,6 +118,14 @@ LIBRARY = {
          "mọi bình luận.", "xin sdt binh luan"),
     ],
     "mai": [
+        ("cách dùng thư viện quảng cáo Facebook để tìm người bán thực phẩm đang chạy quảng cáo", "Tìm trang đang chạy quảng cáo thế nào?",
+         "Vào Thư viện quảng cáo Facebook, chọn Việt Nam, quảng cáo đang hoạt động, tìm theo từ khóa sản phẩm (trà túi lọc, ngũ cốc, "
+         "granola...). Trang trả tiền quảng cáo bán thực phẩm là người bán thật, có ngân sách; quảng cáo thường ghi hotline. Bỏ qua "
+         "quảng cáo không hợp ngành.", "thu vien quang cao facebook ads library chay quang cao"),
+        ("cách nhận ra bài và bình luận hỏi tìm nguồn hàng trong nhóm Facebook", "Ai trong nhóm là khách nóng?",
+         "Người viết 'tìm nguồn', 'cần nhập', 'xin giá sỉ', 'ai có nguồn' kèm tên hàng (trà, ngũ cốc, granola, đồ ăn healthy) là khách "
+         "nóng nhất. Bỏ qua người chào bán sỉ ('nhận sỉ', 'cung cấp sỉ', 'tuyển đại lý'): đó là nhà cung cấp. Họ tự ghi SĐT thì lấy; "
+         "chưa có thì sếp/Hà trả lời hoặc nhắn tay xin SĐT.", "tim nguon hang binh luan nhom can nhap xin gia si khach nong"),
         ("cách tìm số điện thoại kinh doanh công khai của shop trên Facebook", "Tìm SĐT của shop trên Facebook ở đâu?",
          "Theo thứ tự: phần Giới thiệu đầu trang (hotline, Zalo), mục Giới thiệu → Thông tin liên hệ, bài ghim, bài tuyển CTV/đại lý "
          "hay bài chốt đơn ('liên hệ 09...', 'Zalo 09...'), nút gọi điện, link zalo.me. Chỉ lấy số shop tự công khai để bán hàng; "
