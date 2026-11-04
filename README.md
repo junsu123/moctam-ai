@@ -29,14 +29,21 @@ Một "công ty" gồm 5 nhân viên AI làm thay phần việc của đội sal
 
 ## Nhân viên sale và tài khoản Facebook
 
-Mỗi sale AI giữ một nick Facebook. Nick nằm trong một hồ sơ Chrome riêng tại `data/profiles/sale-<số>`,
+Mỗi sale AI giữ **3–5 nick Facebook** (tối đa 5). Mỗi nick nằm trong một hồ sơ Chrome riêng tại
+`data/profiles/acc-<số>` (nick từ bản cũ giữ nguyên thư mục `sale-<số>`, không phải đăng nhập lại),
 tách biệt với Chrome bạn dùng hằng ngày.
+
+**Sale làm theo ca, từng nick một.** Mỗi lúc một sale chỉ mở Chrome của một nick: mở nick, làm hết việc đã đến giờ
+của nick đó (đăng bài, up bài, quét bình luận), đóng Chrome rồi chuyển sang nick kế tiếp có việc. Đến lượt sau
+sale bắt đầu từ nick sau nick vừa làm, nên các nick được làm xoay vòng đều nhau. Tìm nhóm và xin vào nhóm cũng
+xoay vòng theo nick (mỗi nick xin vào tối đa 2 nhóm/ngày).
 
 **Lần đầu cho mỗi nick:**
 
-1. Vào **Nhân viên sale** → *Tuyển sale* (tối đa 8 người, mỗi người có bàn riêng trong văn phòng 3D).
+1. Vào **Nhân viên sale** → *Tuyển sale* (tối đa 8 người, mỗi người có bàn riêng trong văn phòng 3D), đặt tên nick đầu tiên.
    Sale mẫu (nếu có) tự rời văn phòng ngay khi bạn tuyển người đầu tiên.
-2. Bấm **Mở Chrome**. Một cửa sổ Chrome của nick đó hiện lên trên máy đang chạy phần mềm.
+   Rồi bấm **Thêm nick** trong thẻ sale cho đủ 3–5 nick.
+2. Ở từng nick, bấm **Mở Chrome**. Một cửa sổ Chrome của nick đó hiện lên trên máy đang chạy phần mềm.
    Đăng nhập Facebook (kể cả mã xác thực 2 lớp nếu có), vào sẵn các nhóm cần đăng, rồi **đóng cửa sổ**.
    Phiên đăng nhập được giữ lại trong hồ sơ; phần mềm không lưu mật khẩu.
 3. Vào **Hội nhóm**, bấm tên nick ở cột "Nick đã vào nhóm" để đánh dấu nick nào là thành viên nhóm nào,
@@ -47,27 +54,29 @@ tách biệt với Chrome bạn dùng hằng ngày.
 **Tuấn xếp lịch theo các quy tắc an toàn:**
 
 - Nick phải là thành viên nhóm; mỗi nhóm chỉ nhận 1 bài mỗi lượt và phải hết số ngày giãn cách.
-- Mỗi nick không vượt số bài/ngày (mặc định 5), hai bài cách nhau tối thiểu 40 phút cộng thêm vài phút ngẫu nhiên,
-  chỉ đăng trong khung giờ của nick (mặc định 08:00–22:00). Chỉnh trong thẻ của từng sale.
+- Bài được chia đều cho các nick đang chạy. Mỗi nick không vượt số bài/ngày (mặc định 3 cho nick mới), hai bài
+  cách nhau tối thiểu 45 phút cộng thêm vài phút ngẫu nhiên, chỉ đăng trong khung giờ của nick (mặc định 08:00–22:00).
+  Hai nick của cùng một sale cách nhau ít nhất 8–14 phút (thời gian đổi ca). Chỉnh ở mục *Giới hạn* của từng nick.
 - Mỗi nick tối đa 1 bài trang cá nhân/ngày. Mỗi bài là một nội dung riêng do Lan viết, không đăng trùng.
 
-**Khi có sự cố:** nếu Facebook chuyển sang trang checkpoint, đăng xuất, hoặc báo tạm chặn, sale dừng ngay,
-tắt tự đăng của nick đó, trả các bài chờ về hàng đợi và báo lên Văn phòng. Bạn mở Chrome của nick để xử lý,
-rồi bấm **Bật tự đăng**. Phần mềm không giải captcha và không giả mạo trình duyệt.
+**Khi có sự cố:** nếu Facebook chuyển sang trang checkpoint, đăng xuất, hoặc báo tạm chặn, sale dừng ngay
+**riêng nick đó** (các nick khác của sale vẫn làm), trả các bài chờ của nick về hàng đợi để Tuấn xếp cho nick khác,
+và báo lên Văn phòng, Telegram. Bạn mở Chrome của nick để xử lý, rồi bấm **Bật lại nick**.
+Muốn cho cả sale nghỉ tạm thì bấm **Tạm dừng cả sale**. Phần mềm không giải captcha và không giả mạo trình duyệt.
 
 **Khi sale không đăng được bài:** lỗi hiện ở thẻ bài (mục Bài đăng) và thẻ sale, kèm ảnh chụp màn hình lúc lỗi.
 
 | Lỗi | Cách xử lý |
 |---|---|
 | Nhóm chưa có link | Hội nhóm → bấm **Thêm link** ở dòng nhóm đó, dán link nhóm (link điện thoại hay link chia sẻ đều được). Bài từng lỗi vì thiếu link tự về hàng chờ để Tuấn xếp lại. Nhóm mẫu cài sẵn không có link |
-| Nick chưa là thành viên nhóm / đang chờ duyệt vào nhóm | Mở Chrome của sale, tham gia nhóm, chờ quản trị viên duyệt |
+| Nick chưa là thành viên nhóm / đang chờ duyệt vào nhóm | Mở Chrome của đúng nick đó, tham gia nhóm, chờ quản trị viên duyệt |
 | Hồ sơ Chrome của nick đang mở ở cửa sổ khác | Đóng cửa sổ Chrome của sale (cửa sổ mở bằng nút "Mở Chrome") rồi bấm đăng lại. Chrome cũ còn treo chạy ẩn (do phần mềm từng tắt đột ngột) được phần mềm tự đóng |
 | Thông báo đỏ "Đang có 2 phần mềm chạy cùng lúc" / log báo `404` liên tục | Chạy lại run.bat: bản mới tự tìm và tắt mọi bản phần mềm đang chạy trước đó (kể cả bản cũ và Chrome của nó) rồi mới chạy |
 | Cửa sổ đen hiện chữ đỏ `KeyboardInterrupt` | Không phải lỗi: phần mềm nhận lệnh dừng (bấm Ctrl+C trong cửa sổ đen). Từ bản này Ctrl+C chỉ hiện "Đã tắt phần mềm."; bấm chuột vào cửa sổ đen không còn làm phần mềm bị treo. Chạy lại run.bat để bật phần mềm |
 | Thông báo "Đã có bản mới trên máy" | Không cần làm gì: phần mềm tự khởi động lại bằng bản mới khi các sale làm xong việc đang dở, trang tự tải lại. Muốn ngay thì bấm **Khởi động lại ngay** |
 | Chrome của sale tự đóng ngay khi mở ("Target page, context or browser has been closed") | Phần mềm tự thử lại một lần. Nếu vẫn lỗi: đóng hết cửa sổ Chrome của sale, cập nhật Google Chrome lên bản mới nhất, tạm tắt phần mềm diệt virus đang chặn Chrome. Màn hình Lỗi nêu rõ nguyên nhân đoán được (ví dụ hồ sơ tạo bằng bản Chrome mới hơn bản trên máy) |
 | Cửa sổ Chrome bị đóng khi sale đang làm | Không tắt cửa sổ Chrome lúc sale đang đăng bài; muốn không thấy cửa sổ thì bật "Ẩn cửa sổ Chrome khi sale đăng bài" trong Cài đặt |
-| Nick chưa đăng nhập | Nhân viên sale → Mở Chrome để đăng nhập |
+| Nick chưa đăng nhập | Nhân viên sale → bấm **Mở Chrome để đăng nhập** ở đúng nick đó |
 | Không tìm thấy ô viết bài / nút Đăng | Facebook đổi chữ trên nút. Lỗi ghi sẵn tên các nút đang thấy; thêm đúng chữ đó vào `backend/fb_selectors.json` (`group_composer`, `profile_composer`, `post_button`, `next_button`) |
 
 Sale tự xử lý bước **Tiếp** mà Facebook hay chèn trước nút **Đăng**, tự đổi link nhóm dạng điện thoại (`m.facebook.com`)
@@ -423,7 +432,8 @@ backend/
   meeting.py     Phòng họp: báo cáo → tranh luận → chốt việc
   scheduler.py   Lịch tự động: họp mỗi sáng, đăng Fanpage đúng giờ
   facebook.py    Đăng Fanpage qua Graph API
-  browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, đăng bài, lấy link bài, up bài
+  accounts.py    Nick Facebook của sale: mỗi sale 3–5 nick, hồ sơ Chrome và giới hạn riêng, chuyển dữ liệu bản cũ
+  browser_poster.py  Nhân viên sale điều khiển Chrome của nick: đăng nhập lần đầu, ca làm việc theo nick, đăng bài, lấy link bài, up bài
   media_folder.py    Thư mục ảnh từng sản phẩm: chọn ngẫu nhiên, xoay vòng, chống đăng trùng theo nhóm và nick
   errors.py      Sổ lỗi: ghi lỗi từ mọi màn hình và việc tự động, gộp lỗi trùng, gợi ý cách xử lý
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, chấm điểm, thêm nhóm, xin vào nhóm

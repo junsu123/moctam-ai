@@ -52,6 +52,11 @@ def stats() -> dict:
         "sales_total": c("SELECT COUNT(*) n FROM sales"),
         "sales_ok": c("SELECT COUNT(*) n FROM sales WHERE login_status='ok' AND auto_post=1"),
         "sales_problem": c("SELECT COUNT(*) n FROM sales WHERE login_status IN ('checkpoint','not_logged_in')"),
+        "nicks_total": c("SELECT COUNT(*) n FROM fb_accounts a JOIN sales s ON s.id=a.sale_id WHERE COALESCE(s.status,'active')!='fired'"),
+        "nicks_ok": c("""SELECT COUNT(*) n FROM fb_accounts a JOIN sales s ON s.id=a.sale_id WHERE a.enabled=1 AND a.login_status='ok'
+                         AND s.auto_post=1 AND COALESCE(s.status,'active')='active'"""),
+        "nicks_problem": c("""SELECT COUNT(*) n FROM fb_accounts a JOIN sales s ON s.id=a.sale_id WHERE a.enabled=1
+                              AND a.login_status!='ok' AND COALESCE(s.status,'active')!='fired'"""),
         "ai_live": llm.live,
         "ai_cost_month": round(month_spent(), 3),
     }
@@ -218,16 +223,20 @@ def plan_distribution() -> list[dict]:
     mỗi nick tối đa 1 bài trang cá nhân/ngày. Mỗi bài là một nội dung khác nhau (Lan viết riêng).
     """
     set_status("tuan", "working", "Đang xếp lịch đăng nhóm")
+    import accounts
     today, now = db.today(), datetime.now()
-    sales = [s for s in db.q("SELECT * FROM sales ORDER BY id") if s["login_status"] == "ok" and s["auto_post"]]
-    load = {}
+    # mỗi nick là một đơn vị đăng bài; một sale giữ nhiều nick và làm lần lượt từng nick
+    sales = accounts.working()
+    load, sale_last = {}, {}
     for s in sales:
-        rows = db.q("""SELECT scheduled_for, posted_at, target_type FROM posts WHERE sale_id=? AND
+        rows = db.q("""SELECT scheduled_for, posted_at, target_type FROM posts WHERE account_id=? AND
                        ((status IN ('scheduled','posting') AND scheduled_for LIKE ?) OR (status='posted' AND posted_at LIKE ?))""",
                     (s["id"], today + "%", today + "%"))
         times = [r["scheduled_for"] or r["posted_at"] for r in rows]
         load[s["id"]] = {"count": len(rows), "last": max(times) if times else None,
                          "profile": sum(r["target_type"] == "profile" for r in rows)}
+        for t in times:
+            sale_last[s["sale_id"]] = max(sale_last.get(s["sale_id"]) or "", t)
     taken = {r["group_id"] for r in db.q("SELECT group_id FROM posts WHERE status IN ('scheduled','posting') AND group_id IS NOT NULL")}
     groups = [g for g in db.q("SELECT * FROM groups ORDER BY leads_count DESC, members DESC")
               if group_ready(g) and g["id"] not in taken and (g.get("url") or "").strip()]  # nhóm chưa có link: không xếp
@@ -246,6 +255,8 @@ def plan_distribution() -> list[dict]:
         start = max(now + timedelta(minutes=3), _dt(f"{today} {s['active_from'] or '08:00'}"))
         if L["last"]:
             start = max(start, _dt(L["last"]) + timedelta(minutes=int(s["min_gap_minutes"] or 40) + random.randint(0, 12)))
+        if sale_last.get(s["sale_id"]):  # sale làm từng nick một: chừa thời gian xong ca nick trước
+            start = max(start, _dt(sale_last[s["sale_id"]]) + timedelta(minutes=8 + random.randint(0, 6)))
         end = _dt(f"{today} {s['active_to'] or '22:00'}")
         if start > end:
             return None
@@ -257,25 +268,25 @@ def plan_distribution() -> list[dict]:
                 return min(later)
         return start
 
-    def assign(post, sale, when, group=None):
-        db.run("UPDATE posts SET sale_id=?, group_id=?, scheduled_for=?, status='scheduled', error=NULL WHERE id=?",
-               (sale["id"] if sale else None, group["id"] if group else None, when, post["id"]))
-        if sale:
-            L = load[sale["id"]]
+    def assign(post, acc, when, group=None):
+        db.run("UPDATE posts SET sale_id=?, account_id=?, group_id=?, scheduled_for=?, status='scheduled', error=NULL WHERE id=?",
+               (acc["sale_id"] if acc else None, acc["id"] if acc else None, group["id"] if group else None, when, post["id"]))
+        if acc:
+            L = load[acc["id"]]
             L["count"] += 1
             L["last"] = when
             L["profile"] += post["target_type"] == "profile"
+            sale_last[acc["sale_id"]] = max(sale_last.get(acc["sale_id"]) or "", when)
         plan.append({"post_id": post["id"], "group": group["name"] if group else TARGET_NAME[post["target_type"]],
-                     "time": when, "sale": sale["name"] if sale else None})
+                     "time": when, "sale": f"{acc['sale_name']} · {acc['name']}" if acc else None})
 
     approved = db.q("SELECT * FROM posts WHERE status='approved' AND target_type='group' ORDER BY id")
     if sales:
         for post in approved:
             for g in list(groups):
-                members = {int(x) for x in (g.get("member_sale_ids") or "").split(",") if x.strip().isdigit()}
                 # nhóm sale tự tìm được: chỉ nick đã vào nhóm mới đăng; nhóm sếp nhập chưa đánh dấu nick: coi như mọi nick đã vào
                 cands = [(t, load[s["id"]]["count"], s) for s in sales
-                         if ((not members and g.get("source") != "search") or s["id"] in members) and (t := next_slot(s))]
+                         if accounts.can_post_in(g, s["id"]) and (t := next_slot(s))]
                 if cands:
                     t, _, s = min(cands, key=lambda c: (c[0], c[1]))
                     assign(post, s, t.strftime("%Y-%m-%d %H:%M"), g)
@@ -338,8 +349,9 @@ def plan_bumps(force: bool = False) -> int:
     per_nick = int(s.get("bump_max_per_nick") or 8)
     gap = int(s.get("bump_gap_minutes") or 6)
     total = 0
-    for sale in db.q("SELECT * FROM sales WHERE login_status='ok' AND auto_post=1"):
-        posts = db.q("""SELECT id FROM posts WHERE status='posted' AND sale_id=? AND COALESCE(bump_enabled,1)=1
+    import accounts
+    for sale in accounts.working():  # mỗi nick up bài của chính nick đó
+        posts = db.q("""SELECT id FROM posts WHERE status='posted' AND account_id=? AND COALESCE(bump_enabled,1)=1
                         AND COALESCE(permalink_status,'') != 'removed' AND posted_at >= ? AND posted_at <= ?
                         AND id NOT IN (SELECT post_id FROM bumps WHERE created_at LIKE ? AND status != 'skipped')
                         ORDER BY COALESCE(last_bump_at, '') ASC, posted_at DESC LIMIT ?""",
@@ -349,8 +361,8 @@ def plan_bumps(force: bool = False) -> int:
         for p in posts:
             if t > end:
                 break
-            db.run("INSERT INTO bumps(post_id, sale_id, text, status, scheduled_for, created_at) VALUES (?,?,?,?,?,?)",
-                   (p["id"], sale["id"], random.choice(texts), "scheduled", t.strftime("%Y-%m-%d %H:%M"), db.now()))
+            db.run("INSERT INTO bumps(post_id, sale_id, account_id, text, status, scheduled_for, created_at) VALUES (?,?,?,?,?,?,?)",
+                   (p["id"], sale["sale_id"], sale["id"], random.choice(texts), "scheduled", t.strftime("%Y-%m-%d %H:%M"), db.now()))
             total += 1
             t += timedelta(minutes=gap + random.randint(0, 4))
     db.log("tuan", "Lịch up bài", f"Đã xếp {total} lượt bình luận ảnh để up bài hôm nay" if total
@@ -360,11 +372,12 @@ def plan_bumps(force: bool = False) -> int:
 
 def bump_now(post_id: int) -> int | None:
     p = db.one("SELECT * FROM posts WHERE id=?", (post_id,))
-    if not p or not p.get("sale_id"):
+    if not p or not p.get("account_id"):
         return None
     texts = [t.strip() for t in (db.get_settings().get("bump_texts") or "").splitlines()] or [""]
-    return db.run("INSERT INTO bumps(post_id, sale_id, text, status, scheduled_for, created_at) VALUES (?,?,?,?,?,?)",
-                  (post_id, p["sale_id"], random.choice(texts), "scheduled", datetime.now().strftime("%Y-%m-%d %H:%M"), db.now()))
+    return db.run("INSERT INTO bumps(post_id, sale_id, account_id, text, status, scheduled_for, created_at) VALUES (?,?,?,?,?,?,?)",
+                  (post_id, p["sale_id"], p["account_id"], random.choice(texts), "scheduled",
+                   datetime.now().strftime("%Y-%m-%d %H:%M"), db.now()))
 
 
 # ---------------------------------------------------------------- Hà: chăm sóc khách

@@ -127,9 +127,13 @@ def why_no_sales() -> str:
     rows = db.q("SELECT * FROM sales WHERE COALESCE(status,'active')!='fired' AND COALESCE(is_sample,0)=0")
     if not rows:
         return "Chưa có nhân viên sale nào giữ nick Facebook. Sếp vào trang Nhân viên sale để tuyển, hoặc bảo em “tuyển thêm 1 sale”."
-    not_in = [r["name"] for r in rows if r["login_status"] != "ok"]
+    import accounts
+    nonick = [r["name"] for r in rows if not accounts.of_sale(r["id"])]
+    not_in = [r["name"] for r in rows if r["login_status"] != "ok" and r["name"] not in nonick]
     paused = [r["name"] for r in rows if r["login_status"] == "ok" and not r["auto_post"]]
     parts = []
+    if nonick:
+        parts.append(f"{', '.join(nonick)} chưa có nick Facebook nào: sếp vào Nhân viên sale → Thêm nick")
     if not_in:
         parts.append(f"{', '.join(not_in)} chưa đăng nhập Facebook (hoặc nick bị checkpoint): sếp vào Nhân viên sale → "
                      "Mở Chrome để đăng nhập")
@@ -212,15 +216,15 @@ def execute(act: dict) -> str:
         if not group_finder._working_sales():
             return "Chưa giao tìm nhóm được. " + why_no_sales()
         r = group_finder.start_discover(None, kws or None, notify=act.get("_via", "web"))
-        return (f"Giao sale {_name('sale-' + str(r['sale_id']))} lướt Facebook rồi tìm nhóm theo: {', '.join(r['keywords'])}"
+        return (f"Giao sale {_name('sale-' + str(r['sale_id']))} (nick {r['account']}) lướt Facebook rồi tìm nhóm theo: {', '.join(r['keywords'])}"
                 f"{_busy_note(r['sale_id'])}. Tìm xong em báo lại sếp.")
     if t == "join_groups":
-        import browser_poster
         import group_finder
-        ss = group_finder._working_sales()
-        for x in ss:
-            browser_poster.submit(x["id"], {"kind": "join", "notify": act.get("_via", "web")})
-        return f"Giao {len(ss)} nick xin vào các nhóm mới, xong em báo lại sếp" if ss else "Chưa giao xin vào nhóm được. " + why_no_sales()
+        if not group_finder._working_sales():
+            return "Chưa giao xin vào nhóm được. " + why_no_sales()
+        n = group_finder.submit_joins(act.get("_via", "web"))
+        return f"Giao {n} nick xin vào các nhóm mới (sale làm lần lượt từng nick), xong em báo lại sếp" if n else \
+            "Các nick đã hết lượt xin vào nhóm hôm nay (giới hạn an toàn), mai sale xin tiếp"
     if t == "scan_comments":
         import telegram_bot
         n = telegram_bot.start_scan_round(force=True)

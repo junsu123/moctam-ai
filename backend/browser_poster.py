@@ -18,6 +18,7 @@ import traceback
 from pathlib import Path
 from queue import Queue
 
+import accounts
 import db
 import kpi
 import media_folder
@@ -28,6 +29,7 @@ SEL_FILE = Path(__file__).resolve().parent / "fb_selectors.json"
 
 _queues: dict[int, Queue] = {}
 _busy: dict[int, str] = {}
+_busy_acc: dict[int, int] = {}  # sale_id -> nick đang mở Chrome
 _lock = threading.Lock()
 
 
@@ -39,14 +41,22 @@ def selectors() -> dict:
     return json.loads(SEL_FILE.read_text(encoding="utf-8"))
 
 
-def profile_dir(sale_id: int) -> Path:
-    p = db.PROFILES_DIR / f"sale-{sale_id}"
-    p.mkdir(parents=True, exist_ok=True)
-    return p
+def profile_dir(aid: int) -> Path:
+    """Hồ sơ Chrome của một nick Facebook."""
+    return accounts.profile_path(aid)
+
+
+def sale_of(aid: int) -> int | None:
+    a = accounts.get(aid)
+    return a["sale_id"] if a else None
 
 
 def busy(sale_id: int) -> str | None:
     return _busy.get(sale_id)
+
+
+def busy_account(sale_id: int) -> int | None:
+    return _busy_acc.get(sale_id)
 
 
 def queued(sale_id: int) -> int:
@@ -65,10 +75,10 @@ def submit(sale_id: int, job: dict):
 
 
 # ---------------------------------------------------------------- trình duyệt
-def _launch(pw, sale_id: int, headless: bool | None = None):
+def _launch(pw, aid: int, headless: bool | None = None):
     if headless is None:
         headless = db.get_settings().get("browser_headless") == "1"
-    kw = dict(user_data_dir=str(profile_dir(sale_id)), headless=headless, locale="vi-VN",
+    kw = dict(user_data_dir=str(profile_dir(aid)), headless=headless, locale="vi-VN",
               viewport={"width": 1280, "height": 900}, args=["--disable-notifications"])
     try:
         return pw.chromium.launch_persistent_context(channel="chrome", **kw)  # Google Chrome đã cài
@@ -93,9 +103,9 @@ def is_closed_error(e) -> bool:
     return bool(CLOSED_RX.search(str(e)))
 
 
-def profile_in_use(sale_id: int) -> bool:
+def profile_in_use(aid: int) -> bool:
     """Có tiến trình Chrome khác đang giữ hồ sơ này không (mở cùng hồ sơ thì Chrome mới tự đóng ngay)."""
-    d = profile_dir(sale_id)
+    d = profile_dir(aid)
     try:
         if os.name == "nt":
             lf = d / "lockfile"
@@ -120,10 +130,10 @@ def profile_in_use(sale_id: int) -> bool:
     return False
 
 
-def release_profile(sale_id: int) -> int:
+def release_profile(aid: int) -> int:
     """Đóng các tiến trình Chrome còn treo đang giữ hồ sơ của sale (chỉ những tiến trình mở đúng thư mục hồ sơ này,
     không đụng tới Chrome cá nhân của sếp). Trả về số tiến trình đã đóng."""
-    target = str(profile_dir(sale_id).resolve()).lower().replace("\\", "/")
+    target = str(profile_dir(aid).resolve()).lower().replace("\\", "/")
     killed = 0
     try:
         import psutil
@@ -142,7 +152,7 @@ def release_profile(sale_id: int) -> int:
             continue
     if killed:
         time.sleep(2)
-        db.log(f"sale-{sale_id}", "Đóng Chrome bị treo", f"Đã đóng {killed} tiến trình Chrome cũ còn giữ hồ sơ của nick")
+        db.log(f"sale-{sale_of(aid)}", "Đóng Chrome bị treo", f"Đã đóng {killed} tiến trình Chrome cũ còn giữ hồ sơ của nick {accounts.label(accounts.get(aid) or {'id': aid})}")
     return killed
 
 
@@ -163,12 +173,12 @@ def _chrome_version() -> str | None:
     return None
 
 
-def diagnose_closed(sale_id: int) -> str:
+def diagnose_closed(aid: int) -> str:
     """Giải thích vì sao Chrome của sale tự đóng ngay khi mở."""
-    if profile_in_use(sale_id):
+    if profile_in_use(aid):
         return IN_USE_MSG
     try:
-        prof = (profile_dir(sale_id) / "Last Version").read_text().strip()
+        prof = (profile_dir(aid) / "Last Version").read_text().strip()
     except Exception:
         prof = ""
     cur = _chrome_version()
@@ -192,17 +202,17 @@ def friendly(e) -> str:
     return CLOSED_MID if is_closed_error(first) else first
 
 
-def _open(pw, sale_id: int, headless: bool | None = None):
+def _open(pw, aid: int, headless: bool | None = None):
     """Mở Chrome của sale và một tab mới để làm việc. Tự thử lại 1 lần nếu Chrome bị đóng ngay khi mở."""
-    if profile_in_use(sale_id):
+    if profile_in_use(aid):
         # việc của một sale chạy lần lượt, nên lúc này phần mềm không mở Chrome nào cho sale này:
         # hồ sơ bị giữ là do Chrome cũ còn treo (phần mềm từng tắt đột ngột) hoặc cửa sổ sếp tự mở -> đóng Chrome treo
-        release_profile(sale_id)
-        if profile_in_use(sale_id):
+        release_profile(aid)
+        if profile_in_use(aid):
             raise RuntimeError(IN_USE_MSG)
     last = None
     for attempt in range(2):
-        ctx = _launch(pw, sale_id, headless)
+        ctx = _launch(pw, aid, headless)
         try:
             # luôn mở tab mới: tab đầu tiên có thể bị Chrome đóng khi khôi phục phiên trước
             page = ctx.new_page()
@@ -222,9 +232,9 @@ def _open(pw, sale_id: int, headless: bool | None = None):
                 pass
             if not is_closed_error(e):
                 raise
-            release_profile(sale_id)
+            release_profile(aid)
             time.sleep(4)
-    raise RuntimeError(diagnose_closed(sale_id)) from last
+    raise RuntimeError(diagnose_closed(aid)) from last
 
 
 def fb_url(u: str) -> str:
@@ -526,14 +536,22 @@ def _publish(page, post: dict, target_url: str, composer_labels: list[str], dry_
 
 
 # ---------------------------------------------------------------- công việc
-def _set_login(sale_id: int, status: str, err: str = ""):
-    db.run("UPDATE sales SET login_status=?, last_check_at=?, last_error=? WHERE id=?",
-           (status, db.now(), err, sale_id))
+def _set_login(aid: int, status: str, err: str = ""):
+    accounts.set_login(aid, status, err)
 
 
-def _job_open(pw, sale_id: int, minutes: int = 30):
-    """Mở Chrome để sếp đăng nhập / vào nhóm; đóng cửa sổ là xong."""
-    ctx, page = _open(pw, sale_id, headless=False)
+def _ctx_names(aid: int) -> tuple[dict, dict, str]:
+    """(nick, sale, mã agent của sale) cho nhật ký và trạng thái nhân vật."""
+    acc = accounts.get(aid) or {"id": aid, "name": f"Nick #{aid}", "sale_id": None}
+    sale = db.one("SELECT * FROM sales WHERE id=?", (acc["sale_id"],)) or {"id": acc["sale_id"], "name": "Sale"}
+    return acc, sale, f"sale-{sale['id']}"
+
+
+def _job_open(pw, aid: int, minutes: int = 30):
+    """Mở Chrome của một nick để sếp đăng nhập / vào nhóm; đóng cửa sổ là xong."""
+    acc, sale, agent = _ctx_names(aid)
+    workflows.set_status(agent, "working", f"Mở Chrome nick {accounts.label(acc)} chờ sếp đăng nhập")
+    ctx, page = _open(pw, aid, headless=False)
     try:
         page.goto(FB_BASE, wait_until="domcontentloaded")
     except Exception as e:
@@ -547,70 +565,74 @@ def _job_open(pw, sale_id: int, minutes: int = 30):
                 break
             ok = _logged_in(ctx)
             if ok != was:
-                _set_login(sale_id, "ok" if ok else "not_logged_in")
+                _set_login(aid, "ok" if ok else "not_logged_in")
                 if ok:
-                    db.log(f"sale-{sale_id}", "Đăng nhập", "Phiên Facebook đã được lưu trong hồ sơ Chrome")
+                    db.log(agent, "Đăng nhập", f"Phiên Facebook của nick {accounts.label(acc)} đã được lưu trong hồ sơ Chrome")
                 was = ok
             time.sleep(2)
         except Exception:
             break
     try:
         ok = _logged_in(ctx)
-        _set_login(sale_id, "ok" if ok else "not_logged_in")
+        _set_login(aid, "ok" if ok else "not_logged_in")
         ctx.close()
     except Exception:
         pass
+    workflows.set_status(agent, "idle", "Chờ việc tiếp theo")
 
 
-def _job_check(pw, sale_id: int):
-    ctx, page = _open(pw, sale_id)
+def _job_check(pw, aid: int):
+    ctx, page = _open(pw, aid)
     try:
         if not _logged_in(ctx):
-            _set_login(sale_id, "not_logged_in", "Chưa đăng nhập Facebook trong hồ sơ này")
+            _set_login(aid, "not_logged_in", "Chưa đăng nhập Facebook trong hồ sơ này")
             return
         page.goto(FB_BASE, wait_until="domcontentloaded", timeout=60000)
         page.wait_for_timeout(3000)
         _check_blocked(page)
-        _set_login(sale_id, "ok")
+        _set_login(aid, "ok")
     except Blocked as e:
-        _block(sale_id, str(e))
+        _block(aid, str(e))
     finally:
         ctx.close()
 
 
-def _block(sale_id: int, reason: str):
+def _block(aid: int, reason: str):
+    """Nick bị checkpoint/khóa: dừng riêng nick đó (các nick khác của sale vẫn làm), trả bài của nick về hàng đợi."""
     import errors
-    s = db.one("SELECT name, fb_name FROM sales WHERE id=?", (sale_id,)) or {}
-    errors.report("nick", f"Nick {s.get('fb_name') or s.get('name') or sale_id} bị Facebook chặn hoặc kiểm tra", reason,
-                  screen="sales", ref_type="sale", ref_id=sale_id)
-    _set_login(sale_id, "checkpoint", reason)
-    db.run("UPDATE sales SET auto_post=0 WHERE id=?", (sale_id,))
-    db.run("UPDATE posts SET status='approved', sale_id=NULL, scheduled_for=NULL WHERE sale_id=? AND status='scheduled'",
-           (sale_id,))
-    db.log("tuan", "Nick gặp sự cố", f"Sale #{sale_id}: {reason}. Đã dừng tự đăng và trả các bài chờ về hàng đợi.")
+    acc, sale, agent = _ctx_names(aid)
+    errors.report("nick", f"Nick {accounts.label(acc)} (sale {sale.get('name')}) bị Facebook chặn hoặc kiểm tra", reason,
+                  screen="sales", ref_type="account", ref_id=aid)
+    _set_login(aid, "checkpoint", reason)
+    db.run("UPDATE fb_accounts SET enabled=0 WHERE id=?", (aid,))
+    accounts.sync_sale(acc["sale_id"]) if acc.get("sale_id") else None
+    db.run("""UPDATE posts SET status='approved', sale_id=NULL, account_id=NULL, scheduled_for=NULL
+              WHERE account_id=? AND status='scheduled'""", (aid,))
+    db.run("UPDATE bumps SET status='skipped', error='Nick bị dừng' WHERE account_id=? AND status='scheduled'", (aid,))
+    db.log("tuan", "Nick gặp sự cố", f"Nick {accounts.label(acc)} của {sale.get('name')}: {reason}. Đã dừng riêng nick này "
+           "và trả các bài chờ về hàng đợi.")
     try:
         import telegram_bot
-        telegram_bot.alert_nick(sale_id, reason)
+        telegram_bot.alert_nick(aid, reason)
     except Exception as e:
         print("[telegram]", e)
 
 
-def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
+def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
+    """Đăng (hoặc đăng thử) một bài bằng nick đang mở."""
     post = db.one("""SELECT p.*, g.url group_url, g.name group_name FROM posts p
                      LEFT JOIN groups g ON g.id=p.group_id WHERE p.id=?""", (post_id,))
-    sale = db.one("SELECT * FROM sales WHERE id=?", (sale_id,))
-    if not post or not sale:
+    acc, sale, agent = _ctx_names(aid)
+    if not post:
         return
-    aid = f"sale-{sale_id}"
     where = post.get("group_name") or "trang cá nhân"
-    workflows.set_status(aid, "working", f"{'Đăng thử' if dry_run else 'Đang đăng'} bài vào {where}")
+    workflows.set_status(agent, "working", f"{'Đăng thử' if dry_run else 'Đang đăng'} bài vào {where} (nick {accounts.label(acc)})")
     if not dry_run:
-        db.run("UPDATE posts SET status='posting', error=NULL WHERE id=?", (post_id,))
-    ctx, page = _open(pw, sale_id)
+        db.run("UPDATE posts SET status='posting', error=NULL, account_id=?, sale_id=? WHERE id=?", (aid, acc["sale_id"], post_id))
     try:
         if not _logged_in(ctx):
-            _set_login(sale_id, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
-            raise RuntimeError("Nick chưa đăng nhập. Vào Nhân viên sale → Mở Chrome để đăng nhập lại")
+            _set_login(aid, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
+            raise RuntimeError(f"Nick {accounts.label(acc)} chưa đăng nhập. Vào Nhân viên sale → Mở Chrome nick này để đăng nhập lại")
         if post["target_type"] == "group":
             if not post.get("group_url"):
                 raise RuntimeError(f"Nhóm “{post.get('group_name') or ''}” chưa có link. Vào Hội nhóm, bấm “Thêm link” ở dòng nhóm này "
@@ -618,7 +640,7 @@ def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
             url, labels = fb_url(post["group_url"]), selectors()["group_composer"]
         else:
             url, labels = f"{FB_BASE}/me", selectors()["profile_composer"]
-        imgs, warn = media_folder.pick_for_post(post, sale_id)
+        imgs, warn = media_folder.pick_for_post(post, acc["sale_id"])
         if warn:
             db.log("tuan", "Thiếu ảnh mới", f"Bài #{post_id}: {warn}")
         shot, attached = _publish(page, post, url, labels, dry_run, imgs)
@@ -630,33 +652,46 @@ def _job_post(pw, sale_id: int, post_id: int, dry_run: bool):
         used = json.dumps([str(i) for i in imgs], ensure_ascii=False)
         if dry_run:
             db.run("UPDATE posts SET screenshot=?, error=NULL, images_used=? WHERE id=?", (shot, used, post_id))
-            db.log(aid, "Đăng thử", f"Bài #{post_id}: điền nội dung thành công ở {where} (chưa bấm Đăng)")
+            db.log(agent, "Đăng thử", f"Bài #{post_id}: điền nội dung thành công ở {where} bằng nick {accounts.label(acc)} (chưa bấm Đăng)")
         else:
-            workflows.mark_posted(post_id, url, f"{sale['name']} (tự động)")
+            workflows.mark_posted(post_id, url, f"{sale['name']} · nick {accounts.label(acc)} (tự động)")
             db.run("UPDATE posts SET screenshot=?, images_used=? WHERE id=?", (shot, used, post_id))
-            media_folder.record(imgs, "post", post, sale_id)
-            db.run("UPDATE sales SET last_post_at=?, last_error=NULL WHERE id=?", (db.now(), sale_id))
-            _set_login(sale_id, "ok")
-            workflows.set_status(aid, "working", "Đang lấy link bài vừa đăng")
+            media_folder.record(imgs, "post", post, acc["sale_id"])
+            db.run("UPDATE fb_accounts SET last_post_at=?, last_error=NULL WHERE id=?", (db.now(), aid))
+            db.run("UPDATE sales SET last_post_at=? WHERE id=?", (db.now(), acc["sale_id"]))
+            _set_login(aid, "ok")
+            workflows.set_status(agent, "working", "Đang lấy link bài vừa đăng")
             link, st = _capture_link(page, post)
             note = {"found": "đã lưu link bài", "pending": "bài đang chờ nhóm duyệt, sẽ lấy link sau",
                     "not_found": "chưa lấy được link, sẽ thử lại khi up bài"}[st]
-            db.log(aid, "Đã đăng", f"Bài #{post_id} lên {where}, {note}")
+            db.log(agent, "Đã đăng", f"Bài #{post_id} lên {where} bằng nick {accounts.label(acc)}, {note}")
     except Blocked as e:
         _fail(page, post_id, str(e), dry_run)
-        _block(sale_id, str(e))
+        _block(aid, str(e))
+        raise
     except Exception as e:
         _fail(page, post_id, friendly(e)[:300], dry_run)
         if "chưa là thành viên" in str(e) and post.get("group_id"):
             import group_finder
-            group_finder.mark_not_member(post["group_id"], sale_id)
-        db.log(aid, "Lỗi đăng bài", f"Bài #{post_id}: {str(e).splitlines()[0][:200]}")
+            group_finder.mark_not_member(post["group_id"], aid)
+        db.log(agent, "Lỗi đăng bài", f"Bài #{post_id} (nick {accounts.label(acc)}): {str(e).splitlines()[0][:200]}")
+
+
+def _job_post(pw, aid: int, post_id: int, dry_run: bool):
+    acc, sale, agent = _ctx_names(aid)
+    if not dry_run:
+        db.run("UPDATE posts SET status='posting', error=NULL WHERE id=?", (post_id,))
+    ctx, page = _open(pw, aid)
+    try:
+        _do_post(ctx, page, aid, post_id, dry_run)
+    except Blocked:
+        pass
     finally:
         try:
             ctx.close()
         except Exception:
             pass
-        workflows.set_status(aid, "idle", "Chờ lịch đăng tiếp theo")
+        workflows.set_status(agent, "idle", "Chờ lịch đăng tiếp theo")
 
 
 # ---------------------------------------------------------------- lấy link bài
@@ -738,9 +773,9 @@ def _capture_link(page, post: dict) -> tuple[str | None, str]:
 TIME_RX = re.compile(r"^(\d+\s*(giây|phút|giờ|ngày|tuần|tháng|năm|s|m|h|d|w|y|min|mins|hr|hrs)|vừa xong|just now)$", re.I)
 
 
-def _replies_today(sale_id: int) -> int:
-    return db.one("SELECT COUNT(*) n FROM comment_seen WHERE sale_id=? AND replied=1 AND created_at LIKE ?",
-                  (sale_id, db.today() + "%"))["n"]
+def _replies_today(aid: int) -> int:
+    return db.one("SELECT COUNT(*) n FROM comment_seen WHERE account_id=? AND replied=1 AND created_at LIKE ?",
+                  (aid, db.today() + "%"))["n"]
 
 
 def _parse_comment(art, s: dict, label: str) -> tuple[str, str] | None:
@@ -763,7 +798,7 @@ def _parse_comment(art, s: dict, label: str) -> tuple[str, str] | None:
     return (author or "Khách Facebook", text) if text else None
 
 
-def _scan_comments(page, post: dict, sale: dict) -> dict:
+def _scan_comments(page, post: dict, sale: dict, acc: dict | None = None) -> dict:
     """Đọc bình luận trên bài của chính nick này, tạo khách, trả lời xin SĐT (có giới hạn)."""
     s = selectors()
     st = db.get_settings()
@@ -777,7 +812,8 @@ def _scan_comments(page, post: dict, sale: dict) -> dict:
             page.wait_for_timeout(1800)
         except Exception:
             break
-    own = {x.strip().lower() for x in (sale.get("fb_name"), sale.get("name")) if x}
+    own = {x.strip().lower() for x in (sale.get("name"), (acc or {}).get("name")) if x}
+    own |= {a["name"].strip().lower() for a in accounts.of_sale(sale["id"]) if a.get("name")}  # mọi nick của sale
     ours = [t.strip().lower()[:40] for t in (st.get("reply_texts", "") + "\n" + st.get("bump_texts", "")).splitlines() if t.strip()]
     arts = page.locator('[role="article"][aria-label]')
     items = []
@@ -806,11 +842,11 @@ def _scan_comments(page, post: dict, sale: dict) -> dict:
             lead_id, is_new, got_phone = kpi.upsert_lead(author, text, post["id"], author)
             found["leads"] += int(is_new)
             found["phones"] += int(got_phone or (is_new and bool(kpi.norm_phone(text))))
-        cid = db.run("INSERT OR IGNORE INTO comment_seen(post_id, author, text_hash, lead_id, sale_id, created_at) VALUES (?,?,?,?,?,?)",
-                     (post["id"], author, h, lead_id, sale["id"], db.now()))
+        cid = db.run("""INSERT OR IGNORE INTO comment_seen(post_id, author, text_hash, lead_id, sale_id, account_id, created_at)
+                        VALUES (?,?,?,?,?,?,?)""", (post["id"], author, h, lead_id, sale["id"], (acc or {}).get("id"), db.now()))
         lead = db.one("SELECT phone FROM leads WHERE id=?", (lead_id,)) if lead_id else None
         if (lead_id and not (lead or {}).get("phone") and st.get("auto_reply_comments") == "1" and texts
-                and _replies_today(sale["id"]) < max_reply
+                and _replies_today((acc or {}).get("id")) < max_reply
                 and not db.one("SELECT id FROM comment_seen WHERE lead_id=? AND replied=1", (lead_id,))):
             try:
                 btn = _visible_first(art, s["reply_button"])
@@ -834,22 +870,18 @@ def _scan_comments(page, post: dict, sale: dict) -> dict:
     return found
 
 
-def _job_scan(pw, sale_id: int, post_ids: list[int]):
-    sale = db.one("SELECT * FROM sales WHERE id=?", (sale_id,))
-    if not sale:
-        return
-    aid = f"sale-{sale_id}"
-    workflows.set_status(aid, "working", f"Đang đọc bình luận {len(post_ids)} bài để tìm khách")
-    ctx, page = _open(pw, sale_id)
+def _do_scan(ctx, page, aid: int, post_ids: list[int]) -> dict:
+    acc, sale, agent = _ctx_names(aid)
     total = {"leads": 0, "phones": 0, "asked": 0}
-    try:
-        if not _logged_in(ctx):
-            _set_login(sale_id, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
-            return
-        for pid in post_ids:
-            post = db.one("SELECT * FROM posts WHERE id=?", (pid,))
-            if not post or post.get("permalink_status") != "found":
-                continue
+    workflows.set_status(agent, "working", f"Đang đọc bình luận {len(post_ids)} bài (nick {accounts.label(acc)}) để tìm khách")
+    if not _logged_in(ctx):
+        _set_login(aid, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
+        return total
+    for pid in post_ids:
+        post = db.one("SELECT * FROM posts WHERE id=?", (pid,))
+        if not post or post.get("permalink_status") != "found":
+            continue
+        try:
             page.goto(post["posted_url"], wait_until="domcontentloaded", timeout=60000)
             page.wait_for_timeout(3000)
             _check_blocked(page)
@@ -857,22 +889,34 @@ def _job_scan(pw, sale_id: int, post_ids: list[int]):
             if any(t.lower() in body for t in selectors()["removed_texts"]):
                 db.run("UPDATE posts SET permalink_status='removed', bump_enabled=0 WHERE id=?", (pid,))
                 continue
-            r = _scan_comments(page, post, sale)
+            r = _scan_comments(page, post, sale, acc)
             for k in total:
                 total[k] += r[k]
-            _pause(page, 4, 9)
+        except Blocked:
+            raise
+        except Exception as e:
+            db.log(agent, "Lỗi quét bình luận", str(e).splitlines()[0][:160])
+            import errors
+            errors.report_exc("scan", f"Quét bình luận bài #{pid} (nick {accounts.label(acc)}) bị lỗi", e, screen="kpi",
+                              ref_type="account", ref_id=aid)
+        _pause(page, 4, 9)
+    return total
+
+
+def _job_scan(pw, aid: int, post_ids: list[int]):
+    acc, sale, agent = _ctx_names(aid)
+    ctx, page = _open(pw, aid)
+    total = {"leads": 0, "phones": 0, "asked": 0}
+    try:
+        total = _do_scan(ctx, page, aid, post_ids)
     except Blocked as e:
-        _block(sale_id, str(e))
-    except Exception as e:
-        db.log(aid, "Lỗi quét bình luận", str(e).splitlines()[0][:160])
-        import errors
-        errors.report_exc("scan", f"Sale #{sale_id} quét bình luận bị lỗi", e, screen="kpi", ref_type="sale", ref_id=sale_id)
+        _block(aid, str(e))
     finally:
         try:
             ctx.close()
         except Exception:
             pass
-        workflows.set_status(aid, "idle", f"Quét xong: {total['leads']} khách mới, {total['phones']} SĐT")
+        workflows.set_status(agent, "idle", f"Quét xong: {total['leads']} khách mới, {total['phones']} SĐT")
 
 
 # ---------------------------------------------------------------- up bài: bình luận ảnh sản phẩm
@@ -886,25 +930,25 @@ def _bump_done(bump_id: int, status: str, err: str | None = None, shot: str | No
            (status, err, shot, image, db.now(), bump_id))
 
 
-def _job_bump(pw, sale_id: int, bump_id: int):
+def _do_bump(ctx, page, aid: int, bump_id: int):
     b = db.one("SELECT * FROM bumps WHERE id=?", (bump_id,))
     post = db.one("""SELECT p.*, g.url group_url, g.name group_name FROM posts p
                      LEFT JOIN groups g ON g.id=p.group_id WHERE p.id=?""", (b["post_id"],)) if b else None
     if not b or not post:
         return
-    aid = f"sale-{sale_id}"
+    acc, sale, agent = _ctx_names(aid)
     where = post.get("group_name") or "trang cá nhân"
     img = media_folder.pick(post)
     if not img:
         _bump_done(bump_id, "failed", "Thư mục ảnh trống hoặc chưa cài. Vào Cài đặt → Up bài để chọn thư mục")
         return
-    workflows.set_status(aid, "working", f"Đang up bài ở {where}")
-    ctx, page = _open(pw, sale_id)
+    db.run("UPDATE bumps SET status='running' WHERE id=?", (bump_id,))
+    workflows.set_status(agent, "working", f"Đang up bài ở {where} (nick {accounts.label(acc)})")
     shot = db.SHOTS_DIR / f"bump-{bump_id}.png"
     try:
         if not _logged_in(ctx):
-            _set_login(sale_id, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
-            raise RuntimeError("Nick chưa đăng nhập")
+            _set_login(aid, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
+            raise RuntimeError(f"Nick {accounts.label(acc)} chưa đăng nhập")
         link = post["posted_url"] if post.get("permalink_status") == "found" else None
         if not link:
             link, st = _capture_link(page, post)
@@ -923,7 +967,7 @@ def _job_bump(pw, sale_id: int, bump_id: int):
             db.run("UPDATE posts SET comments=MAX(COALESCE(comments,0), ?) WHERE id=?", (n, post["id"]))
         if not any(t.lower() in body for t in s["removed_texts"]):
             try:
-                _scan_comments(page, post, db.one("SELECT * FROM sales WHERE id=?", (sale_id,)))
+                _scan_comments(page, post, sale, acc)
             except Blocked:
                 raise
             except Exception as e:
@@ -933,7 +977,7 @@ def _job_bump(pw, sale_id: int, bump_id: int):
         if any(t.lower() in body for t in s["removed_texts"]):
             db.run("UPDATE posts SET permalink_status='removed', bump_enabled=0 WHERE id=?", (post["id"],))
             _bump_done(bump_id, "skipped", "Bài đã bị xóa hoặc ẩn, đã ngừng up bài này")
-            db.log(aid, "Bài bị gỡ", f"Bài #{post['id']} ở {where} không còn hiển thị, ngừng up")
+            db.log(agent, "Bài bị gỡ", f"Bài #{post['id']} ở {where} không còn hiển thị, ngừng up")
             return
         box = None
         end = time.time() + 15
@@ -973,28 +1017,92 @@ def _job_bump(pw, sale_id: int, bump_id: int):
         _check_blocked(page)
         page.screenshot(path=str(shot))
         _bump_done(bump_id, "done", None, f"/shots/{shot.name}", str(img))
-        media_folder.record([img], "bump", post, sale_id, bump_id)
+        media_folder.record([img], "bump", post, acc["sale_id"], bump_id)
         db.run("UPDATE posts SET bump_count=COALESCE(bump_count,0)+1, last_bump_at=? WHERE id=?", (db.now(), post["id"]))
-        db.log(aid, "Up bài", f"Bình luận ảnh {img.name} vào bài #{post['id']} ở {where}")
+        db.log(agent, "Up bài", f"Bình luận ảnh {img.name} vào bài #{post['id']} ở {where} (nick {accounts.label(acc)})")
         import learning
-        learning.award(aid, 1, "Up bài")
+        learning.award(agent, 1, "Up bài")
     except Blocked as e:
         _bump_done(bump_id, "failed", str(e))
-        _block(sale_id, str(e))
-        db.run("UPDATE bumps SET status='skipped', error='Nick bị dừng' WHERE sale_id=? AND status='scheduled'", (sale_id,))
+        _block(aid, str(e))
+        raise
     except Exception as e:
         try:
             page.screenshot(path=str(shot))
         except Exception:
             pass
         _bump_done(bump_id, "failed", str(e).splitlines()[0][:300], f"/shots/{shot.name}" if shot.exists() else None, str(img))
-        db.log(aid, "Lỗi up bài", f"Bài #{post['id']}: {str(e).splitlines()[0][:160]}")
+        db.log(agent, "Lỗi up bài", f"Bài #{post['id']}: {str(e).splitlines()[0][:160]}")
+
+
+def _job_bump(pw, aid: int, bump_id: int):
+    acc, sale, agent = _ctx_names(aid)
+    ctx, page = _open(pw, aid)
+    try:
+        _do_bump(ctx, page, aid, bump_id)
+    except Blocked:
+        pass
     finally:
         try:
             ctx.close()
         except Exception:
             pass
-        workflows.set_status(aid, "idle", "Chờ lịch tiếp theo")
+        workflows.set_status(agent, "idle", "Chờ lịch tiếp theo")
+
+
+# ---------------------------------------------------------------- ca làm việc trên một nick
+_scan_pending: dict[int, list[int]] = {}  # nick -> bài cần quét bình luận ở ca tới
+
+
+def request_scan(aid: int, post_ids: list[int]):
+    cur = _scan_pending.setdefault(aid, [])
+    cur.extend(p for p in post_ids if p not in cur)
+
+
+def due_work(aid: int, stamp: str | None = None) -> dict:
+    """Việc đến hạn của một nick: bài đến giờ đăng, lượt up bài đến giờ, bài chờ quét bình luận."""
+    stamp = stamp or db.now()[:16]
+    posts = [r["id"] for r in db.q("""SELECT id FROM posts WHERE account_id=? AND status='scheduled' AND scheduled_for <= ?
+                                      ORDER BY scheduled_for""", (aid, stamp))]
+    bumps = [r["id"] for r in db.q("""SELECT id FROM bumps WHERE account_id=? AND status='scheduled' AND scheduled_for <= ?
+                                      ORDER BY scheduled_for""", (aid, stamp))]
+    return {"posts": posts, "bumps": bumps, "scan": list(_scan_pending.get(aid, []))}
+
+
+def _job_session(pw, aid: int):
+    """Ca làm việc: mở Chrome của nick, làm hết việc đến hạn của nick đó, đóng lại (rồi sale chuyển sang nick khác)."""
+    acc, sale, agent = _ctx_names(aid)
+    work = due_work(aid)
+    if not any(work.values()):
+        return
+    _scan_pending.pop(aid, None)
+    db.run("UPDATE fb_accounts SET last_session_at=? WHERE id=?", (db.now(), aid))
+    db.run("UPDATE sales SET last_account_id=? WHERE id=?", (aid, acc["sale_id"]))
+    workflows.set_status(agent, "working", f"Chuyển sang nick {accounts.label(acc)}")
+    ctx, page = _open(pw, aid)
+    done = {"posts": 0, "bumps": 0, "scan": 0}
+    try:
+        for pid in work["posts"]:
+            _do_post(ctx, page, aid, pid, False)
+            done["posts"] += 1
+            _pause(page, 20, 45)
+        for bid in work["bumps"]:
+            _do_bump(ctx, page, aid, bid)
+            done["bumps"] += 1
+            _pause(page, 15, 40)
+        if work["scan"]:
+            _do_scan(ctx, page, aid, work["scan"])
+            done["scan"] = len(work["scan"])
+        db.log(agent, "Xong ca trên nick", f"Nick {accounts.label(acc)}: đăng {done['posts']} bài, up {done['bumps']} lượt, "
+               f"quét {done['scan']} bài")
+    except Blocked:
+        pass  # _block đã dừng riêng nick này; việc còn lại của nick đã trả về hàng đợi
+    finally:
+        try:
+            ctx.close()
+        except Exception:
+            pass
+        workflows.set_status(agent, "idle", f"Xong việc trên nick {accounts.label(acc)}")
 
 
 def _fail(page, post_id: int, msg: str, dry_run: bool):
@@ -1016,32 +1124,44 @@ def _fail(page, post_id: int, msg: str, dry_run: bool):
 
 
 JOB_NAME = {"open": "mở Chrome", "check": "kiểm tra phiên", "post": "đăng bài", "bump": "up bài", "scan": "quét bình luận",
-            "discover": "tìm nhóm mới", "join": "xin vào nhóm"}
+            "discover": "tìm nhóm mới", "join": "xin vào nhóm", "session": "làm ca trên nick"}
 
 
 def _worker(sale_id: int, q: Queue):
+    """Một nhân viên sale làm lần lượt từng việc (mỗi lúc chỉ mở Chrome của một nick)."""
     from playwright.sync_api import sync_playwright
     while True:
         job = q.get()
         _busy[sale_id] = job.get("kind", "")
+        aid = job.get("account")
+        if not aid:  # việc cũ không ghi nick: dùng nick đầu tiên của sale
+            a = accounts.first(sale_id)
+            aid = a["id"] if a else None
+        if aid:
+            _busy_acc[sale_id] = aid
         try:
+            if not aid:
+                raise RuntimeError("Nhân viên sale này chưa có nick Facebook nào. Vào Nhân viên sale → Thêm nick")
             with sync_playwright() as pw:
-                if job["kind"] == "open":
-                    _job_open(pw, sale_id)
-                elif job["kind"] == "check":
-                    _job_check(pw, sale_id)
-                elif job["kind"] == "post":
-                    _job_post(pw, sale_id, job["post_id"], job.get("dry_run", False))
-                elif job["kind"] == "bump":
-                    _job_bump(pw, sale_id, job["bump_id"])
-                elif job["kind"] == "scan":
-                    _job_scan(pw, sale_id, job["post_ids"])
-                elif job["kind"] == "discover":
+                k = job["kind"]
+                if k == "open":
+                    _job_open(pw, aid)
+                elif k == "check":
+                    _job_check(pw, aid)
+                elif k == "post":
+                    _job_post(pw, aid, job["post_id"], job.get("dry_run", False))
+                elif k == "bump":
+                    _job_bump(pw, aid, job["bump_id"])
+                elif k == "scan":
+                    _job_scan(pw, aid, job["post_ids"])
+                elif k == "session":
+                    _job_session(pw, aid)
+                elif k == "discover":
                     import group_finder
-                    group_finder.job_discover(pw, sale_id, job["keywords"], job.get("notify"))
-                elif job["kind"] == "join":
+                    group_finder.job_discover(pw, aid, job["keywords"], job.get("notify"))
+                elif k == "join":
                     import group_finder
-                    group_finder.job_join(pw, sale_id, job.get("notify"))
+                    group_finder.job_join(pw, aid, job.get("notify"))
         except Exception as e:
             traceback.print_exc()
             msg = friendly(e)
@@ -1050,15 +1170,19 @@ def _worker(sale_id: int, q: Queue):
             db.log(f"sale-{sale_id}", "Lỗi trình duyệt", msg[:200])
             import errors
             s = db.one("SELECT name FROM sales WHERE id=?", (sale_id,)) or {}
-            eid = errors.report_exc("browser", f"Chrome của sale {s.get('name') or '#' + str(sale_id)} lỗi khi "
-                                    f"{JOB_NAME.get(job['kind'], job['kind'])}", e, screen="sales", ref_type="sale", ref_id=sale_id)
+            acc = accounts.get(aid) if aid else None
+            nick = f" (nick {accounts.label(acc)})" if acc else ""
+            eid = errors.report_exc("browser", f"Chrome của sale {s.get('name') or '#' + str(sale_id)}{nick} lỗi khi "
+                                    f"{JOB_NAME.get(job['kind'], job['kind'])}", e, screen="sales",
+                                    ref_type="account" if aid else "sale", ref_id=aid or sale_id)
             if eid and msg != str(e).strip().splitlines()[0]:
                 db.run("UPDATE errors SET message=? WHERE id=?", (msg[:1000], eid))
-            if job["kind"] == "check":
-                db.run("UPDATE sales SET last_error=? WHERE id=?", (msg[:300], sale_id))
+            if job["kind"] == "check" and aid:
+                db.run("UPDATE fb_accounts SET last_error=? WHERE id=?", (msg[:300], aid))
+                accounts.sync_sale(sale_id)
             if job.get("notify"):  # việc CEO giao theo lệnh sếp: báo lại là không làm được
                 import ceo_orders
-                ceo_orders.followup(f"{s.get('name') or 'Sale'} chưa {JOB_NAME.get(job['kind'], job['kind'])} được: {msg[:200]}. "
+                ceo_orders.followup(f"{s.get('name') or 'Sale'}{nick} chưa {JOB_NAME.get(job['kind'], job['kind'])} được: {msg[:200]}. "
                                     "Chi tiết ở mục Lỗi.", job["notify"])
             if job["kind"] == "bump":
                 db.run("UPDATE bumps SET status='failed', error=? WHERE id=? AND status='running'",
@@ -1066,6 +1190,10 @@ def _worker(sale_id: int, q: Queue):
             if job["kind"] == "post" and not job.get("dry_run"):
                 db.run("UPDATE posts SET status='failed', error=? WHERE id=? AND status='posting'",
                        (msg[:300], job["post_id"]))
+            if job["kind"] == "session" and aid:  # ca lỗi khi đang mở Chrome: bài đang đăng dở trả về chờ lượt sau
+                db.run("UPDATE posts SET status='scheduled' WHERE account_id=? AND status='posting'", (aid,))
+                db.run("UPDATE bumps SET status='scheduled' WHERE account_id=? AND status='running'", (aid,))
         finally:
             _busy.pop(sale_id, None)
+            _busy_acc.pop(sale_id, None)
             q.task_done()

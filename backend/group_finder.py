@@ -161,7 +161,7 @@ EXTRACT_JS = r"""(skip) => {
 }"""
 
 
-def save_results(rows: list[dict], keyword: str, sale_id: int, base: str) -> int:
+def save_results(rows: list[dict], keyword: str, aid: int, base: str) -> int:
     """Lưu nhóm tìm được (bỏ nhóm đã có trong danh sách). Trả về số nhóm mới."""
     import browser_poster
     new = 0
@@ -185,26 +185,27 @@ def save_results(rows: list[dict], keyword: str, sale_id: int, base: str) -> int
         db.run("""INSERT INTO group_candidates(url, name, members, posts_per_day, privacy, joined, keyword, relevance, score,
                   found_by, status, found_at, last_seen_at) VALUES (?,?,?,?,?,?,?,?,?,?,'new',?,?)""",
                (canon, c["name"], c["members"], c["posts_per_day"], c["privacy"], int(c["joined"]), keyword, rel, sc,
-                sale_id, db.now(), db.now()))
+                aid, db.now(), db.now()))
         new += 1
+    import accounts
     db.run("INSERT INTO group_searches(keyword, sale_id, results, new, searched_at) VALUES (?,?,?,?,?)",
-           (keyword, sale_id, len(rows), new, db.now()))
+           (keyword, (accounts.get(aid) or {}).get("sale_id"), len(rows), new, db.now()))
     return new
 
 
-def add_candidate(cid: int, by: str = "ceo", joined_sale: int | None = None) -> dict | None:
+def add_candidate(cid: int, by: str = "ceo", joined_account: int | None = None) -> dict | None:
     c = db.one("SELECT * FROM group_candidates WHERE id=?", (cid,))
     if not c or c["status"] == "added":
         return None
     gid = db.run("""INSERT INTO groups(name, url, topic, members, rules, min_days_between_posts, note, created_at, source,
-                    keyword, privacy, posts_per_day, score, member_sale_ids) VALUES (?,?,?,?,?,?,?,?,'search',?,?,?,?,?)""",
+                    keyword, privacy, posts_per_day, score, member_account_ids) VALUES (?,?,?,?,?,?,?,?,'search',?,?,?,?,?)""",
                  (c["name"], c["url"], c["keyword"], c["members"], "", 3,
                   f"Sale tìm thấy khi tìm “{c['keyword']}”", db.now(), c["keyword"], c["privacy"], c["posts_per_day"],
-                  c["score"], str(joined_sale) if joined_sale else ""))
+                  c["score"], str(joined_account) if joined_account else ""))
     db.run("UPDATE group_candidates SET status='added', group_id=? WHERE id=?", (gid, cid))
-    if joined_sale:
-        db.run("INSERT OR REPLACE INTO group_joins(group_id, sale_id, status, requested_at, updated_at) VALUES (?,?,?,?,?)",
-               (gid, joined_sale, "joined", db.now(), db.now()))
+    if joined_account:
+        db.run("INSERT OR REPLACE INTO account_groups(group_id, account_id, status, requested_at, updated_at) VALUES (?,?,?,?,?)",
+               (gid, joined_account, "joined", db.now(), db.now()))
     db.log("tuan" if by == "ceo" else "minh", "Thêm nhóm mới tìm được",
            f"{c['name']} ({c['members']:,} thành viên, chủ đề “{c['keyword']}”)".replace(",", "."))
     return db.one("SELECT * FROM groups WHERE id=?", (gid,))
@@ -218,36 +219,37 @@ def auto_add(limit: int | None = None) -> list[dict]:
     out = []
     for c in db.q("""SELECT * FROM group_candidates WHERE status='new' AND relevance > 0 AND members >= 1000
                      ORDER BY score DESC LIMIT ?""", (room,)):
-        g = add_candidate(c["id"], joined_sale=c["found_by"] if c["joined"] else None)
+        g = add_candidate(c["id"], joined_account=c["found_by"] if c["joined"] else None)
         if g:
             out.append(g)
     return out
 
 
-def set_join(group_id: int, sale_id: int, status: str, note: str = ""):
-    db.run("""INSERT INTO group_joins(group_id, sale_id, status, note, requested_at, updated_at) VALUES (?,?,?,?,?,?)
-              ON CONFLICT(group_id, sale_id) DO UPDATE SET status=excluded.status, note=excluded.note,
-              updated_at=excluded.updated_at""", (group_id, sale_id, status, note[:200], db.now(), db.now()))
-    g = db.one("SELECT member_sale_ids FROM groups WHERE id=?", (group_id,))
+def set_join(group_id: int, aid: int, status: str, note: str = ""):
+    """Trạng thái xin vào nhóm của một nick; nick đã vào thì được Tuấn xếp bài vào nhóm đó."""
+    db.run("""INSERT INTO account_groups(group_id, account_id, status, note, requested_at, updated_at) VALUES (?,?,?,?,?,?)
+              ON CONFLICT(group_id, account_id) DO UPDATE SET status=excluded.status, note=excluded.note,
+              updated_at=excluded.updated_at""", (group_id, aid, status, note[:200], db.now(), db.now()))
+    g = db.one("SELECT member_account_ids FROM groups WHERE id=?", (group_id,))
     if not g:
         return
-    mem = [int(x) for x in (g["member_sale_ids"] or "").split(",") if x.strip().isdigit()]
-    if status == "joined" and sale_id not in mem:
-        mem.append(sale_id)
-    if status != "joined" and sale_id in mem:
-        mem.remove(sale_id)
-    db.run("UPDATE groups SET member_sale_ids=? WHERE id=?", (",".join(map(str, mem)), group_id))
+    mem = [int(x) for x in (g["member_account_ids"] or "").split(",") if x.strip().isdigit()]
+    if status == "joined" and aid not in mem:
+        mem.append(aid)
+    if status != "joined" and aid in mem:
+        mem.remove(aid)
+    db.run("UPDATE groups SET member_account_ids=? WHERE id=?", (",".join(map(str, mem)), group_id))
 
 
-def mark_not_member(group_id: int, sale_id: int):
+def mark_not_member(group_id: int, aid: int):
     """Đăng bài báo nick chưa vào nhóm: cập nhật để Tuấn không xếp bài nick này vào nhóm đó nữa."""
-    if group_id and sale_id:
-        set_join(group_id, sale_id, "none", "Đăng bài báo nick chưa là thành viên")
+    if group_id and aid:
+        set_join(group_id, aid, "none", "Đăng bài báo nick chưa là thành viên")
 
 
-def joins_today(sale_id: int) -> int:
-    return db.one("""SELECT COUNT(*) n FROM group_joins WHERE sale_id=? AND requested_at LIKE ?
-                     AND status IN ('requested','joined','needs_answers')""", (sale_id, db.today() + "%"))["n"]
+def joins_today(aid: int) -> int:
+    return db.one("""SELECT COUNT(*) n FROM account_groups WHERE account_id=? AND requested_at LIKE ?
+                     AND status IN ('requested','joined','needs_answers')""", (aid, db.today() + "%"))["n"]
 
 
 # ---------------------------------------------------------------- việc của sale trên trình duyệt
@@ -265,7 +267,7 @@ def _browse(page, minutes: float):
         page.wait_for_timeout(int(random.uniform(2.5, 7) * 1000))
 
 
-def _search(page, keyword: str, sale_id: int) -> int:
+def _search(page, keyword: str, aid: int) -> int:
     import browser_poster as B
     page.goto(f"{B.FB_BASE}/search/groups/?q={quote(keyword)}", wait_until="domcontentloaded", timeout=60000)
     page.wait_for_timeout(4000)
@@ -275,7 +277,7 @@ def _search(page, keyword: str, sale_id: int) -> int:
         page.wait_for_timeout(int(random.uniform(1.8, 3.5) * 1000))
     rows = page.evaluate(EXTRACT_JS, sorted(SKIP_SLUGS))
     base = B.FB_BASE if not B.FB_BASE.startswith("https://www.facebook.com") else "https://www.facebook.com"
-    return save_results(rows, keyword, sale_id, base)
+    return save_results(rows, keyword, aid, base)
 
 
 def _is_member(page) -> bool:
@@ -283,21 +285,21 @@ def _is_member(page) -> bool:
     return bool(B._visible_first(page, B.selectors()["group_composer"]))
 
 
-def _join_one(page, g: dict, sale_id: int) -> str:
+def _join_one(page, g: dict, aid: int) -> str:
     import browser_poster as B
     sel = B.selectors()
     page.goto(B.fb_url(g["url"]), wait_until="domcontentloaded", timeout=60000)
     page.wait_for_timeout(3500)
     B._check_blocked(page)
     if _is_member(page):
-        set_join(g["id"], sale_id, "joined")
+        set_join(g["id"], aid, "joined")
         return "joined"
     if B._visible_first(page, sel.get("pending_join", [])):
-        set_join(g["id"], sale_id, "requested")
+        set_join(g["id"], aid, "requested")
         return "requested"
     btn = B._visible_first(page, sel.get("join_button", []))
     if not btn:
-        set_join(g["id"], sale_id, "failed", "Không thấy nút Tham gia nhóm. Nút đang thấy: " + B._labels_on(page))
+        set_join(g["id"], aid, "failed", "Không thấy nút Tham gia nhóm. Nút đang thấy: " + B._labels_on(page))
         return "failed"
     btn.click()
     page.wait_for_timeout(3500)
@@ -306,36 +308,36 @@ def _join_one(page, g: dict, sale_id: int) -> str:
         # nhóm bắt trả lời câu hỏi: sale không tự trả lời thay sếp
         page.keyboard.press("Escape")
         page.wait_for_timeout(1000)
-        set_join(g["id"], sale_id, "needs_answers", "Nhóm yêu cầu trả lời câu hỏi khi xin vào")
+        set_join(g["id"], aid, "needs_answers", "Nhóm yêu cầu trả lời câu hỏi khi xin vào")
         return "needs_answers"
     if _is_member(page):
-        set_join(g["id"], sale_id, "joined")
+        set_join(g["id"], aid, "joined")
         return "joined"
-    set_join(g["id"], sale_id, "requested")
+    set_join(g["id"], aid, "requested")
     return "requested"
 
 
-def _join_some(page, sale_id: int) -> dict:
+def _join_some(page, aid: int) -> dict:
     """Kiểm tra các yêu cầu đang chờ, rồi xin vào thêm nhóm mới (trong giới hạn mỗi ngày)."""
     import browser_poster as B
     res = {"joined": 0, "requested": 0, "needs_answers": 0, "failed": 0, "checked": 0}
-    for g in db.q("""SELECT g.* FROM group_joins j JOIN groups g ON g.id=j.group_id WHERE j.sale_id=? AND j.status='requested'
-                     ORDER BY j.updated_at LIMIT 3""", (sale_id,)):
+    for g in db.q("""SELECT g.* FROM account_groups j JOIN groups g ON g.id=j.group_id WHERE j.account_id=? AND j.status='requested'
+                     ORDER BY j.updated_at LIMIT 3""", (aid,)):
         page.goto(B.fb_url(g["url"]), wait_until="domcontentloaded", timeout=60000)
         page.wait_for_timeout(3000)
         B._check_blocked(page)
         res["checked"] += 1
         if _is_member(page):
-            set_join(g["id"], sale_id, "joined")
+            set_join(g["id"], aid, "joined")
             res["joined"] += 1
         B._pause(page, 3, 7)
     if s().get("join_enabled", "1") != "1":
         return res
-    cap = max(0, int(s().get("join_per_nick_day") or 2) - joins_today(sale_id))
+    cap = max(0, int(s().get("join_per_nick_day") or 2) - joins_today(aid))
     for g in db.q("""SELECT * FROM groups g WHERE source='search' AND COALESCE(url,'')!='' AND NOT EXISTS
-                     (SELECT 1 FROM group_joins j WHERE j.group_id=g.id AND j.sale_id=?)
-                     ORDER BY score DESC, members DESC LIMIT ?""", (sale_id, cap)):
-        st = _join_one(page, g, sale_id)
+                     (SELECT 1 FROM account_groups j WHERE j.group_id=g.id AND j.account_id=?)
+                     ORDER BY score DESC, members DESC LIMIT ?""", (aid, cap)):
+        st = _join_one(page, g, aid)
         res[st] = res.get(st, 0) + 1
         B._pause(page, 8, 20)  # giãn cách giữa các lần xin vào nhóm
     return res
@@ -347,31 +349,32 @@ def _report(notify, text):
         ceo_orders.followup(text, notify)
 
 
-def job_discover(pw, sale_id: int, keywords: list[str], notify: str | None = None):
+def job_discover(pw, acc_id: int, keywords: list[str], notify: str | None = None):
     import browser_poster as B
     import workflows
-    aid = f"sale-{sale_id}"
-    ctx, page = B._open(pw, sale_id)
+    acc, sale_row, aid = B._ctx_names(acc_id)
+    sale_id = acc["sale_id"]
+    ctx, page = B._open(pw, acc_id)
     found, added, jr = 0, [], {}
     try:
         if not B._logged_in(ctx):
-            B._set_login(sale_id, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
+            B._set_login(acc_id, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
             raise RuntimeError("Nick chưa đăng nhập. Vào Nhân viên sale → Mở Chrome để đăng nhập lại")
         workflows.set_status(aid, "working", "Đang lướt Facebook")
         _browse(page, float(s().get("browse_minutes") or 2))
         for kw in keywords:
             workflows.set_status(aid, "working", f"Đang tìm nhóm: {kw}")
-            found += _search(page, kw, sale_id)
+            found += _search(page, kw, acc_id)
             B._pause(page, 5, 12)
         added = auto_add()
         if added or db.one("SELECT 1 x FROM groups WHERE source='search' LIMIT 1"):
             workflows.set_status(aid, "working", "Đang xin vào nhóm mới")
-            jr = _join_some(page, sale_id)
-        db.set_setting("discover_last_result", json.dumps({"at": db.now(), "sale_id": sale_id, "keywords": keywords,
+            jr = _join_some(page, acc_id)
+        db.set_setting("discover_last_result", json.dumps({"at": db.now(), "sale_id": sale_id, "account_id": acc_id, "keywords": keywords,
                                                            "found": found, "added": len(added), "joins": jr}, ensure_ascii=False))
         db.log(aid, "Tìm nhóm mới", f"Tìm “{'”, “'.join(keywords)}”: {found} nhóm mới, thêm {len(added)} nhóm vào danh sách"
                + (f", xin vào {jr.get('requested', 0) + jr.get('joined', 0)} nhóm" if jr else ""))
-        sale = db.one("SELECT name FROM sales WHERE id=?", (sale_id,))["name"]
+        sale = f"{sale_row['name']} (nick {acc['name']})"
         if found or added:
             if added:
                 msg = (f"{sale} tìm xong theo “{'”, “'.join(keywords)}”: {found} nhóm mới, em đã thêm {len(added)} nhóm tốt vào "
@@ -393,7 +396,7 @@ def job_discover(pw, sale_id: int, keywords: list[str], notify: str | None = Non
                    "sách, hoặc trang tìm kiếm của Facebook hiển thị khác). Sếp thử chủ đề khác, hoặc vào mục Lỗi xem có báo lỗi không.")
         _report(notify, msg)
     except B.Blocked as e:
-        B._block(sale_id, str(e))
+        B._block(acc_id, str(e))
         _report(notify, f"Nick của sale bị Facebook chặn hoặc kiểm tra khi đang tìm nhóm: {e}. Em đã dừng nick này, sếp mở Chrome của sale để xử lý.")
     finally:
         try:
@@ -403,25 +406,26 @@ def job_discover(pw, sale_id: int, keywords: list[str], notify: str | None = Non
         workflows.set_status(aid, "idle", f"Tìm được {found} nhóm mới")
 
 
-def job_join(pw, sale_id: int, notify: str | None = None):
+def job_join(pw, acc_id: int, notify: str | None = None):
     import browser_poster as B
     import workflows
-    aid = f"sale-{sale_id}"
-    ctx, page = B._open(pw, sale_id)
+    acc, sale_row, aid = B._ctx_names(acc_id)
+    sale_id = acc["sale_id"]
+    ctx, page = B._open(pw, acc_id)
     try:
         if not B._logged_in(ctx):
             raise RuntimeError("Nick chưa đăng nhập. Vào Nhân viên sale → Mở Chrome để đăng nhập lại")
         workflows.set_status(aid, "working", "Đang xin vào nhóm mới")
-        jr = _join_some(page, sale_id)
+        jr = _join_some(page, acc_id)
         if any(jr.values()):
             db.log(aid, "Xin vào nhóm", f"Vào được {jr['joined']} nhóm, chờ duyệt {jr['requested']}, "
                    f"cần sếp trả lời câu hỏi {jr['needs_answers']}")
-        sale = db.one("SELECT name FROM sales WHERE id=?", (sale_id,))["name"]
+        sale = f"{sale_row['name']} (nick {acc['name']})"
         _report(notify, f"{sale} xin vào nhóm xong: vào được {jr.get('joined', 0)}, chờ duyệt {jr.get('requested', 0)}"
                 + (f", {jr['needs_answers']} nhóm cần sếp tự trả lời câu hỏi" if jr.get("needs_answers") else "")
                 + ("." if any(jr.values()) else ". Hôm nay nick đã xin đủ số nhóm cho phép hoặc chưa có nhóm mới để xin."))
     except B.Blocked as e:
-        B._block(sale_id, str(e))
+        B._block(acc_id, str(e))
     finally:
         try:
             ctx.close()
@@ -432,23 +436,45 @@ def job_join(pw, sale_id: int, notify: str | None = None):
 
 # ---------------------------------------------------------------- lịch hằng ngày
 def _working_sales() -> list[dict]:
+    """Nhân viên sale có ít nhất một nick làm được."""
     return db.q("""SELECT * FROM sales WHERE COALESCE(status,'active')='active' AND COALESCE(is_sample,0)=0
                    AND login_status='ok' AND auto_post=1 ORDER BY id""")
 
 
+def _working_accounts() -> list[dict]:
+    import accounts
+    return [a for a in accounts.working() if not db.one("SELECT 1 x FROM sales WHERE id=? AND COALESCE(is_sample,0)=1", (a["sale_id"],))]
+
+
 def start_discover(sale_id: int | None = None, keywords: list[str] | None = None, notify: str | None = None) -> dict:
+    """Giao một nick đi tìm nhóm (luân phiên các nick, ưu tiên nick của sale đang rảnh)."""
     import browser_poster as B
-    sales = _working_sales()
-    if not sales:
+    accs = _working_accounts()
+    if sale_id is not None:
+        accs = [a for a in accs if a["sale_id"] == sale_id] or accs
+    if not accs:
         raise ValueError("Chưa có nick sale nào đăng nhập và đang bật tự đăng")
-    if sale_id is None:  # luân phiên nick đi tìm nhóm
-        last = int(s().get("discover_last_sale") or 0)
-        nxt = [x for x in sales if x["id"] > last] or sales
-        sale_id = nxt[0]["id"]
+    last = int(s().get("discover_last_account") or 0)
+    idle = [a for a in accs if not B.busy(a["sale_id"]) and not B.queued(a["sale_id"])] or accs
+    nxt = [a for a in idle if a["id"] > last] or idle
+    acc = nxt[0]
     kws = keywords or today_keywords()
-    db.set_setting("discover_last_sale", str(sale_id))
-    B.submit(sale_id, {"kind": "discover", "keywords": kws, "notify": notify})
-    return {"sale_id": sale_id, "keywords": kws}
+    db.set_setting("discover_last_account", str(acc["id"]))
+    db.set_setting("discover_last_sale", str(acc["sale_id"]))
+    B.submit(acc["sale_id"], {"kind": "discover", "account": acc["id"], "keywords": kws, "notify": notify})
+    return {"sale_id": acc["sale_id"], "account_id": acc["id"], "account": acc["name"], "keywords": kws}
+
+
+def submit_joins(notify: str | None = None) -> int:
+    """Mỗi nick còn lượt xin vào nhóm hôm nay: giao xin vào nhóm (sale làm lần lượt từng nick)."""
+    import browser_poster as B
+    n = 0
+    cap = int(s().get("join_per_nick_day") or 2)
+    for a in _working_accounts():
+        if joins_today(a["id"]) < cap:
+            B.submit(a["sale_id"], {"kind": "join", "account": a["id"], "notify": notify})
+            n += 1
+    return n
 
 
 def tick(now: datetime):
@@ -464,14 +490,11 @@ def tick(now: datetime):
             start_discover()
         except ValueError:
             pass
-    # 45 phút sau: các nick khác xin vào nhóm mới được thêm
+    # 45 phút sau: các nick xin vào nhóm mới được thêm
     later = (datetime.strptime(t, "%H:%M") + timedelta(minutes=45)).strftime("%H:%M")
     if st.get("join_enabled", "1") == "1" and hm >= later and st.get("join_last") != db.today():
         db.set_setting("join_last", db.today())
-        import browser_poster as B
-        for x in _working_sales():
-            if joins_today(x["id"]) < int(st.get("join_per_nick_day") or 2) and not B.busy(x["id"]):
-                B.submit(x["id"], {"kind": "join"})
+        submit_joins()
 
 
 def overview() -> dict:
@@ -486,5 +509,6 @@ def overview() -> dict:
             "last": json.loads(st.get("discover_last_result") or "{}"),
             "settings": {k: st.get(k) for k in ("discover_enabled", "discover_time", "discover_keywords_per_day",
                                                  "discover_add_per_day", "join_enabled", "join_per_nick_day", "browse_minutes")},
-            "pending_answers": db.q("""SELECT g.id, g.name, g.url, s.name sale FROM group_joins j JOIN groups g ON g.id=j.group_id
-                                       JOIN sales s ON s.id=j.sale_id WHERE j.status='needs_answers'""")}
+            "pending_answers": db.q("""SELECT g.id, g.name, g.url, s.name || ' · nick ' || a.name sale FROM account_groups j
+                                       JOIN groups g ON g.id=j.group_id JOIN fb_accounts a ON a.id=j.account_id
+                                       JOIN sales s ON s.id=a.sale_id WHERE j.status='needs_answers'""")}

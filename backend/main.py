@@ -18,6 +18,7 @@ from pydantic import BaseModel
 import base64
 import re
 
+import accounts
 import agents
 import browser_poster
 import db
@@ -270,8 +271,8 @@ class Group(BaseModel):
 def groups():
     rows = db.q("SELECT * FROM groups ORDER BY leads_count DESC, members DESC")
     joins = {}
-    for j in db.q("SELECT group_id, sale_id, status, note FROM group_joins"):
-        joins.setdefault(j["group_id"], {})[j["sale_id"]] = {"status": j["status"], "note": j["note"]}
+    for j in db.q("SELECT group_id, account_id, status, note FROM account_groups"):
+        joins.setdefault(j["group_id"], {})[j["account_id"]] = {"status": j["status"], "note": j["note"]}
     import group_finder
     for g in rows:
         g["ready"] = workflows.group_ready(g)
@@ -360,12 +361,10 @@ def gf_run(r: GFRun):
 @app.post("/api/group-finder/join")
 def gf_join():
     import group_finder
-    sales = group_finder._working_sales()
-    if not sales:
+    n = group_finder.submit_joins()
+    if not n:
         raise HTTPException(400, "Chưa có nick sale nào đăng nhập và đang bật tự đăng")
-    for x in sales:
-        browser_poster.submit(x["id"], {"kind": "join"})
-    return {"ok": True, "sales": len(sales)}
+    return {"ok": True, "sales": n}
 
 
 @app.post("/api/group-finder/candidates/{cid}/add")
@@ -464,11 +463,11 @@ class MarkPosted(BaseModel):
 
 @app.get("/api/posts")
 def posts(status: str | None = None):
-    sql = """SELECT p.*, pr.name product_name, g.name group_name, g.url group_url, s.name sale_name,
+    sql = """SELECT p.*, pr.name product_name, g.name group_name, g.url group_url, s.name sale_name, fa.name account_name,
              (SELECT status || '|' || COALESCE(error,'') || '|' || COALESCE(screenshot,'') || '|' || COALESCE(scheduled_for,'')
               FROM bumps b WHERE b.post_id=p.id ORDER BY b.id DESC LIMIT 1) last_bump FROM posts p
              LEFT JOIN products pr ON pr.id=p.product_id LEFT JOIN groups g ON g.id=p.group_id
-             LEFT JOIN sales s ON s.id=p.sale_id"""
+             LEFT JOIN sales s ON s.id=p.sale_id LEFT JOIN fb_accounts fa ON fa.id=p.account_id"""
     return db.q(sql + (" WHERE p.status=?" if status else "") + " ORDER BY p.id DESC LIMIT 200",
                 (status,) if status else ())
 
@@ -755,12 +754,30 @@ class Sale(BaseModel):
 
 class SalePatch(BaseModel):
     name: str | None = None
-    fb_name: str | None = None
     auto_post: int | None = None
+
+
+class AccountIn(BaseModel):
+    sale_id: int
+    name: str = ""
+
+
+class AccountPatch(BaseModel):
+    name: str | None = None
+    enabled: int | None = None
     max_posts_per_day: int | None = None
     min_gap_minutes: int | None = None
     active_from: str | None = None
     active_to: str | None = None
+
+
+def _acc_out(a: dict) -> dict:
+    t = db.today() + "%"
+    a["posted_today"] = db.one("SELECT COUNT(*) n FROM posts WHERE account_id=? AND status='posted' AND posted_at LIKE ?", (a["id"], t))["n"]
+    a["scheduled_today"] = db.one("SELECT COUNT(*) n FROM posts WHERE account_id=? AND status IN ('scheduled','posting') AND scheduled_for LIKE ?", (a["id"], t))["n"]
+    a["groups_joined"] = db.one("SELECT COUNT(*) n FROM account_groups WHERE account_id=? AND status='joined'", (a["id"],))["n"]
+    a.pop("profile_dir", None)
+    return a
 
 
 def _sale_out(r: dict) -> dict:
@@ -769,9 +786,13 @@ def _sale_out(r: dict) -> dict:
     r["scheduled_today"] = db.one("SELECT COUNT(*) n FROM posts WHERE sale_id=? AND status IN ('scheduled','posting') AND scheduled_for LIKE ?", (r["id"], t))["n"]
     r["failed"] = db.one("SELECT COUNT(*) n FROM posts WHERE sale_id=? AND status='failed'", (r["id"],))["n"]
     r["busy"] = browser_poster.busy(r["id"])
+    r["busy_account"] = browser_poster.busy_account(r["id"])
     r["agent_id"] = f"sale-{r['id']}"
+    r["accounts"] = [_acc_out(a) for a in accounts.of_sale(r["id"])]
+    r["max_accounts"] = accounts.MAX_PER_SALE
     r["recent"] = db.q("""SELECT p.id, p.status, p.title, p.target_type, p.posted_at, p.scheduled_for, p.error, p.screenshot,
-                          g.name group_name FROM posts p LEFT JOIN groups g ON g.id=p.group_id
+                          g.name group_name, a.name account_name FROM posts p LEFT JOIN groups g ON g.id=p.group_id
+                          LEFT JOIN fb_accounts a ON a.id=p.account_id
                           WHERE p.sale_id=? ORDER BY COALESCE(p.posted_at, p.scheduled_for) DESC LIMIT 6""", (r["id"],))
     r.pop("profile_dir", None)
     return r
@@ -794,9 +815,14 @@ def add_sale(s: Sale):
     # kỳ KPI bắt đầu từ ngày đầu tiên nick chạy được (sau khi sếp đăng nhập), không tính ngày chờ nick
     sid = db.run("INSERT INTO sales(name, fb_name, created_at, hired_by) VALUES (?,?,?,'boss')",
                  (s.name.strip(), s.fb_name.strip(), db.now()))
-    db.run("UPDATE sales SET profile_dir=? WHERE id=?", (str(browser_poster.profile_dir(sid)), sid))
-    db.log("minh", "Tuyển sale", f"{s.name} nhận quản lý nick {s.fb_name or s.name}")
+    accounts.create(sid, s.fb_name.strip() or "Nick 1")
+    db.log("minh", "Tuyển sale", f"{s.name} nhận quản lý nick {s.fb_name or 'Nick 1'} (thêm được tới {accounts.MAX_PER_SALE} nick)")
     return _sale_out(db.one("SELECT * FROM sales WHERE id=?", (sid,)))
+
+
+def _requeue(where: str, val: int):
+    db.run(f"UPDATE posts SET status='approved', sale_id=NULL, account_id=NULL, scheduled_for=NULL WHERE {where}=? AND status='scheduled'", (val,))
+    db.run(f"UPDATE bumps SET status='skipped', error='Nick tạm dừng' WHERE {where}=? AND status='scheduled'", (val,))
 
 
 @app.patch("/api/sales/{sid}")
@@ -807,40 +833,109 @@ def patch_sale(sid: int, p: SalePatch):
     if p.auto_post == 1 and company.status() == "dissolved":
         raise HTTPException(400, "Công ty đã giải thể.")
     fields = {k: v for k, v in p.model_dump().items() if v is not None}
-    for k in ("active_from", "active_to"):
-        if k in fields and not re.fullmatch(r"\d{2}:\d{2}", fields[k]):
-            raise HTTPException(400, "Giờ phải có dạng HH:MM")
     if fields:
         db.run(f"UPDATE sales SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), sid))
     if p.auto_post == 0:  # tạm dừng: trả bài chờ về hàng đợi để Tuấn xếp cho nick khác
-        db.run("UPDATE posts SET status='approved', sale_id=NULL, scheduled_for=NULL WHERE sale_id=? AND status='scheduled'", (sid,))
+        _requeue("sale_id", sid)
     return _sale_out(db.one("SELECT * FROM sales WHERE id=?", (sid,)))
 
 
 @app.delete("/api/sales/{sid}")
 def del_sale(sid: int):
-    db.run("UPDATE posts SET status='approved', sale_id=NULL, scheduled_for=NULL WHERE sale_id=? AND status='scheduled'", (sid,))
+    _requeue("sale_id", sid)
+    for a in accounts.of_sale(sid):
+        db.run("DELETE FROM account_groups WHERE account_id=?", (a["id"],))
+    db.run("DELETE FROM fb_accounts WHERE sale_id=?", (sid,))
     db.run("DELETE FROM sales WHERE id=?", (sid,))
     return {"ok": True, "note": "Hồ sơ Chrome vẫn giữ trong data/profiles, xóa thư mục đó nếu không dùng nữa"}
 
 
+def _acc_or_404(aid: int) -> dict:
+    a = accounts.get(aid)
+    if not a:
+        raise HTTPException(404, "Không tìm thấy nick")
+    return a
+
+
+@app.post("/api/accounts")
+def add_account(a: AccountIn):
+    s = db.one("SELECT * FROM sales WHERE id=?", (a.sale_id,))
+    if not s:
+        raise HTTPException(404, "Không tìm thấy nhân viên sale")
+    if s.get("status") == "fired":
+        raise HTTPException(400, "Sale này đã nghỉ việc")
+    try:
+        acc = accounts.create(a.sale_id, a.name, copy_limits_from=accounts.first(a.sale_id))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    db.log("minh", "Thêm nick", f"{s['name']} nhận thêm nick {acc['name']}. Bấm Mở Chrome để đăng nhập nick này")
+    return _sale_out(db.one("SELECT * FROM sales WHERE id=?", (a.sale_id,)))
+
+
+@app.patch("/api/accounts/{aid}")
+def patch_account(aid: int, p: AccountPatch):
+    a = _acc_or_404(aid)
+    fields = {k: v for k, v in p.model_dump().items() if v is not None}
+    for k in ("active_from", "active_to"):
+        if k in fields and not re.fullmatch(r"\d{2}:\d{2}", fields[k]):
+            raise HTTPException(400, "Giờ phải có dạng HH:MM")
+    if "name" in fields:
+        fields["name"] = fields["name"].strip() or a["name"]
+    if fields:
+        db.run(f"UPDATE fb_accounts SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), aid))
+    if p.enabled == 0:
+        _requeue("account_id", aid)
+    accounts.sync_sale(a["sale_id"])
+    return _sale_out(db.one("SELECT * FROM sales WHERE id=?", (a["sale_id"],)))
+
+
+@app.delete("/api/accounts/{aid}")
+def del_account(aid: int):
+    a = _acc_or_404(aid)
+    if browser_poster.busy_account(a["sale_id"]) == aid:
+        raise HTTPException(409, "Nick đang làm việc, chờ xong ca rồi xóa")
+    _requeue("account_id", aid)
+    db.run("DELETE FROM account_groups WHERE account_id=?", (aid,))
+    db.run("DELETE FROM fb_accounts WHERE id=?", (aid,))
+    accounts.sync_sale(a["sale_id"])
+    return {"ok": True, "note": "Hồ sơ Chrome của nick vẫn giữ trong data/profiles"}
+
+
+@app.post("/api/accounts/{aid}/open")
+def open_account(aid: int):
+    """Mở cửa sổ Chrome của nick này trên máy chạy phần mềm để sếp đăng nhập / vào nhóm."""
+    a = _acc_or_404(aid)
+    if browser_poster.busy(a["sale_id"]):
+        raise HTTPException(409, "Sale đang làm việc trên một nick, chờ xong ca hiện tại rồi mở")
+    browser_poster.submit(a["sale_id"], {"kind": "open", "account": aid})
+    return {"ok": True}
+
+
+@app.post("/api/accounts/{aid}/check")
+def check_account(aid: int):
+    a = _acc_or_404(aid)
+    browser_poster.submit(a["sale_id"], {"kind": "check", "account": aid})
+    return {"ok": True}
+
+
 @app.post("/api/sales/{sid}/open")
 def open_browser(sid: int):
-    """Mở cửa sổ Chrome của nick này trên máy chạy phần mềm để sếp đăng nhập / vào nhóm."""
-    if browser_poster.busy(sid):
-        raise HTTPException(409, "Nick đang bận, chờ xong việc hiện tại rồi mở")
-    browser_poster.submit(sid, {"kind": "open"})
-    return {"ok": True}
+    a = accounts.first(sid)
+    if not a:
+        raise HTTPException(400, "Sale này chưa có nick nào. Thêm nick trước")
+    return open_account(a["id"])
 
 
 @app.post("/api/sales/{sid}/check")
 def check_sale(sid: int):
-    browser_poster.submit(sid, {"kind": "check"})
+    for a in accounts.of_sale(sid):
+        browser_poster.submit(sid, {"kind": "check", "account": a["id"]})
     return {"ok": True}
 
 
 class PostRun(BaseModel):
     sale_id: int | None = None
+    account_id: int | None = None
     dry_run: bool = False
 
 
@@ -850,17 +945,23 @@ def run_post(pid: int, r: PostRun):
     p = db.one("SELECT * FROM posts WHERE id=?", (pid,))
     if not p:
         raise HTTPException(404)
-    sid = r.sale_id or p.get("sale_id")
-    if not sid:
+    aid = r.account_id
+    if not aid and r.sale_id:
+        a = accounts.first(r.sale_id)
+        aid = a and a["id"]
+    aid = aid or p.get("account_id")
+    acc = accounts.get(aid) if aid else None
+    if not acc:
         raise HTTPException(400, "Chọn nick sale để đăng bài này")
+    sid = acc["sale_id"]
     if p["target_type"] == "page":
         raise HTTPException(400, "Bài Fanpage đăng qua nút Đăng Fanpage")
     if p["target_type"] == "group" and not p.get("group_id"):
         raise HTTPException(400, "Bài nhóm chưa được xếp vào nhóm nào. Bấm 'Tuấn xếp lịch' trước")
-    db.run("UPDATE posts SET sale_id=? WHERE id=?", (sid, pid))
+    db.run("UPDATE posts SET sale_id=?, account_id=? WHERE id=?", (sid, aid, pid))
     if not r.dry_run:
         db.run("UPDATE posts SET status='posting', error=NULL WHERE id=?", (pid,))
-    browser_poster.submit(sid, {"kind": "post", "post_id": pid, "dry_run": r.dry_run})
+    browser_poster.submit(sid, {"kind": "post", "account": aid, "post_id": pid, "dry_run": r.dry_run})
     return {"ok": True, "queued": browser_poster.queued(sid)}
 
 
@@ -871,12 +972,23 @@ def retry_post(pid: int):
 
 
 class GroupMembers(BaseModel):
-    sale_ids: list[int] = []
+    account_ids: list[int] = []
+    sale_ids: list[int] = []  # bản cũ: chọn theo sale -> mọi nick của sale đó
 
 
 @app.put("/api/groups/{gid}/members")
 def group_members(gid: int, m: GroupMembers):
-    db.run("UPDATE groups SET member_sale_ids=? WHERE id=?", (",".join(map(str, m.sale_ids)), gid))
+    ids = list(m.account_ids)
+    for sid in m.sale_ids:
+        ids += [a["id"] for a in accounts.of_sale(sid)]
+    ids = sorted(set(ids))
+    db.run("UPDATE groups SET member_account_ids=? WHERE id=?", (",".join(map(str, ids)), gid))
+    for aid in ids:
+        db.run("""INSERT INTO account_groups(group_id, account_id, status, requested_at, updated_at) VALUES (?,?,'joined',?,?)
+                  ON CONFLICT(group_id, account_id) DO UPDATE SET status='joined', updated_at=excluded.updated_at""",
+               (gid, aid, db.now(), db.now()))
+    db.run(f"DELETE FROM account_groups WHERE group_id=? AND status='joined' AND account_id NOT IN ({','.join('?' * len(ids)) or 'NULL'})",
+           (gid, *ids))
     return {"ok": True}
 
 
@@ -1362,7 +1474,8 @@ def bump_plan_now():
 
 @app.get("/api/bumps")
 def bumps(post_id: int | None = None):
-    sql = """SELECT b.*, s.name sale_name FROM bumps b LEFT JOIN sales s ON s.id=b.sale_id"""
+    sql = """SELECT b.*, s.name sale_name, fa.name account_name FROM bumps b LEFT JOIN sales s ON s.id=b.sale_id
+             LEFT JOIN fb_accounts fa ON fa.id=b.account_id"""
     return db.q(sql + (" WHERE b.post_id=?" if post_id else "") + " ORDER BY b.id DESC LIMIT 100", (post_id,) if post_id else ())
 
 

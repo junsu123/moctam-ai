@@ -158,6 +158,16 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE TABLE IF NOT EXISTS expenses (
   id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, category TEXT, amount INTEGER, note TEXT, created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS fb_accounts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, sale_id INTEGER, name TEXT, profile_dir TEXT, login_status TEXT DEFAULT 'not_logged_in',
+  enabled INTEGER DEFAULT 1, position INTEGER DEFAULT 0, max_posts_per_day INTEGER DEFAULT 3, min_gap_minutes INTEGER DEFAULT 45,
+  active_from TEXT DEFAULT '08:00', active_to TEXT DEFAULT '22:00', last_check_at TEXT, last_error TEXT, last_post_at TEXT,
+  last_session_at TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS account_groups (
+  group_id INTEGER, account_id INTEGER, status TEXT, note TEXT, requested_at TEXT, updated_at TEXT,
+  PRIMARY KEY (group_id, account_id)
+);
 CREATE TABLE IF NOT EXISTS ceo_messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT, text TEXT, actions TEXT, via TEXT, created_at TEXT
 );
@@ -201,6 +211,8 @@ CREATE TABLE IF NOT EXISTS sales (
 
 # Cột thêm cho cơ sở dữ liệu tạo từ phiên bản trước
 MIGRATIONS = [
+    ("posts", "account_id", "INTEGER"), ("bumps", "account_id", "INTEGER"), ("comment_seen", "account_id", "INTEGER"),
+    ("groups", "member_account_ids", "TEXT DEFAULT ''"), ("sales", "last_account_id", "INTEGER"),
     ("groups", "source", "TEXT DEFAULT 'manual'"), ("groups", "keyword", "TEXT"), ("groups", "privacy", "TEXT"),
     ("groups", "posts_per_day", "REAL"), ("groups", "score", "REAL"),
     ("orders", "customer", "TEXT"),
@@ -379,6 +391,8 @@ def init():
         for name, *_ in SEED_PRODUCTS:
             run("UPDATE products SET is_sample=1 WHERE name=? AND COALESCE(images,'[]')='[]'", (name,))
         run("INSERT OR REPLACE INTO settings(key, value) VALUES ('sample_marked','1')")
+    import accounts
+    accounts.migrate()  # bản cũ 1 sale = 1 nick -> bảng nick riêng, mỗi sale nhiều nick
 
 
 def sample_counts() -> dict:
@@ -392,7 +406,7 @@ RESET_TABLES = {  # bảng: mô tả cho sếp
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",
     "kpi_daily": "lịch sử KPI", "ai_batches": "lô viết bài đang chờ",
-    "orders": "doanh thu đã nhập", "ceo_decisions": "quyết định của CEO", "errors": "sổ lỗi", "ceo_messages": "trao đổi sếp – CEO", "group_candidates": "nhóm tìm được chưa thêm", "group_searches": "lượt tìm nhóm", "group_joins": "trạng thái xin vào nhóm", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
+    "orders": "doanh thu đã nhập", "ceo_decisions": "quyết định của CEO", "errors": "sổ lỗi", "ceo_messages": "trao đổi sếp – CEO", "group_candidates": "nhóm tìm được chưa thêm", "group_searches": "lượt tìm nhóm", "group_joins": "trạng thái xin vào nhóm (bản cũ)", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
 }
 RUN_STATE_KEYS = ["bump_planned_date", "learn_last_date", "scan_last", "tg_sent_log", "company_founded_at", "company_founded_ts",
                   "dissolved_at", "dissolved_reason", "trial_warned", "capital_warned",
@@ -430,15 +444,20 @@ def reset_test_data(products: bool = False, groups: bool = False) -> dict:
         c = conn()
         for t in RESET_TABLES:
             c.execute(f"DELETE FROM {t}")
+        c.execute("DELETE FROM fb_accounts WHERE sale_id IN (SELECT id FROM sales WHERE is_sample=1)")
         c.execute("DELETE FROM sales WHERE is_sample=1")
-        c.execute("UPDATE sales SET last_post_at=NULL, last_error=NULL")
+        c.execute("UPDATE sales SET last_post_at=NULL, last_error=NULL, last_account_id=NULL")
+        c.execute("UPDATE fb_accounts SET last_post_at=NULL, last_session_at=NULL")
         if products:
             c.execute("DELETE FROM products")
         else:
             c.execute("DELETE FROM products WHERE is_sample=1")
         if groups:
             c.execute("DELETE FROM groups")
+            c.execute("DELETE FROM account_groups")
         else:
+            c.execute("DELETE FROM account_groups WHERE group_id IN (SELECT id FROM groups WHERE is_sample=1)"
+                      " OR account_id NOT IN (SELECT id FROM fb_accounts)")
             c.execute("DELETE FROM groups WHERE is_sample=1")
             c.execute("UPDATE groups SET last_posted_at=NULL, leads_count=0")
         for k in RUN_STATE_KEYS:
@@ -470,7 +489,9 @@ def clear_samples(tables=("sales", "leads", "groups", "products")) -> dict:
         if t == "leads":
             run("DELETE FROM replies WHERE lead_id IN (SELECT id FROM leads WHERE is_sample=1)")
         if t == "sales":
-            run("UPDATE posts SET sale_id=NULL, status='approved', scheduled_for=NULL WHERE status='scheduled' AND sale_id IN (SELECT id FROM sales WHERE is_sample=1)")
+            run("UPDATE posts SET sale_id=NULL, account_id=NULL, status='approved', scheduled_for=NULL WHERE status='scheduled' AND sale_id IN (SELECT id FROM sales WHERE is_sample=1)")
+            run("DELETE FROM account_groups WHERE account_id IN (SELECT a.id FROM fb_accounts a JOIN sales s ON s.id=a.sale_id WHERE s.is_sample=1)")
+            run("DELETE FROM fb_accounts WHERE sale_id IN (SELECT id FROM sales WHERE is_sample=1)")
         run(f"DELETE FROM {t} WHERE is_sample=1")
         done[t] = n
     return done

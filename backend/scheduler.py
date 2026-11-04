@@ -1,7 +1,7 @@
 """Lịch tự động: họp giao ban mỗi sáng, đăng Fanpage và giao bài cho nhân viên sale đúng giờ."""
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import browser_poster
 import company
@@ -46,20 +46,10 @@ def _tick():
             else:
                 db.log("tuan", "Lỗi đăng Fanpage", res["error"])
                 db.run("UPDATE posts SET status='approved' WHERE id=?", (p["id"],))
-    # Bài nhóm / trang cá nhân đến giờ -> giao cho nhân viên sale giữ nick đó
-    due = db.q("""SELECT p.id, p.sale_id FROM posts p JOIN sales s ON s.id=p.sale_id
-                  WHERE p.status='scheduled' AND p.scheduled_for <= ? AND s.auto_post=1 AND s.login_status='ok'
-                  ORDER BY p.scheduled_for""", (stamp,))
-    started = set()
-    busy_post = {p["sale_id"] for p in due}
-    for p in due:
-        sid = p["sale_id"]
-        if sid in started or browser_poster.busy(sid) or browser_poster.queued(sid):
-            continue  # mỗi nick làm một việc một lúc
-        db.run("UPDATE posts SET status='posting' WHERE id=?", (p["id"],))
-        browser_poster.submit(sid, {"kind": "post", "post_id": p["id"]})
-        started.add(sid)
-    _dispatch_bumps(stamp, s, busy_post | started)
+    # Bài nhóm / trang cá nhân, lượt up bài, quét bình luận đến hạn -> sale làm theo ca trên từng nick
+    if s.get("bump_enabled") == "1" and stamp[11:] >= (s.get("bump_time") or "19:30"):
+        workflows.plan_bumps()
+    dispatch_sessions(stamp)
     # Quét bình luận tìm khách theo các mốc giờ trong ngày
     if s.get("scan_enabled") == "1":
         hm = stamp[11:]
@@ -80,25 +70,37 @@ def _tick():
     telegram_bot.tick()
 
 
-def _dispatch_bumps(stamp: str, s: dict, busy_post: set):
-    # Up bài: lên lịch 1 lần/ngày từ giờ đã cài, rồi giao từng lượt khi nick rảnh (ưu tiên việc đăng bài)
-    if s.get("bump_enabled") == "1" and stamp[11:] >= (s.get("bump_time") or "19:30"):
-        workflows.plan_bumps()
-    for b in db.q("""SELECT b.id, b.sale_id, s.active_to FROM bumps b JOIN sales s ON s.id=b.sale_id
-                     WHERE b.status='scheduled' AND b.scheduled_for <= ? AND s.auto_post=1 AND s.login_status='ok'
-                     ORDER BY b.scheduled_for""", (stamp,)):
-        sid = b["sale_id"]
-        if stamp[11:] > (b["active_to"] or "22:00"):
+def dispatch_sessions(stamp: str) -> int:
+    """Mỗi nhân viên sale đang rảnh: chọn nick kế tiếp (sau nick vừa làm) có việc đến hạn và giao một ca làm việc trên nick đó.
+    Sale làm xong nick này mới chuyển sang nick khác."""
+    import accounts
+    hm = stamp[11:]
+    # lượt up bài ngoài khung giờ của nick, hoặc của ngày cũ -> bỏ qua
+    for b in db.q("""SELECT b.id, a.active_to FROM bumps b JOIN fb_accounts a ON a.id=b.account_id
+                     WHERE b.status='scheduled' AND b.scheduled_for <= ?""", (stamp,)):
+        if hm > (b["active_to"] or "22:00"):
             db.run("UPDATE bumps SET status='skipped', error='Ngoài khung giờ hoạt động của nick' WHERE id=?", (b["id"],))
-            continue
-        if sid in busy_post or browser_poster.busy(sid) or browser_poster.queued(sid):
-            continue
-        db.run("UPDATE bumps SET status='running' WHERE id=?", (b["id"],))
-        browser_poster.submit(sid, {"kind": "bump", "bump_id": b["id"]})
-        busy_post.add(sid)
-    # lượt up bài của ngày cũ chưa chạy được -> bỏ qua
     db.run("UPDATE bumps SET status='skipped', error='Hết ngày, chưa đến lượt' WHERE status='scheduled' AND scheduled_for < ?",
            (stamp[:10],))
+    # bài đã quá giờ 2 tiếng mà nick không còn làm được (bị dừng, đăng xuất) -> trả về hàng đợi để Tuấn xếp nick khác
+    late = (datetime.strptime(stamp, "%Y-%m-%d %H:%M") - timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
+    ok_ids = {a["id"] for a in accounts.working()}
+    for p in db.q("SELECT id, account_id FROM posts WHERE status='scheduled' AND scheduled_for <= ? AND account_id IS NOT NULL", (late,)):
+        if p["account_id"] not in ok_ids:
+            db.run("UPDATE posts SET status='approved', sale_id=NULL, account_id=NULL, scheduled_for=NULL WHERE id=?", (p["id"],))
+    started = 0
+    for sale in db.q("SELECT * FROM sales WHERE auto_post=1 AND COALESCE(status,'active')='active' ORDER BY id"):
+        sid = sale["id"]
+        if browser_poster.busy(sid) or browser_poster.queued(sid):
+            continue  # sale đang làm việc trên một nick
+        due = [a for a in accounts.working(sid) if any(browser_poster.due_work(a["id"], stamp).values())]
+        if not due:
+            continue
+        last = sale.get("last_account_id") or 0
+        due.sort(key=lambda a: (a["id"] <= last, a["position"], a["id"]))  # nick kế tiếp sau nick vừa làm
+        browser_poster.submit(sid, {"kind": "session", "account": due[0]["id"]})
+        started += 1
+    return started
 
 
 def start():

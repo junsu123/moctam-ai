@@ -225,12 +225,12 @@ def send_lead(lead_id: int, reminder: bool = False):
         send(lead_text(l, reminder), lead_buttons(lead_id))
 
 
-def alert_nick(sale_id: int, reason: str):
+def alert_nick(account_id: int, reason: str):
     if not configured() or db.get_settings().get("tg_alert_nick") != "1":
         return
-    s = db.one("SELECT name, fb_name FROM sales WHERE id=?", (sale_id,))
-    send(f"🚨 <b>Nick {e((s or {}).get('fb_name') or (s or {}).get('name'))} gặp sự cố</b>\n{e(reason)}\n"
-         "Sale đã dừng nick này và trả bài về hàng đợi. Sếp mở phần mềm → Nhân viên sale → Mở Chrome để xử lý.")
+    a = db.one("SELECT a.name, s.name sale FROM fb_accounts a LEFT JOIN sales s ON s.id=a.sale_id WHERE a.id=?", (account_id,)) or {}
+    send(f"🚨 <b>Nick {e(a.get('name') or account_id)} (sale {e(a.get('sale') or '')}) gặp sự cố</b>\n{e(reason)}\n"
+         "Sale đã dừng riêng nick này, các nick khác vẫn làm việc. Sếp mở phần mềm → Nhân viên sale → Mở Chrome nick này để xử lý.")
 
 
 def _sent(key: str) -> bool:
@@ -283,12 +283,13 @@ def start_scan_round(force: bool = True) -> int:
         return 0
     cutoff = (datetime.now() - timedelta(days=int(s.get("scan_max_age_days") or 7))).strftime("%Y-%m-%d %H:%M:%S")
     n = 0
-    for sale in db.q("SELECT * FROM sales WHERE login_status='ok' AND auto_post=1"):
-        ids = [r["id"] for r in db.q("""SELECT id FROM posts WHERE sale_id=? AND status='posted' AND permalink_status='found'
+    import accounts
+    for acc in accounts.working():  # mỗi nick quét bài của chính nick đó, ở ca làm việc tới trên nick
+        ids = [r["id"] for r in db.q("""SELECT id FROM posts WHERE account_id=? AND status='posted' AND permalink_status='found'
                                          AND posted_at >= ? ORDER BY COALESCE(last_scan_at,'') ASC, posted_at DESC LIMIT 8""",
-                                      (sale["id"], cutoff))]
+                                      (acc["id"], cutoff))]
         if ids:
-            browser_poster.submit(sale["id"], {"kind": "scan", "post_ids": ids})
+            browser_poster.request_scan(acc["id"], ids)
             n += len(ids)
     if n:
         db.log("tuan", "Quét bình luận", f"Giao các nick đọc bình luận {n} bài để tìm khách và xin SĐT")

@@ -87,11 +87,12 @@ def hire(reason: str, source: str, name: str | None = None) -> dict | None:
     name = (name or "").strip() or _pick_name()
     sid = db.run("""INSERT INTO sales(name, fb_name, auto_post, created_at, hired_by, hire_reason) VALUES (?,?,1,?,?,?)""",
                  (name, "", db.now(), "ceo", f"{source}: {reason}"))
-    db.run("UPDATE sales SET profile_dir=? WHERE id=?", (str(browser_poster.profile_dir(sid)), sid))
+    import accounts
+    accounts.create(sid, "Nick 1")
     _decide("hire", f"Tuyển sale mới: {name}", reason, sale_id=sid, data={"source": source})
     _tg(f"👔 <b>CEO {NAME} tuyển sale mới: {html.escape(name)}</b>\nLý do: {html.escape(reason)}\n\n"
-        f"Việc của sếp: chuẩn bị 1 tài khoản Facebook cho {html.escape(name)}, mở phần mềm → <b>Nhân viên sale</b> → "
-        f"{html.escape(name)} → <b>Đăng nhập lần đầu</b>. Kỳ KPI của {html.escape(name)} bắt đầu từ ngày nick chạy được.")
+        f"Việc của sếp: chuẩn bị 3–5 tài khoản Facebook cho {html.escape(name)}, mở phần mềm → <b>Nhân viên sale</b> → "
+        f"{html.escape(name)} → <b>Thêm nick</b> rồi <b>Mở Chrome</b> từng nick để đăng nhập. Kỳ KPI của {html.escape(name)} bắt đầu từ ngày nick chạy được.")
     return db.one("SELECT * FROM sales WHERE id=?", (sid,))
 
 
@@ -112,14 +113,11 @@ def replace(old_id: int, name: str = "", by: str = "boss") -> dict:
                      db.today() if old["login_status"] == "ok" else None, old["max_posts_per_day"],
                      old["min_gap_minutes"], old["active_from"], old["active_to"], by,
                      f"Tiếp quản nick của {old['name']}"))
-    src, dst = db.PROFILES_DIR / f"sale-{old_id}", db.PROFILES_DIR / f"sale-{new_id}"
-    if src.exists() and not dst.exists():
-        shutil.move(str(src), str(dst))
-    db.run("UPDATE sales SET profile_dir=? WHERE id=?", (str(dst), new_id))
+    import accounts
+    # các nick (hồ sơ Chrome đã đăng nhập, nhóm đã vào) chuyển nguyên sang người mới
+    db.run("UPDATE fb_accounts SET sale_id=? WHERE sale_id=?", (new_id, old_id))
     db.run("UPDATE sales SET replaced_by=?, ceo_handled=1 WHERE id=?", (new_id, old_id))
-    db.run("UPDATE groups SET member_sale_ids=REPLACE(','||member_sale_ids||',', ?, ?) WHERE member_sale_ids!=''",
-           (f",{old_id},", f",{new_id},"))
-    db.run("UPDATE groups SET member_sale_ids=TRIM(member_sale_ids, ',')")
+    accounts.sync_sale(new_id)
     db.log("ceo" if by == "ceo" else "minh", "Tuyển người thay",
            f"{name} tiếp quản nick {old['fb_name'] or old['name']} của {old['name']}")
     return db.one("SELECT * FROM sales WHERE id=?", (new_id,))
@@ -241,7 +239,7 @@ def potential() -> dict:
     cooldown = int(st.get("ceo_hire_cooldown_days") or 14)
     cool_ok = not last_hire or (today - date.fromisoformat(last_hire)).days >= cooldown
     free_groups = db.one("""SELECT COUNT(*) n FROM groups WHERE COALESCE(is_sample,0)=0
-                            AND COALESCE(member_sale_ids,'')=''""")["n"]
+                            AND COALESCE(member_account_ids,'')=''""")["n"]
     signal = [
         {"key": "exceed", "label": f"Cả phòng trung bình ≥ {kmax} khách có SĐT/ngày (mức vượt KPI)",
          "value": f"{per_day:.1f}/ngày", "ok": per_day >= kmax},
