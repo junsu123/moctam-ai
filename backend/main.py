@@ -7,6 +7,7 @@ import subprocess
 import sys
 import threading
 import time
+from datetime import timedelta
 from pathlib import Path
 
 import uvicorn
@@ -1006,6 +1007,56 @@ def posts(status: str | None = None):
             r["img_count"] = media_folder.image_count(r)
             r["img_required"] = need
     return rows
+
+
+@app.get("/api/posts/posted")
+def posted_posts(page: int = 1, size: int = 20, q: str = "", group_id: int | None = None, account_id: int | None = None,
+                 link: str = "", target: str = "", days: int = 0, sort: str = "new"):
+    """Bảng bài đã đăng có phân trang + bộ lọc (nhóm, nick, link, thời gian, tìm chữ)."""
+    size = max(5, min(100, size))
+    where, args = ["p.status='posted'"], []
+    if q.strip():
+        like = f"%{q.strip()}%"
+        where.append("(p.title LIKE ? OR p.content LIKE ? OR g.name LIKE ? OR p.posted_url LIKE ? OR CAST(p.id AS TEXT)=?)")
+        args += [like, like, like, like, q.strip().lstrip("#")]
+    if group_id:
+        where.append("p.group_id=?"); args.append(group_id)
+    if account_id:
+        where.append("p.account_id=?"); args.append(account_id)
+    if target in ("group", "profile", "page"):
+        where.append("p.target_type=?"); args.append(target)
+    if link == "found":
+        where.append("p.permalink_status='found'")
+    elif link == "missing":
+        where.append("COALESCE(p.permalink_status,'') NOT IN ('found','pending','removed')")
+    elif link in ("pending", "removed"):
+        where.append("p.permalink_status=?"); args.append(link)
+    if days > 0:
+        since = (db.clock() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
+        where.append("p.posted_at >= ?"); args.append(since)
+    base = """FROM posts p LEFT JOIN products pr ON pr.id=p.product_id LEFT JOIN groups g ON g.id=p.group_id
+              LEFT JOIN sales s ON s.id=p.sale_id LEFT JOIN fb_accounts fa ON fa.id=p.account_id WHERE """ + " AND ".join(where)
+    total = db.one("SELECT COUNT(*) n " + base, tuple(args))["n"]
+    pages = max(1, -(-total // size))
+    page = max(1, min(page, pages))
+    order = {"new": "p.posted_at DESC, p.id DESC", "old": "p.posted_at ASC, p.id ASC",
+             "leads": "COALESCE(p.leads,0) DESC, COALESCE(p.comments,0) DESC, p.posted_at DESC",
+             "comments": "COALESCE(p.comments,0) DESC, p.posted_at DESC"}.get(sort, "p.posted_at DESC, p.id DESC")
+    items = db.q(f"""SELECT p.*, pr.name product_name, g.name group_name, g.url group_url, s.name sale_name, fa.name account_name,
+                     (SELECT status || '|' || COALESCE(error,'') || '|' || COALESCE(screenshot,'') || '|' || COALESCE(scheduled_for,'')
+                      FROM bumps b WHERE b.post_id=p.id ORDER BY b.id DESC LIMIT 1) last_bump {base} ORDER BY {order} LIMIT ? OFFSET ?""",
+                 tuple(args) + (size, (page - 1) * size))
+    st = db.one("""SELECT COUNT(*) total, SUM(permalink_status='found') found, SUM(permalink_status='pending') pending,
+                   SUM(permalink_status='removed') removed,
+                   SUM(COALESCE(permalink_status,'') NOT IN ('found','pending','removed')) missing,
+                   SUM(COALESCE(comments,0)) comments, SUM(COALESCE(leads,0)) leads,
+                   SUM(posted_at >= ?) today FROM posts WHERE status='posted'""", (db.today(),))
+    groups = db.q("""SELECT g.id, g.name, COUNT(*) n FROM posts p JOIN groups g ON g.id=p.group_id WHERE p.status='posted'
+                     GROUP BY g.id ORDER BY n DESC, g.name LIMIT 300""")
+    accs = db.q("""SELECT fa.id, fa.name, s.name sale_name, COUNT(*) n FROM posts p JOIN fb_accounts fa ON fa.id=p.account_id
+                   LEFT JOIN sales s ON s.id=fa.sale_id WHERE p.status='posted' GROUP BY fa.id ORDER BY s.name, fa.name""")
+    return {"items": items, "total": total, "page": page, "size": size, "pages": pages,
+            "stats": {k: (v or 0) for k, v in st.items()}, "groups": groups, "accounts": accs}
 
 
 @app.post("/api/posts/generate")

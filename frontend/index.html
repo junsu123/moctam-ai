@@ -369,7 +369,34 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:
 .items{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;font-size:13px}
 
 /* Bài đăng */
-.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+.posted-card{margin-top:14px}
+.pd-filters{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.pd-filters .f{flex:0 1 170px;min-width:0}
+.pd-filters .f.grow{flex:2 1 240px}
+.pd-table{min-width:980px}
+.pd-table td{vertical-align:middle}
+.pd-table .pd-title{font-weight:600;max-width:320px}
+.pd-table .pd-snip{color:var(--muted);font-size:12.5px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-table tr.open td{background:var(--panel-2)}
+.pd-table tr.pd-detail > td{background:var(--panel-2);padding:10px 12px 14px}
+.pd-table tr.pd-detail article.post{max-width:760px;margin:0}
+.pager{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;margin-top:10px}
+.pager .pg{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.pager button{min-width:34px;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:5px 9px;font-size:13px;cursor:pointer;color:var(--ink)}
+.pager button[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.pager button:disabled{opacity:.45;cursor:default}
+.pager select{width:auto;padding:4px 8px;font-size:12.5px}
+@media (max-width:760px){
+  .pd-table{min-width:0}
+  .pd-table thead{display:none}
+  .pd-table tbody tr.pd-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .pd-table tbody tr.pd-row td{border:0;padding:0;font-size:12.5px}
+  .pd-table tbody tr.pd-row td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--muted)}
+  .pd-table tbody tr.pd-row td.pd-main{grid-column:1/-1;order:-1}
+  .pd-table .pd-title,.pd-table .pd-snip{max-width:none}
+  .pd-table tr.pd-detail,.pd-table tr.pd-detail > td{display:block}
+}
 .col{background:var(--panel-2);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .col>header{display:flex;justify-content:space-between;align-items:center;padding:2px 4px}
 .col>header b{font-family:var(--f-display);font-size:15px}
@@ -920,6 +947,19 @@ label.f{font-weight:600;color:var(--muted)}
       <div class="banner noimg" id="noImgBar" hidden></div>
       <div class="banner" id="noLinkBar" hidden></div>
       <div class="board" id="board"></div>
+      <section class="card posted-card" id="postedCard">
+        <div class="card-h"><div><h3>Bài đã đăng</h3><p class="small muted" style="margin:2px 0 0" id="pdStats">Đang tải…</p></div></div>
+        <form class="pd-filters" id="pdFilters" role="search" onsubmit="return false">
+          <label class="f grow" for="pdQ">Tìm<input type="text" inputmode="search" enterkeyhint="search" id="pdQ" placeholder="Tên bài, nội dung, nhóm, link hoặc #mã bài"></label>
+          <label class="f" for="pdGroup">Nhóm<select id="pdGroup"><option value="">Tất cả nhóm</option></select></label>
+          <label class="f" for="pdAcc">Nick<select id="pdAcc"><option value="">Tất cả nick</option></select></label>
+          <label class="f" for="pdLink">Link bài<select id="pdLink"><option value="">Tất cả</option><option value="found">Đã lưu link</option><option value="missing">Chưa có link</option><option value="pending">Chờ nhóm duyệt</option><option value="removed">Bị xóa/ẩn</option></select></label>
+          <label class="f" for="pdDays">Thời gian<select id="pdDays"><option value="0">Mọi lúc</option><option value="1">Hôm nay</option><option value="7">7 ngày</option><option value="30">30 ngày</option><option value="90">90 ngày</option></select></label>
+          <label class="f" for="pdSort">Sắp xếp<select id="pdSort"><option value="new">Mới nhất</option><option value="old">Cũ nhất</option><option value="leads">Nhiều khách nhất</option><option value="comments">Nhiều bình luận nhất</option></select></label>
+        </form>
+        <div class="tbl-wrap"><table class="pd-table"><thead><tr><th>Ngày đăng</th><th>Bài viết</th><th>Đăng ở</th><th>Nick</th><th class="num">Ảnh</th><th>Link bài</th><th class="num">Up</th><th class="num">Bình luận</th><th class="num">Khách</th></tr></thead><tbody id="pdRows"></tbody></table></div>
+        <nav class="pager" id="pdPager" aria-label="Phân trang bài đã đăng"></nav>
+      </section>
     </section>
 
     <!-- NHÂN VIÊN SALE -->
@@ -1491,6 +1531,27 @@ const Demo = (() => {
     mk(S.posts[0],0,"posted",{images_used:JSON.stringify(["D:\\AnhSanPham\\Tra gung\\hop-tra-ban-go.jpg","D:\\AnhSanPham\\Tra gung\\pha-tra-coc-thuy-tinh.jpg","D:\\AnhSanPham\\Tra gung\\dong-goi-xuong.jpg"]),posted_at:now(),poster:"Linh (tự động)",posted_url:"https://www.facebook.com/groups/congdongbanhang/posts/1234567890",permalink_status:"found",bump_count:3,last_bump_at:now(),last_bump:"done|||",bump_enabled:1});
     mk(S.posts[3],4,"posted",{posted_at:now(),poster:"Linh (tự động)",permalink_status:"pending",link_error:"Bài đang chờ quản trị viên nhóm duyệt, sale sẽ tự lấy link khi bài được duyệt. Thử lại lúc 18:30",link_next_at:"x",bump_count:0,last_bump:"skipped|Bài đang chờ nhóm duyệt||"}); mk(S.posts[1],2,"scheduled",{scheduled_for:`${today()} 20:05`});
     mk(S.posts[2],3,"failed",{error:"Không tìm thấy ô viết bài. Kiểm tra nick đã vào nhóm chưa, hoặc thêm chữ hiển thị mới vào fb_selectors.json"}); }
+  { // lịch sử bài đã đăng các ngày trước (để xem bảng có phân trang)
+    const nk=[11,21,12], gs=S.groups, titles=["MỘC TÂM - nhận gia công & sỉ toàn quốc","Tìm đại lý, CTV trà túi lọc","Nguồn ngũ cốc tận xưởng cho shop online","Trà gừng mật ong mùa lạnh giá sỉ","Bột cần tây sấy lạnh cho chị em bán online"];
+    const lk=["found","found","found","found","found","not_found","found","pending","found","removed"];
+    for(let i=0;i<46;i++){ const a=S.accounts.find(x=>x.id===nk[i%3]), r=S.sales.find(x=>x.id===a.sale_id), g=gs[i%gs.length], pr=S.products[i%S.products.length];
+      const d=new Date(Date.now()-(i+1)*7.3*3600e3), ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:00`;
+      const st=lk[i%lk.length], t0=titles[i%titles.length];
+      S.posts.push({id:5000+i,agent_id:"lan",product_id:pr.id,product_name:pr.name,target_type:"group",group_id:g.id,group_name:g.name,sale_id:r.id,sale_name:r.name,account_id:a.id,account_name:a.name,
+        title:t0,content:`🌿 ${t0}\n${pr.name}: ${pr.description}\n💬 Giá vui lòng liên hệ trực tiếp Zalo 0386992326`,hashtags:"",status:"posted",source:"template",posted_at:ds,poster:`${r.name} · nick ${a.name} (tự động)`,
+        posted_url:st==="found"?`https://www.facebook.com/groups/demo${g.id}/posts/${880000+i}`:`https://www.facebook.com/groups/demo${g.id}`,permalink_status:st,
+        link_error:st==="not_found"?"Chưa tìm thấy bài trên Facebook để lấy link. Đã thử nhiều lần không được: mở bài trên Facebook, chép link dán vào thẻ bài ở mục Bài đăng":null,
+        images_used:JSON.stringify(["D:\\AnhSanPham\\Tong hop\\anh-"+(i%9+1)+".jpg","D:\\AnhSanPham\\Tong hop\\anh-"+(i%7+2)+".jpg"]),bump_count:i%4,comments:(i*7)%11,leads:i%5===0?2:i%3===0?1:0,bump_enabled:1}); }
+  }
+  function demoPosted(qs){ const q=new URLSearchParams(qs||""), page=+(q.get("page")||1), size=+(q.get("size")||20), s=(q.get("q")||"").toLowerCase(), gid=+(q.get("group_id")||0), aid=+(q.get("account_id")||0), link=q.get("link")||"", days=+(q.get("days")||0), sort=q.get("sort")||"new";
+    const all=S.posts.filter(p=>p.status==="posted"); let L=all.filter(p=>(!s||[p.title,p.content,p.group_name,p.posted_url,"#"+p.id].join(" ").toLowerCase().includes(s.replace(/^#/,"")))&&(!gid||p.group_id===gid)&&(!aid||p.account_id===aid)
+      &&(!link||(link==="missing"?!["found","pending","removed"].includes(p.permalink_status):p.permalink_status===link))&&(!days||(Date.now()-new Date((p.posted_at||"").replace(" ","T")))/864e5<=days));
+    L.sort((a,b)=>sort==="old"?(a.posted_at>b.posted_at?1:-1):sort==="leads"?(b.leads||0)-(a.leads||0)||(b.comments||0)-(a.comments||0):sort==="comments"?(b.comments||0)-(a.comments||0):(a.posted_at<b.posted_at?1:-1));
+    const pages=Math.max(1,Math.ceil(L.length/size)), pg=Math.min(Math.max(1,page),pages), cnt=f=>all.filter(f).length, today=now().slice(0,10);
+    const gm={}, am={}; all.forEach(p=>{ if(p.group_id){ gm[p.group_id]=gm[p.group_id]||{id:p.group_id,name:p.group_name,n:0}; gm[p.group_id].n++; } if(p.account_id){ am[p.account_id]=am[p.account_id]||{id:p.account_id,name:p.account_name,sale_name:p.sale_name,n:0}; am[p.account_id].n++; } });
+    return {items:L.slice((pg-1)*size,pg*size),total:L.length,page:pg,size,pages,
+      stats:{total:all.length,found:cnt(p=>p.permalink_status==="found"),pending:cnt(p=>p.permalink_status==="pending"),removed:cnt(p=>p.permalink_status==="removed"),missing:cnt(p=>!["found","pending","removed"].includes(p.permalink_status)),comments:all.reduce((s,p)=>s+(p.comments||0),0),leads:all.reduce((s,p)=>s+(p.leads||0),0),today:cnt(p=>(p.posted_at||"").startsWith(today))},
+      groups:Object.values(gm).sort((a,b)=>b.n-a.n),accounts:Object.values(am)}; }
   const ready=g=>!g.last_posted_at;
   const SALE_LOOKS=[{skin:"#f3cfae",shirt:"#d64545",pants:"#2d2d3a",hair:"#2a1810",hairStyle:"long",accessory:"none"},{skin:"#e8b88f",shirt:"#2f86c9",pants:"#25303a",hair:"#1d1d1d",hairStyle:"spiky",accessory:"glasses"},{skin:"#f6d2b3",shirt:"#e0a12a",pants:"#3a2d2a",hair:"#5a3520",hairStyle:"bun",accessory:"none"},{skin:"#eec29b",shirt:"#1f9a8a",pants:"#22332f",hair:"#2b2018",hairStyle:"side",accessory:"headset"},{skin:"#f2c9a0",shirt:"#a24fb5",pants:"#2c2236",hair:"#3b2414",hairStyle:"long",accessory:"beret"},{skin:"#e9bd96",shirt:"#5b7f2a",pants:"#2a3020",hair:"#141414",hairStyle:"cap",accessory:"cap"},{skin:"#f3d0b0",shirt:"#c4572b",pants:"#30262a",hair:"#4a2a1a",hairStyle:"bun",accessory:"glasses"},{skin:"#e6b48a",shirt:"#3b5bb5",pants:"#232a3a",hair:"#2a1d14",hairStyle:"spiky",accessory:"none"}];
   const saleAgents=()=>S.sales.map((r,i)=>({id:`sale-${r.id}`,sale_id:r.id,kind:"sale",name:r.name,role:`Sale · nick ${r.fb_name||r.name}`,short:"Đăng bài lên trang cá nhân và hội nhóm bằng tài khoản Facebook mình quản lý",personality:"Chăm chỉ, đúng giờ, báo ngay khi tài khoản gặp sự cố.",look:SALE_LOOKS[(r.id-1)%8],desk:5+i,login_status:r.login_status,sample:!!r.is_sample,
@@ -1811,6 +1872,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/sales") return S.sales.map(saleOut);
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products.slice().sort((a,b)=>(b.is_general||0)-(a.is_general||0)||(b.hot||0)-(a.hot||0)||a.id-b.id).map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g),joins:g.joins||{},today:gfToday(g)}));
+      if(P==="/posts/posted") return demoPosted(qs);
       if(P==="/posts/reset"){ const c={approved:0,scheduled:0,failed:0,draft:0}, g={approved:0,scheduled:0,failed:0,draft:0};
         S.posts.forEach(p=>{ if(p.status in c){ c[p.status]++; if(p.target_type==="group") g[p.status]++; } });
         return {counts:c,group_counts:g,scheduled_today:S.posts.filter(p=>p.status==="scheduled"&&(p.scheduled_for||"").startsWith(now().slice(0,10))).length,posting:S.posts.filter(p=>p.status==="posting").length}; }
@@ -2540,7 +2602,59 @@ async function loadPosts(){
   const [posts,products,sales]=await Promise.all([api("/posts"),api("/products"),api("/sales")]); ST.posts=posts; ST.products=products; ST.sales=sales;
   const sel=$("#gProduct"), cur=sel.value; sel.innerHTML=`<option value="">Lan tự chọn</option>`+products.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(""); sel.value=cur;
   renderBoard();
+  loadPosted();
 }
+ST.pd=ST.pd||{page:1,size:20,q:"",group_id:"",account_id:"",link:"",days:"0",sort:"new"};
+ST.pdOpen=ST.pdOpen||new Set();
+async function loadPosted(){
+  const f=ST.pd, qs=new URLSearchParams(Object.entries(f).filter(([k,v])=>v!==""&&v!=null&&!(k==="days"&&v==="0"))).toString();
+  try{ ST.posted=await api("/posts/posted?"+qs); }catch(e){ $("#pdStats").textContent=e.message; return; }
+  ST.pd.page=ST.posted.page;
+  const keep=(sel,opts,cur)=>{ sel.innerHTML=opts; sel.value=cur; };
+  keep($("#pdGroup"),`<option value="">Tất cả nhóm</option>`+ST.posted.groups.map(g=>`<option value="${g.id}">${esc(g.name)} (${g.n})</option>`).join(""),f.group_id);
+  keep($("#pdAcc"),`<option value="">Tất cả nick</option>`+ST.posted.accounts.map(a=>`<option value="${a.id}">${esc(a.sale_name?a.sale_name+" · ":"")}${esc(a.name)} (${a.n})</option>`).join(""),f.account_id);
+  renderPosted(); renderBoard();
+}
+function pdLinkCell(p){
+  const st=p.permalink_status;
+  if(st==="found") return `<a class="btn sm" href="${esc(p.posted_url)}" target="_blank" rel="noopener">Mở bài</a>`;
+  if(st==="pending") return `<span class="chip warn">Chờ nhóm duyệt</span>`;
+  if(st==="removed") return `<span class="chip bad">Bị xóa/ẩn</span>`;
+  return `<span class="chip bad">Chưa có link</span>`;
+}
+function renderPosted(){
+  const d=ST.posted; if(!d) return;
+  const s=d.stats;
+  $("#pdStats").innerHTML=`<b>${s.total}</b> bài đã đăng · hôm nay ${s.today} · <b>${s.found}</b> có link`+(s.missing?` · <span style="color:var(--danger)">${s.missing} chưa có link</span>`:"")+(s.pending?` · ${s.pending} chờ nhóm duyệt`:"")+(s.removed?` · ${s.removed} bị xóa/ẩn`:"")+` · ${s.comments} bình luận · ${s.leads} khách`;
+  const imgs=p=>{ try{ return JSON.parse(p.images_used||"[]").length; }catch(e){ return 0; } };
+  $("#pdRows").innerHTML=d.items.length?d.items.map(p=>{ const open=ST.pdOpen.has(p.id);
+    const where=p.group_name||TARGET[p.target_type]||p.target_type;
+    return `<tr class="click pd-row${open?" open":""}" data-pd="${p.id}" tabindex="0" aria-expanded="${open}" title="Bấm để xem chi tiết, dán link, up bài">
+      <td data-l="Ngày đăng" class="small">${fmtTime(p.posted_at)}<br>${fmtDate(p.posted_at)}</td>
+      <td class="pd-main"><div class="pd-title">#${p.id} · ${esc(p.title||"(Không tiêu đề)")}</div><div class="pd-snip">${esc((p.content||"").replace(/\s+/g," ").slice(0,140))}</div>${p.product_name?`<span class="chip" style="margin-top:3px">${esc(p.product_name)}</span>`:""}</td>
+      <td data-l="Đăng ở" class="small">${esc(where)}</td>
+      <td data-l="Nick" class="small">${p.account_name?esc((p.sale_name?p.sale_name+" · ":"")+p.account_name):esc(p.poster||"Đăng tay")}</td>
+      <td data-l="Ảnh" class="num">${imgs(p)||'<span class="chip bad">0</span>'}</td>
+      <td data-l="Link bài">${pdLinkCell(p)}</td>
+      <td data-l="Up" class="num">${p.bump_count||0}</td>
+      <td data-l="Bình luận" class="num">${p.comments||0}</td>
+      <td data-l="Khách" class="num">${p.leads?`<b style="color:var(--accent)">${p.leads}</b>`:0}</td></tr>`
+      +(open?`<tr class="pd-detail"><td colspan="9">${postCard(p)}</td></tr>`:""); }).join("")
+    :`<tr><td colspan="9"><div class="empty">${d.stats.total?"Không có bài nào khớp bộ lọc.":"Chưa có bài nào được đăng."}</div></td></tr>`;
+  const pg=d.page, n=d.pages, win=[...new Set([1,pg-2,pg-1,pg,pg+1,pg+2,n])].filter(x=>x>=1&&x<=n).sort((a,b)=>a-b);
+  const btns=[]; win.forEach((x,i)=>{ if(i&&x-win[i-1]>1) btns.push(`<span class="muted">…</span>`); btns.push(`<button type="button" data-pg="${x}" ${x===pg?'aria-current="page"':""}>${x}</button>`); });
+  const from=d.total?(pg-1)*d.size+1:0, to=Math.min(pg*d.size,d.total);
+  $("#pdPager").innerHTML=`<span class="small muted">${from}–${to} trên ${d.total} bài</span>
+    <div class="pg"><button type="button" data-pg="${pg-1}" ${pg<=1?"disabled":""} aria-label="Trang trước">‹ Trước</button>${btns.join("")}<button type="button" data-pg="${pg+1}" ${pg>=n?"disabled":""} aria-label="Trang sau">Sau ›</button></div>
+    <label class="row small">Mỗi trang <select id="pdSize">${[10,20,50,100].map(x=>`<option ${x===d.size?"selected":""}>${x}</option>`).join("")}</select></label>`;
+}
+$("#pdFilters").addEventListener("change",e=>{ const map={pdGroup:"group_id",pdAcc:"account_id",pdLink:"link",pdDays:"days",pdSort:"sort"}; const k=map[e.target.id]; if(!k) return; ST.pd[k]=e.target.value; ST.pd.page=1; loadPosted(); });
+let pdT; $("#pdQ").addEventListener("input",e=>{ clearTimeout(pdT); pdT=setTimeout(()=>{ ST.pd.q=e.target.value.trim(); ST.pd.page=1; loadPosted(); },350); });
+$("#pdPager").addEventListener("click",e=>{ const b=e.target.closest("[data-pg]"); if(!b||b.disabled) return; ST.pd.page=+b.dataset.pg; loadPosted().then(()=>$("#postedCard").scrollIntoView({block:"start",behavior:"smooth"})); });
+$("#pdPager").addEventListener("change",e=>{ if(e.target.id==="pdSize"){ ST.pd.size=+e.target.value; ST.pd.page=1; loadPosted(); } });
+$("#pdRows").addEventListener("click",e=>{ if(e.target.closest("tr.pd-detail")) return; const r=e.target.closest("tr[data-pd]"); if(!r||e.target.closest("a")) return;
+  const id=+r.dataset.pd; ST.pdOpen.has(id)?ST.pdOpen.delete(id):ST.pdOpen.add(id); renderPosted(); });
+$("#pdRows").addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches("tr[data-pd]")){ e.preventDefault(); e.target.click(); } });
 function postCard(p){
   const open=ST.openPost.has(p.id), editing=ST.editPost===p.id, posting=ST.postedForm===p.id;
   const SRCP={self:["ok","Lan tự viết"],claude:["","Claude viết"],boss:["talking","Sếp sửa"],template:["ok","Từ bài mẫu"]};
@@ -2587,16 +2701,18 @@ function postImgs(p){
   return `<div><span class="small muted">${label}</span><div class="thumbs" style="margin-top:4px">${DEMO?imgs.map(n=>`<span class="fname" title="${esc(n)}">${esc(base(n))}</span>`).join(""):imgs.map(n=>`<figure><img src="/api/image?path=${encodeURIComponent(n)}" alt="${esc(base(n))}" title="${esc(base(n))}" loading="lazy"></figure>`).join("")}</div></div>`;
 }
 function renderBoard(){
-  const cols=[["draft","Chờ duyệt"],["approved","Đã duyệt"],["scheduled","Lịch đăng hôm nay"],["posted","Đã đăng"]];
+  const cols=[["draft","Chờ duyệt"],["approved","Đã duyệt"],["scheduled","Lịch đăng hôm nay"]];
   const inCol=(p,s)=>s==="scheduled"?["scheduled","posting","failed"].includes(p.status):p.status===s;
   const miss=ST.posts.filter(p=>noImg(p)&&["approved","scheduled","draft","failed"].includes(p.status)).length, bar=$("#noImgBar");
-  const nl=ST.posts.filter(noLink).length, lb=$("#noLinkBar");
-  lb.hidden=!nl; if(nl) lb.innerHTML=`<b>${nl} bài đã đăng chưa lưu được link.</b> Bài chờ nhóm duyệt: sale tự lấy link khi bài được duyệt. Bài chưa tìm thấy: sale tự thử lại (sau 20 phút, 2, 6, 12, 24 giờ); hoặc bấm <b>Lấy link ngay</b>, hay dán link vào thẻ bài ở cột Đã đăng.`;
+  const nl=ST.posted?ST.posted.stats.missing+ST.posted.stats.pending:ST.posts.filter(noLink).length, lb=$("#noLinkBar");
+  lb.hidden=!nl; if(nl) lb.innerHTML=`<b>${nl} bài đã đăng chưa lưu được link.</b> Bài chờ nhóm duyệt: sale tự lấy link khi bài được duyệt. Bài chưa tìm thấy: sale tự thử lại (sau 20 phút, 2, 6, 12, 24 giờ); hoặc bấm <b>Lấy link ngay</b>, hay dán link vào bài trong bảng Bài đã đăng bên dưới (lọc “Chưa có link”).`;
   bar.hidden=!miss; if(miss) bar.innerHTML=`<b>${miss} bài chưa có ảnh nên sẽ không đăng.</b> Bài đăng lên Facebook bắt buộc kèm ảnh sản phẩm. Thêm thư mục ảnh cho sản phẩm ở <a href="#products">Sản phẩm</a> hoặc thư mục ảnh chung ở <a href="#setup">Cài đặt → Up bài</a>, Tuấn sẽ tự xếp lại các bài này.`;
+  renderPosted();
   $("#board").innerHTML=cols.map(([s,l])=>{ const list=ST.posts.filter(p=>inCol(p,s)); return `<div class="col"><header><b>${l}</b><span class="chip num">${list.length}</span></header>${list.map(postCard).join("")||`<div class="empty">Trống</div>`}</div>`; }).join("");
 }
-$("#board").addEventListener("click",async e=>{
-  const b=e.target.closest("[data-act]"); if(!b) return; const card=b.closest("[data-p]"); const id=+card.dataset.p; const p=ST.posts.find(x=>x.id===id); const act=b.dataset.act;
+async function postAction(e){
+  const b=e.target.closest("[data-act]"); if(!b) return; const card=b.closest("[data-p]"); const id=+card.dataset.p; const p=ST.posts.find(x=>x.id===id)||((ST.posted||{}).items||[]).find(x=>x.id===id); const act=b.dataset.act;
+  if(!p) return;
   const patch=async body=>{ Object.assign(p,await api(`/posts/${id}`,"PATCH",body)); };
   if(act==="more"){ ST.openPost.has(id)?ST.openPost.delete(id):ST.openPost.add(id); return renderBoard(); }
   if(act==="edit"){ ST.editPost=id; return renderBoard(); }
@@ -2615,10 +2731,12 @@ $("#board").addEventListener("click",async e=>{
   if(act==="bump"){ b.disabled=true; try{ await api(`/posts/${id}/bump`,"POST"); toast(`${p.sale_name||"Sale"} sẽ bình luận ảnh để up bài trong vòng 1 phút`); }catch(err){ toast(err.message); } b.disabled=false; return loadPosts(); }
   if(act==="bumpToggle"){ await patch({bump_enabled:p.bump_enabled===0?1:0}); toast(p.bump_enabled===0?"Đã dừng tự up bài này":"Đã bật tự up bài này"); return renderBoard(); }
   if(act==="fetchLink"){ b.disabled=true; try{ await api(`/posts/${id}/fetch-link`,"POST"); toast(`${p.sale_name||"Sale"} đang mở Chrome nick đã đăng để tìm link bài`); }catch(err){ toast(err.message); } b.disabled=false; return loadPosts(); }
-  if(act==="saveLink"){ const v=$(`#plink-${id}`).value.trim(); if(!/^https?:\/\/\S+/.test(v)){ toast("Dán đường dẫn bài viết, bắt đầu bằng https://"); return; } try{ await patch({posted_url:v}); }catch(err){ toast(err.message); return; } toast("Đã lưu link. Sale sẽ up bài này theo lịch."); return renderBoard(); }
+  if(act==="saveLink"){ const v=$(`#plink-${id}`).value.trim(); if(!/^https?:\/\/\S+/.test(v)){ toast("Dán đường dẫn bài viết, bắt đầu bằng https://"); return; } try{ await patch({posted_url:v}); }catch(err){ toast(err.message); return; } toast("Đã lưu link. Sale sẽ up bài này theo lịch."); ST.pdOpen.delete(id); return loadPosted(); }
   if(act==="retry"){ await api(`/posts/${id}/retry`,"POST"); toast("Đã đưa bài về hàng đợi. Tuấn sẽ xếp lại."); return loadPosts(); }
-  if(act==="result"){ await patch({comments:+$(`#cm-${id}`).value,leads:+$(`#ld-${id}`).value}); toast("Khoa đã ghi nhận kết quả bài"); }
-});
+  if(act==="result"){ await patch({comments:+$(`#cm-${id}`).value,leads:+$(`#ld-${id}`).value}); toast("Khoa đã ghi nhận kết quả bài"); loadPosted(); }
+}
+$("#board").addEventListener("click",postAction);
+$("#pdRows").addEventListener("click",postAction);
 $("#genForm").addEventListener("submit",async e=>{ e.preventDefault(); const btn=$("#gBtn"); btn.disabled=true; btn.textContent="Lan đang viết…";
   try{ const r=await api("/posts/generate","POST",{count:+$("#gCount").value||3,product_id:+$("#gProduct").value||null,target_type:$("#gTarget").value,angle:$("#gAngle").value||null,note:$("#gNote").value});
     toast(`Lan đã viết ${r.length} bài, chờ sếp duyệt`); }catch(err){ toast(err.message); }

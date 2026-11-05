@@ -100,6 +100,20 @@ sang giao diện máy tính. Nếu không đính được ảnh, sale vẫn đă
 hạn chế dù đã giãn cách, nên giữ số bài/ngày vừa phải, nội dung có giá trị và đúng luật từng nhóm.
 Máy chạy phần mềm phải bật trong giờ đăng bài; Chrome của các nick chạy trên chính máy đó.
 
+## Bảng bài đã đăng (phân trang)
+
+Mục **Bài đăng** có 3 cột việc đang chạy (Chờ duyệt, Đã duyệt, Lịch đăng hôm nay); bài **đã đăng** nằm trong bảng
+**Bài đã đăng** bên dưới:
+- Dòng tổng: số bài đã đăng, hôm nay, có link / chưa có link / chờ nhóm duyệt / bị xóa-ẩn, tổng bình luận và khách.
+- Mỗi dòng: ngày giờ đăng, mã và tên bài (kèm vài chữ đầu), nhóm, sale · nick, số ảnh, link bài (nút **Mở bài** hoặc
+  trạng thái), số lần up, bình luận, khách.
+- **Lọc** theo nhóm, nick, tình trạng link, thời gian (hôm nay, 7, 30, 90 ngày); **tìm** theo chữ trong bài, tên nhóm,
+  link hoặc `#mã bài`; **sắp xếp** mới nhất, cũ nhất, nhiều khách, nhiều bình luận.
+- **Phân trang** 10 / 20 / 50 / 100 bài mỗi trang.
+- Bấm vào một dòng để mở chi tiết ngay trong bảng: nội dung, ảnh đã đăng, dán link, **Lấy link ngay**, **Up ngay**,
+  bật/dừng tự up, ghi số bình luận và khách.
+- Trên điện thoại mỗi bài hiện thành một khối gọn, không phải kéo ngang.
+
 ## Làm lại bài đăng (xóa bài lỗi, viết bài mới)
 
 Ở mục **Bài đăng**, nút **Làm lại bài đăng** (cạnh “Tuấn xếp lịch đăng nhóm”) mở bảng cho biết sẽ xóa bao nhiêu bài:
