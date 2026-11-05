@@ -115,8 +115,17 @@ def required() -> bool:
     return db.get_settings().get("require_images", "1") != "0"
 
 
+def general() -> dict | None:
+    """Sản phẩm sếp tích “Ảnh tổng hợp nhà máy”: có thì MỌI bài đăng, mọi lượt up bài chỉ lấy ảnh ở đây."""
+    return db.one("SELECT * FROM products WHERE COALESCE(is_general,0)=1 ORDER BY id LIMIT 1")
+
+
+def _image_product(post: dict) -> dict | None:
+    return general() or _product(post.get("product_id"))
+
+
 def pool_for(post: dict) -> list[Path]:
-    product = _product(post.get("product_id"))
+    product = _image_product(post)
     pool = images_for(product)
     if not pool and product:  # dự phòng: ảnh tải lên trong phần mềm
         pool = [db.DATA_DIR / rel for rel in json.loads(product.get("images") or "[]") if (db.DATA_DIR / rel).exists()]
@@ -129,7 +138,8 @@ _count_cache: dict = {}
 def image_count(post: dict) -> int:
     """Số ảnh có thể dùng cho bài (nhớ 60 giây theo sản phẩm, vì xếp lịch và danh sách bài gọi nhiều lần)."""
     import time
-    key = post.get("product_id") or 0
+    g = general()
+    key = f"g{g['id']}" if g else (post.get("product_id") or 0)
     hit = _count_cache.get(key)
     if hit and hit[0] > time.time() - 60:
         return hit[1]
@@ -142,6 +152,10 @@ def missing(post: dict) -> str | None:
     """Lý do bài KHÔNG được đăng vì thiếu ảnh (None = đủ ảnh hoặc sếp không bắt buộc)."""
     if not required() or image_count(post):
         return None
+    g = general()
+    if g:
+        return (f"Bài chưa có ảnh nên không đăng: “{g['name']}” (ảnh tổng hợp nhà máy, mọi bài lấy ảnh ở đây) chưa có ảnh. "
+                "Vào Sản phẩm, điền thư mục ảnh cho mục này, hoặc bỏ tích Ảnh tổng hợp để bài lấy ảnh theo từng sản phẩm")
     product = _product(post.get("product_id"))
     if product:
         return (f"Bài chưa có ảnh nên không đăng: sản phẩm “{product['name']}” chưa có ảnh. Vào Sản phẩm, điền thư mục ảnh "
@@ -186,7 +200,7 @@ def pick_for_post(post: dict, sale_id: int | None = None) -> tuple[list[Path], s
 
 def pick(post: dict) -> Path | None:
     """Chọn 1 ảnh để bình luận up bài: không lặp ảnh trên cùng bài, ưu tiên ảnh ít dùng nhất."""
-    pool = images_for(_product(post.get("product_id")))
+    pool = pool_for(post)
     if not pool:
         return None
     used_here = {r["path"] for r in db.q("SELECT path FROM image_usage WHERE post_id=?", (post["id"],))}

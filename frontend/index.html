@@ -400,6 +400,12 @@ tbody tr.sel td{background:var(--accent-soft)}
 .hot-note{background:var(--honey-soft);color:var(--ink);border-radius:8px;padding:6px 9px;font-size:12.5px}
 .hot-bar{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:var(--panel-2);font-size:13.5px}
 .hot-bar b{color:var(--honey)}
+.gen-bar{margin:0 0 12px;padding:10px 12px;border-radius:var(--r-s);background:var(--accent-soft);font-size:13.5px;border-left:3px solid var(--accent)}
+.gen-bar.off{background:var(--panel-2);border-left-color:var(--line);color:var(--muted)}
+.prod.gen{border-color:var(--accent);box-shadow:var(--shadow),inset 0 0 0 1px var(--accent)}
+.gen-tick{display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:8px 10px;border:1px dashed var(--line);border-radius:var(--r-s);cursor:pointer}
+.prod.gen .gen-tick{border-style:solid;border-color:var(--accent);background:var(--accent-soft)}
+.gen-tick input{margin-top:2px}
 .prod form .grid2{margin-top:4px}
 .prod .cat{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12.5px}
@@ -1040,6 +1046,7 @@ label.f{font-weight:600;color:var(--muted)}
     <section class="view" id="v-products" hidden>
       <div class="vh"><div><h1>Sản phẩm</h1><p>Thông tin này là "tài liệu bán hàng" các agent dùng khi viết bài và tư vấn. Ghi mô tả và điểm mạnh càng rõ, bài càng thuyết phục. <b>Không ghi giá</b>: mọi bài viết, tin nhắn đều mời khách liên hệ Zalo <b class="zalo-num">0386992326</b> để được báo giá (sửa số Zalo ở Cài đặt).</p></div></div>
       <div class="hot-bar" id="hotBar"></div>
+      <div class="gen-bar" id="genBar"></div>
       <div class="products" id="prodGrid"></div>
       <form class="card" id="prodForm">
         <h3>Thêm sản phẩm</h3>
@@ -1050,6 +1057,7 @@ label.f{font-weight:600;color:var(--muted)}
           <label class="f" for="pDesc">Mô tả<input type="text" id="pDesc"></label>
           <label class="f" for="pSell" style="grid-column:1/-1">Điểm mạnh khi bán<input type="text" id="pSell"></label>
           <label class="row small" style="grid-column:1/-1"><input type="checkbox" id="pHot"> 🔥 Sản phẩm đang bán chạy: cả đội tập trung chào mời</label>
+          <label class="row small" style="grid-column:1/-1"><input type="checkbox" id="pGen"> <span>📷 <b>Ảnh tổng hợp nhà máy</b>: mọi bài đăng chỉ lấy ảnh ngẫu nhiên trong thư mục ảnh của mục này</span></label>
           <label class="f" for="pHotNote" style="grid-column:1/-1">Lưu ý khi chào sản phẩm bán chạy (không bắt buộc)<input type="text" id="pHotNote" placeholder="VD: đang vào mùa Tết, tặng 5 hộp khi nhập từ 100 hộp"></label>
           <label class="f" for="pFolder" style="grid-column:1/-1">Thư mục ảnh của sản phẩm trên máy này (sale chọn ngẫu nhiên ảnh trong đây để đăng)<input type="text" id="pFolder" placeholder="VD: D:\AnhSanPham\Tra gung mat ong"></label>
         </div>
@@ -1795,8 +1803,8 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
           .concat(saleAgents().map(a=>({...a,level:lvl(S.xp[a.id]||0),progress:prog(a.id),recent:rec(a.id),learned_today:1,status:learnSt(a.id),tasks:[]}))); }
       if(P==="/sales") return S.sales.map(saleOut);
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
-      if(P==="/products") return S.products.slice().sort((a,b)=>(b.hot||0)-(a.hot||0)||a.id-b.id).map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g),joins:g.joins||{},today:gfToday(g)}));
-      if(P==="/posts") return S.posts.map(p=>{ const pr=S.products.find(x=>x.id===p.product_id); const shared=(S.settings.bump_folder||"").trim()?10:0;
+      if(P==="/products") return S.products.slice().sort((a,b)=>(b.is_general||0)-(a.is_general||0)||(b.hot||0)-(a.hot||0)||a.id-b.id).map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g),joins:g.joins||{},today:gfToday(g)}));
+      if(P==="/posts") return S.posts.map(p=>{ const pr=S.products.find(x=>x.is_general)||S.products.find(x=>x.id===p.product_id); const shared=(S.settings.bump_folder||"").trim()?10:0;
         return {...p,img_required:S.settings.require_images!=="0",img_count:pr?(demoFolder(pr).count||shared):shared}; }); if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,tg_token:S.settings.tg_token?"••••••":"",models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
       if(P==="/company") return demoCompany();
       if(P==="/errors") return demoErrors(qs);
@@ -1875,7 +1883,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if((m=P.match(/^\/leads\/(\d+)\/reply$/))){ S.status.ha={state:"working",text:"Đang soạn tin nhắn"}; await wait(900); S.status.ha={state:"idle",text:"Chờ duyệt tin"}; return {reply:reply(S.leads.find(l=>l.id==m[1]),body.message)}; }
       if(P==="/leads"){ const l={id:id(),...body,score:60,status:"new",created_at:now()}; S.leads.unshift(l); log("ha","Khách mới",l.name); return l; }
       if(P==="/products"){ if(!(body.name||"").trim()) throw new Error("Nhập tên sản phẩm"); if(S.products.some(p=>p.name.toLowerCase()===body.name.trim().toLowerCase())) throw new Error("Đã có sản phẩm cùng tên. Sửa sản phẩm đó thay vì thêm mới");
-        const x={id:id(),...body,name:body.name.trim(),hot:body.hot?1:0,images:"[]"}; S.products.push(x); log("minh","Thêm sản phẩm",`${x.name}: Lan có thể viết bài, Hà tư vấn sản phẩm này từ giờ`); return x; }
+        const x={id:id(),...body,name:body.name.trim(),hot:body.hot?1:0,is_general:body.is_general?1:0,images:"[]"}; if(x.is_general) S.products.forEach(p=>p.is_general=0); S.products.push(x); log("minh","Thêm sản phẩm",`${x.name}: Lan có thể viết bài, Hà tư vấn sản phẩm này từ giờ`); return x; }
       if(P==="/groups"){ const u=demoGroupUrl(body.url); if(u.err) throw new Error(u.err); const x={id:id(),...body,url:u.url,leads_count:0,last_posted_at:null}; S.groups.push(x); log("tuan","Thêm nhóm",x.name); return x; }
       if(P==="/run/daily-work"){ genPosts(3,null,"group"); const pl=plan(); return {drafts:3,scheduled:pl.length,follow_ups:S.leads.filter(l=>l.status==="new").length}; }
     }
@@ -1887,7 +1895,9 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     if(method==="PATCH"&&(m=P.match(/^\/groups\/(\d+)$/))){ const g=S.groups.find(x=>x.id==m[1]); if(body.url!=null){ const u=demoGroupUrl(body.url); if(u.err) throw new Error(u.err); body.url=u.url; }
       const had=!!g.url; Object.assign(g,body); if(!had&&g.url) S.posts.filter(p=>p.group_id===g.id&&p.status==="failed").forEach(p=>Object.assign(p,{status:"approved",error:null,sale_id:null,scheduled_for:null})); return {...g,ready:ready(g)}; }
     if(method==="PATCH"&&(m=P.match(/^\/products\/(\d+)$/))){ const pr=S.products.find(x=>x.id==m[1]); if(body.name!=null&&!body.name.trim()) throw new Error("Tên sản phẩm không được để trống");
-      if(body.hot!=null&&!!pr.hot!==!!body.hot) log("minh","Sản phẩm bán chạy",`${pr.name}: ${body.hot?"đang bán chạy, cả đội tập trung chào mời":"thôi ưu tiên"}`); if(body.hot!=null) body.hot=body.hot?1:0; Object.assign(pr,body); return {...pr,folder:pr.image_folder?{...demoFolder(pr),count:20,fresh:20,posts_left:10}:demoFolder(pr)}; }
+      if(body.hot!=null&&!!pr.hot!==!!body.hot) log("minh","Sản phẩm bán chạy",`${pr.name}: ${body.hot?"đang bán chạy, cả đội tập trung chào mời":"thôi ưu tiên"}`); if(body.hot!=null) body.hot=body.hot?1:0;
+      if(body.is_general!=null){ body.is_general=body.is_general?1:0; if(body.is_general) S.products.forEach(x=>x.is_general=0); log("tuan","Ảnh đăng bài",body.is_general?`Từ giờ mọi bài đăng chỉ lấy ảnh ngẫu nhiên trong “${pr.name}” (ảnh tổng hợp nhà máy)`:`Bỏ ảnh tổng hợp “${pr.name}”`); }
+      Object.assign(pr,body); return {...pr,folder:body.image_folder!=null&&pr.image_folder?{...demoFolder(pr),count:20,fresh:20,posts_left:10}:demoFolder(pr)}; }
     if(method==="PATCH"&&(m=P.match(/^\/lessons\/(\d+)$/))){ const l=S.lessons.find(x=>x.id==m[1]); if(body.status==="retired") S.lessons=S.lessons.filter(x=>x!==l); else Object.assign(l,body); return l||{}; }
     if(method==="PATCH"&&(m=P.match(/^\/accounts\/(\d+)$/))){ const a=S.accounts.find(x=>x.id==m[1]); if(!a) throw new Error("Không tìm thấy nick");
       for(const k of ["active_from","active_to"]) if(body[k]!=null&&!/^\d{2}:\d{2}$/.test(body[k])) throw new Error("Giờ phải có dạng HH:MM");
@@ -3310,7 +3320,7 @@ $("#leadForm").addEventListener("submit",async e=>{ e.preventDefault(); await ap
 function folderBox(p){
   const f=p.folder||{}; const own=f.source==="product";
   const pct=f.count?Math.round(f.fresh/f.count*100):0;
-  const st=!f.exists?(f.error?`<div class="err">${esc(f.error)}</div>`:'<span class="small muted">Chưa có thư mục ảnh. Bài sẽ đăng không kèm ảnh.</span>')
+  const st=!f.exists?(f.error?`<div class="err">${esc(f.error)}</div>`:'<span class="small muted">Chưa có thư mục ảnh. ${p.is_general?"Mọi bài sẽ không được đăng cho tới khi điền thư mục ảnh ở đây.":"Bài của sản phẩm này sẽ không được đăng (bắt buộc có ảnh)."}</span>')
     :`<div class="row small" style="justify-content:space-between"><span><b>${f.count}</b> ảnh · <b>${f.fresh}</b> ảnh chưa đăng lần nào${f.posts_left!=null?` · đủ cho khoảng ${f.posts_left} bài mới`:""}</span>${own?"":'<span class="chip warn">Đang dùng thư mục chung</span>'}</div>
       <div class="meter" title="Tỉ lệ ảnh chưa dùng"><i class="${pct<25?"low":""}" style="width:${pct}%"></i></div>
       ${f.error?`<span class="small" style="color:var(--honey)">${esc(f.error)}</span>`:""}
@@ -3340,16 +3350,26 @@ async function loadProducts(){
   const hot=ST.products.filter(p=>p.hot);
   $("#hotBar").innerHTML=hot.length?`🔥 Cả đội đang tập trung chào: <b>${hot.map(p=>esc(p.name)).join(", ")}</b>. Lan viết phần lớn bài về các sản phẩm này, Hà chào các sản phẩm này trước khi tư vấn khách, Tuấn up bài của chúng trước.`
     :`Chưa có sản phẩm nào được tích <b>Đang bán chạy</b>. Bấm nút 🔥 ở sản phẩm muốn đẩy để cả đội tập trung chào mời.`;
+  const gen=ST.products.find(p=>p.is_general);
+  $("#genBar").className="gen-bar"+(gen?"":" off");
+  $("#genBar").innerHTML=gen?`📷 <b>Mọi bài đăng đang lấy ảnh ngẫu nhiên trong “${esc(gen.name)}”</b> (${gen.folder&&gen.folder.exists?`${gen.folder.count} ảnh, ${gen.folder.fresh} ảnh chưa đăng`:"chưa có thư mục ảnh: bài sẽ không đăng cho tới khi điền thư mục"}). Ảnh của các sản phẩm khác không được dùng. Bỏ tích ô Ảnh tổng hợp để bài lấy ảnh theo từng sản phẩm.`
+    :`Bài đăng đang lấy ảnh theo đúng sản phẩm của bài. Muốn mọi bài dùng chung ảnh tổng hợp các sản phẩm nhà máy: tạo một mục (VD “Tổng hợp sản phẩm nhà máy”), điền thư mục ảnh rồi tích ô <b>Ảnh tổng hợp nhà máy</b>.`;
   if(ST.editProd&&!ST.products.some(p=>p.id===ST.editProd)) ST.editProd=null;
-  $("#prodGrid").innerHTML=ST.products.map(p=>`<div class="card prod${p.hot?" hot":""}" data-prod="${p.id}"><div class="prod-h"><div class="cat">${esc(p.category)}${p.is_sample?' · <span class="chip warn">Mẫu</span>':""}</div>
+  $("#prodGrid").innerHTML=ST.products.map(p=>`<div class="card prod${p.hot?" hot":""}${p.is_general?" gen":""}" data-prod="${p.id}"><div class="prod-h"><div class="cat">${esc(p.category)}${p.is_sample?' · <span class="chip warn">Mẫu</span>':""}</div>
      <button type="button" class="hot-btn" data-phot="${p.id}" aria-pressed="${p.hot?"true":"false"}" title="Tích để cả đội tập trung chào mời sản phẩm này">🔥 ${p.hot?"Đang bán chạy":"Đánh dấu bán chạy"}</button></div>
    ${ST.editProd===p.id?prodEdit(p):`<h3>${esc(p.name)}</h3>${p.hot&&p.hot_note?`<div class="hot-note">${esc(p.hot_note)}</div>`:""}<p class="small muted">${esc(p.description)}</p>
    <dl class="kv"><dt>Giá</dt><dd>Liên hệ Zalo ${esc(ZALO())}</dd><dt>Nhập tối thiểu</dt><dd>${esc(p.moq)}</dd><dt>Điểm mạnh</dt><dd>${esc(p.selling_points)}</dd></dl>`}
-   ${folderBox(p)}
+   <label class="gen-tick"><input type="checkbox" data-pgen="${p.id}" ${p.is_general?"checked":""}> <span><b>Ảnh tổng hợp nhà máy</b>: mọi bài đăng chỉ lấy ảnh ngẫu nhiên trong mục này</span></label>
+   ${folderBox(p)}${gen&&!p.is_general?`<span class="small muted">Đang dùng ảnh tổng hợp “${esc(gen.name)}” khi đăng, ảnh của sản phẩm này tạm không dùng.</span>`:""}
    ${JSON.parse(p.images||"[]").length?`<div><span class="small muted">Ảnh tải lên (chỉ dùng khi chưa có thư mục ảnh)</span><div class="thumbs" style="margin-top:4px">${JSON.parse(p.images||"[]").map(src=>`<figure><img src="${src.startsWith("data:")?src:"/"+esc(src)}" alt="Ảnh ${esc(p.name)}"><button type="button" data-delimg="${esc(src)}" data-p="${p.id}" aria-label="Xóa ảnh">×</button></figure>`).join("")}</div></div>`:""}
    <div class="row"><label class="btn sm ghost" for="up-${p.id}">Tải ảnh lên</label><input type="file" id="up-${p.id}" data-up="${p.id}" accept="image/png,image/jpeg,image/webp" multiple hidden>${ST.editProd===p.id?"":`<button class="btn sm" type="button" data-pedit-open="${p.id}">Sửa thông tin</button>`}<button class="btn sm ghost danger" data-pr="${p.id}">Xóa sản phẩm</button></div></div>`).join("");
 }
-$("#prodGrid").addEventListener("change",async e=>{ const pid=e.target.dataset.up; if(!pid) return;
+$("#prodGrid").addEventListener("change",async e=>{
+  const g=e.target.dataset.pgen; if(g){ const on=e.target.checked, p=ST.products.find(x=>x.id==g); e.target.disabled=true;
+    try{ const r=await api(`/products/${g}`,"PATCH",{is_general:on});
+      toast(on?(r.folder&&r.folder.exists?`Từ giờ mọi bài đăng lấy ngẫu nhiên ${r.folder.count} ảnh trong “${p.name}”`:`Đã tích “${p.name}”. Điền thư mục ảnh cho mục này, chưa có ảnh thì bài sẽ không đăng`):"Bài đăng lấy ảnh theo đúng sản phẩm của bài"); }
+    catch(err){ toast(err.message); } return loadProducts(); }
+  const pid=e.target.dataset.up; if(!pid) return;
   for(const f of e.target.files){ const data=await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(f); });
     try{ await api(`/products/${pid}/images`,"POST",{filename:f.name,data}); }catch(err){ toast(err.message); } }
   toast("Đã thêm ảnh"); loadProducts(); });
@@ -3366,7 +3386,7 @@ $("#prodGrid").addEventListener("submit",async e=>{ const f=e.target.closest("[d
   try{ await api(`/products/${id}`,"PATCH",{name:$(`#en-${id}`).value,category:$(`#ec-${id}`).value,moq:$(`#em-${id}`).value,description:$(`#ed-${id}`).value,selling_points:$(`#es-${id}`).value,hot:$(`#eh-${id}`).checked,hot_note:$(`#eo-${id}`).value});
     ST.editProd=null; toast("Đã lưu sản phẩm. Các agent dùng thông tin mới từ việc tiếp theo."); }catch(err){ toast(err.message); }
   loadProducts(); });
-$("#prodForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/products","POST",{name:$("#pName").value,category:$("#pCat").value,description:$("#pDesc").value,moq:$("#pMoq").value,selling_points:$("#pSell").value,image_folder:$("#pFolder").value,hot:$("#pHot").checked,hot_note:$("#pHotNote").value}); e.target.reset(); toast("Đã thêm sản phẩm. Lan và Hà dùng sản phẩm này từ việc tiếp theo."); }catch(err){ toast(err.message); } loadProducts(); });
+$("#prodForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/products","POST",{name:$("#pName").value,category:$("#pCat").value,description:$("#pDesc").value,moq:$("#pMoq").value,selling_points:$("#pSell").value,image_folder:$("#pFolder").value,hot:$("#pHot").checked,hot_note:$("#pHotNote").value,is_general:$("#pGen").checked}); e.target.reset(); toast("Đã thêm sản phẩm. Lan và Hà dùng sản phẩm này từ việc tiếp theo."); }catch(err){ toast(err.message); } loadProducts(); });
 
 /* --------------------------------------------- phong cách viết của Lan */
 const ST_SRC={claude:["","Claude viết"],self:["ok","Lan tự viết"],boss:["talking","Sếp sửa"]};

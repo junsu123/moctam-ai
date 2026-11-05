@@ -191,6 +191,7 @@ class Product(BaseModel):
     image_folder: str = ""
     hot: bool = False
     hot_note: str = ""
+    is_general: bool = False
 
 
 class ProductPatch(BaseModel):
@@ -204,6 +205,19 @@ class ProductPatch(BaseModel):
     image_folder: str | None = None
     hot: bool | None = None
     hot_note: str | None = None
+    is_general: bool | None = None
+
+
+def _set_general(pid: int, on: bool):
+    """Chỉ 1 mục ảnh tổng hợp: tích mục này thì bỏ tích mục khác."""
+    if on:
+        db.run("UPDATE products SET is_general=CASE WHEN id=? THEN 1 ELSE 0 END", (pid,))
+    else:
+        db.run("UPDATE products SET is_general=0 WHERE id=?", (pid,))
+    media_folder._count_cache.clear()
+    p = db.one("SELECT name FROM products WHERE id=?", (pid,))
+    db.log("tuan", "Ảnh đăng bài", f"Từ giờ mọi bài đăng chỉ lấy ảnh ngẫu nhiên trong “{p['name']}” (ảnh tổng hợp nhà máy)" if on
+           else f"Bỏ ảnh tổng hợp “{p['name']}”: bài đăng lấy ảnh theo đúng sản phẩm của bài")
 
 
 def _set_hot(pid: int, hot: bool, by: str = "boss"):
@@ -214,7 +228,7 @@ def _set_hot(pid: int, hot: bool, by: str = "boss"):
 @app.get("/api/products")
 def products():
     return [{**p, "folder": media_folder.folder_info(p)}
-            for p in db.q("SELECT * FROM products ORDER BY hot DESC, id")]
+            for p in db.q("SELECT * FROM products ORDER BY COALESCE(is_general,0) DESC, hot DESC, id")]
 
 
 @app.post("/api/products")
@@ -230,6 +244,8 @@ def add_product(p: Product):
     db.log("minh", "Thêm sản phẩm", f"{p.name.strip()}: Lan có thể viết bài, Hà tư vấn sản phẩm này từ giờ")
     if p.hot:
         _set_hot(pid, True)
+    if p.is_general:
+        _set_general(pid, True)
     prod = db.one("SELECT * FROM products WHERE id=?", (pid,))
     return {**prod, "folder": media_folder.folder_info(prod)}
 
@@ -240,6 +256,7 @@ def patch_product(pid: int, p: ProductPatch):
         raise HTTPException(404, "Không tìm thấy sản phẩm")
     data = p.model_dump()
     hot = data.pop("hot")
+    gen = data.pop("is_general")
     data.pop("wholesale_price", None), data.pop("retail_price", None)  # sếp chốt: không lưu giá, giá liên hệ Zalo
     fields = {k: (v.strip().strip('"') if k == "image_folder" else v.strip() if isinstance(v, str) else v)
               for k, v in data.items() if v is not None}
@@ -249,9 +266,12 @@ def patch_product(pid: int, p: ProductPatch):
         raise HTTPException(400, "Đã có sản phẩm khác cùng tên")
     if hot is not None:
         _set_hot(pid, hot)
+    if gen is not None:
+        _set_general(pid, gen)
     if fields:
         fields["is_sample"] = 0  # sếp đã sửa -> thành dữ liệu thật
         db.run(f"UPDATE products SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), pid))
+        media_folder._count_cache.clear()  # đổi thư mục ảnh: số ảnh sẵn để đăng tính lại ngay
     prod = db.one("SELECT * FROM products WHERE id=?", (pid,))
     if not prod:
         raise HTTPException(404)
@@ -294,6 +314,7 @@ def del_product(pid: int):
     drafts = db.one("SELECT COUNT(*) n FROM posts WHERE product_id=? AND status IN ('draft','approved')", (pid,))["n"]
     db.run("UPDATE posts SET status='rejected' WHERE product_id=? AND status IN ('draft','approved')", (pid,))
     db.run("DELETE FROM products WHERE id=?", (pid,))
+    media_folder._count_cache.clear()
     db.log("minh", "Xóa sản phẩm", f"{p['name']}" + (f", bỏ {drafts} bài nháp/chờ đăng của sản phẩm này" if drafts else ""))
     return {"ok": True, "drafts_removed": drafts}
 
@@ -1610,6 +1631,7 @@ def add_image(pid: int, img: ImageUp):
     (folder / name).write_bytes(raw)
     imgs = json.loads(p["images"] or "[]") + [f"media/product-{pid}/{name}"]
     db.run("UPDATE products SET images=? WHERE id=?", (json.dumps(imgs), pid))
+    media_folder._count_cache.clear()
     return {"images": imgs}
 
 
@@ -1618,6 +1640,7 @@ def del_image(pid: int, path: str):
     p = db.one("SELECT images FROM products WHERE id=?", (pid,))
     imgs = [i for i in json.loads((p or {}).get("images") or "[]") if i != path]
     db.run("UPDATE products SET images=? WHERE id=?", (json.dumps(imgs), pid))
+    media_folder._count_cache.clear()
     return {"images": imgs}
 
 

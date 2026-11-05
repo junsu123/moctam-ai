@@ -300,6 +300,13 @@ nhiêu ảnh chưa đăng và đủ cho khoảng bao nhiêu bài nữa. Thẻ b�
 Sản phẩm chưa có thư mục riêng sẽ dùng thư mục chung (Cài đặt → Tự động up bài): thư mục con trùng tên sản phẩm,
 hoặc ảnh để thẳng trong thư mục chung.
 
+**Ảnh tổng hợp nhà máy**: ở trang Sản phẩm, mỗi sản phẩm có ô **Ảnh tổng hợp nhà máy**. Tạo một mục (VD “Tổng hợp sản
+phẩm nhà máy”), điền thư mục chứa ảnh tổng hợp các sản phẩm của nhà máy, rồi tích ô đó: từ giờ **mọi bài đăng** (và ảnh
+bình luận up bài) chỉ lấy ngẫu nhiên ảnh trong thư mục này, không lấy ảnh ở các sản phẩm khác nữa. Vẫn áp dụng các quy
+tắc chống trùng ở trên. Chỉ tích được 1 mục: tích mục khác thì mục cũ tự bỏ tích. Mục tổng hợp chưa có ảnh thì bài không
+đăng (không quay về dùng ảnh sản phẩm khác). Bỏ tích thì bài lại lấy ảnh theo đúng sản phẩm của bài. Đầu trang Sản phẩm
+luôn ghi bài đăng đang lấy ảnh ở đâu.
+
 **Bắt buộc có ảnh** (Cài đặt → Nhân viên sale đăng bài, mặc định bật): bài không có ảnh thì **không đăng lên Facebook**,
 ở mọi đường đăng (hội nhóm, nhóm mình quản lý, trang cá nhân, Fanpage):
 - Tuấn không xếp lịch bài thiếu ảnh. Bài nằm lại cột Đã duyệt với dòng đỏ “Bài chưa có ảnh nên không đăng: ...” chỉ rõ
