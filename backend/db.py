@@ -295,7 +295,8 @@ CREATE TABLE IF NOT EXISTS sales (
 MIGRATIONS = [
     ("posts", "source", "TEXT"),
     ("products", "hot", "INTEGER DEFAULT 0"), ("products", "hot_note", "TEXT DEFAULT ''"), ("products", "hot_since", "TEXT"),
-    ("products", "is_general", "INTEGER DEFAULT 0"),  # ảnh tổng hợp nhà máy: tích thì mọi bài chỉ lấy ảnh ở đây
+    ("products", "is_general", "INTEGER DEFAULT 0"),
+    ("posts", "link_tries", "INTEGER DEFAULT 0"), ("posts", "link_next_at", "TEXT"), ("posts", "link_error", "TEXT"),  # lấy lại link bài  # ảnh tổng hợp nhà máy: tích thì mọi bài chỉ lấy ảnh ở đây
     # chỉ số tương tác của nhóm (sale khảo sát) và đánh giá của Tuấn
     ("group_candidates", "posts_today", "REAL"), ("group_candidates", "posts_month", "INTEGER"), ("group_candidates", "new_members_week", "INTEGER"), ("group_candidates", "avg_reactions", "REAL"), ("group_candidates", "avg_comments", "REAL"), ("group_candidates", "sampled_posts", "INTEGER"), ("group_candidates", "last_post_hours", "REAL"), ("group_candidates", "selling_ratio", "REAL"), ("group_candidates", "no_selling", "INTEGER DEFAULT 0"), ("group_candidates", "rules_note", "TEXT"), ("group_candidates", "scouted_at", "TEXT"), ("group_candidates", "eng_score", "REAL"), ("group_candidates", "verdict", "TEXT"), ("group_candidates", "review_note", "TEXT"), ("group_candidates", "reviewed_at", "TEXT"),
     ("groups", "posts_today", "REAL"), ("groups", "posts_month", "INTEGER"), ("groups", "new_members_week", "INTEGER"), ("groups", "avg_reactions", "REAL"), ("groups", "avg_comments", "REAL"), ("groups", "sampled_posts", "INTEGER"), ("groups", "last_post_hours", "REAL"), ("groups", "selling_ratio", "REAL"), ("groups", "no_selling", "INTEGER DEFAULT 0"), ("groups", "rules_note", "TEXT"), ("groups", "scouted_at", "TEXT"), ("groups", "eng_score", "REAL"), ("groups", "verdict", "TEXT"), ("groups", "review_note", "TEXT"), ("groups", "reviewed_at", "TEXT"),

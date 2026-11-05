@@ -64,10 +64,12 @@
   ],
   "my_posts_paths": [
     "/my_posted_content",
+    "/my_content/posted",
     ""
   ],
   "pending_paths": [
-    "/my_pending_content"
+    "/my_pending_content",
+    "/my_content/pending"
   ],
   "comment_box": [
     "Viết bình luận",
@@ -126,5 +128,16 @@
     "Top contributor",
     "Quản trị viên",
     "Admin"
+  ],
+  "pending_texts": [
+    "đang chờ phê duyệt",
+    "đang chờ quản trị viên",
+    "chờ quản trị viên phê duyệt",
+    "đã được gửi tới quản trị viên",
+    "bài viết của bạn đang chờ",
+    "pending approval",
+    "is pending",
+    "submitted for admin approval",
+    "waiting for admin approval"
   ]
 }

@@ -517,6 +517,7 @@ def _publish(page, post: dict, target_url: str, composer_labels: list[str], dry_
         _wait_click(page, s["discard_button"], timeout=4)
         return f"/shots/{shot.name}", used
     # Bấm Đăng; giao diện mới có thể hiện "Tiếp" trước (chọn đối tượng, cài đặt bài viết) rồi mới tới "Đăng"
+    caught, on_resp = _net_watch(page)  # nghe phản hồi của Facebook để lấy link bài vừa tạo
     posted = False
     for _step in range(3):
         end = time.time() + 30
@@ -545,6 +546,11 @@ def _publish(page, post: dict, target_url: str, composer_labels: list[str], dry_
         page.screenshot(path=str(shot))
         raise RuntimeError("Đã bấm Đăng nhưng hộp soạn bài chưa đóng sau 90 giây (mạng chậm hoặc Facebook chặn)")
     page.wait_for_timeout(4000)
+    try:
+        page.remove_listener("response", on_resp)
+        post["_net"] = _net_link(caught, post, page)
+    except Exception as e:
+        print("[net link]", e)
     _check_blocked(page)
     page.screenshot(path=str(shot))
     return f"/shots/{shot.name}", used
@@ -678,9 +684,9 @@ def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
             db.run("UPDATE sales SET last_post_at=? WHERE id=?", (db.now(), acc["sale_id"]))
             _set_login(aid, "ok")
             workflows.set_status(agent, "working", "Đang lấy link bài vừa đăng")
-            link, st = _capture_link(page, post)
-            note = {"found": "đã lưu link bài", "pending": "bài đang chờ nhóm duyệt, sẽ lấy link sau",
-                    "not_found": "chưa lấy được link, sẽ thử lại khi up bài"}[st]
+            link, st = _capture_link(page, post, fresh=True)
+            note = {"found": "đã lưu link bài", "pending": "bài đang chờ nhóm duyệt, sale sẽ tự lấy link khi bài được duyệt",
+                    "not_found": "chưa lấy được link, sale sẽ tự thử lại sau 20 phút"}[st]
             db.log(agent, "Đã đăng", f"Bài #{post_id} lên {where} bằng nick {accounts.label(acc)}, {note}"
                    + (f": {link}" if st == "found" and link else ""))
     except Blocked as e:
@@ -715,11 +721,17 @@ def _job_post(pw, aid: int, post_id: int, dry_run: bool):
 
 
 # ---------------------------------------------------------------- lấy link bài
-PERMA_RX = re.compile(r"(/groups/[^/?#]+/(posts|permalink)/[\w]+|/posts/(pfbid\w+|\d+)|story_fbid=|/permalink\.php|/photo/\?fbid=)")
+PERMA_RX = re.compile(r"(/groups/[^/?#]+/(posts|permalink)/[\w]+|/posts/(pfbid\w+|\d+)|story_fbid=|/permalink\.php|"
+                      r"/photo/\?fbid=|[?&]multi_permalinks=\d+|/share/p/\w+)")
+PENDING_TEXTS = ["đang chờ phê duyệt", "đang chờ quản trị viên", "chờ quản trị viên phê duyệt", "pending approval", "is pending"]
+# lấy lại link: chưa thấy bài thì thử lại sau 20 phút, 2 giờ, 6 giờ, 12 giờ, 24 giờ; bài chờ duyệt: 3 giờ một lần trong 3 ngày
+LINK_RETRY_MIN = [20, 120, 360, 720, 1440]
+PENDING_RETRY_MIN, PENDING_MAX_TRIES = 180, 24
 
 
 def _norm(t: str) -> str:
-    return re.sub(r"[^\w]+", " ", (t or "").lower()).strip()
+    import unicodedata
+    return re.sub(r"[^\w]+", " ", unicodedata.normalize("NFC", t or "").lower()).strip()
 
 
 def _snippet(content: str) -> str:
@@ -727,20 +739,166 @@ def _snippet(content: str) -> str:
     return _norm(first)[:45]
 
 
+def _snippets(content: str) -> list[str]:
+    """2 đoạn chữ đầu đủ dài của bài để nhận ra bài trên Facebook (Facebook có thể cắt “Xem thêm”)."""
+    out = [_norm(ln)[:45] for ln in content.splitlines() if len(_norm(ln)) >= 12][:2]
+    return out or [_norm(content)[:45]]
+
+
 def _clean_link(h: str) -> str:
     from urllib.parse import parse_qs, urlencode, urljoin, urlparse
     u = urlparse(urljoin(FB_BASE + "/", h))
+    q = parse_qs(u.query)
+    if "multi_permalinks" in q and "/groups/" in u.path:  # /groups/x/?multi_permalinks=123 -> /groups/x/posts/123
+        g = u.path.split("/groups/")[1].split("/")[0]
+        return f"{u.scheme}://{u.netloc}/groups/{g}/posts/{q['multi_permalinks'][0].split(',')[0]}"
     if "permalink.php" in u.path or "story_fbid" in u.query:
-        q = parse_qs(u.query)
         keep = {k: q[k][0] for k in ("story_fbid", "id") if k in q}
         return f"{u.scheme}://{u.netloc}{u.path}?{urlencode(keep)}"
     return f"{u.scheme}://{u.netloc}{u.path}".rstrip("/")
 
 
+# ---- 1) đọc link ngay trong phản hồi của Facebook lúc bấm Đăng (chắc chắn nhất)
+NET_NAMES = ("ComposerStoryCreate", "StoryCreate", "GroupsCometComposer", "useCometComposer")
+
+
+def _net_watch(page) -> tuple[list, callable]:
+    """Nghe phản hồi tạo bài; đọc nội dung ngay khi về (trang có thể tải lại sau khi đăng làm mất nội dung)."""
+    caught = []
+
+    def on_resp(r):
+        try:
+            if "graphql" not in r.url and "/api/" not in r.url:
+                return
+            req = r.request
+            name = (req.headers.get("x-fb-friendly-name") or "") + " " + (req.post_data or "")[:3000]
+            if any(n in name for n in NET_NAMES):
+                caught.append(r.text())
+        except Exception as e:
+            print("[net]", e)
+    page.on("response", on_resp)
+    return caught, on_resp
+
+
+def _net_link(caught: list, post: dict, page) -> tuple[str | None, bool]:
+    """(link, chờ duyệt?) từ phản hồi tạo bài của Facebook."""
+    pending = False
+    for body in caught:
+        body = body.replace("\\/", "/")
+        if re.search(r'"(is_)?pending[_a-z]*"\s*:\s*true|pending_post|PENDING', body):
+            pending = True
+        for m in re.finditer(r'"(?:url|permalink_url|wwwURL)"\s*:\s*"([^"]+)"', body):
+            u = m.group(1)
+            if PERMA_RX.search(u):
+                return _clean_link(u), pending
+        m = re.search(r'"(?:legacy_story_hideable_id|post_id|top_level_post_id)"\s*:\s*"?(\d{6,})', body)
+        if m:
+            if post.get("target_type") == "group" and post.get("group_url"):
+                base = _clean_link(fb_url(post["group_url"]))
+                if "/groups/" in base:
+                    return f"{base.split('/groups/')[0]}/groups/{base.split('/groups/')[1].split('/')[0]}/posts/{m.group(1)}", pending
+            try:  # trang cá nhân: permalink.php?story_fbid=..&id=<mã nick>
+                uid = next(c["value"] for c in page.context.cookies() if c["name"] == "c_user")
+                return f"{FB_BASE}/permalink.php?story_fbid={m.group(1)}&id={uid}", pending
+            except Exception:
+                pass
+    return None, pending
+
+
+# ---- 2) tìm bài trên trang (bảng tin nhóm, Nội dung của bạn, trang cá nhân)
+LINK_JS = r"""(snips) => {
+  const norm = t => (t || '').normalize('NFC').toLowerCase().replace(/[^\p{L}\p{N}_]+/gu, ' ').trim();
+  const has = t => { const n = norm(t); return snips.some(s => s && n.includes(s)); };
+  document.querySelectorAll('[data-mt-link]').forEach(e => e.removeAttribute('data-mt-link'));
+  const pick = new Set();
+  for (const u of document.querySelectorAll('[aria-posinset],[role="article"],[data-pagelet*="FeedUnit"],[data-pagelet*="GroupFeed"] > div > div')) {
+    if (has(u.innerText)) pick.add(u.closest('[aria-posinset]') || u.closest('[data-pagelet*="FeedUnit"]') || u);
+  }
+  if (!pick.size) {  // giao diện lạ: đi ngược lên từ đoạn chữ của bài
+    const first = snips[0].split(' ').slice(0, 5).join(' ');
+    const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = tw.nextNode()) && pick.size < 3) {
+      if (!norm(n.nodeValue).includes(first)) continue;
+      let e = n.parentElement;
+      for (let k = 0; k < 14 && e && e.querySelectorAll('a').length < 4; k++) e = e.parentElement;
+      if (e && e !== document.body) pick.add(e);
+    }
+  }
+  const roots = [...pick].filter(r => ![...pick].some(o => o !== r && o.contains(r)));
+  roots.slice(0, 4).forEach((r, i) => r.querySelectorAll('a').forEach((a, j) => { if (j < 80) a.setAttribute('data-mt-link', String(i + 1)); }));
+  return Math.min(roots.length, 4);
+}"""
+
+HOVER_JS = """els => els.forEach(a => { for (const t of ['mouseover', 'mouseenter', 'focusin', 'focus'])
+  a.dispatchEvent(new (t.startsWith('focus') ? FocusEvent : MouseEvent)(t, {bubbles: t !== 'mouseenter' && t !== 'focus'})); })"""
+
+
+def _pick_href(hrefs: list[str], post: dict) -> str | None:
+    hits = [h for h in hrefs if h and PERMA_RX.search(h)]
+    if not hits:
+        return None
+    g = ""
+    if post.get("group_url"):
+        g = _clean_link(fb_url(post["group_url"])).split("/groups/")[-1].split("/")[0] if "/groups/" in post["group_url"] else ""
+    hits.sort(key=lambda h: (g and f"/groups/{g}/" not in h, "comment_id" in h))  # ưu tiên link bài trong đúng nhóm
+    return _clean_link(hits[0])
+
+
+def _links_in(page, k: int, post: dict) -> str | None:
+    loc = page.locator(f'a[data-mt-link="{k}"]')
+    read = lambda: loc.evaluate_all("els => els.map(e => e.href)")
+    link = _pick_href(read(), post)
+    if link:
+        return link
+    try:  # Facebook chỉ gắn link thật vào mốc thời gian khi rê chuột lên
+        loc.evaluate_all(HOVER_JS)
+        page.wait_for_timeout(600)
+        link = _pick_href(read(), post)
+        if link:
+            return link
+        for j in range(min(loc.count(), 20)):
+            try:
+                if loc.nth(j).is_visible():
+                    loc.nth(j).hover(timeout=1500)
+                    page.wait_for_timeout(150)
+            except Exception:
+                pass
+        page.mouse.move(2, 2)
+        page.wait_for_timeout(500)
+        return _pick_href(read(), post)
+    except Exception:
+        return None
+
+
+def _scan_for_link(page, post: dict, scrolls: int = 4) -> str | None:
+    snips = _snippets(post["content"])
+    for _ in range(scrolls):
+        try:
+            n = page.evaluate(LINK_JS, snips)
+        except Exception:
+            n = 0
+        for k in range(1, n + 1):
+            link = _links_in(page, k, post)
+            if link:
+                return link
+        page.mouse.wheel(0, 2400)
+        page.wait_for_timeout(1500)
+    return None
+
+
+def _is_pending_page(page, post: dict) -> bool:
+    try:
+        body = _norm(page.inner_text("body"))
+    except Exception:
+        return False
+    texts = selectors().get("pending_texts", PENDING_TEXTS)
+    return any(_norm(x) in body for x in texts)
+
+
 def _find_permalink(page, post: dict) -> tuple[str | None, str]:
-    """Tìm bài vừa đăng trong 'Nội dung của bạn' của nhóm (hoặc trang cá nhân), trích link thật."""
+    """Tìm bài vừa đăng trong 'Nội dung của bạn' của nhóm, bảng tin nhóm (hoặc trang cá nhân), trích link thật."""
     s = selectors()
-    snip = _snippet(post["content"])
     if post["target_type"] == "group" and post.get("group_url"):
         base = fb_url(post["group_url"]).rstrip("/")
         pages = [base + p for p in s.get("my_posts_paths", ["/my_posted_content", ""])]
@@ -750,43 +908,111 @@ def _find_permalink(page, post: dict) -> tuple[str | None, str]:
         page.goto(u, wait_until="domcontentloaded", timeout=60000)
         page.wait_for_timeout(3000)
         _check_blocked(page)
-        for _ in range(4):
-            arts = page.locator('[role="article"]')
-            for i in range(min(arts.count(), 15)):
-                a = arts.nth(i)
-                try:
-                    if snip not in _norm(a.inner_text(timeout=3000)):
-                        continue
-                    hrefs = a.locator("a[href]").evaluate_all("els => els.map(e => e.href)")
-                except Exception:
-                    continue
-                for h in hrefs:
-                    if PERMA_RX.search(h):
-                        return _clean_link(h), "found"
-            page.mouse.wheel(0, 2400)
-            page.wait_for_timeout(1500)
+        link = _scan_for_link(page, post)
+        if link:
+            return link, "found"
     if post["target_type"] == "group" and post.get("group_url"):
+        snips = _snippets(post["content"])
         for pth in s.get("pending_paths", []):
             page.goto(fb_url(post["group_url"]).rstrip("/") + pth, wait_until="domcontentloaded", timeout=60000)
             page.wait_for_timeout(2500)
-            if snip in _norm(page.inner_text("body")):
+            body = _norm(page.inner_text("body"))
+            if any(sn in body for sn in snips):
                 return None, "pending"
     return None, "not_found"
 
 
-def _capture_link(page, post: dict) -> tuple[str | None, str]:
+def _save_link(post: dict, link: str | None, st: str) -> None:
+    """Lưu link; chưa có thì hẹn sale thử lại, hết lượt thì báo sếp dán link."""
+    if link and st != "pending":
+        db.run("""UPDATE posts SET posted_url=?, permalink_status='found', link_next_at=NULL, link_error=NULL WHERE id=?""",
+               (link, post["id"]))
+        return
+    if link:  # đã có link nhưng bài còn chờ nhóm duyệt: lưu link, hẹn xem lại bài đã hiện chưa
+        db.run("UPDATE posts SET posted_url=? WHERE id=?", (link, post["id"]))
+    cur = db.one("SELECT COALESCE(link_tries,0) n, group_id FROM posts WHERE id=?", (post["id"],)) or {"n": 0}
+    tries = cur["n"] + 1
+    if st == "pending":
+        delay = PENDING_RETRY_MIN if tries < PENDING_MAX_TRIES else None
+        why = "Bài đang chờ quản trị viên nhóm duyệt, sale sẽ tự lấy link khi bài được duyệt"
+    else:
+        delay = LINK_RETRY_MIN[tries - 1] if tries <= len(LINK_RETRY_MIN) else None
+        why = "Chưa tìm thấy bài trên Facebook để lấy link"
+    nxt = (db.clock() + __import__("datetime").timedelta(minutes=delay)).strftime("%Y-%m-%d %H:%M") if delay else None
+    msg = why + (f". Thử lại lúc {nxt[11:16]} {nxt[8:10]}/{nxt[5:7]}" if nxt else
+                 ". Đã thử nhiều lần không được: mở bài trên Facebook, chép link dán vào thẻ bài ở mục Bài đăng")
+    db.run("UPDATE posts SET permalink_status=?, link_tries=?, link_next_at=?, link_error=? WHERE id=?",
+           (st, tries, nxt, msg[:300], post["id"]))
+    if not nxt:
+        import errors
+        errors.report("link", f"Không lưu được link bài #{post['id']}", msg,
+                      f"Nhóm: {post.get('group_name') or 'trang cá nhân'} · Bài: {(post.get('title') or '')[:80]}",
+                      screen="posts", ref_type="post", ref_id=post["id"])
+
+
+def _capture_link(page, post: dict, fresh: bool = False) -> tuple[str | None, str]:
+    """Lấy link bài: phản hồi của Facebook lúc đăng -> bài trên trang đang mở -> Nội dung của bạn / bảng tin -> chờ duyệt."""
+    link, st = None, "not_found"
     try:
-        link, st = _find_permalink(page, post)
+        net = post.get("_net") or (None, False)
+        if net[0]:
+            link, st = net[0], ("pending" if net[1] else "found")
+        if not link and fresh:  # vừa đăng: bài thường hiện ngay đầu bảng tin
+            link = _scan_for_link(page, post, scrolls=2)
+            if link:
+                st = "found"
+            elif net[1] or _is_pending_page(page, post):
+                st = "pending"
+        if not link and st != "pending":
+            link, st = _find_permalink(page, post)
     except Blocked:
         raise
     except Exception as e:
         print("[permalink]", e)
-        link, st = None, "not_found"
-    if link:
-        db.run("UPDATE posts SET posted_url=?, permalink_status='found' WHERE id=?", (link, post["id"]))
-    else:
-        db.run("UPDATE posts SET permalink_status=? WHERE id=?", (st, post["id"]))
+    _save_link(post, link, st)
     return link, st
+
+
+def _job_link(pw, aid: int, post_id: int):
+    acc, sale, agent = _ctx_names(aid)
+    ctx, page = _open(pw, aid)
+    try:
+        if not _logged_in(ctx):
+            _set_login(aid, "not_logged_in", "Phiên đăng nhập đã hết, cần đăng nhập lại")
+            raise RuntimeError(f"Nick {accounts.label(acc)} chưa đăng nhập. Vào Nhân viên sale → Mở Chrome nick này để đăng nhập lại")
+        _do_link(ctx, page, aid, post_id)
+    except Blocked as e:
+        _block(aid, str(e))
+    finally:
+        try:
+            ctx.close()
+        except Exception:
+            pass
+        workflows.set_status(agent, "idle", "Chờ lịch đăng tiếp theo")
+
+
+def _do_link(ctx, page, aid: int, post_id: int) -> None:
+    """Sale quay lại lấy link bài đã đăng mà lần trước chưa lấy được."""
+    post = db.one("""SELECT p.*, g.url group_url, g.name group_name FROM posts p
+                     LEFT JOIN groups g ON g.id=p.group_id WHERE p.id=?""", (post_id,))
+    if not post or post.get("permalink_status") == "found":
+        return
+    acc, sale, agent = _ctx_names(aid)
+    workflows.set_status(agent, "working", f"Lấy link bài #{post_id} ({post.get('group_name') or 'trang cá nhân'})")
+    if post.get("permalink_status") == "pending" and PERMA_RX.search(post.get("posted_url") or ""):
+        page.goto(post["posted_url"], wait_until="domcontentloaded", timeout=60000)  # đã có link, chờ duyệt: xem bài hiện chưa
+        page.wait_for_timeout(3000)
+        _check_blocked(page)
+        body = page.inner_text("body").lower()
+        if not any(x.lower() in body for x in selectors()["removed_texts"]) and not _is_pending_page(page, post):
+            db.run("UPDATE posts SET permalink_status='found', link_next_at=NULL, link_error=NULL WHERE id=?", (post_id,))
+            db.log(agent, "Đã lưu link bài", f"Bài #{post_id} đã được nhóm duyệt: {post['posted_url']}")
+            return
+        _save_link(post, None, "pending")
+        return
+    link, st = _capture_link(page, post)
+    db.log(agent, "Đã lưu link bài" if link else "Chưa lấy được link bài",
+           f"Bài #{post_id}: {link}" if link else f"Bài #{post_id}: " + (db.one("SELECT link_error FROM posts WHERE id=?", (post_id,)) or {}).get("link_error", ""))
 
 
 # ---------------------------------------------------------------- quét bình luận tìm khách, xin SĐT
@@ -1086,7 +1312,10 @@ def due_work(aid: int, stamp: str | None = None) -> dict:
                                       ORDER BY scheduled_for""", (aid, stamp))]
     bumps = [r["id"] for r in db.q("""SELECT id FROM bumps WHERE account_id=? AND status='scheduled' AND scheduled_for <= ?
                                       ORDER BY scheduled_for""", (aid, stamp))]
-    return {"posts": posts, "bumps": bumps, "scan": list(_scan_pending.get(aid, []))}
+    links = [r["id"] for r in db.q("""SELECT id FROM posts WHERE account_id=? AND status='posted'
+                                      AND COALESCE(permalink_status,'') IN ('not_found','pending','')
+                                      AND link_next_at IS NOT NULL AND link_next_at <= ? ORDER BY link_next_at LIMIT 6""", (aid, stamp))]
+    return {"posts": posts, "bumps": bumps, "scan": list(_scan_pending.get(aid, [])), "links": links}
 
 
 def _job_session(pw, aid: int):
@@ -1100,12 +1329,21 @@ def _job_session(pw, aid: int):
     db.run("UPDATE sales SET last_account_id=? WHERE id=?", (aid, acc["sale_id"]))
     workflows.set_status(agent, "working", f"Chuyển sang nick {accounts.label(acc)}")
     ctx, page = _open(pw, aid)
-    done = {"posts": 0, "bumps": 0, "scan": 0}
+    done = {"posts": 0, "bumps": 0, "scan": 0, "links": 0}
     try:
         for pid in work["posts"]:
             _do_post(ctx, page, aid, pid, False)
             done["posts"] += 1
             _pause(page, 20, 45)
+        for pid in work.get("links", []):  # bài đã đăng nhưng chưa lưu được link: quay lại lấy
+            try:
+                _do_link(ctx, page, aid, pid)
+                done["links"] += 1
+            except Blocked:
+                raise
+            except Exception as e:
+                print("[link]", e)
+            _pause(page, 5, 15)
         for bid in work["bumps"]:
             _do_bump(ctx, page, aid, bid)
             done["bumps"] += 1
@@ -1114,7 +1352,7 @@ def _job_session(pw, aid: int):
             _do_scan(ctx, page, aid, work["scan"])
             done["scan"] = len(work["scan"])
         db.log(agent, "Xong ca trên nick", f"Nick {accounts.label(acc)}: đăng {done['posts']} bài, up {done['bumps']} lượt, "
-               f"quét {done['scan']} bài")
+               f"quét {done['scan']} bài" + (f", lấy link {done['links']} bài" if done["links"] else ""))
     except Blocked:
         pass  # _block đã dừng riêng nick này; việc còn lại của nick đã trả về hàng đợi
     finally:
@@ -1164,7 +1402,7 @@ def _fail(page, post_id: int, msg: str, dry_run: bool):
 
 JOB_NAME = {"open": "mở Chrome", "check": "kiểm tra phiên", "post": "đăng bài", "bump": "up bài", "scan": "quét bình luận",
             "discover": "tìm nhóm mới", "join": "xin vào nhóm", "session": "làm ca trên nick",
-            "prospect": "mở trang tìm khách sỉ cho Mai", "mygroups": "rà soát nhóm của nick"}
+            "prospect": "mở trang tìm khách sỉ cho Mai", "mygroups": "rà soát nhóm của nick", "link": "lấy link bài đã đăng"}
 
 
 def _worker(sale_id: int, q: Queue):
@@ -1196,6 +1434,8 @@ def _worker(sale_id: int, q: Queue):
                     _job_scan(pw, aid, job["post_ids"])
                 elif k == "session":
                     _job_session(pw, aid)
+                elif k == "link":
+                    _job_link(pw, aid, job["post_id"])
                 elif k == "discover":
                     import group_finder
                     group_finder.job_discover(pw, aid, job["keywords"], job.get("notify"))

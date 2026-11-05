@@ -912,6 +912,7 @@ label.f{font-weight:600;color:var(--muted)}
         <div><button class="btn primary" type="submit" id="gBtn">Viết bài</button></div>
       </form>
       <div class="banner noimg" id="noImgBar" hidden></div>
+      <div class="banner" id="noLinkBar" hidden></div>
       <div class="board" id="board"></div>
     </section>
 
@@ -1482,7 +1483,7 @@ const Demo = (() => {
   { const ok=S.sales; const gs=S.groups; const nk=[11,21,12]; const mk=(p,i,st,extra)=>{ const a=S.accounts.find(x=>x.id===nk[i%3]); const r=S.sales.find(x=>x.id===a.sale_id);
       return Object.assign(p,{status:st,group_id:gs[i].id,group_name:gs[i].name,sale_id:r.id,sale_name:r.name,account_id:a.id,account_name:a.name,...extra}); };
     mk(S.posts[0],0,"posted",{images_used:JSON.stringify(["D:\\AnhSanPham\\Tra gung\\hop-tra-ban-go.jpg","D:\\AnhSanPham\\Tra gung\\pha-tra-coc-thuy-tinh.jpg","D:\\AnhSanPham\\Tra gung\\dong-goi-xuong.jpg"]),posted_at:now(),poster:"Linh (tự động)",posted_url:"https://www.facebook.com/groups/congdongbanhang/posts/1234567890",permalink_status:"found",bump_count:3,last_bump_at:now(),last_bump:"done|||",bump_enabled:1});
-    mk(S.posts[3],4,"posted",{posted_at:now(),poster:"Linh (tự động)",permalink_status:"pending",bump_count:0,last_bump:"skipped|Bài đang chờ nhóm duyệt||"}); mk(S.posts[1],2,"scheduled",{scheduled_for:`${today()} 20:05`});
+    mk(S.posts[3],4,"posted",{posted_at:now(),poster:"Linh (tự động)",permalink_status:"pending",link_error:"Bài đang chờ quản trị viên nhóm duyệt, sale sẽ tự lấy link khi bài được duyệt. Thử lại lúc 18:30",link_next_at:"x",bump_count:0,last_bump:"skipped|Bài đang chờ nhóm duyệt||"}); mk(S.posts[1],2,"scheduled",{scheduled_for:`${today()} 20:05`});
     mk(S.posts[2],3,"failed",{error:"Không tìm thấy ô viết bài. Kiểm tra nick đã vào nhóm chưa, hoặc thêm chữ hiển thị mới vào fb_selectors.json"}); }
   const ready=g=>!g.last_posted_at;
   const SALE_LOOKS=[{skin:"#f3cfae",shirt:"#d64545",pants:"#2d2d3a",hair:"#2a1810",hairStyle:"long",accessory:"none"},{skin:"#e8b88f",shirt:"#2f86c9",pants:"#25303a",hair:"#1d1d1d",hairStyle:"spiky",accessory:"glasses"},{skin:"#f6d2b3",shirt:"#e0a12a",pants:"#3a2d2a",hair:"#5a3520",hairStyle:"bun",accessory:"none"},{skin:"#eec29b",shirt:"#1f9a8a",pants:"#22332f",hair:"#2b2018",hairStyle:"side",accessory:"headset"},{skin:"#f2c9a0",shirt:"#a24fb5",pants:"#2c2236",hair:"#3b2414",hairStyle:"long",accessory:"beret"},{skin:"#e9bd96",shirt:"#5b7f2a",pants:"#2a3020",hair:"#141414",hairStyle:"cap",accessory:"cap"},{skin:"#f3d0b0",shirt:"#c4572b",pants:"#30262a",hair:"#4a2a1a",hairStyle:"bun",accessory:"glasses"},{skin:"#e6b48a",shirt:"#3b5bb5",pants:"#232a3a",hair:"#2a1d14",hairStyle:"spiky",accessory:"none"}];
@@ -1888,7 +1889,9 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/run/daily-work"){ genPosts(3,null,"group"); const pl=plan(); return {drafts:3,scheduled:pl.length,follow_ups:S.leads.filter(l=>l.status==="new").length}; }
     }
     if(method==="PATCH"){
-      if((m=P.match(/^\/posts\/(\d+)$/))){ const po=S.posts.find(x=>x.id==m[1]); Object.assign(po,body); if(body.posted_url){ po.permalink_status="found"; po.bump_enabled=1; } if(body.status==="approved") log("minh","Duyệt bài",`Sếp duyệt bài #${po.id}`); return po; }
+      if((m=P.match(/^\/posts\/(\d+)$/))){ const po=S.posts.find(x=>x.id==m[1]);
+        if(body.posted_url&&!/(\/groups\/[^/?#]+\/(posts|permalink)\/\w+|\/posts\/(pfbid\w+|\d+)|story_fbid=|\/permalink\.php|multi_permalinks=\d+|\/share\/p\/\w+)/.test(body.posted_url)) throw new Error("Đây chưa phải link bài viết. Mở bài trên Facebook, bấm vào giờ đăng (VD “2 giờ”) rồi chép link trên thanh địa chỉ (có /posts/ hoặc /permalink/)");
+        Object.assign(po,body); if(body.posted_url){ po.permalink_status="found"; po.bump_enabled=1; po.link_error=null; po.link_next_at=null; } if(body.status==="approved") log("minh","Duyệt bài",`Sếp duyệt bài #${po.id}`); return po; }
       if((m=P.match(/^\/leads\/(\d+)$/))){ const l=S.leads.find(x=>x.id==m[1]); const {contacted,...rest}=body; Object.assign(l,rest); if(contacted) l.last_contact_at=now(); return l; }
       if((m=P.match(/^\/tasks\/(\d+)$/))){ S.tasks.find(x=>x.id==m[1]).status=body.status; return {ok:true}; }
     }
@@ -2019,6 +2022,8 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/junk/exclude"){ S.prCrit.exclude.push(body.word); log("mai","Ghi nhớ data rác",`Sếp cho loại hẳn khách có chữ “${body.word}”`); return ov(); }
       if(P==="/junk/dismiss"){ J.dismissed.push(body.word); return ov(); }
       return ov(); }
+    if(method==="POST"&&(m=P.match(/^\/posts\/(\d+)\/fetch-link$/))){ const po=S.posts.find(x=>x.id==m[1]); if(!po.sale_id) throw new Error("Bài này đăng tay, không có nick để tìm lại. Dán link bài vào ô bên dưới");
+      po.link_error="Sale đang tìm lại link…"; setTimeout(()=>{ if(po.permalink_status!=="pending"){ Object.assign(po,{permalink_status:"found",posted_url:`https://www.facebook.com/groups/demo/posts/${100000+po.id}`,link_error:null,link_next_at:null}); log(`sale-${po.sale_id}`,"Đã lưu link bài",`Bài #${po.id}: ${po.posted_url}`); } else po.link_error="Bài vẫn đang chờ quản trị viên nhóm duyệt, sale sẽ tự lấy link khi bài được duyệt"; },4000); return {ok:true,queued:1}; }
     if(method==="POST"&&(m=P.match(/^\/leads\/(\d+)\/order$/))){ const l=S.leads.find(x=>x.id==m[1]); l.status="ordered"; S.co.orders.unshift({id:id(),lead_name:l.name,amount:body.amount,via:"app",created_at:now()}); log("ha","Có đơn hàng",`${l.name}: ${body.amount}`); return {ok:true}; }
     if(method==="POST"&&(m=P.match(/^\/sales\/(\d+)\/replace$/))) throw new Error("Bản xem trước không tuyển thay được. Chạy phần mềm trên máy để dùng.");
     if(method==="POST"&&P==="/reset"){ if(String(body.confirm).trim().toUpperCase()!=="CHAY THAT") throw new Error('Gõ đúng "CHAY THAT" để xác nhận');
@@ -2526,7 +2531,7 @@ async function loadPosts(){
 function postCard(p){
   const open=ST.openPost.has(p.id), editing=ST.editPost===p.id, posting=ST.postedForm===p.id;
   const SRCP={self:["ok","Lan tự viết"],claude:["","Claude viết"],boss:["talking","Sếp sửa"],template:["ok","Từ bài mẫu"]};
-  const meta=`<div class="meta">${SRCP[p.source]?`<span class="chip ${SRCP[p.source][0]}" title="Ai viết nội dung bài này">${SRCP[p.source][1]}</span>`:""}<span class="chip">${TARGET[p.target_type]||p.target_type}</span>${p.product_name?`<span class="chip">${esc(p.product_name)}</span>`:""}${p.group_name?`<span class="chip ok">${esc(p.group_name)}</span>`:""}${p.scheduled_for&&p.status==="scheduled"?`<span class="chip warn">${fmtTime(p.scheduled_for)} ${fmtDate(p.scheduled_for)}</span>`:""}${p.sale_name?`<span class="chip">${esc(p.sale_name)}${p.account_name?` · nick ${esc(p.account_name)}`:""}</span>`:""}${p.status==="posting"?`<span class="chip talking">Đang đăng…</span>`:""}${p.status==="failed"?`<span class="chip bad">Đăng lỗi</span>`:""}${noImg(p)?`<span class="chip bad" title="Bài đăng lên Facebook bắt buộc kèm ảnh">📷 Thiếu ảnh, không đăng</span>`:p.img_count?`<span class="chip" title="Số ảnh sản phẩm sẵn để đính kèm">📷 ${p.img_count} ảnh</span>`:""}</div>`;
+  const meta=`<div class="meta">${SRCP[p.source]?`<span class="chip ${SRCP[p.source][0]}" title="Ai viết nội dung bài này">${SRCP[p.source][1]}</span>`:""}<span class="chip">${TARGET[p.target_type]||p.target_type}</span>${p.product_name?`<span class="chip">${esc(p.product_name)}</span>`:""}${p.group_name?`<span class="chip ok">${esc(p.group_name)}</span>`:""}${p.scheduled_for&&p.status==="scheduled"?`<span class="chip warn">${fmtTime(p.scheduled_for)} ${fmtDate(p.scheduled_for)}</span>`:""}${p.sale_name?`<span class="chip">${esc(p.sale_name)}${p.account_name?` · nick ${esc(p.account_name)}`:""}</span>`:""}${p.status==="posting"?`<span class="chip talking">Đang đăng…</span>`:""}${p.status==="failed"?`<span class="chip bad">Đăng lỗi</span>`:""}${noImg(p)?`<span class="chip bad" title="Bài đăng lên Facebook bắt buộc kèm ảnh">📷 Thiếu ảnh, không đăng</span>`:p.img_count&&p.status!=="posted"?`<span class="chip" title="Số ảnh sản phẩm sẵn để đính kèm">📷 ${p.img_count} ảnh</span>`:""}</div>`;
   let acts="";
   const shot = p.screenshot?`<a class="btn sm ghost" href="${esc(p.screenshot)}" target="_blank" rel="noopener">Ảnh chụp</a>`:"";
   const salePick = p.target_type!=="page" && ST.sales?.some(s=>(s.accounts||[]).length) ? `<select class="sm" id="sale-${p.id}" aria-label="Nick đăng bài" style="width:auto;max-width:100%;padding:4px 8px;font-size:12.5px">${ST.sales.filter(s=>s.status!=="fired"&&(s.accounts||[]).length).map(s=>`<optgroup label="${esc(s.name)}">${s.accounts.map(n=>`<option value="${n.id}" ${n.id===p.account_id?"selected":""}>${esc(n.name)}${n.login_status!=="ok"||!n.enabled?" (chưa sẵn sàng)":""}</option>`).join("")}</optgroup>`).join("")}</select><button class="btn sm primary" data-act="runNow">Đăng ngay</button><button class="btn sm" data-act="dry">Đăng thử</button>`:"";
@@ -2548,7 +2553,8 @@ function postCard(p){
   const rv=p.review_score!=null?`<div class="ceo-rv ${p.review_ok===0?"bad":p.review_score>=85?"ok":""}"><b>CEO chấm ${p.review_score}/100</b>${(p.review_note||"").replace(/^CEO chấm \d+\/100:?\s*\.?\s*/,"")?` · ${esc((p.review_note||"").replace(/^CEO chấm \d+\/100:?\s*\.?\s*/,""))}`:""}</div>`:"";
   return `<article class="post" data-p="${p.id}"><h4>${esc(p.title||"(Không tiêu đề)")}</h4>${meta}${rv}${body}${p.hashtags?`<div class="tags">${esc(p.hashtags)}</div>`:""}${p.image_idea&&p.status!=="posted"?`<div class="idea"><b>Ảnh/video:</b> ${esc(p.image_idea)}</div>`:""}${postImgs(p)}${p.error?`<div class="err">${esc(p.error)}</div>`:""}${p.status==="posted"?linkBox(p):""}${posted}${result}<div class="acts">${acts}</div></article>`;
 }
-const PLINK={found:["ok","Đã lưu link bài"],pending:["warn","Bài chờ nhóm duyệt"],not_found:["warn","Chưa lấy được link"],removed:["bad","Bài đã bị xóa/ẩn"]};
+const PLINK={found:["ok","Đã lưu link bài"],pending:["warn","Bài chờ nhóm duyệt"],not_found:["bad","Chưa lưu được link"],removed:["bad","Bài đã bị xóa/ẩn"]};
+function noLink(p){ return p.status==="posted"&&!["found","removed"].includes(p.permalink_status); }
 function linkBox(p){
   const [c,t]=PLINK[p.permalink_status]||(p.sale_id?["warn","Chưa lấy được link"]:["","Đăng tay"]);
   const lb=(p.last_bump||"").split("|"); const BST={done:"đã up",failed:"up lỗi",skipped:"bỏ qua",scheduled:"chờ up",running:"đang up"};
@@ -2556,7 +2562,8 @@ function linkBox(p){
   const needLink=p.permalink_status!=="found"&&p.permalink_status!=="removed";
   return `<div class="meta"><span class="chip ${c}">${t}</span>${p.sale_id?`<span class="chip">${bumpTxt}</span>`:""}${lb[0]&&lb[0]!=="done"?`<span class="chip ${lb[0]==="failed"?"bad":"warn"}">Lượt gần nhất: ${BST[lb[0]]||lb[0]}</span>`:""}</div>`
     +(lb[0]==="failed"||lb[0]==="skipped"?(lb[1]?`<div class="err">${esc(lb[1])}</div>`:""):"")
-    +(needLink?`<div class="row"><input type="url" class="grow" id="plink-${p.id}" placeholder="Dán link bài viết để sale up được" style="padding:5px 8px;font-size:12.5px"><button class="btn sm" data-act="saveLink">Lưu link</button></div>`:"");
+    +(needLink&&p.link_error?`<div class="small ${p.link_next_at?"muted":"err"}">${esc(p.link_error)}</div>`:"")
+    +(needLink?`<div class="row wrap"><input type="url" id="plink-${p.id}" placeholder="Dán link bài viết (có /posts/ hoặc /permalink/)" style="padding:5px 8px;font-size:12.5px;flex:1 1 100%;min-width:0"><button class="btn sm" data-act="saveLink">Lưu link</button>${p.account_id?`<button class="btn sm ghost" data-act="fetchLink" title="Sale mở Chrome của nick đã đăng để tìm lại link">Lấy link ngay</button>`:""}</div>`:"");
 }
 function noImg(p){ return p.img_required&&p.img_count===0&&p.status!=="posted"; }
 function postImgs(p){
@@ -2570,6 +2577,8 @@ function renderBoard(){
   const cols=[["draft","Chờ duyệt"],["approved","Đã duyệt"],["scheduled","Lịch đăng hôm nay"],["posted","Đã đăng"]];
   const inCol=(p,s)=>s==="scheduled"?["scheduled","posting","failed"].includes(p.status):p.status===s;
   const miss=ST.posts.filter(p=>noImg(p)&&["approved","scheduled","draft","failed"].includes(p.status)).length, bar=$("#noImgBar");
+  const nl=ST.posts.filter(noLink).length, lb=$("#noLinkBar");
+  lb.hidden=!nl; if(nl) lb.innerHTML=`<b>${nl} bài đã đăng chưa lưu được link.</b> Bài chờ nhóm duyệt: sale tự lấy link khi bài được duyệt. Bài chưa tìm thấy: sale tự thử lại (sau 20 phút, 2, 6, 12, 24 giờ); hoặc bấm <b>Lấy link ngay</b>, hay dán link vào thẻ bài ở cột Đã đăng.`;
   bar.hidden=!miss; if(miss) bar.innerHTML=`<b>${miss} bài chưa có ảnh nên sẽ không đăng.</b> Bài đăng lên Facebook bắt buộc kèm ảnh sản phẩm. Thêm thư mục ảnh cho sản phẩm ở <a href="#products">Sản phẩm</a> hoặc thư mục ảnh chung ở <a href="#setup">Cài đặt → Up bài</a>, Tuấn sẽ tự xếp lại các bài này.`;
   $("#board").innerHTML=cols.map(([s,l])=>{ const list=ST.posts.filter(p=>inCol(p,s)); return `<div class="col"><header><b>${l}</b><span class="chip num">${list.length}</span></header>${list.map(postCard).join("")||`<div class="empty">Trống</div>`}</div>`; }).join("");
 }
@@ -2592,7 +2601,8 @@ $("#board").addEventListener("click",async e=>{
     catch(err){ toast(err.message); } b.disabled=false; refresh(); return loadPosts(); }
   if(act==="bump"){ b.disabled=true; try{ await api(`/posts/${id}/bump`,"POST"); toast(`${p.sale_name||"Sale"} sẽ bình luận ảnh để up bài trong vòng 1 phút`); }catch(err){ toast(err.message); } b.disabled=false; return loadPosts(); }
   if(act==="bumpToggle"){ await patch({bump_enabled:p.bump_enabled===0?1:0}); toast(p.bump_enabled===0?"Đã dừng tự up bài này":"Đã bật tự up bài này"); return renderBoard(); }
-  if(act==="saveLink"){ const v=$(`#plink-${id}`).value.trim(); if(!/^https?:\/\/\S+/.test(v)){ toast("Dán đường dẫn bài viết, bắt đầu bằng https://"); return; } await patch({posted_url:v}); toast("Đã lưu link. Sale sẽ up bài này theo lịch."); return renderBoard(); }
+  if(act==="fetchLink"){ b.disabled=true; try{ await api(`/posts/${id}/fetch-link`,"POST"); toast(`${p.sale_name||"Sale"} đang mở Chrome nick đã đăng để tìm link bài`); }catch(err){ toast(err.message); } b.disabled=false; return loadPosts(); }
+  if(act==="saveLink"){ const v=$(`#plink-${id}`).value.trim(); if(!/^https?:\/\/\S+/.test(v)){ toast("Dán đường dẫn bài viết, bắt đầu bằng https://"); return; } try{ await patch({posted_url:v}); }catch(err){ toast(err.message); return; } toast("Đã lưu link. Sale sẽ up bài này theo lịch."); return renderBoard(); }
   if(act==="retry"){ await api(`/posts/${id}/retry`,"POST"); toast("Đã đưa bài về hàng đợi. Tuấn sẽ xếp lại."); return loadPosts(); }
   if(act==="result"){ await patch({comments:+$(`#cm-${id}`).value,leads:+$(`#ld-${id}`).value}); toast("Khoa đã ghi nhận kết quả bài"); }
 });

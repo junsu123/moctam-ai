@@ -1042,11 +1042,21 @@ def patch_post(pid: int, p: PostPatch):
         learning.record_feedback(pid, "reject", old["content"], "", (p.reason or "").strip()[:120])
     fields = {k: v for k, v in p.model_dump().items() if v is not None and k != "reason"}
     if p.posted_url is not None:  # sếp dán link bài thủ công
-        fields["permalink_status"] = "found" if p.posted_url.strip() else "not_found"
+        u = p.posted_url.strip()
+        if u and not browser_poster.PERMA_RX.search(u):
+            raise HTTPException(400, "Đây chưa phải link bài viết. Mở bài trên Facebook, bấm vào giờ đăng (VD “2 giờ”) "
+                                     "rồi chép link trên thanh địa chỉ (có /posts/ hoặc /permalink/)")
+        fields["posted_url"] = browser_poster._clean_link(u) if u else u
+        fields["permalink_status"] = "found" if u else "not_found"
+        fields["link_next_at"] = None
+        fields["link_error"] = None
         if p.posted_url.strip() and p.bump_enabled is None:
             fields["bump_enabled"] = 1
     if fields:
         db.run(f"UPDATE posts SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), pid))
+    if p.posted_url and p.posted_url.strip():
+        db.run("""UPDATE errors SET status='resolved' WHERE source='link' AND ref_type='post' AND ref_id=?
+                  AND status!='resolved'""", (pid,))  # sếp đã dán link: lỗi “không lưu được link” xong
     if p.leads is not None:  # cập nhật số khách của nhóm để Khoa xếp hạng
         learning.on_post_leads(pid, p.leads - (old["leads"] or 0))
         db.run("""UPDATE groups SET leads_count=(SELECT COALESCE(SUM(leads),0) FROM posts WHERE group_id=groups.id)""")
@@ -1550,6 +1560,20 @@ class PostRun(BaseModel):
     sale_id: int | None = None
     account_id: int | None = None
     dry_run: bool = False
+
+
+@app.post("/api/posts/{pid}/fetch-link")
+def fetch_link(pid: int):
+    """Sếp bấm “Lấy link ngay”: sale mở Chrome nick đã đăng bài để tìm lại link."""
+    p = db.one("SELECT * FROM posts WHERE id=?", (pid,))
+    if not p or p["status"] != "posted":
+        raise HTTPException(400, "Bài chưa đăng nên chưa có link")
+    if not p.get("account_id") or not accounts.get(p["account_id"]):
+        raise HTTPException(400, "Bài này đăng tay, không có nick để tìm lại. Dán link bài vào ô bên dưới")
+    db.run("UPDATE posts SET link_next_at=?, link_tries=0, link_error=NULL WHERE id=?", (db.now()[:16], pid))
+    acc = accounts.get(p["account_id"])
+    browser_poster.submit(acc["sale_id"], {"kind": "link", "account": acc["id"], "post_id": pid})
+    return {"ok": True, "queued": browser_poster.queued(acc["sale_id"])}
 
 
 @app.post("/api/posts/{pid}/run")

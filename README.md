@@ -324,9 +324,22 @@ Bỏ chọn “Bắt buộc có ảnh” nếu muốn cho phép đăng bài ch�
 
 ## Lưu link bài và tự động up bài
 
-**Link bài:** ngay sau khi đăng, nhân viên sale mở mục "Nội dung của bạn" trong nhóm (hoặc trang cá nhân), tìm đúng bài
-vừa đăng và lưu link thật của bài (đã bỏ phần theo dõi `__cft__`). Bài vào hàng chờ duyệt của nhóm được đánh dấu
-"chờ duyệt" và sẽ lấy link sau. Không tìm được link thì dán tay vào thẻ bài ở mục **Bài đăng**.
+**Link bài (bắt buộc lưu):** mỗi bài đăng phải có link thật trên Facebook (đã bỏ phần theo dõi `__cft__`). Sale lấy link
+theo thứ tự:
+1. **Phản hồi của Facebook lúc bấm Đăng**: Facebook trả về link hoặc mã bài vừa tạo; sale đọc ngay, không cần tìm.
+2. **Bài trên trang đang mở**: bài mới thường hiện đầu bảng tin nhóm. Sale nhận ra bài theo 2 đoạn chữ đầu, tìm được cả
+   khi bài không có `role="article"` (giao diện Facebook mới), và **rê chuột lên mốc thời gian** vì Facebook chỉ gắn link
+   thật vào đó khi rê chuột.
+3. **Nội dung của bạn** trong nhóm (`/my_posted_content`, `/my_content/posted`), bảng tin nhóm, hoặc trang cá nhân.
+4. **Bài chờ quản trị viên duyệt**: ghi “Bài chờ nhóm duyệt” (lưu sẵn link nếu Facebook đã trả mã bài), 3 giờ một lần
+   sale xem lại, bài hiện thì chuyển thành “Đã lưu link”. Theo dõi tối đa 3 ngày.
+
+Chưa tìm thấy thì sale **tự thử lại** sau 20 phút, 2 giờ, 6 giờ, 12 giờ, 24 giờ (trong ca làm việc của nick đã đăng).
+Thẻ bài ghi lý do và giờ thử lại; nút **Lấy link ngay** cho sale đi tìm luôn. Thử hết lượt vẫn không được thì màn **Lỗi**
+báo “Không lưu được link bài #...”: mở bài trên Facebook, bấm vào giờ đăng (VD “2 giờ”), chép link dán vào thẻ bài.
+Ô dán link chỉ nhận link bài viết (có `/posts/`, `/permalink/`, `story_fbid`...), dán nhầm link nhóm sẽ bị báo. Đầu
+trang **Bài đăng** báo số bài đã đăng chưa lưu được link. Facebook đổi chữ báo chờ duyệt thì thêm vào `pending_texts`
+trong `backend/fb_selectors.json`.
 
 **Up bài hằng ngày:** vào **Cài đặt → Tự động up bài**, chọn thư mục ảnh trên máy chạy phần mềm rồi bấm
 *Kiểm tra thư mục*. Từ giờ đã chọn (mặc định 19:30), mỗi nhân viên sale vào lại các bài chính mình đã đăng trong
