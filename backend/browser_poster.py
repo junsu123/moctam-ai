@@ -398,42 +398,103 @@ def _type_text(page, box, text: str):
             raise RuntimeError("Không điền được nội dung vào ô viết bài")
 
 
+PREVIEW_JS = """d => {
+  // ảnh xem trước trong hộp soạn bài: <img> blob:/data:/ảnh tải lên, hoặc khối có ảnh nền blob:
+  const imgs = [...d.querySelectorAll('img')].filter(i => /^(blob:|data:image)/.test(i.src || '') ||
+      ((i.naturalWidth || i.width) >= 60 && !i.closest('[role="button"][aria-label]') && !/emoji|static\\.xx|rsrc\\.php/.test(i.src || '')));
+  const bg = [...d.querySelectorAll('[style*="blob:"]')];
+  const vids = [...d.querySelectorAll('video')];
+  return imgs.length + bg.length + vids.length;
+}"""
+DROPZONE = ["Thêm ảnh/video", "Add photos/videos", "Thêm ảnh", "Add photos", "hoặc kéo và thả", "or drag and drop"]
+
+
+def _preview_count(dialog) -> int:
+    try:
+        return dialog.evaluate(PREVIEW_JS)
+    except Exception:
+        return 0
+
+
+def _wait_previews(page, dialog, base: int, want: int, timeout: float = 25) -> int:
+    """Chờ Facebook hiện ảnh xem trước trong hộp soạn bài. Trả về số ảnh mới hiện."""
+    end, got = time.time() + timeout, 0
+    while time.time() < end:
+        got = _preview_count(dialog) - base
+        if got >= want:
+            break
+        page.wait_for_timeout(700)
+    return max(0, got)
+
+
+def _wait_uploaded(page, dialog, timeout: float = 120):
+    """Chờ ảnh tải lên xong (hết thanh tiến trình) trước khi bấm Đăng."""
+    end = time.time() + timeout
+    while time.time() < end:
+        try:
+            busy = dialog.locator('[role="progressbar"]').count()
+        except Exception:
+            busy = 0
+        if not busy:
+            return True
+        page.wait_for_timeout(800)
+    return False
+
+
+def _chooser(page, scope, labels: list[str], wait_ms: int = 5000):
+    """Bấm nút (Ảnh/video, Thêm ảnh/video) và bắt hộp chọn tệp của Facebook. Trả về FileChooser hoặc None."""
+    el = _visible_first(scope, labels) or _exact_button(scope, labels)
+    if not el:
+        return None, False
+    try:
+        with page.expect_file_chooser(timeout=wait_ms) as fc:
+            el.click()
+        return fc.value, True
+    except Exception:
+        return None, True  # đã bấm nhưng không mở hộp chọn tệp (có thể hiện ô “Thêm ảnh/video”)
+
+
 def _attach_images(page, dialog, imgs: list[str], labels: list[str]) -> list[str]:
-    """Đính ảnh vào hộp soạn bài. Trả về danh sách ảnh đã đính (rỗng nếu không đính được)."""
-    def inputs():
-        loc = dialog.locator('input[type="file"]')
-        return [loc.nth(i) for i in range(loc.count())]
-    cands = inputs()
-    if not cands:
+    """Đính ảnh vào hộp soạn bài như người dùng: bấm Ảnh/video, chọn tệp trong hộp chọn tệp của Facebook,
+    rồi CHỜ ảnh xem trước hiện trong bài. Ảnh không hiện thì coi như chưa đính (trả về rỗng, không đăng)."""
+    base = _preview_count(dialog)
+    want = 1  # ít nhất 1 ảnh hiện ra; Facebook có thể gộp nhiều ảnh thành 1 khung xem trước
+    # 1) Bấm Ảnh/video -> hộp chọn tệp (Facebook mới); hoặc hiện ô "Thêm ảnh/video" -> bấm tiếp
+    fc, clicked = _chooser(page, dialog, labels)
+    if not fc and clicked:
+        page.wait_for_timeout(800)
+        fc, _ = _chooser(page, dialog, DROPZONE)
+    if fc:
+        fc.set_files(imgs)
+        if _wait_previews(page, dialog, base, want):
+            _wait_uploaded(page, dialog)
+            return list(imgs)
+    # 2) Dự phòng: ô chọn tệp ảnh MỚI xuất hiện sau khi bấm Ảnh/video (trong hộp soạn hoặc gắn ngoài trang)
+    if not clicked:
         el = _visible_first(dialog, labels)
         if el:
             el.click()
             page.wait_for_timeout(1500)
-        cands = inputs()
-    if not cands:
-        return []
-    # ưu tiên ô nhận ảnh và chọn được nhiều tệp
-    def score(el):
+    loc = page.locator('input[type="file"]')
+    cands = []
+    for k in range(loc.count() - 1, -1, -1):  # ô mới nhất trước
+        el = loc.nth(k)
         acc = (el.get_attribute("accept") or "").lower()
-        return (("image" in acc) or acc == "") * 2 + (el.get_attribute("multiple") is not None)
-    inp = max(cands, key=score)
-    done = []
-    if inp.get_attribute("multiple") is not None:
-        inp.set_input_files(imgs)
-        try:  # trình duyệt có nhận tệp không
-            if inp.evaluate("e => e.files ? e.files.length : 0") == 0:
-                return []
+        if acc and "image" not in acc:
+            continue
+        cands.append(el)
+    for el in cands[:4]:
+        try:
+            if el.get_attribute("multiple") is not None:
+                el.set_input_files(imgs)
+            else:
+                el.set_input_files(imgs[0])
         except Exception:
-            pass
-        done = list(imgs)
-    else:
-        for f in imgs:  # ô chỉ nhận 1 tệp: đính từng ảnh
-            cur = max(inputs() or [inp], key=score)
-            cur.set_input_files(f)
-            done.append(f)
-            page.wait_for_timeout(1500)
-    page.wait_for_timeout(2500 + 1500 * len(done))
-    return done
+            continue
+        if _wait_previews(page, dialog, base, want, timeout=12):
+            _wait_uploaded(page, dialog)
+            return list(imgs) if el.get_attribute("multiple") is not None else [imgs[0]]
+    return []
 
 
 def _top_dialog(page):
@@ -500,15 +561,24 @@ def _publish(page, post: dict, target_url: str, composer_labels: list[str], dry_
         if not used and not media_folder.required():
             db.log("tuan", "Không đính được ảnh", f"Bài #{post['id']}: {why or 'không thấy ô chọn ảnh trong hộp soạn bài'}, đăng phần chữ.")
     if not used and media_folder.required():  # sếp quy định: bài phải có ảnh -> hủy bài đang soạn, không bấm Đăng
+        noimg_shot = None
+        try:  # chụp lại hộp soạn bài để sếp xem Facebook đang hiện gì
+            f = db.SHOTS_DIR / f"post-{post['id']}-noimg.png"
+            page.screenshot(path=str(f))
+            noimg_shot = f"/shots/{f.name}"
+        except Exception:
+            pass
         try:
             page.keyboard.press("Escape")
             page.wait_for_timeout(1200)
             _wait_click(page, s["discard_button"], timeout=4)
         except Exception:
             pass
-        raise NoImage("Không đính được ảnh vào bài nên KHÔNG đăng (sếp quy định bài phải có ảnh). "
-                      + (f"Lỗi: {why}. " if why else "Không thấy ô chọn ảnh trong hộp soạn bài. ")
-                      + "Thêm chữ của nút Ảnh/video vào fb_selectors.json nếu Facebook đổi giao diện")
+        err = NoImage("Không đính được ảnh vào bài nên KHÔNG đăng (sếp quy định bài phải có ảnh). "
+                      + (f"Lỗi: {why}. " if why else "Đã chọn ảnh nhưng Facebook không hiện ảnh trong bài (hoặc không thấy nút Ảnh/video). ")
+                      + "Xem ảnh chụp hộp soạn bài; Facebook đổi chữ nút thì thêm vào photo_button trong fb_selectors.json")
+        err.shot, err.attach = noimg_shot, True
+        raise err
     shot = db.SHOTS_DIR / f"post-{post['id']}.png"
     if dry_run:
         page.screenshot(path=str(shot))
@@ -694,7 +764,7 @@ def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
         _block(aid, str(e))
         raise
     except NoImage as e:
-        _no_image(post, str(e), dry_run, agent)
+        _no_image(post, str(e), dry_run, agent, getattr(e, "shot", None), getattr(e, "attach", False))
     except Exception as e:
         _fail(page, post_id, friendly(e)[:300], dry_run)
         if "chưa là thành viên" in str(e) and post.get("group_id"):
@@ -1239,6 +1309,14 @@ def _do_bump(ctx, page, aid: int, bump_id: int):
         text = (b.get("text") or "").strip()
         if text:
             page.keyboard.insert_text(text)
+        def blobs():  # ảnh xem trước: blob/data trên trang + ảnh/video mới quanh ô bình luận
+            try:
+                return box.evaluate("""e => { let r = e; for (let k = 0; k < 6 && r.parentElement; k++) r = r.parentElement;
+                    return [...document.querySelectorAll('img')].filter(i => /^(blob:|data:image)/.test(i.src || '')).length
+                         + document.querySelectorAll('[style*="blob:"]').length + r.querySelectorAll('img,video').length; }""")
+            except Exception:
+                return 0
+        base = blobs()
         attached = False
         btn = _visible_first(page, s["comment_attach"])
         if btn:
@@ -1256,7 +1334,12 @@ def _do_bump(ctx, page, aid: int, bump_id: int):
                 attached = True
         if not attached:
             raise RuntimeError("Không đính kèm được ảnh vào bình luận (thêm chữ nút đính kèm vào comment_attach)")
-        page.wait_for_timeout(4000)
+        end = time.time() + 20  # chờ ảnh hiện trong ô bình luận; không hiện thì không gửi (tránh up bài không ảnh)
+        while blobs() <= base and time.time() < end:
+            page.wait_for_timeout(700)
+        if blobs() <= base:
+            raise RuntimeError("Đã chọn ảnh nhưng Facebook không hiện ảnh trong ô bình luận nên chưa gửi. Xem ảnh chụp lượt up này")
+        page.wait_for_timeout(2500)
         box.click()
         page.keyboard.press("Enter")
         page.wait_for_timeout(5000)
@@ -1367,13 +1450,25 @@ class NoImage(RuntimeError):
     """Bài không có ảnh: không đăng."""
 
 
-def _no_image(post: dict, msg: str, dry_run: bool, agent: str):
-    """Bài thiếu ảnh: không đăng, trả bài về hàng chờ duyệt (bỏ nick/giờ) để khi có ảnh Tuấn xếp lại."""
+def _no_image(post: dict, msg: str, dry_run: bool, agent: str, shot: str | None = None, attach: bool = False):
+    """Bài thiếu ảnh: không đăng, trả bài về hàng chờ duyệt (bỏ nick/giờ) để khi có ảnh Tuấn xếp lại.
+    Đính ảnh lên Facebook thất bại 2 lần: dừng hẳn (báo Lỗi) để không thử đi thử lại mãi."""
     import errors
-    errors.report("image", "Bài không có ảnh nên chưa đăng", msg, f"Bài #{post['id']}: {(post.get('title') or '')[:80]}",
-                  screen="products", ref_type="post", ref_id=post["id"])
+    fails = 0
+    if attach and not dry_run:
+        db.run("UPDATE posts SET img_fails=COALESCE(img_fails,0)+1 WHERE id=?", (post["id"],))
+        fails = (db.one("SELECT img_fails FROM posts WHERE id=?", (post["id"],)) or {}).get("img_fails") or 0
+    errors.report("image", "Facebook không nhận ảnh nên chưa đăng bài" if attach else "Bài không có ảnh nên chưa đăng", msg,
+                  f"Bài #{post['id']}: {(post.get('title') or '')[:80]}", screen="posts" if attach else "products",
+                  ref_type="post", ref_id=post["id"], screenshot=shot)
     if dry_run:
-        db.run("UPDATE posts SET error=? WHERE id=?", (msg[:300], post["id"]))
+        db.run("UPDATE posts SET error=?, screenshot=COALESCE(?, screenshot) WHERE id=?", (msg[:300], shot, post["id"]))
+    elif attach and fails >= 2:
+        db.run("UPDATE posts SET status='failed', error=?, screenshot=COALESCE(?, screenshot) WHERE id=?",
+               (("Đã thử 2 lần, Facebook không nhận ảnh nên KHÔNG đăng. Xem ảnh chụp, sửa rồi bấm Đưa về hàng đợi. " + msg)[:300],
+                shot, post["id"]))
+        db.log(agent, "Không đăng bài thiếu ảnh", f"Bài #{post['id']}: Facebook không nhận ảnh 2 lần, dừng bài này")
+        return
     else:
         # bài chăm sóc nhóm viết riêng cho 1 nhóm: bỏ luôn; bài tìm khách: về hàng chờ, có ảnh thì xếp lại
         st = "failed" if post.get("source") == "care" else "approved"

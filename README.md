@@ -314,9 +314,14 @@ luôn ghi bài đăng đang lấy ảnh ở đâu.
   Đăng ngay, Đăng thử, Đăng Fanpage được thay bằng **Thêm ảnh sản phẩm**. Có ảnh rồi thì Tuấn tự xếp lại các bài đó.
 - Bài mẫu sỉ và bài chăm sóc nhóm quản lý (không gắn sản phẩm) lấy ảnh ở thư mục chung; chưa có thư mục chung thì Lan
   không làm thêm các bài này.
-- Lúc đăng, sale chọn ảnh trước khi mở hộp soạn bài; không chọn được ảnh thì không mở. Nếu Facebook không nhận ảnh
-  (không thấy nút Ảnh/video, trình duyệt không nhận tệp) thì sale **hủy bài đang soạn, không bấm Đăng**, trả bài về hàng
-  chờ và ghi vào màn hình Lỗi.
+- Lúc đăng, sale chọn ảnh trước khi mở hộp soạn bài; không chọn được ảnh thì không mở.
+- Sale đính ảnh **như người thật**: bấm nút **Ảnh/video** (hoặc ô “Thêm ảnh/video” hiện ra sau đó), chọn ảnh trong hộp
+  chọn tệp của Facebook, rồi **chờ ảnh xem trước hiện trong bài** và chờ tải lên xong mới bấm Đăng. Không dùng các ô chọn
+  tệp ẩn có sẵn trong hộp soạn bài (Facebook có ô ẩn không gắn với ảnh bài, chọn vào đó bài lên không có ảnh).
+- Ảnh không hiện trong bài thì sale **hủy bài đang soạn, không bấm Đăng**, chụp lại hộp soạn bài, trả bài về hàng chờ và
+  báo ở màn Lỗi (“Facebook không nhận ảnh nên chưa đăng bài”). Cùng một bài bị 2 lần thì dừng hẳn bài đó (cột Lịch đăng,
+  trạng thái lỗi, có ảnh chụp); sửa xong bấm **Đưa về hàng đợi**.
+- Up bài bằng bình luận ảnh cũng vậy: ảnh không hiện trong ô bình luận thì không gửi.
 - Fanpage: ảnh được tải lên trước rồi gắn vào bài (Graph API `photos` + `attached_media`); không có ảnh thì không gọi API.
 - Thẻ bài chưa đăng hiện **📷 N ảnh** là số ảnh sẵn để đính kèm.
 

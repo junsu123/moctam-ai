@@ -1607,7 +1607,7 @@ def run_post(pid: int, r: PostRun):
 
 @app.post("/api/posts/{pid}/retry")
 def retry_post(pid: int):
-    db.run("UPDATE posts SET status='approved', error=NULL, sale_id=NULL, scheduled_for=NULL WHERE id=? AND status='failed'", (pid,))
+    db.run("UPDATE posts SET status='approved', error=NULL, img_fails=0, sale_id=NULL, scheduled_for=NULL WHERE id=? AND status='failed'", (pid,))
     return db.one("SELECT * FROM posts WHERE id=?", (pid,))
 
 
