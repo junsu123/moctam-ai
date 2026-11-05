@@ -102,8 +102,11 @@ Máy chạy phần mềm phải bật trong giờ đăng bài; Chrome của các
 
 ## Bảng bài đã đăng (phân trang)
 
-Mục **Bài đăng** có 3 cột việc đang chạy (Chờ duyệt, Đã duyệt, Lịch đăng hôm nay); bài **đã đăng** nằm trong bảng
-**Bài đã đăng** bên dưới:
+Mục **Bài đăng** có 2 tab (số bên cạnh tên tab là số bài; tab Bài đã đăng hiện đỏ khi có bài chưa có link):
+- **Bài đăng**: việc đang chạy: bài mẫu, giao Lan viết, Làm lại bài đăng, 3 cột Chờ duyệt / Đã duyệt / Lịch đăng hôm nay.
+- **Bài đã đăng**: bảng có phân trang. Mở thẳng bằng link `#posts/posted`; phần mềm nhớ tab sếp xem lần trước.
+
+Bảng **Bài đã đăng**:
 - Dòng tổng: số bài đã đăng, hôm nay, có link / chưa có link / chờ nhóm duyệt / bị xóa-ẩn, tổng bình luận và khách.
 - Mỗi dòng: ngày giờ đăng, mã và tên bài (kèm vài chữ đầu), nhóm, sale · nick, số ảnh, link bài (nút **Mở bài** hoặc
   trạng thái), số lần up, bình luận, khách.
