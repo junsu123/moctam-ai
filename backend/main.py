@@ -1562,6 +1562,23 @@ class PostRun(BaseModel):
     dry_run: bool = False
 
 
+class ResetPosts(BaseModel):
+    kinds: list[str] = ["approved", "scheduled", "failed"]
+    rewrite: int = 0
+    plan: bool = True
+
+
+@app.get("/api/posts/reset")
+def reset_posts_preview():
+    return workflows.reset_preview()
+
+
+@app.post("/api/posts/reset")
+def reset_posts(r: ResetPosts):
+    """Làm lại bài đăng: xóa bài chưa đăng (đã duyệt, lịch đăng, lỗi...) rồi cho Lan viết bài mới."""
+    return workflows.reset_posts(r.kinds, r.rewrite, r.plan)
+
+
 @app.post("/api/posts/{pid}/fetch-link")
 def fetch_link(pid: int):
     """Sếp bấm “Lấy link ngay”: sale mở Chrome nick đã đăng bài để tìm lại link."""

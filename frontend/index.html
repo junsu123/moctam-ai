@@ -151,6 +151,11 @@ details.limits .grid2{margin-top:8px}
 .reasons{display:flex;gap:4px;flex-wrap:wrap}
 .reasons button{border:1px solid var(--line);background:var(--panel);border-radius:20px;font-size:12px;padding:3px 9px}
 .reasons button:hover{border-color:var(--danger);color:var(--danger)}
+.reset-panel{border-top:3px solid var(--danger)}
+.reset-panel .rk{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:8px;margin:10px 0}
+.reset-panel .rk label{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:var(--r-s);padding:8px 10px;font-size:13.5px;cursor:pointer}
+.reset-panel .rk label:has(input:checked){border-color:var(--danger);background:var(--danger-soft)}
+.reset-panel .rk b{font-size:18px;font-variant-numeric:tabular-nums}
 .reasons button.on{border-color:var(--danger);color:var(--danger);background:var(--danger-soft);font-weight:600}
 .junkbox{border:1px dashed var(--line);border-radius:10px;padding:8px 10px;margin-top:4px}
 .junkbox summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--danger)}
@@ -893,7 +898,7 @@ label.f{font-weight:600;color:var(--muted)}
     <section class="view" id="v-posts" hidden>
       <div class="vh">
         <div><h1>Bài đăng</h1><p>Lan viết bài, CEO duyệt (sếp vẫn sửa hoặc duyệt thay được), Tuấn xếp lịch theo nhóm và nick. Đến giờ, nhân viên sale AI tự mở Chrome của nick mình và đăng. Bài Fanpage đăng qua API chính thức.</p></div>
-        <div class="actions"><button class="btn" id="btnPlan" data-direct>Tuấn xếp lịch đăng nhóm</button></div>
+        <div class="actions"><button class="btn" id="btnPlan" data-direct>Tuấn xếp lịch đăng nhóm</button><button class="btn danger" id="btnReset" aria-expanded="false" aria-controls="resetPanel">Làm lại bài đăng</button></div>
       </div>
       <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. CEO tự giao Lan viết bài, tự duyệt bài nháp và cho Tuấn xếp lịch. Muốn viết thêm hay sửa cách viết, nhắn CEO ở <a href="#ceo">Giao việc</a> hoặc Telegram.</p>
       <section class="card tpl" id="tplCard">
@@ -911,6 +916,7 @@ label.f{font-weight:600;color:var(--muted)}
         </div>
         <div><button class="btn primary" type="submit" id="gBtn">Viết bài</button></div>
       </form>
+      <section class="card reset-panel" id="resetPanel" hidden></section>
       <div class="banner noimg" id="noImgBar" hidden></div>
       <div class="banner" id="noLinkBar" hidden></div>
       <div class="board" id="board"></div>
@@ -1805,6 +1811,9 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/sales") return S.sales.map(saleOut);
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products.slice().sort((a,b)=>(b.is_general||0)-(a.is_general||0)||(b.hot||0)-(a.hot||0)||a.id-b.id).map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g),joins:g.joins||{},today:gfToday(g)}));
+      if(P==="/posts/reset"){ const c={approved:0,scheduled:0,failed:0,draft:0}, g={approved:0,scheduled:0,failed:0,draft:0};
+        S.posts.forEach(p=>{ if(p.status in c){ c[p.status]++; if(p.target_type==="group") g[p.status]++; } });
+        return {counts:c,group_counts:g,scheduled_today:S.posts.filter(p=>p.status==="scheduled"&&(p.scheduled_for||"").startsWith(now().slice(0,10))).length,posting:S.posts.filter(p=>p.status==="posting").length}; }
       if(P==="/posts") return S.posts.map(p=>{ const pr=S.products.find(x=>x.is_general)||S.products.find(x=>x.id===p.product_id); const shared=(S.settings.bump_folder||"").trim()?10:0;
         return {...p,img_required:S.settings.require_images!=="0",img_count:pr?(demoFolder(pr).count||shared):shared}; }); if(P==="/leads") return S.leads; if(P==="/tasks") return S.tasks; if(P==="/settings") return {...S.settings,tg_token:S.settings.tg_token?"••••••":"",models:["claude-haiku-5-5","claude-sonnet-5-5","claude-opus-5-5"]};
       if(P==="/company") return demoCompany();
@@ -1886,6 +1895,10 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/products"){ if(!(body.name||"").trim()) throw new Error("Nhập tên sản phẩm"); if(S.products.some(p=>p.name.toLowerCase()===body.name.trim().toLowerCase())) throw new Error("Đã có sản phẩm cùng tên. Sửa sản phẩm đó thay vì thêm mới");
         const x={id:id(),...body,name:body.name.trim(),hot:body.hot?1:0,is_general:body.is_general?1:0,images:"[]"}; if(x.is_general) S.products.forEach(p=>p.is_general=0); S.products.push(x); log("minh","Thêm sản phẩm",`${x.name}: Lan có thể viết bài, Hà tư vấn sản phẩm này từ giờ`); return x; }
       if(P==="/groups"){ const u=demoGroupUrl(body.url); if(u.err) throw new Error(u.err); const x={id:id(),...body,url:u.url,leads_count:0,last_posted_at:null}; S.groups.push(x); log("tuan","Thêm nhóm",x.name); return x; }
+      if(P==="/posts/reset"){ const ks=body.kinds||["approved","scheduled","failed"]; const del=S.posts.filter(p=>ks.includes(p.status)); S.posts=S.posts.filter(p=>!ks.includes(p.status));
+        log("minh","Làm lại bài đăng",`Sếp xóa ${del.length} bài chưa đăng`+(body.rewrite?`. Lan viết lại ${body.rewrite} bài mới`:""));
+        if(body.rewrite){ S.status.lan={state:"working",text:`Đang viết ${body.rewrite} bài mới`}; setTimeout(()=>{ genPosts(body.rewrite,null,"group").forEach(p=>{ p.status="approved"; p.source="template"; }); if(body.plan) plan(); S.status.lan={state:"idle",text:"Vừa viết xong bài mới"}; },2500); }
+        return {deleted:del.length,rewrite:body.rewrite||0}; }
       if(P==="/run/daily-work"){ genPosts(3,null,"group"); const pl=plan(); return {drafts:3,scheduled:pl.length,follow_ups:S.leads.filter(l=>l.status==="new").length}; }
     }
     if(method==="PATCH"){
@@ -2610,6 +2623,36 @@ $("#genForm").addEventListener("submit",async e=>{ e.preventDefault(); const btn
   try{ const r=await api("/posts/generate","POST",{count:+$("#gCount").value||3,product_id:+$("#gProduct").value||null,target_type:$("#gTarget").value,angle:$("#gAngle").value||null,note:$("#gNote").value});
     toast(`Lan đã viết ${r.length} bài, chờ sếp duyệt`); }catch(err){ toast(err.message); }
   btn.disabled=false; btn.textContent="Viết bài"; loadPosts(); refresh(); });
+async function renderReset(){
+  const el=$("#resetPanel"); const r=await api("/posts/reset"); ST.resetInfo=r;
+  const sel=ST.resetSel||(ST.resetSel=new Set(["approved","scheduled","failed"]));
+  const kinds=[["approved","Đã duyệt (chờ xếp lịch)"],["scheduled",`Lịch đăng${r.scheduled_today?` (hôm nay ${r.scheduled_today})`:""}`],["failed","Đăng lỗi"],["draft","Chờ duyệt"]];
+  const total=kinds.filter(([k])=>sel.has(k)).reduce((s,[k])=>s+(r.counts[k]||0),0);
+  const grp=kinds.filter(([k])=>sel.has(k)).reduce((s,[k])=>s+(r.group_counts[k]||0),0);
+  if(ST.resetN==null) ST.resetN=Math.min(20,Math.max(grp,3));
+  el.innerHTML=`<div class="card-h"><div><h3>Làm lại bài đăng</h3><p class="small muted" style="margin:2px 0 0">Xóa hẳn các bài chưa đăng bị lỗi hoặc không dùng nữa, rồi giao Lan viết bài mới. Bài đã đăng lên Facebook${r.posting?` và ${r.posting} bài đang đăng dở`:""} được giữ nguyên.</p></div></div>
+    <div class="rk">${kinds.map(([k,l])=>`<label><input type="checkbox" data-rk="${k}" ${sel.has(k)?"checked":""}><span><b>${r.counts[k]||0}</b> ${l}</span></label>`).join("")}</div>
+    <div class="grid3">
+      <label class="f" for="rsN">Lan viết lại (bài đăng nhóm)<input type="number" id="rsN" min="0" max="20" value="${ST.resetN}"></label>
+      <label class="row small" style="align-self:end"><input type="checkbox" id="rsPlan" checked> Viết xong cho Tuấn xếp lịch luôn</label>
+    </div>
+    <p class="small muted">${ST.resetN>0?"Bài nhóm viết theo thư viện bài mẫu của sếp (nếu đang bật), CEO chấm trước khi đăng. Bài vẫn phải có ảnh mới được đăng.":"Để 0 nếu chỉ muốn xóa, chưa viết bài mới."}</p>
+    <div class="actions"><button class="btn danger" id="rsGo" ${total?"":"disabled"} data-confirm="0">Xóa ${total} bài${ST.resetN>0?` và viết lại ${ST.resetN} bài`:""}</button><button class="btn ghost" id="rsCancel">Hủy</button></div>`;
+}
+$("#btnReset").onclick=async()=>{ const el=$("#resetPanel"), open=el.hidden; el.hidden=!open; $("#btnReset").setAttribute("aria-expanded",String(open));
+  if(open){ ST.resetSel=null; ST.resetN=null; try{ await renderReset(); el.scrollIntoView({block:"nearest",behavior:"smooth"}); }catch(e){ toast(e.message); } } };
+$("#resetPanel").addEventListener("change",e=>{ const k=e.target.dataset.rk; if(k){ e.target.checked?ST.resetSel.add(k):ST.resetSel.delete(k); ST.resetN=null; renderReset(); }
+  if(e.target.id==="rsN"){ ST.resetN=Math.max(0,Math.min(20,+e.target.value||0)); renderReset(); } });
+$("#resetPanel").addEventListener("click",async e=>{
+  if(e.target.id==="rsCancel"){ $("#resetPanel").hidden=true; $("#btnReset").setAttribute("aria-expanded","false"); return; }
+  const b=e.target.closest("#rsGo"); if(!b) return;
+  if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa hẳn (không hoàn tác được)"; return; }
+  b.disabled=true;
+  try{ const r=await api("/posts/reset","POST",{kinds:[...ST.resetSel],rewrite:ST.resetN||0,plan:$("#rsPlan").checked});
+    toast(`Đã xóa ${r.deleted} bài.`+(r.rewrite?` Lan đang viết ${r.rewrite} bài mới${$("#rsPlan").checked?", viết xong Tuấn xếp lịch":""}.`:""));
+    $("#resetPanel").hidden=true; $("#btnReset").setAttribute("aria-expanded","false"); }
+  catch(err){ toast(err.message); b.disabled=false; }
+  loadPosts(); refresh(); if(ST.resetN) setTimeout(loadPosts,4000); });
 $("#btnPlan").onclick=async()=>{ const r=await api("/distribution/plan","POST"); toast(r.length?`Tuấn đã xếp ${r.length} bài: ${r.map(x=>`${fmtTime(x.time)} ${x.sale?x.sale+" → ":""}${x.group}`).join("; ")}`.slice(0,220):"Chưa xếp được bài nào: chưa có bài đã duyệt, nhóm đang giãn cách, hoặc các nick đã đủ bài/ngày"); loadPosts(); refresh(); };
 
 /* --------------------------------------------- nhân viên sale */

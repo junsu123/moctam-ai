@@ -3,6 +3,8 @@ import json
 import random
 from datetime import datetime, timedelta
 
+import threading
+
 import db
 import mock_brain
 from agents import system_prompt
@@ -288,6 +290,56 @@ def post_demand() -> list[tuple[str, int]]:
 # ---------------------------------------------------------------- Tuấn: phân phối nhóm
 def _dt(s: str) -> datetime:
     return datetime.strptime(s[:16], "%Y-%m-%d %H:%M")
+
+
+RESET_KINDS = {"approved": "đã duyệt", "scheduled": "lịch đăng", "failed": "đăng lỗi", "draft": "chờ duyệt"}
+
+
+def reset_preview() -> dict:
+    """Số bài sẽ bị xóa khi sếp bấm Làm lại bài đăng (bài đã đăng và bài đang đăng dở giữ nguyên)."""
+    rows = db.q("SELECT status, target_type, COUNT(*) n FROM posts WHERE status IN ('approved','scheduled','failed','draft') "
+                "GROUP BY status, target_type")
+    out = {k: 0 for k in RESET_KINDS}
+    groups = {k: 0 for k in RESET_KINDS}
+    for r in rows:
+        out[r["status"]] += r["n"]
+        if r["target_type"] == "group":
+            groups[r["status"]] += r["n"]
+    today = db.one("SELECT COUNT(*) n FROM posts WHERE status='scheduled' AND scheduled_for LIKE ?", (db.today() + "%",))["n"]
+    posting = db.one("SELECT COUNT(*) n FROM posts WHERE status='posting'")["n"]
+    return {"counts": out, "group_counts": groups, "scheduled_today": today, "posting": posting, "labels": RESET_KINDS}
+
+
+def reset_posts(kinds: list[str], rewrite: int = 0, plan: bool = True) -> dict:
+    """Sếp làm lại bài đăng: xóa các bài chưa đăng (đã duyệt, lịch đăng, lỗi, tùy chọn chờ duyệt) rồi cho Lan viết bài mới."""
+    kinds = [k for k in kinds if k in RESET_KINDS] or ["approved", "scheduled", "failed"]
+    rows = db.q(f"SELECT id, status FROM posts WHERE status IN ({','.join('?' * len(kinds))})", tuple(kinds))
+    ids = [r["id"] for r in rows]
+    by = {k: sum(r["status"] == k for r in rows) for k in kinds}
+    if ids:
+        qs = ",".join("?" * len(ids))
+        db.run(f"DELETE FROM feedback WHERE post_id IN ({qs})", tuple(ids))
+        db.run(f"DELETE FROM content_library WHERE post_id IN ({qs})", tuple(ids))
+        db.run(f"UPDATE errors SET status='resolved' WHERE ref_type='post' AND ref_id IN ({qs}) AND status!='resolved'",
+               tuple(str(i) for i in ids))
+        db.run(f"DELETE FROM posts WHERE id IN ({qs})", tuple(ids))
+    detail = ", ".join(f"{n} bài {RESET_KINDS[k]}" for k, n in by.items() if n) or "không có bài nào"
+    rewrite = max(0, min(20, int(rewrite or 0)))
+    db.log("minh", "Làm lại bài đăng", f"Sếp xóa {len(ids)} bài chưa đăng ({detail})"
+           + (f". Lan viết lại {rewrite} bài mới" if rewrite else ""))
+    set_status("tuan", "idle", "Lịch đăng đã xóa, chờ bài mới")
+    if rewrite:
+        def work():
+            try:
+                made = generate_posts(rewrite, target_type="group")
+                if plan and any(m.get("status") == "approved" for m in made):
+                    plan_distribution()
+            except Exception as e:
+                import errors
+                errors.report_exc("posts", "Viết lại bài sau khi làm lại bài đăng bị lỗi", e, screen="posts")
+                set_status("lan", "idle", "Viết lại bài bị lỗi")
+        threading.Thread(target=work, daemon=True).start()
+    return {"deleted": len(ids), "by": by, "rewrite": rewrite}
 
 
 def with_images(posts: list[dict]) -> list[dict]:

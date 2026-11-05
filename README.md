@@ -100,6 +100,18 @@ sang giao diện máy tính. Nếu không đính được ảnh, sale vẫn đă
 hạn chế dù đã giãn cách, nên giữ số bài/ngày vừa phải, nội dung có giá trị và đúng luật từng nhóm.
 Máy chạy phần mềm phải bật trong giờ đăng bài; Chrome của các nick chạy trên chính máy đó.
 
+## Làm lại bài đăng (xóa bài lỗi, viết bài mới)
+
+Ở mục **Bài đăng**, nút **Làm lại bài đăng** (cạnh “Tuấn xếp lịch đăng nhóm”) mở bảng cho biết sẽ xóa bao nhiêu bài:
+**Đã duyệt** (chờ xếp lịch), **Lịch đăng** (ghi rõ số bài của hôm nay), **Đăng lỗi**, và tùy chọn **Chờ duyệt**. Tích các
+nhóm bài muốn xóa, chọn số bài Lan **viết lại** (mặc định bằng số bài nhóm bị xóa, tối đa 20; để 0 nếu chỉ xóa) và có cho
+Tuấn xếp lịch ngay khi viết xong không. Bấm nút xóa 2 lần để xác nhận (không hoàn tác được).
+
+- Bài **đã đăng** lên Facebook và bài **đang đăng dở** luôn được giữ nguyên.
+- Bài bị xóa biến mất hẳn khỏi bảng, lịch đăng của các nick và màn Lỗi; không bị tính là “sếp loại bài” nên Lan không học
+  sai từ các bài này.
+- Bài mới viết theo thư viện bài mẫu của sếp (nếu đang bật), CEO chấm trước; vẫn phải có ảnh mới được đăng.
+
 ## Thư viện bài mẫu sỉ: Lan học từ bài mẫu của sếp để viết lại hay hơn
 
 Mục **Kho tri thức → Bài mẫu sỉ**. Sếp tạo danh sách các bài đăng sỉ mẫu; mọi bài đăng vào **nhóm nick đã tham gia** và **nhóm nick quản lý** là bản viết lại từ thư viện này: chỉ nội dung tìm khách sỉ, gia công, không đăng bài linh tinh, không ghi giá.
