@@ -435,6 +435,15 @@ def plan_distribution(keywords: list[str] | None = None, limit: int | None = Non
         if fb_policy.enabled() and (s.get("rest_until") or "") > db.now():  # nick đang nghỉ sau sự cố
             return None
         start = max(now + timedelta(minutes=3), _dt(f"{today} {s['active_from'] or '08:00'}"))
+        if db.get_settings().get("spread_posts", "1") == "1":
+            # rải bài đều cả ngày: nick đăng bài thứ k không sớm hơn mốc k của khung giờ, các nick cùng sale lệch nhau
+            # (không dồn 25 bài của 5 nick vào buổi sáng, mỗi 10 phút một bài)
+            af, at = _dt(f"{today} {s['active_from'] or '08:00'}"), _dt(f"{today} {s['active_to'] or '22:00'}")
+            cap = max(1, min(int(s["max_posts_per_day"] or 5), int(lim["posts"])))
+            peers = sorted(x["id"] for x in sales if x["sale_id"] == s["sale_id"])
+            step = max(0.0, (at - af).total_seconds() / 60 / cap)
+            even = af + timedelta(minutes=(L["count"] + peers.index(s["id"]) / len(peers)) * step)
+            start = max(start, even)
         if L["last"]:
             gap = max(int(s["min_gap_minutes"] or 40), lim["gap"])
             start = max(start, _dt(L["last"]) + timedelta(minutes=gap + random.randint(0, 12)))

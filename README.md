@@ -62,6 +62,12 @@ không ở nhóm nào trong danh sách đăng (hay chỉ 1–2 nhóm), hết gi�
 đã duyệt. Nick chỉ được xếp vào nhóm nick đó thật sự đang ở; nick không ở nhóm nào trong danh sách thì phải cho nick vào nhóm
 (hoặc Rà soát nhóm của nick để thêm nhóm nick đang ở) mới có việc.
 
+**Rải bài đều cả ngày.** Bài thứ k của một nick không xếp sớm hơn mốc k trong khung giờ làm của nick (VD 08:00–22:00, 5 bài/ngày
+thì khoảng 2 giờ 48 phút một bài), các nick cùng sale lệch nhau. Sale giữ 5 nick, mỗi nick 5 bài: 25 bài rải từ 08:00 tới khoảng
+21:30, cứ khoảng 34 phút một bài, thay vì dồn hết vào buổi sáng mỗi 10 phút một bài. Tắt bằng cài đặt `spread_posts=0`.
+Một sale tối đa 5 nick; nhiều nick thì cần nhiều nhóm hơn (mỗi nhóm 1 bài/ngày, rồi giãn cách vài ngày) và nhiều bài đã duyệt
+hơn (mỗi bài một nội dung riêng): 5 nick × 5 bài cần khoảng 25 nhóm đăng được mỗi ngày, tức danh sách 60–80 nhóm nick đang ở.
+
 **Lần đầu cho mỗi nick:**
 
 1. Vào **Nhân viên sale** → *Tuyển sale* (tối đa 8 người, mỗi người có bàn riêng trong văn phòng 3D), đặt tên nick đầu tiên.
