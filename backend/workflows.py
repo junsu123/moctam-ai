@@ -11,7 +11,7 @@ from agents import system_prompt
 from llm import llm, month_spent, parse_json
 
 # Trạng thái hiện tại của từng agent (hiển thị trên văn phòng 3D)
-STATUS = {a: {"state": "idle", "text": "Đang sẵn sàng"} for a in ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy"]}
+STATUS = {a: {"state": "idle", "text": "Đang sẵn sàng"} for a in ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy", "bao"]}
 
 
 TARGET_NAME = {"group": "Hội nhóm", "profile": "Trang cá nhân", "page": "Fanpage"}
@@ -528,19 +528,19 @@ def plan_bumps(force: bool = False) -> int:
         return 0
     db.set_setting("bump_planned_date", today)
     if not media_folder.root():
-        db.log("tuan", "Up bài", "Chưa cài thư mục ảnh sản phẩm (Cài đặt → Up bài), hôm nay bỏ qua")
+        db.log("bao", "Up bài", "Chưa cài thư mục ảnh sản phẩm (Cài đặt → Up bài), hôm nay bỏ qua")
         return 0
+    import post_care
+    set_status("bao", "working", "Rà soát bài đã đăng, viết câu bình luận kèm ảnh")
     now = db.clock()
     cutoff = (now - timedelta(days=int(s.get("bump_max_age_days") or 7))).strftime("%Y-%m-%d %H:%M:%S")
     fresh = (now - timedelta(hours=10)).strftime("%Y-%m-%d %H:%M:%S")  # bài vừa đăng hôm nay chưa cần up
-    texts = [t.strip() for t in (s.get("bump_texts") or "").splitlines()]
-    texts = texts or [""]
     per_nick = int(s.get("bump_max_per_nick") or 8)
     gap = int(s.get("bump_gap_minutes") or 6)
     total = 0
     import accounts
     for sale in accounts.working():  # mỗi nick up bài của chính nick đó
-        posts = db.q("""SELECT p.id FROM posts p LEFT JOIN products pr ON pr.id=p.product_id
+        posts = db.q("""SELECT p.id, p.product_id FROM posts p LEFT JOIN products pr ON pr.id=p.product_id
                         WHERE p.status='posted' AND p.account_id=? AND COALESCE(p.bump_enabled,1)=1
                         AND COALESCE(p.permalink_status,'') != 'removed' AND p.posted_at >= ? AND p.posted_at <= ?
                         AND p.id NOT IN (SELECT post_id FROM bumps WHERE created_at LIKE ? AND status != 'skipped')
@@ -548,15 +548,17 @@ def plan_bumps(force: bool = False) -> int:
                      (sale["id"], cutoff, fresh, today + "%", per_nick))
         t = now + timedelta(minutes=random.randint(1, 6))
         end = datetime.strptime(f"{today} {sale['active_to'] or '22:00'}", "%Y-%m-%d %H:%M")
-        for p in posts:
+        words = post_care.texts_for(posts, sale["id"]) if posts else []  # Bảo viết mỗi bài một câu khác nhau + dòng liên hệ
+        for p, text in zip(posts, words):
             if t > end:
                 break
             db.run("INSERT INTO bumps(post_id, sale_id, account_id, text, status, scheduled_for, created_at) VALUES (?,?,?,?,?,?,?)",
-                   (p["id"], sale["sale_id"], sale["id"], random.choice(texts), "scheduled", t.strftime("%Y-%m-%d %H:%M"), db.now()))
+                   (p["id"], sale["sale_id"], sale["id"], text, "scheduled", t.strftime("%Y-%m-%d %H:%M"), db.now()))
             total += 1
             t += timedelta(minutes=gap + random.randint(0, 4))
-    db.log("tuan", "Lịch up bài", f"Đã xếp {total} lượt bình luận ảnh để up bài hôm nay" if total
-           else "Không có bài nào cần up hôm nay")
+    db.log("bao", "Lịch up bài", f"Rà soát bài đã đăng: xếp {total} lượt bình luận ảnh kèm câu mới và dòng liên hệ" if total
+           else "Rà soát bài đã đăng: không có bài nào cần up hôm nay")
+    set_status("bao", "idle", f"Hôm nay xếp {total} lượt up bài")
     return total
 
 
@@ -564,9 +566,10 @@ def bump_now(post_id: int) -> int | None:
     p = db.one("SELECT * FROM posts WHERE id=?", (post_id,))
     if not p or not p.get("account_id"):
         return None
-    texts = [t.strip() for t in (db.get_settings().get("bump_texts") or "").splitlines()] or [""]
+    import post_care
+    text = post_care.texts_for([p], p["account_id"])[0]
     return db.run("INSERT INTO bumps(post_id, sale_id, account_id, text, status, scheduled_for, created_at) VALUES (?,?,?,?,?,?,?)",
-                  (post_id, p["sale_id"], p["account_id"], random.choice(texts), "scheduled",
+                  (post_id, p["sale_id"], p["account_id"], text, "scheduled",
                    db.clock().strftime("%Y-%m-%d %H:%M"), db.now()))
 
 

@@ -390,6 +390,8 @@ DEFAULT_SETTINGS = {
     "bump_max_age_days": "7",
     "bump_max_per_nick": "8",
     "bump_gap_minutes": "6",
+    "bump_contact": "Cần hàng liên hệ Zalo 0386992326",  # Bảo luôn gắn dòng này cuối mỗi bình luận up bài
+    "bump_text_mode": "ai",  # ai: Bảo tự viết mỗi lần (Claude nếu có khóa); list: chọn ngẫu nhiên từ bump_texts
     "bump_texts": "Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng\n",
     "bump_planned_date": "",
     "learn_enabled": "1",

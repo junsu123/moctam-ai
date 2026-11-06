@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 
 import db
 
-CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy"]
+CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy", "bao"]
 _lock = threading.Lock()
 _busy: set[str] = set()      # agent đang chạy một buổi học có gọi Claude
 _session: dict[str, dict] = {}  # agent -> {"until": datetime, "kind": ...}
@@ -140,6 +140,9 @@ def _practice(aid: str) -> str | None:
             return f"Xem lại nhóm cần cân nhắc: {g['name'][:50]}"
     if aid == "khoa":
         return "Xem lại số liệu bài đăng 7 ngày qua"
+    if aid == "bao":
+        r = db.one("SELECT COUNT(*) n FROM posts WHERE status='posted' AND COALESCE(permalink_status,'')!='removed'")
+        return f"Rà lại {r['n']} bài đã đăng, chọn bài cần up" if r and r["n"] else "Chuẩn bị câu bình luận up bài mới"
     if aid == "vy":
         r = db.one("SELECT keyword FROM site_keywords WHERE status='planned' ORDER BY priority, id LIMIT 1")
         return f"Nghiên cứu từ khóa: {r['keyword'][:50]}" if r else "Đọc lại bài website, sửa chỗ chưa chuẩn SEO"

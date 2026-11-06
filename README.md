@@ -28,6 +28,7 @@ Trang **Tìm khách sỉ** có dòng số SĐT tìm được theo từng kênh t
 | **Khoa** | Phân tích | Đo số bài, số khách, nhóm hiệu quả nhất; đưa số liệu vào cuộc họp |
 | **Mai** | Tìm khách sỉ | Tìm người đang bán hàng online (livestream, Facebook, TikTok Shop, Shopee, đa nền tảng), chấm điểm 100 có bằng chứng, đưa khách hạng A/B vào mục Khách hàng; không tự nhắn tin |
 | **Vy** | Website & SEO | Quản lý website công ty, lên kế hoạch từ khóa, viết bài chuẩn SEO (tự chấm theo bảng kiểm), dựng website và đăng lên hosting |
+| **Bảo** | Chăm sóc bài đã đăng | Mỗi ngày rà soát các bài đã đăng còn hiển thị, giao đúng nick đã đăng bình luận 1 ảnh sản phẩm kèm câu ngắn tự viết và dòng liên hệ Zalo của sếp |
 | **Sale 1…8** | Nhân viên sale | Mỗi sale giữ **3–5 tài khoản Facebook**, mỗi nick một hồ sơ Chrome riêng; làm theo ca từng nick: đăng bài vào nhóm và trang cá nhân, up bài, quét bình luận, rồi chuyển nick kế tiếp |
 
 ## Một ngày làm việc
@@ -495,7 +496,20 @@ trong `backend/fb_selectors.json`.
 
 **Up bài hằng ngày:** vào **Cài đặt → Tự động up bài**, chọn thư mục ảnh trên máy chạy phần mềm rồi bấm
 *Kiểm tra thư mục*. Từ giờ đã chọn (mặc định 19:30), mỗi nhân viên sale vào lại các bài chính mình đã đăng trong
-7 ngày gần nhất và bình luận một ảnh sản phẩm, kèm một câu ngẫu nhiên trong danh sách (để trống thì chỉ gửi ảnh).
+7 ngày gần nhất và bình luận một ảnh sản phẩm.
+
+**Bảo (Chăm sóc bài đã đăng) phụ trách up bài:** mỗi ngày Bảo rà soát các bài đã đăng (còn hiển thị, đăng trong số ngày đã
+chọn, đã đăng hơn 10 giờ, chưa up hôm nay; bài bị nhóm gỡ thì ngừng), xếp cho đúng nick đã đăng vào bình luận **1 ảnh bất kỳ
+trong thư mục ảnh** (ưu tiên ảnh ít dùng, không lặp ảnh trên cùng bài) kèm:
+- **một câu ngắn Bảo tự viết** cho từng bài theo sản phẩm của bài (VD “Mẻ trà gừng mật ong túi lọc sáng nay vừa đóng thùng”).
+  Có khóa Claude thì Bảo gọi Claude viết cả lượt trong một lần; chưa có thì ghép từ mẫu có sẵn. Mỗi bài một câu, khác các câu
+  nick đã dùng 14 ngày qua (Facebook coi bình luận giống hệt lặp lại là spam), không hứa chữa bệnh, câu tự ghi số điện thoại bị bỏ;
+- **dòng liên hệ của sếp** luôn gắn cuối, mặc định “Cần hàng liên hệ Zalo 0386992326”, VD:
+  “Mẻ trà gừng mật ong túi lọc sáng nay vừa đóng thùng. 👉 Cần hàng liên hệ Zalo 0386992326”.
+
+Chỉnh ở **Cài đặt → Tự động up bài · Bảo phụ trách**: ô *Dòng liên hệ*, chọn *Bảo tự viết* hoặc *Chọn ngẫu nhiên từ danh sách*,
+nút **Xem thử câu Bảo viết** (chưa gửi). Nhắn CEO cũng được: “rà soát lại các bài đã đăng và comment ảnh kèm zalo” (Bảo xếp
+ngay), “từ nay đổi zalo liên hệ thành 09xxxxxxxx”. Số lượt mỗi nick/ngày vẫn theo Luật Facebook (mặc định 6 lượt up/nick/ngày).
 
 ```
 D:\AnhSanPham\
@@ -878,6 +892,7 @@ backend/
   fb_policy.py   Luật Facebook: bộ luật, kiểm bài, giới hạn an toàn mỗi nick, sự cố & bài học, theo dõi chính sách Meta
   website.py     Website công ty + Vy: từ khóa, viết bài, bảng kiểm SEO, dựng trang tĩnh, sitemap, schema, zip, FTP
   group_target.py Sếp chỉ đạo nơi đăng: chế độ all/prefer/only, từ khóa nên đăng / tránh, nhóm tập trung, xem trước
+  post_care.py   Bảo chăm bài đã đăng: câu bình luận up bài tự viết (Claude hoặc mẫu), dòng liên hệ Zalo, xem thử
   friends.py     Kết bạn trong nhóm: điểm sôi nổi của nhóm, đọc bảng tin tìm người hợp tệp khách, trần lời mời, mở hồ sơ cho sale
   prospect.py    Mai tìm khách sỉ: tìm, đọc trang công khai, phân loại người bán, chấm điểm 100 có bằng chứng, lưu CRM
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm

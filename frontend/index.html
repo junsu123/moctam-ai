@@ -1583,7 +1583,7 @@ label.f{font-weight:600;color:var(--muted)}
             <p class="small muted">Giờ báo cáo sáng/tối, cảnh báo KPI và khách cần tư vấn chỉnh ở <a href="#kpi">KPI &amp; Báo cáo</a>. Token chỉ lưu trên máy này và không hiện lại đầy đủ.</p>
           </form>
           <form class="card" id="bumpForm">
-            <div class="card-h"><h3>Tự động up bài</h3><span class="chip" id="bumpToday"></span></div>
+            <div class="card-h"><h3>Tự động up bài · Bảo phụ trách</h3><span class="chip" id="bumpToday"></span></div>
             <p class="small muted">Mỗi ngày, từ giờ đã chọn, mỗi nhân viên sale vào lại các bài mình đã đăng và bình luận một ảnh sản phẩm lấy từ thư mục trên máy này, để bài nổi lên đầu nhóm. Mỗi bài tối đa 1 lần/ngày, mỗi ảnh không lặp lại trên cùng một bài cho tới khi dùng hết ảnh.</p>
             <label class="row small"><input type="checkbox" id="bEnabled"> Bật tự động up bài</label>
             <label class="f" for="bFolder">Thư mục ảnh sản phẩm trên máy chạy phần mềm
@@ -1596,7 +1596,13 @@ label.f{font-weight:600;color:var(--muted)}
               <label class="f" for="bPer">Tối đa lượt up mỗi nick/ngày<input type="number" id="bPer" min="1" max="50"></label>
               <label class="f" for="bGap">Cách nhau tối thiểu (phút)<input type="number" id="bGap" min="2" max="120"></label>
             </div>
-            <label class="f" for="bTexts">Câu bình luận đi kèm ảnh (mỗi dòng một câu, chọn ngẫu nhiên; để trống thì chỉ gửi ảnh)<textarea id="bTexts" rows="4"></textarea></label>
+            <label class="f" for="bContact">Dòng liên hệ luôn gắn cuối bình luận<input type="text" id="bContact" maxlength="120" placeholder="VD: Cần hàng liên hệ Zalo 0386992326"></label>
+            <fieldset class="f" style="border:0;padding:0;margin:0"><legend class="small" style="font-weight:600;margin-bottom:4px">Câu bình luận đi kèm ảnh</legend>
+              <label class="row small"><input type="radio" name="bMode" value="ai"> Bảo tự viết mỗi bài một câu ngắn khác nhau (dùng Claude nếu đã nhập khóa)</label>
+              <label class="row small"><input type="radio" name="bMode" value="list"> Chọn ngẫu nhiên từ danh sách dưới</label></fieldset>
+            <label class="f" for="bTexts" id="bTextsL">Danh sách câu (mỗi dòng một câu)<textarea id="bTexts" rows="3"></textarea></label>
+            <div class="row wrap" style="gap:8px;align-items:center"><button type="button" class="btn sm" id="bPrev">Xem thử câu Bảo viết</button><span class="small muted">Chưa gửi, chỉ xem trước.</span></div>
+            <ul class="small" id="bPrevOut" hidden style="margin:6px 0 0;padding-left:18px"></ul>
             <div class="actions"><button class="btn primary" type="submit">Lưu cài đặt up bài</button><button type="button" class="btn" id="bNow">Up các bài ngay bây giờ</button></div>
           </form>
           <div class="card"><h3>Về việc đăng bài Facebook</h3>
@@ -1653,6 +1659,7 @@ const AGENT_DEFS = [
  {id:"tuan",name:"Tuấn",role:"Chuyên viên Hội nhóm",short:"Rà soát nhóm trong các nick, chọn nhóm đăng, thoát nhóm kém, chăm sóc nhóm mình quản lý",personality:"Thực tế, cẩn thận, thuộc luật từng nhóm, ghét spam.",look:{skin:"#e8b88f",shirt:"#2e9e6b",pants:"#2c3a33",hair:"#1d1d1d",hairStyle:"cap",accessory:"cap",accent:"#bff0d4"},desk:2},
  {id:"ha",name:"Hà",role:"Chăm sóc & Chốt khách",short:"Phân loại khách, soạn tin nhắn, bám đuổi đơn sỉ",personality:"Ngọt ngào nhưng bám khách rất chặt.",look:{skin:"#f3cfae",shirt:"#f08a24",pants:"#3b3b52",hair:"#2a1810",hairStyle:"bun",accessory:"headset",accent:"#ffe2c2"},desk:3},
  {id:"khoa",name:"Khoa",role:"Phân tích số liệu",short:"Đo hiệu quả bài, nhóm, sản phẩm; báo cáo hằng ngày",personality:"Ít nói, chỉ tin vào con số.",look:{skin:"#eec29b",shirt:"#7a4fc9",pants:"#25223a",hair:"#3a2a20",hairStyle:"spiky",accessory:"none",accent:"#d9c8ff"},desk:4},
+ {id:"bao",name:"Bảo",role:"Chăm sóc bài đã đăng",short:"Rà soát các bài đã đăng còn hiển thị, giao đúng nick bình luận 1 ảnh sản phẩm kèm câu ngắn tự viết và dòng liên hệ Zalo để bài nổi lên",personality:"Chịu khó, bài bị gỡ thì dừng, mỗi lần bình luận một câu khác, không spam.",look:{skin:"#e8b994",shirt:"#2f9e6a",pants:"#26312b",hair:"#191210",hairStyle:"short",accessory:"none",accent:"#c9f0da"},desk:16},
  {id:"vy",name:"Vy",role:"Biên tập Website & SEO",short:"Quản lý website công ty, lên kế hoạch từ khóa, viết bài chuẩn SEO để khách sỉ tự tìm thấy xưởng trên Google",personality:"Kỹ tính với từng thẻ tiêu đề, không nhồi từ khóa, không hứa công dụng.",look:{skin:"#f5d3b5",shirt:"#3c6fd8",pants:"#2b2f3c",hair:"#2a1a12",hairStyle:"long",accessory:"none",accent:"#cfe0ff"},desk:15},
  {id:"mai",name:"Mai",role:"Chuyên viên Tìm khách sỉ",short:"Tìm người đang bán online, livestream trên Facebook, TikTok, Shopee; chấm điểm và lưu vào CRM",personality:"Tỉ mỉ, chỉ tin bằng chứng có link, không đoán doanh thu.",look:{skin:"#f4cdb0",shirt:"#0f8b8d",pants:"#2b3440",hair:"#1f1410",hairStyle:"long",accessory:"glasses",accent:"#bfeeee"},desk:14},
 ];
@@ -1663,7 +1670,7 @@ const Demo = (() => {
   const today = () => now().slice(0,10);
   let seq = 100; const id = () => ++seq;
   const S = {
-    settings:{attach_images:"1",require_images:"1",images_min:"2",images_max:"4",image_reuse_days:"14",kpi_min:"5",kpi_max:"10",kpi_check_time:"15:00",escalate_all_phone:"1",escalate_complex:"1",escalate_after_hours:"2",scan_enabled:"1",scan_times:"11:30,16:30,20:45",scan_max_age_days:"7",auto_reply_comments:"1",reply_max_per_nick:"10",reply_texts:"Dạ anh/chị để lại SĐT hoặc Zalo giúp em, bên em gọi tư vấn giá sỉ ngay ạ\nEm cảm ơn ạ, anh/chị cho em xin SĐT/Zalo để em gửi bảng giá sỉ và tư vấn kỹ hơn nhé",tg_token:"",tg_morning:"09:00",tg_evening:"21:30",tg_alert_leads:"1",tg_alert_kpi:"1",tg_alert_nick:"1",learn_enabled:"1",learn_time:"23:15",learn_explore:"0.25",bump_enabled:"1",bump_folder:"D:\\AnhSanPham",bump_time:"19:30",bump_max_age_days:"7",bump_max_per_nick:"8",bump_gap_minutes:"6",bump_texts:"Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng",cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 0386992326",price_zalo:"0386992326",price_contact:"",ai_live:false,model:"mô phỏng"},
+    settings:{bump_contact:"Cần hàng liên hệ Zalo 0386992326",bump_text_mode:"ai",attach_images:"1",require_images:"1",images_min:"2",images_max:"4",image_reuse_days:"14",kpi_min:"5",kpi_max:"10",kpi_check_time:"15:00",escalate_all_phone:"1",escalate_complex:"1",escalate_after_hours:"2",scan_enabled:"1",scan_times:"11:30,16:30,20:45",scan_max_age_days:"7",auto_reply_comments:"1",reply_max_per_nick:"10",reply_texts:"Dạ anh/chị để lại SĐT hoặc Zalo giúp em, bên em gọi tư vấn giá sỉ ngay ạ\nEm cảm ơn ạ, anh/chị cho em xin SĐT/Zalo để em gửi bảng giá sỉ và tư vấn kỹ hơn nhé",tg_token:"",tg_morning:"09:00",tg_evening:"21:30",tg_alert_leads:"1",tg_alert_kpi:"1",tg_alert_nick:"1",learn_enabled:"1",learn_time:"23:15",learn_explore:"0.25",bump_enabled:"1",bump_folder:"D:\\AnhSanPham",bump_time:"19:30",bump_max_age_days:"7",bump_max_per_nick:"8",bump_gap_minutes:"6",bump_texts:"Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng",cost_preset:"can_bang",model_posts:"claude-sonnet-5-5",model_replies:"claude-haiku-5-5",model_meeting:"claude-haiku-5-5",use_batch:"1",monthly_budget_usd:"10",meeting_weekdays:"1,2,3,4,5,6,7",debate_rounds:"2",company_name:"Xưởng Trà & Bột Thiên Nhiên",meeting_time:"08:30",auto_meeting:"1",auto_daily_work:"1",posts_per_day:"4",fb_page_id:"",fb_page_token:"",brand_voice:"Thân thiện, chân thật, nói chuyện như người làm xưởng.",contact_info:"Inbox trang hoặc Zalo 0386992326",price_zalo:"0386992326",price_contact:"",ai_live:false,model:"mô phỏng"},
     products:[
       {id:1,hot:1,hot_note:"Đang vào mùa lạnh, khách hỏi nhiều; tặng 5 hộp khi nhập từ 100 hộp",image_folder:"D:\\AnhSanPham\\Tra gung mat ong",name:"Trà gừng mật ong túi lọc",category:"Trà túi lọc",description:"Gừng sẻ sấy lạnh phối mật ong, hộp 20 túi x 2g.",moq:"50 hộp",selling_points:"Ấm bụng, dễ uống, bán chạy mùa lạnh; in nhãn riêng (OEM) được"},
       {id:2,image_folder:"D:\\AnhSanPham\\Tra hoa dau biec",name:"Trà hoa đậu biếc - cỏ ngọt",category:"Trà túi lọc",description:"Hoa đậu biếc sấy khô phối cỏ ngọt, hộp 25 túi.",moq:"50 hộp",selling_points:"Màu xanh đẹp lên video, hợp livestream pha chế"},
@@ -1714,7 +1721,7 @@ const Demo = (() => {
       cta:[{text:"👉 Bình luận \"quan tâm\" mình inbox tư vấn ngay nhé!",score:7.1,uses:4},{text:"Để lại SĐT/Zalo dưới bình luận, xưởng gọi tư vấn trong 15 phút 📞",score:5.4,uses:2}],point:[]},
     recent:S.posts.slice(0,6).map((p,i)=>({id:p.id,source:i%3===0?"self":"claude",product_name:p.product_name,title:p.title,content:p.content.slice(0,400),status:p.status==="posted"?"approved":"draft",leads:p.leads||0,created_at:p.created_at}))});
   S.kbLog={memory:31,claude:12,study:18}; S.kbSet={knowledge_enabled:"1",study_time:"07:00",study_per_agent:"2",idle_learning:"1",idle_study_per_day:"6"};
-  const KB_ROLES={ceo:"CEO Đức",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",vy:"Vy",sale:"Nhân viên sale",all:"Cả đội"};
+  const KB_ROLES={ceo:"CEO Đức",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",vy:"Vy",bao:"Bảo",sale:"Nhân viên sale",all:"Cả đội"};
   const kbPlain=t=>(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d");
   const kbHit=q=>{ const w=kbPlain(q).split(/\W+/).filter(x=>x.length>2); let best=null,bs=0; S.kb.filter(k=>k.status==="active").forEach(k=>{ const h=kbPlain(k.topic+" "+k.question); const sc=w.filter(x=>h.includes(x)).length/(w.length||1); if(sc>bs){bs=sc;best=k;} }); return bs>=0.6?best:null; };
   const demoKB=(agent,q)=>{ const act=S.kb.filter(k=>k.status==="active"); const m=S.kbLog; let items=S.kb.slice().reverse(); if(agent) items=items.filter(k=>k.agent_id===agent); if(q){ const w=kbPlain(q).split(/\W+/).filter(x=>x.length>1); items=items.filter(k=>w.every(x=>kbPlain(k.topic+" "+k.question+" "+k.content).includes(x))); }
@@ -1802,7 +1809,7 @@ const Demo = (() => {
   const SALE_LOOKS=[{skin:"#f3cfae",shirt:"#d64545",pants:"#2d2d3a",hair:"#2a1810",hairStyle:"long",accessory:"none"},{skin:"#e8b88f",shirt:"#2f86c9",pants:"#25303a",hair:"#1d1d1d",hairStyle:"spiky",accessory:"glasses"},{skin:"#f6d2b3",shirt:"#e0a12a",pants:"#3a2d2a",hair:"#5a3520",hairStyle:"bun",accessory:"none"},{skin:"#eec29b",shirt:"#1f9a8a",pants:"#22332f",hair:"#2b2018",hairStyle:"side",accessory:"headset"},{skin:"#f2c9a0",shirt:"#a24fb5",pants:"#2c2236",hair:"#3b2414",hairStyle:"long",accessory:"beret"},{skin:"#e9bd96",shirt:"#5b7f2a",pants:"#2a3020",hair:"#141414",hairStyle:"cap",accessory:"cap"},{skin:"#f3d0b0",shirt:"#c4572b",pants:"#30262a",hair:"#4a2a1a",hairStyle:"bun",accessory:"glasses"},{skin:"#e6b48a",shirt:"#3b5bb5",pants:"#232a3a",hair:"#2a1d14",hairStyle:"spiky",accessory:"none"}];
   const saleAgents=()=>S.sales.map((r,i)=>({id:`sale-${r.id}`,sale_id:r.id,kind:"sale",name:r.name,role:`Sale · nick ${r.fb_name||r.name}`,short:"Đăng bài lên trang cá nhân và hội nhóm bằng tài khoản Facebook mình quản lý",personality:"Chăm chỉ, đúng giờ, báo ngay khi tài khoản gặp sự cố.",look:SALE_LOOKS[(r.id-1)%8],desk:5+i,login_status:r.login_status,sample:!!r.is_sample,
     status:(S.status[`sale-${r.id}`]&&S.status[`sale-${r.id}`].state!=="idle")?S.status[`sale-${r.id}`]:{state:"idle",text:{ok:"Nick sẵn sàng",not_logged_in:"Chờ sếp đăng nhập Facebook",checkpoint:"Nick bị checkpoint, đã dừng"}[r.login_status]}}));
-  S.xp={minh:140,lan:310,tuan:230,ha:180,khoa:95,mai:160,vy:60,"sale-1":120,"sale-2":75,"sale-3":20}; S.learnRunning=false;
+  S.xp={minh:140,lan:310,tuan:230,ha:180,khoa:95,mai:160,vy:60,bao:40,"sale-1":120,"sale-2":75,"sale-3":20}; S.learnRunning=false;
   S.goals={minh:"Theo dõi để 4 việc giao trong cuộc họp được hoàn thành trong ngày.",lan:"Viết ít nhất 2 bài góc 'Sản phẩm dễ livestream' và thử 1 bài góc OEM để so sánh.",tuan:"Xếp ít nhất một nửa số bài vào giờ vàng 20h, 11h.",ha:"Liên hệ hết 2 khách mới trước 11h.",khoa:"Đảm bảo bài đăng hôm qua đều có số bình luận và số khách.",mai:"Tìm ít nhất 2 khách sỉ hạng A/B có bằng chứng bán hàng thật và link nguồn."};
   S.lessons=[
     {id:901,agent_id:"lan",text:"Ưu tiên góc 'Sản phẩm dễ livestream' (điểm 8,4/bài); hạn chế góc 'Câu chuyện xưởng' (1,2/bài).",evidence:"9 và 6 bài trong 30 ngày",source:"auto",confidence:0.8,pinned:0},
@@ -2010,6 +2017,10 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
   S.chat=[]; S.orders=[];
   setInterval(()=>{ if(S.settings.ceo_autopilot==="0") return; const d=S.posts.filter(p=>p.status==="draft"); if(d.length){ d.forEach(p=>p.status="approved"); log("ceo","Duyệt bài",`Duyệt ${d.length} bài`); } },15000);
   function demoChat(){ return {autopilot:S.settings.ceo_autopilot!=="0",running:Object.entries(S.status).filter(([k,v])=>k.startsWith("sale-")&&v.state==="working").map(([k,v])=>`${(S.sales.find(x=>"sale-"+x.id===k)||{}).name}: ${v.text}`),history:S.chat,orders:S.orders.filter(o=>o.active),suggestions:["Tình hình hôm nay thế nào?","Đăng bài lên các nhóm có từ khóa nguồn hàng, bán hàng online","Viết 3 bài về trà gừng mật ong","Xếp lịch đăng nhóm","Tìm nhóm theo chủ đề “hội chạy quảng cáo facebook”","Lan viết bài dài quá, viết dưới 150 chữ","Từ nay bài nào cũng nhắc giao hàng toàn quốc"]}; }
+  function demoBumpPlan(){ const ps=S.posts.filter(p=>p.status==="posted"&&p.sale_id&&p.bump_enabled!==0&&p.permalink_status!=="removed").slice(0,8); const tx=demoBumpLines(ps.length);
+    S.status.nam={state:"working",text:"Rà soát bài đã đăng, viết câu bình luận kèm ảnh"}; setTimeout(()=>{ S.status.nam={state:"idle",text:`Hôm nay xếp ${ps.length} lượt up bài`}; },3000);
+    log("bao","Lịch up bài",`Rà soát bài đã đăng: xếp ${ps.length} lượt bình luận ảnh kèm câu mới và dòng liên hệ`);
+    ps.forEach((p,i)=>setTimeout(()=>{ p.bump_count=(p.bump_count||0)+1; p.last_bump_at=now(); p.last_bump="done|||"; log(`sale-${p.sale_id}`,"Up bài",`Bình luận ảnh vào bài #${p.id}: “${tx[i]}”`); },4000+i*3000)); return ps.length; }
   function demoCeoDo(t){ const low=t.toLowerCase(); const ag=[["lan","Lan"],["tuấn","Tuấn"],["hà","Hà"],["khoa","Khoa"],["minh","Minh"]].find(([k])=>new RegExp(`(^|\\s)${k}(\\s|$|,)`).test(low));
     const crit=/(sai|không đúng|dài quá|quá dài|ngắn quá|kém|đừng|không được|phải|nên|cấm|nhầm|chán|nhạt|sửa)/.test(low); let m;
     if(/tình hình|thế nào|báo cáo/.test(low)&&!crit){ const st=stats(); return ["Dạ sếp, tình hình hôm nay:",`Hôm nay ${S.kpiPhone||3}/5 khách có SĐT; ${st.drafts} bài nháp; ${st.approved} bài đã duyệt/lên lịch; ${st.posted_total} bài đã đăng.`]; }
@@ -2023,6 +2034,8 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(ap<want) genPosts(want-ap,null,"group").forEach(p=>p.status="approved");
       const pl=plan(g=>rd.includes(g),want);
       return ["Dạ em nhận việc.",`Có ${found.length} nhóm có từ khóa ${kw}, hôm nay đăng được ${rd.length} nhóm. Em giao đăng ${want} nhóm. ${ap<want?`Lan viết thêm ${want-ap} bài, em đã duyệt. `:""}Tuấn xếp ${pl.length} bài: ${pl.map(x=>`${x.time.slice(11)} ${x.sale?x.sale+" → ":""}${x.group}`).join("; ")}.`]; }
+    if(/(rà soát|comment|bình luận|cmt|up)\s*(lại\s*)?(vào\s*|cho\s*)?(các\s*|những\s*|mấy\s*)?(bài|post)\s*(viết\s*)?(đã|vừa)\s*đăng|\bup (lại )?(các |những )?bài\b/.test(low)){ const n=demoBumpPlan(); const ex=demoBumpLines(1)[0];
+      return ["Dạ em nhận việc.",`Bảo rà soát bài đã đăng và xếp ${n} lượt bình luận ảnh, mỗi bài một câu riêng kèm “${S.settings.bump_contact}”. Sale bắt đầu trong vài phút. VD: “${ex}”`]; }
     if((m=low.match(/viết\s*(\d+)?\s*bài/))){ const n=+(m[1]||3); S.status.lan={state:"working",text:`Đang viết ${n} bài`}; setTimeout(()=>{ genPosts(n,null,"group"); S.status.lan={state:"idle",text:`Vừa viết xong ${n} bài`}; },5000); return ["Dạ em nhận việc.",`Giao Lan viết ${n} bài đăng nhóm (CEO sẽ duyệt rồi cho Tuấn xếp lịch)`]; }
     if(/xếp lịch|lên lịch/.test(low)){ const pl=plan(); return ["Dạ em nhận việc.",`Giao Tuấn xếp lịch: ${pl.length} bài đã có giờ đăng`]; }
     if(/(tìm|kiếm|săn)\b.{0,30}?(nhóm|group|cộng đồng)/.test(low)){ setTimeout(()=>S.chat.push({id:id(),role:"ceo",text:`Linh tìm xong theo “${S.gf.today.join("”, “")}”: 2 nhóm mới, em đã thêm 1 nhóm tốt vào danh sách Hội nhóm: Kinh Doanh Online Tại Nhà. Đã vào 1 nhóm, đang chờ duyệt 0 nhóm.`,via:"web",created_at:now()}),10000); const kws=(t.match(/[“"']([^”"']{3,60})[”"']/g)||[]).map(x=>x.slice(1,-1)); if(kws.length){ S.gf.today=kws; S.gf.by="boss"; } return ["Dạ em nhận việc.",`Giao sale Linh lướt Facebook rồi tìm nhóm: ${S.gf.today.join(", ")}`]; }
@@ -2143,6 +2156,13 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       return {id:g.id,name:g.name,url:g.url,members:g.members,score:Math.round(Object.values(parts).reduce((s,v)=>s+v,0)),known:!!g.posts_month,parts,per_day:Math.round(pd*10)/10,growth:Math.round(gr*100)/100,avg_comments:g.avg_comments,avg_reactions:g.avg_reactions,focus:g.focus?1:0,target:k,
         nicks:nicks.map(a=>({id:a.id,name:a.name})),scanned_at:g.friends_scanned_at||null,found:it.length,sent:it.filter(x=>["sent","accepted"].includes(x.status)).length,accepted:it.filter(x=>x.status==="accepted").length}; })
       .sort((a,b)=>(a.target==="exclude")-(b.target==="exclude")||(b.score+(b.focus?10:0))-(a.score+(a.focus?10:0))); };
+  const BUMP_OPEN=["Xưởng vừa ra mẻ {p} mới","Ảnh thật {p} tại xưởng hôm nay","{p} đóng gói xong, sẵn hàng giao ngay","Mẻ {p} sáng nay vừa đóng thùng","Hàng {p} chuẩn xưởng, giá tận gốc","Nhận sỉ {p} số lượng lớn","Lô {p} mới về kho, ảnh thật","Shop online cần nguồn {p} thì ghé xưởng","{p} có sẵn, nhận in nhãn theo yêu cầu"];
+  const BUMP_TAIL=[""," 🌿",", ship toàn quốc",", có hóa đơn đầy đủ",", nhận đơn từ 1 thùng"," 📦"];
+  function demoBumpLines(n){ const c=(S.settings.bump_contact||"").trim(); const out=[];
+    if(S.settings.bump_text_mode==="list"){ const L=(S.settings.bump_texts||"").split("\n").map(x=>x.trim()).filter(Boolean); for(let i=0;i<n;i++) out.push(L.length?L[Math.floor(Math.random()*L.length)]:""); }
+    else { const used=new Set(), op=[...BUMP_OPEN].sort(()=>Math.random()-.5); while(out.length<n&&used.size<60){ const pr=S.products[Math.floor(Math.random()*S.products.length)]; let wd=(pr?pr.name:"trà, ngũ cốc").replace(/\s*[\(\[].*?[\)\]]/g,"").split(/\s[-–|/]\s|[,;:]/)[0].trim().split(/\s+/).slice(0,7); while(wd.length>2&&/^(\d+\S*|loại|vị|gói|túi)$/i.test(wd[wd.length-1])) wd.pop(); const p=wd.join(" ").toLowerCase();
+      let l=op[(out.length+used.size)%op.length].replace("{p}",p); l=l[0].toUpperCase()+l.slice(1)+BUMP_TAIL[Math.floor(Math.random()*BUMP_TAIL.length)]; if(used.has(l)) continue; used.add(l); out.push(l); } }
+    return out.map(l=>{ if(!l||!c) return l||c; l=l.replace(/[ .]+$/,""); return `${l}${/[\p{L}\p{N}]$/u.test(l)?".":""} 👉 ${c}`; }); }
   function demoFr(method,P,qs,body){ let m; const q=new URLSearchParams(qs||"");
     if(!S.fr.seeded){ S.fr.seeded=1; frAdd(11,3,5); frAdd(11,1,3); frAdd(12,4,3); S.fr.items.slice(0,2).forEach((x,i)=>{ x.status=i?"opened":"sent"; if(!i) x.sent_at=now(); }); }
     if(P==="/post-target"){ if(method==="PUT"){ if(body.mode) S.tg.mode=body.mode; if(body.include!=null) S.tg.include=tgWords(body.include); if(body.exclude!=null) S.tg.exclude=tgWords(body.exclude); log("tuan","Nhận chỉ đạo nơi đăng",`${({all:"Mọi nhóm đủ điều kiện",prefer:"Ưu tiên nhóm chỉ định",only:"Chỉ nhóm chỉ định"})[S.tg.mode]} · từ khóa: ${S.tg.include.join(", ")||"—"} · tránh: ${S.tg.exclude.join(", ")||"—"}`); } return tgOverview(); }
@@ -2169,6 +2189,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     throw new Error("Không hỗ trợ trong bản xem trước"); }
   async function handle(method, path, body){
     const [p, qs] = path.split("?"); const P=p.replace(/^\/api/,""); let m;
+    if(P==="/bump/preview-text") return {texts:demoBumpLines(+(new URLSearchParams(qs||"").get("n"))||3),mode:S.settings.bump_text_mode||"ai",contact:S.settings.bump_contact||"",ai:false};
     if(P.startsWith("/post-target")||P.startsWith("/friends")||/^\/groups\/\d+\/focus$/.test(P)) return demoFr(method,P,qs,body||{});
     if(method==="GET"){
       if(P==="/health"){ const z=S.settings.app_tz||"Asia/Ho_Chi_Minh"; return {ok:true,ai_live:false,model:"bản xem trước",time:{tz:z,label:(TZ_LIST.find(x=>x.id===z)||TZ_LIST[0]).label,now:tzNow(z),pc_now:now(),choices:TZ_LIST}}; }
@@ -2260,7 +2281,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
         const aid=`sale-${po.sale_id}`; po.last_bump="running|||"; S.status[aid]={state:"working",text:`Đang up bài ở ${po.group_name||"trang cá nhân"}`};
         setTimeout(()=>{ po.bump_count=(po.bump_count||0)+1; po.last_bump_at=now(); po.last_bump="done|||"; S.status[aid]={state:"idle",text:"Chờ lịch tiếp theo"}; log(aid,"Up bài",`Bình luận ảnh vào bài #${po.id} ở ${po.group_name||"trang cá nhân"}`); },5000);
         return {ok:true}; }
-      if(P==="/bump/plan-now"){ const ps=S.posts.filter(p=>p.status==="posted"&&p.sale_id&&p.bump_enabled!==0&&p.permalink_status!=="removed"); ps.forEach((p,i)=>setTimeout(()=>{ p.bump_count=(p.bump_count||0)+1; p.last_bump_at=now(); p.last_bump="done|||"; log(`sale-${p.sale_id}`,"Up bài",`Bình luận ảnh vào bài #${p.id}`); },4000+i*3000)); return {scheduled:ps.length}; }
+      if(P==="/bump/plan-now") return {scheduled:demoBumpPlan()};
       if((m=P.match(/^\/posts\/(\d+)\/retry$/))){ const po=S.posts.find(x=>x.id==m[1]); Object.assign(po,{status:"approved",error:null,sale_id:null,sale_name:null,scheduled_for:null}); return po; }
       if((m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const im=JSON.parse(pr.images||"[]"); im.push(body.data); pr.images=JSON.stringify(im); return {images:im}; }
       if((m=P.match(/^\/posts\/(\d+)\/publish-page$/))) return {ok:false,error:"Bản xem trước không kết nối Facebook. Chạy backend và nhập Page Access Token trong Cài đặt."};
@@ -2584,7 +2605,8 @@ const World = (() => {
     [-11,6.2],[-8,6.2],[-5,6.2],[-2,6.2],[-11,9.6],[-8,9.6],[-5,9.6],[-2,9.6],
     [-1.4,2.6], // 13: bàn CEO
     [0.9,6.2], // 14: bàn Mai (tìm khách sỉ)
-    [0.9,9.6]]; // 15: bàn Vy (website & SEO)
+    [0.9,9.6], // 15: bàn Vy (website & SEO)
+    [4.4,9.6]]; // 16: bàn Bảo (chăm bài đã đăng)
   const deskObjs={};
   function buildDesk(i,color,isSale){ const [x,z]=DESKS[i]; const g=new THREE.Group(); scene.add(g); const P={parent:g};
     mesh(box(2,0.1,0.95),"#d8b48a",{...P,x,y:0.76,z:z+0.95}); for(const dx of [-0.9,0.9]) mesh(box(0.08,0.74,0.85),"#a7835c",{...P,x:x+dx,y:0.37,z:z+0.95});
@@ -2596,6 +2618,7 @@ const World = (() => {
     g.add(chair(x,z-0.05,0,"#3d4b44",true)); return g; }
   for(let i=0;i<5;i++) buildDesk(i,["#2f4b8f","#e2557a","#2e9e6b","#f08a24","#7a4fc9"][i]);
   { const g=buildDesk(15,"#3c6fd8"); const [x,z]=DESKS[15]; mesh(new THREE.SphereGeometry(0.12,14,10),"#3c6fd8",{parent:g,x:x-0.7,y:0.95,z:z+0.75}); } // quả địa cầu trên bàn Vy
+  { const g=buildDesk(16,"#2f9e6a"); const [x,z]=DESKS[16]; mesh(box(0.28,0.2,0.04),"#f4efe2",{parent:g,x:x-0.7,y:0.92,z:z+0.75}); mesh(box(0.2,0.12,0.045),"#2f9e6a",{parent:g,x:x-0.7,y:0.93,z:z+0.75}); } // khung ảnh trên bàn Bảo
   { const g=buildDesk(14,"#0f8b8d"); const [x,z]=DESKS[14]; mesh(new THREE.TorusGeometry(0.13,0.03,8,18),"#0f8b8d",{parent:g,x:x-0.7,y:1.02,z:z+0.75}); } // kính lúp trên bàn Mai
   { const g=buildDesk(13,"#d4af37"); const [x,z]=DESKS[13]; // bàn CEO: biển tên mạ vàng + cờ nhỏ
     mesh(box(0.7,0.18,0.05),"#d4af37",{parent:g,x:x-0.55,y:0.9,z:z+0.5}); mesh(box(0.66,0.12,0.02),"#1f2a3a",{parent:g,x:x-0.55,y:0.9,z:z+0.47,shadow:false});
@@ -3719,7 +3742,7 @@ setInterval(()=>{ if(ST.view==="friends"&&!document.querySelector("#v-friends :f
 
 /* --------------------------------------------- sếp giao việc cho CEO */
 async function renderOrders(){ const box=$("#ceoOrders"); if(!box) return; let d; try{ d=await api("/ceo/chat"); }catch(e){ return; }
-  const AG={all:"Cả đội",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",vy:"Vy",ceo:"CEO"};
+  const AG={all:"Cả đội",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",vy:"Vy",bao:"Bảo",ceo:"CEO"};
   box.innerHTML=d.orders.length?`<h4 style="margin:4px 0 6px;font-size:13px">Chỉ đạo lâu dài của sếp (CEO đưa vào lời dặn của agent)</h4><ul class="recent">${d.orders.map(o=>`<li><b>${esc(AG[o.agent]||o.agent)}</b><span>${esc(o.text)}</span><span class="muted small">${fmtDate(o.created_at)}</span><button type="button" class="btn sm ghost danger" data-orderoff="${o.id}">Bỏ</button></li>`).join("")}</ul>`:""; }
 document.addEventListener("click",async e=>{ const b=e.target.closest("[data-orderoff]"); if(!b) return; await api(`/ceo/orders/${b.dataset.orderoff}`,"DELETE"); toast("Đã bỏ chỉ đạo"); renderOrders(); });
 async function loadCeoChat(force){
@@ -4239,11 +4262,14 @@ function showFolder(f){ const box=$("#bFolderInfo"); box.hidden=false;
     +(DEMO?"":`<div class="thumbs" style="margin-top:8px">${f.samples.slice(0,8).map(n=>`<figure><img src="/api/bump/image?name=${encodeURIComponent(n)}" alt="${esc(n)}" title="${esc(n)}"></figure>`).join("")}</div>`); }
 async function loadBump(s){
   $("#bEnabled").checked=s.bump_enabled==="1"; $("#bFolder").value=s.bump_folder||""; $("#bTime").value=s.bump_time||"19:30";
-  $("#bAge").value=s.bump_max_age_days||7; $("#bPer").value=s.bump_max_per_nick||8; $("#bGap").value=s.bump_gap_minutes||6; $("#bTexts").value=s.bump_texts||"";
+  $("#bAge").value=s.bump_max_age_days||7; $("#bPer").value=s.bump_max_per_nick||8; $("#bGap").value=s.bump_gap_minutes||6; $("#bTexts").value=s.bump_texts||""; $("#bContact").value=s.bump_contact??"";
+  const bm=document.querySelector(`input[name=bMode][value=${s.bump_text_mode==="list"?"list":"ai"}]`); if(bm) bm.checked=true; $("#bTextsL").hidden=s.bump_text_mode!=="list";
   const st=ST.dash?.stats; $("#bumpToday").textContent=`Hôm nay đã up ${st?.bumps_today||0} lượt`;
   if(s.bump_folder) showFolder(await api("/bump/folder"));
 }
-const bumpPayload=()=>({bump_enabled:$("#bEnabled").checked?"1":"0",bump_folder:$("#bFolder").value.trim(),bump_time:$("#bTime").value,bump_max_age_days:$("#bAge").value,bump_max_per_nick:$("#bPer").value,bump_gap_minutes:$("#bGap").value,bump_texts:$("#bTexts").value});
+const bumpPayload=()=>({bump_enabled:$("#bEnabled").checked?"1":"0",bump_folder:$("#bFolder").value.trim(),bump_time:$("#bTime").value,bump_max_age_days:$("#bAge").value,bump_max_per_nick:$("#bPer").value,bump_gap_minutes:$("#bGap").value,bump_texts:$("#bTexts").value,bump_contact:$("#bContact").value.trim(),bump_text_mode:(document.querySelector("input[name=bMode]:checked")||{}).value||"ai"});
+document.querySelectorAll("input[name=bMode]").forEach(r=>r.addEventListener("change",()=>{ $("#bTextsL").hidden=r.value!=="list"||!r.checked; }));
+$("#bPrev").onclick=async e=>{ e.target.disabled=true; try{ await api("/settings","PUT",bumpPayload()); const r=await api("/bump/preview-text?n=3"); const o=$("#bPrevOut"); o.hidden=false; o.innerHTML=r.texts.map(t=>`<li>${esc(t)}</li>`).join("")+(r.mode==="ai"&&!r.ai?'<li class="muted" style="list-style:none;margin-left:-18px">Chưa có khóa Claude: Bảo đang ghép câu từ mẫu có sẵn. Nhập khóa ở Cài đặt để câu tự nhiên hơn.</li>':""); }catch(err){ toast(err.message); } e.target.disabled=false; };
 $("#bCheck").onclick=async()=>{ await api("/settings","PUT",{bump_folder:$("#bFolder").value.trim()}); showFolder(await api("/bump/folder")); };
 $("#bumpForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",bumpPayload()); toast("Đã lưu cài đặt up bài"); showFolder(await api("/bump/folder")); });
 $("#bNow").onclick=async e=>{ e.target.disabled=true; await api("/settings","PUT",bumpPayload()); try{ const r=await api("/bump/plan-now","POST"); toast(r.scheduled?`Đã xếp ${r.scheduled} lượt up bài, sale bắt đầu trong vài phút`:"Không có bài nào cần up (bài quá cũ, vừa đăng, đã up hôm nay, hoặc thư mục ảnh trống)"); }catch(err){ toast(err.message); } e.target.disabled=false; };

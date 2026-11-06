@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 
 import db
 
-AGENT_ALIASES = {"minh": "minh", "lan": "lan", "tuan": "tuan", "tuấn": "tuan", "ha": "ha", "hà": "ha", "khoa": "khoa", "mai": "mai", "vy": "vy",
+AGENT_ALIASES = {"minh": "minh", "lan": "lan", "tuan": "tuan", "tuấn": "tuan", "ha": "ha", "hà": "ha", "khoa": "khoa", "mai": "mai", "vy": "vy", "bao": "bao",
                  "đức": "ceo", "duc": "ceo", "ceo": "ceo", "trưởng phòng": "minh"}
 SETTINGS_OK = {
     "posts_per_day": ("int", 1, 20, "số bài Lan viết mỗi ngày"), "kpi_min": ("int", 1, 50, "KPI tối thiểu khách có SĐT/ngày"),
@@ -24,7 +24,7 @@ SETTINGS_OK = {
     "discover_add_per_day": ("int", 0, 30, "số nhóm tự thêm/ngày"), "images_min": ("int", 0, 6, "số ảnh tối thiểu mỗi bài"),
     "images_max": ("int", 1, 10, "số ảnh tối đa mỗi bài"), "bump_time": ("time", 0, 0, "giờ up bài"),
     "meeting_time": ("time", 0, 0, "giờ họp sáng"), "auto_meeting": ("bool", 0, 0, "tự họp mỗi sáng"),
-    "bump_enabled": ("bool", 0, 0, "tự up bài"), "scan_enabled": ("bool", 0, 0, "tự quét bình luận"),
+    "bump_enabled": ("bool", 0, 0, "tự up bài"), "bump_contact": ("line", 0, 120, "dòng liên hệ Bảo gắn cuối bình luận up bài"), "scan_enabled": ("bool", 0, 0, "tự quét bình luận"),
     "discover_enabled": ("bool", 0, 0, "tự tìm nhóm"), "join_enabled": ("bool", 0, 0, "tự xin vào nhóm"),
     "auto_leave": ("bool", 0, 0, "tự thoát nhóm kém"), "admin_posts_min": ("int", 0, 20, "số bài tối thiểu/ngày ở nhóm mình quản lý"),
     "admin_posts_max": ("int", 1, 20, "số bài tối đa/ngày ở nhóm mình quản lý"),
@@ -430,6 +430,18 @@ def execute(act: dict) -> str:
         return head + (f"Đang có {approved} bài đã duyệt, " if approved else "Chưa có bài đã duyệt, ") + \
             f"em giao Lan viết thêm {need} bài" + (f" về {p['name']}" if p else "") + \
             (", viết xong em duyệt rồi Tuấn xếp vào các nhóm này và báo lại sếp" if autopilot() else ", viết xong sếp duyệt giúp em")
+    if t == "care_posts":
+        import post_care
+        n = workflows.plan_bumps(force=True)
+        if not n:
+            import media_folder
+            if not media_folder.root():
+                return "Bảo chưa up được: chưa cài thư mục ảnh sản phẩm (Cài đặt → Tự động up bài)"
+            return ("Bảo rà soát xong: không có bài nào cần bình luận lúc này (bài quá cũ, vừa đăng dưới 10 giờ, đã up hôm nay, "
+                    "bị gỡ hoặc nick đã đủ lượt theo Luật Facebook)")
+        ex = db.one("SELECT text FROM bumps ORDER BY id DESC LIMIT 1")
+        return (f"Bảo rà soát bài đã đăng và xếp {n} lượt bình luận ảnh, mỗi bài một câu riêng kèm “{post_care.contact()}”. "
+                f"Sale bắt đầu trong vài phút" + (f". VD: “{ex['text']}”" if ex and ex.get("text") else ""))
     if t == "focus_group":
         import group_target
         from knowledge import plain
@@ -466,6 +478,8 @@ def execute(act: dict) -> str:
         elif kind == "choice":
             if v not in lo:
                 return f"{label}: chọn một trong {', '.join(lo)}"
+        elif kind == "line":
+            v = re.sub(r"\s+", " ", v).strip()[:hi]
         elif kind == "text":
             import group_target
             v = ", ".join(group_target.words(v))[:hi]
@@ -541,7 +555,8 @@ def _context() -> str:
         "hom_nay": db.today(),
         "agents": {"minh": "Minh, trưởng phòng, chủ trì họp", "lan": "Lan, viết bài", "tuan": "Tuấn, chọn nhóm và xếp lịch đăng",
                    "ha": "Hà, chăm sóc khách, soạn tin", "khoa": "Khoa, số liệu", "mai": "Mai, tìm khách sỉ (người bán online, livestream) trên Facebook, TikTok, Shopee",
-                   "vy": "Vy, quản lý website công ty và viết bài chuẩn SEO"},
+                   "vy": "Vy, quản lý website công ty và viết bài chuẩn SEO",
+                   "bao": "Bảo, rà soát bài đã đăng, cho nick bình luận ảnh kèm câu ngắn và Zalo liên hệ (up bài)"},
         "sales": [{"id": r["id"], "ten": r["name"], "nick": r["fb_name"], "dang_nhap": r["login_status"] == "ok",
                    "tu_dang": bool(r["auto_post"])} for r in sales],
         "san_pham": [{"id": p["id"], "ten": p["name"], "dang_ban_chay": bool(p["hot"])} for p in prods],
@@ -578,6 +593,8 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
   post_group_exclude)
 - post_keyword {keyword, count?, product?}: sếp bảo ĐĂNG BÀI NGAY lên các nhóm có từ khóa (một lần, hôm nay). Tuấn xếp bài đã
   duyệt vào nhóm khớp từ khóa, thiếu bài thì Lan viết thêm. Khác setting post_group_keywords (chỉ đạo lâu dài)
+- care_posts {}: giao Bảo rà soát các bài đã đăng ngay bây giờ: nick đã đăng bình luận 1 ảnh + câu ngắn Bảo tự viết + dòng liên hệ
+  (bump_contact). Đổi dòng liên hệ thì dùng setting bump_contact
 - focus_group {group, on}: sếp bảo tập trung đăng (on=true) / thôi tập trung (on=false) vào một nhóm theo tên
 - find_friends {}: Tuấn đọc nhóm sôi nổi nhất của các nick, chuẩn bị danh sách người nên kết bạn (sale tự bấm gửi, không tự gửi)
 - hire {reason}: tuyển thêm sale; fire {sale_id, reason}: cho sale nghỉ (chỉ khi sếp nói rõ)
@@ -673,6 +690,11 @@ def _rule_plan(text: str) -> dict:
     want_demand = re.search(r"(bình luận|comment|cmt|bài)\s*(trong|ở|của)\s*(các\s*)?(nhóm|group|hội)|hỏi nguồn|tìm nguồn hàng|cần nhập hàng", low)
     teach_mai = re.search(r"\b(dạy|hướng dẫn|chỉ)\s+(cho\s+)?mai\b|\bmai\s+(học|nhớ|ghi nhớ)\b|điều kiện tìm khách", low)
     want_friends = re.search(r"kết bạn|add (bạn|friend)|thêm bạn", low)
+    want_care = re.search(r"(rà soát|comment|bình luận|cmt|up)\s*(lại\s*)?(vào\s*|cho\s*)?(các\s*|những\s*|mấy\s*)?(bài|post)\s*(viết\s*)?(đã|vừa)\s*đăng"
+                          r"|\bup (lại )?(các |những )?bài\b", low)
+    zalo = re.search(r"(?:dòng liên hệ|liên hệ|zalo)[^0-9]{0,30}(0\d{9})", low)
+    if zalo and re.search(r"đổi|thay|sửa|dùng|từ nay", low):
+        acts.append({"type": "setting", "key": "bump_contact", "value": f"Cần hàng liên hệ Zalo {zalo.group(1)}"})
     tgt = re.search(r"\b(chỉ|ưu tiên|tập trung|không|đừng|cấm|tránh)\s+(đăng|post)\s*(bài\s*)?(ở|vào|lên|trong|tại)?\s*(các\s*)?"
                     r"(nhóm|group|hội)\s*(có\s*)?(từ khóa|tên|chữ|về)?\s*[:“\"']?\s*(.+)", low)
     if tgt and not want_friends:
@@ -706,6 +728,8 @@ def _rule_plan(text: str) -> dict:
             acts.append({"type": "post_keyword", "keyword": ", ".join(kws), "count": int(n.group(1)) if n else None})
     if acts and all(a["type"] in ("setting", "focus_group", "post_keyword") for a in acts):
         pass
+    elif want_care and not want_friends:
+        acts.append({"type": "care_posts"})
     elif want_friends:
         acts.append({"type": "find_friends"})
     elif teach_mai:

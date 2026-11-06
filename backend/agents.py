@@ -85,9 +85,21 @@ AGENTS = {
                  "hairStyle": "long", "accessory": "none", "accent": "#cfe0ff"},
         "desk": 15,
     },
+    "bao": {
+        "id": "bao",
+        "name": "Bảo",
+        "role": "Chăm sóc bài đã đăng",
+        "short": "Rà soát các bài đã đăng còn hiển thị, giao đúng nick đã đăng bình luận 1 ảnh sản phẩm kèm câu ngắn tự viết "
+                 "và dòng liên hệ Zalo của sếp để bài nổi lên và khách có số liên hệ",
+        "personality": "Chịu khó, để ý từng bài: bài nào bị gỡ thì dừng, bài nào đang có khách hỏi thì up trước. "
+                       "Câu bình luận ngắn, mỗi lần một kiểu, không spam, không hứa công dụng.",
+        "look": {"skin": "#e8b994", "shirt": "#2f9e6a", "pants": "#26312b", "hair": "#191210",
+                 "hairStyle": "short", "accessory": "none", "accent": "#c9f0da"},
+        "desk": 16,
+    },
 }
 
-ORDER = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy"]
+ORDER = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy", "bao"]
 
 COMPANY_CONTEXT = """Bạn là nhân viên của một xưởng sản xuất thực phẩm thường tại Việt Nam
 (trà túi lọc, bột ngũ cốc, bột thiên nhiên sấy lạnh, cà phê hòa tan...).

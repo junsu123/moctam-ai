@@ -2357,6 +2357,19 @@ def bump_post(pid: int):
     return {"ok": True, "bump_id": bid, "note": "Sale sẽ up bài trong vòng 1 phút khi rảnh"}
 
 
+@app.get("/api/bump/preview-text")
+def bump_preview_text(n: int = 3):
+    """Bảo viết thử vài câu bình luận up bài (chưa lưu, chưa gửi)."""
+    import post_care
+    return post_care.preview(max(1, min(n, 6)))
+
+
+@app.get("/api/post-care")
+def post_care_get():
+    import post_care
+    return post_care.overview()
+
+
 @app.post("/api/bump/plan-now")
 def bump_plan_now():
     return {"scheduled": workflows.plan_bumps(force=True)}
