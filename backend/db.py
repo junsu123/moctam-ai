@@ -268,6 +268,9 @@ CREATE TABLE IF NOT EXISTS site_keywords (
   id INTEGER PRIMARY KEY AUTOINCREMENT, keyword TEXT UNIQUE, intent TEXT, cluster TEXT, priority INTEGER DEFAULT 2,
   status TEXT DEFAULT 'planned', post_id INTEGER, source TEXT DEFAULT 'vy', created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS comment_samples (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, template TEXT, product TEXT, source TEXT, score INTEGER, created_at TEXT
+);
 CREATE TABLE IF NOT EXISTS friend_suggestions (
   id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, group_id INTEGER, name TEXT, profile_url TEXT, reason TEXT,
   score INTEGER DEFAULT 0, snippet TEXT, status TEXT DEFAULT 'suggested', created_at TEXT, opened_at TEXT, sent_at TEXT,

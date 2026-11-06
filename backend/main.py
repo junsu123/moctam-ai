@@ -2370,6 +2370,12 @@ def post_care_get():
     return post_care.overview()
 
 
+@app.post("/api/post-care/relearn")
+def post_care_relearn():
+    import post_care
+    return post_care.relearn()
+
+
 @app.post("/api/bump/plan-now")
 def bump_plan_now():
     return {"scheduled": workflows.plan_bumps(force=True)}

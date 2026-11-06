@@ -401,6 +401,17 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:
 .ws-prev{border:1px solid var(--line);border-radius:12px;padding:6px 18px;background:#fff;max-height:520px;overflow:auto;color:#1d2420}
 .ws-prev h2{font-size:20px}.ws-prev h3{font-size:16px}
 #v-website .ptabs{margin-top:0}
+/* tay nghề viết câu của Bảo */
+.bk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;background:var(--panel-2)}
+.bk-top{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.bk-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:8px 0 4px;list-style:none;padding:0}
+.bk-steps li{font-size:11.5px;text-align:center;padding:4px 2px;border-radius:7px;background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+.bk-steps li.done{background:var(--accent-soft);color:var(--accent);border-color:transparent;font-weight:600}
+.bk-steps li.on{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:700}
+.bk-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:3px;max-height:180px;overflow:auto}
+.bk-list li{font-size:12.5px;display:flex;gap:6px;align-items:baseline}
+.bk-src{font-size:10.5px;font-weight:700;border-radius:5px;padding:0 5px;flex:none}
+.bk-src.claude{background:var(--accent-soft);color:var(--accent)}.bk-src.bao{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 /* chỉ đạo nơi đăng */
 .tg-sum{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
 .kw.no{background:var(--danger-soft);color:var(--danger)}
@@ -1607,6 +1618,7 @@ label.f{font-weight:600;color:var(--muted)}
             <label class="f" for="bTexts" id="bTextsL">Danh sách câu (mỗi dòng một câu)<textarea id="bTexts" rows="3"></textarea></label>
             <div class="row wrap" style="gap:8px;align-items:center"><button type="button" class="btn sm" id="bPrev">Xem thử câu Bảo viết</button><span class="small muted">Chưa gửi, chỉ xem trước.</span></div>
             <ul class="small" id="bPrevOut" hidden style="margin:6px 0 0;padding-left:18px"></ul>
+            <section class="bk" id="bSkill" aria-live="polite"></section>
             <div class="actions"><button class="btn primary" type="submit">Lưu cài đặt up bài</button><button type="button" class="btn" id="bNow">Up các bài ngay bây giờ</button></div>
           </form>
           <div class="card"><h3>Về việc đăng bài Facebook</h3>
@@ -2193,6 +2205,10 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     throw new Error("Không hỗ trợ trong bản xem trước"); }
   async function handle(method, path, body){
     const [p, qs] = path.split("?"); const P=p.replace(/^\/api/,""); let m;
+    if(P==="/post-care"&&method==="GET"){ const sm=S.baoSamples||(S.baoSamples=[["Mẻ trà gừng mật ong vừa đóng thùng sáng nay, ship toàn quốc","claude",null],["Shop nào cần bột ngũ cốc giá gốc, nhận in nhãn riêng","claude",null],["Kho vừa nhập thêm trà hoa đậu biếc, giao trong ngày","bao",9],["Ảnh thật bột diếp cá tại xưởng, đơn từ 1 thùng vẫn nhận","bao",8],["Xưởng còn sẵn trà gừng, giá tốt lắm","bao",6]].map((x,i)=>({id:i+1,text:x[0],source:x[1],score:x[2],created_at:now()})));
+      const lv=S.baoLevel??2; return {today:{done:3,waiting:2,failed:0,skipped:0},alive:S.posts.filter(p=>p.status==="posted").length,contact:S.settings.bump_contact,mode:S.settings.bump_text_mode,
+        skill:{level:lv,name:["Học việc","Thạo việc","Giỏi","Master"][lv],master:lv===3,samples:lv?64:0,graded:lv?38:0,pass_rate:lv?84:0,avg:lv?8.4:null,next:lv<3?{name:["Thạo việc","Giỏi","Master"][lv],samples:[20,50,100][lv],pass_rate:[60,80,90][lv],graded:[10,20,40][lv]}:null,calls:lv?14:0,saved:0},samples:sm}; }
+    if(P==="/post-care/relearn"){ S.baoLevel=0; log("bao","Học lại","Sếp cho Bảo học lại cách viết câu bình luận: gọi Claude và chấm điểm lại từ đầu"); return {}; }
     if(P==="/bump/preview-text") return {texts:demoBumpLines(+(new URLSearchParams(qs||"").get("n"))||3),mode:S.settings.bump_text_mode||"ai",contact:S.settings.bump_contact||"",ai:false};
     if(P.startsWith("/post-target")||P.startsWith("/friends")||/^\/groups\/\d+\/focus$/.test(P)) return demoFr(method,P,qs,body||{});
     if(method==="GET"){
@@ -4266,14 +4282,22 @@ function showFolder(f){ const box=$("#bFolderInfo"); box.hidden=false;
     +(DEMO?"":`<div class="thumbs" style="margin-top:8px">${f.samples.slice(0,8).map(n=>`<figure><img src="/api/bump/image?name=${encodeURIComponent(n)}" alt="${esc(n)}" title="${esc(n)}"></figure>`).join("")}</div>`); }
 async function loadBump(s){
   $("#bEnabled").checked=s.bump_enabled==="1"; $("#bFolder").value=s.bump_folder||""; $("#bTime").value=s.bump_time||"19:30";
-  $("#bAge").value=s.bump_max_age_days||7; $("#bPer").value=s.bump_max_per_nick||8; $("#bGap").value=s.bump_gap_minutes||6; $("#bTexts").value=s.bump_texts||""; $("#bContact").value=s.bump_contact??"";
+  $("#bAge").value=s.bump_max_age_days||7; $("#bPer").value=s.bump_max_per_nick||8; $("#bGap").value=s.bump_gap_minutes||6; $("#bTexts").value=s.bump_texts||""; $("#bContact").value=s.bump_contact??""; loadBaoSkill();
   const bm=document.querySelector(`input[name=bMode][value=${s.bump_text_mode==="list"?"list":"ai"}]`); if(bm) bm.checked=true; $("#bTextsL").hidden=s.bump_text_mode!=="list";
   const st=ST.dash?.stats; $("#bumpToday").textContent=`Hôm nay đã up ${st?.bumps_today||0} lượt`;
   if(s.bump_folder) showFolder(await api("/bump/folder"));
 }
 const bumpPayload=()=>({bump_enabled:$("#bEnabled").checked?"1":"0",bump_folder:$("#bFolder").value.trim(),bump_time:$("#bTime").value,bump_max_age_days:$("#bAge").value,bump_max_per_nick:$("#bPer").value,bump_gap_minutes:$("#bGap").value,bump_texts:$("#bTexts").value,bump_contact:$("#bContact").value.trim(),bump_text_mode:(document.querySelector("input[name=bMode]:checked")||{}).value||"ai"});
 document.querySelectorAll("input[name=bMode]").forEach(r=>r.addEventListener("change",()=>{ $("#bTextsL").hidden=r.value!=="list"||!r.checked; }));
-$("#bPrev").onclick=async e=>{ e.target.disabled=true; try{ await api("/settings","PUT",bumpPayload()); const r=await api("/bump/preview-text?n=3"); const o=$("#bPrevOut"); o.hidden=false; o.innerHTML=r.texts.map(t=>`<li>${esc(t)}</li>`).join("")+(r.mode==="ai"&&!r.ai?'<li class="muted" style="list-style:none;margin-left:-18px">Chưa có khóa Claude: Bảo đang ghép câu từ mẫu có sẵn. Nhập khóa ở Cài đặt để câu tự nhiên hơn.</li>':""); }catch(err){ toast(err.message); } e.target.disabled=false; };
+async function loadBaoSkill(){ let d; try{ d=await api("/post-care"); }catch(e){ return; } const k=d.skill, box=$("#bSkill"); if(!box) return;
+  const LV=["Học việc","Thạo việc","Giỏi","Master"]; const nx=k.next;
+  box.innerHTML=`<div class="bk-top"><b>Tay nghề viết câu của Bảo:</b><span class="chip ${k.master?"ok":""}">${esc(k.name)}</span><span class="small muted">${k.master?"Bảo tự viết, không gọi Claude nữa"+(k.saved?` · đã bớt ${k.saved} lần gọi`:""):`Đang học từ Claude · đã gọi ${k.calls} lần`}</span></div>
+    <ol class="bk-steps">${LV.map((n,i)=>`<li class="${i<k.level?"done":i===k.level?"on":""}">${n}</li>`).join("")}</ol>
+    <p class="small muted" style="margin:2px 0 0">${k.samples} câu mẫu Claude đã lưu · ${k.graded} câu Bảo tự viết đã được Claude chấm, ${k.pass_rate}% đạt từ ${8} điểm${k.avg!=null?` (trung bình ${String(k.avg).replace(".",",")})`:""}.${nx?` Lên <b>${nx.name}</b> cần ${nx.samples} mẫu, ${nx.graded} câu chấm, ${nx.pass_rate}% đạt.`:""}</p>
+    ${d.samples.length?`<details style="margin-top:6px"><summary class="small">Câu mẫu gần đây</summary><ul class="bk-list">${d.samples.map(x=>`<li><span class="bk-src ${x.source}">${x.source==="claude"?"Claude":"Bảo"+(x.score!=null?` ${x.score}/10`:"")}</span><span>${esc(x.text)}</span></li>`).join("")}</ul></details>`:""}
+    ${k.level>0?`<button type="button" class="btn sm ghost" id="bRelearn" style="margin-top:8px">Cho Bảo học lại</button><span class="small muted"> Câu tự viết chưa ổn: Bảo gọi Claude và được chấm lại từ đầu, mẫu đã học vẫn giữ.</span>`:""}`;
+  const rl=$("#bRelearn"); if(rl) rl.onclick=async()=>{ try{ await api("/post-care/relearn","POST",{}); toast("Bảo học lại: từ lượt sau gọi Claude viết câu và chấm câu Bảo tự viết"); loadBaoSkill(); }catch(err){ toast(err.message); } }; }
+$("#bPrev").onclick=async e=>{ e.target.disabled=true; try{ await api("/settings","PUT",bumpPayload()); const r=await api("/bump/preview-text?n=3"); const o=$("#bPrevOut"); o.hidden=false; loadBaoSkill(); o.innerHTML=r.texts.map(t=>`<li>${esc(t)}</li>`).join("")+(r.mode==="ai"&&!r.ai?'<li class="muted" style="list-style:none;margin-left:-18px">Chưa có khóa Claude: Bảo tự viết từ những câu đã học (chưa học thì dùng mẫu có sẵn). Nhập khóa ở Cài đặt để Bảo học từ Claude.</li>':""); }catch(err){ toast(err.message); } e.target.disabled=false; };
 $("#bCheck").onclick=async()=>{ await api("/settings","PUT",{bump_folder:$("#bFolder").value.trim()}); showFolder(await api("/bump/folder")); };
 $("#bumpForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",bumpPayload()); toast("Đã lưu cài đặt up bài"); showFolder(await api("/bump/folder")); });
 $("#bNow").onclick=async e=>{ e.target.disabled=true; await api("/settings","PUT",bumpPayload()); try{ const r=await api("/bump/plan-now","POST"); toast(r.scheduled?`Đã xếp ${r.scheduled} lượt up bài, sale bắt đầu trong vài phút`:"Không có bài nào cần up (bài quá cũ, vừa đăng, đã up hôm nay, hoặc thư mục ảnh trống)"); }catch(err){ toast(err.message); } e.target.disabled=false; };

@@ -521,6 +521,23 @@ trong thư mục ảnh** (ưu tiên ảnh ít dùng, không lặp ảnh trên c�
 - **dòng liên hệ của sếp** luôn gắn cuối, mặc định “Cần hàng liên hệ Zalo 0386992326”, VD:
   “Mẻ trà gừng mật ong túi lọc sáng nay vừa đóng thùng. 👉 Cần hàng liên hệ Zalo 0386992326”.
 
+**Bảo tự học để không phải gọi Claude mãi.** Mỗi câu Claude viết được lưu làm **câu mẫu**. Bảo tách câu mẫu thành khuôn câu
+(thay tên sản phẩm bằng chỗ trống) và hai vế trước / sau dấu phẩy, rồi tự ghép câu mới cùng giọng cho sản phẩm của từng bài.
+Trong lúc học, mỗi lượt Bảo nộp vài câu tự viết để Claude **chấm điểm 1–10 ngay trong cùng lần gọi** (không tốn thêm lượt gọi).
+Tay nghề:
+
+| Tay nghề | Câu mẫu Claude | Câu tự viết đã chấm | Đạt từ 8 điểm (40 câu gần nhất) |
+|---|---|---|---|
+| Học việc | – | – | – |
+| Thạo việc | 20 | 10 | 60% |
+| Giỏi | 50 | 20 | 80% |
+| **Master** | 100 | 40 | 90% |
+
+Đạt **Master** thì Bảo tự viết toàn bộ, **không gọi Claude nữa** (đếm số lần gọi đã bớt). Câu tự viết vẫn qua bộ lọc: không trùng
+câu nick dùng 14 ngày qua, không hứa công dụng. Chưa có khóa Claude thì Bảo tự viết từ những gì đã học (chưa học thì dùng mẫu
+gốc). Thấy câu tự viết chưa ổn, bấm **Cho Bảo học lại**: điểm chấm xóa, Bảo gọi Claude và được chấm lại từ đầu, mẫu đã học
+vẫn giữ. Tay nghề, số lần gọi Claude và các câu mẫu gần đây hiện ngay trong ô Tự động up bài.
+
 Chỉnh ở **Cài đặt → Tự động up bài · Bảo phụ trách**: ô *Dòng liên hệ*, chọn *Bảo tự viết* hoặc *Chọn ngẫu nhiên từ danh sách*,
 nút **Xem thử câu Bảo viết** (chưa gửi). Nhắn CEO cũng được: “rà soát lại các bài đã đăng và comment ảnh kèm zalo” (Bảo xếp
 ngay), “từ nay đổi zalo liên hệ thành 09xxxxxxxx”. Số lượt mỗi nick/ngày vẫn theo Luật Facebook (mặc định 6 lượt up/nick/ngày).
