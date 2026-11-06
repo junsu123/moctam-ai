@@ -538,6 +538,12 @@ câu nick dùng 14 ngày qua, không hứa công dụng. Chưa có khóa Claude 
 gốc). Thấy câu tự viết chưa ổn, bấm **Cho Bảo học lại**: điểm chấm xóa, Bảo gọi Claude và được chấm lại từ đầu, mẫu đã học
 vẫn giữ. Tay nghề, số lần gọi Claude và các câu mẫu gần đây hiện ngay trong ô Tự động up bài.
 
+**Đính ảnh vào bình luận:** sale ghim đúng ô soạn bình luận (không nhầm chữ mờ “Viết bình luận…”) và khung bình luận chứa nó,
+rồi chỉ đính ảnh trong khung đó: đặt tệp thẳng vào ô tệp của khung, không được thì bấm nút “Đính kèm (một) ảnh hoặc video” trong
+khung, cuối cùng mới tìm nút đính kèm của bình luận trên cả trang (không bao giờ dùng nút “Ảnh/video” của hộp đăng bài). Mỗi cách
+chờ ảnh xem trước tới 20 giây; ảnh không hiện thì không gửi, báo lỗi ghi rõ đã thử những cách nào. Lượt up lỗi được thử lại
+khi bấm **Up bài ngay** hoặc nhắn CEO “rà soát lại các bài đã đăng”.
+
 Chỉnh ở **Cài đặt → Tự động up bài · Bảo phụ trách**: ô *Dòng liên hệ*, chọn *Bảo tự viết* hoặc *Chọn ngẫu nhiên từ danh sách*,
 nút **Xem thử câu Bảo viết** (chưa gửi). Nhắn CEO cũng được: “rà soát lại các bài đã đăng và comment ảnh kèm zalo” (Bảo xếp
 ngay), “từ nay đổi zalo liên hệ thành 09xxxxxxxx”. Số lượt mỗi nick/ngày vẫn theo Luật Facebook (mặc định 6 lượt up/nick/ngày).

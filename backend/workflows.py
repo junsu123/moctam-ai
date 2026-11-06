@@ -543,7 +543,7 @@ def plan_bumps(force: bool = False) -> int:
         posts = db.q("""SELECT p.id, p.product_id FROM posts p LEFT JOIN products pr ON pr.id=p.product_id
                         WHERE p.status='posted' AND p.account_id=? AND COALESCE(p.bump_enabled,1)=1
                         AND COALESCE(p.permalink_status,'') != 'removed' AND p.posted_at >= ? AND p.posted_at <= ?
-                        AND p.id NOT IN (SELECT post_id FROM bumps WHERE created_at LIKE ? AND status != 'skipped')
+                        AND p.id NOT IN (SELECT post_id FROM bumps WHERE created_at LIKE ? AND status NOT IN ('skipped', 'failed'))  -- lượt lỗi được thử lại khi bấm Up bài ngay
                         ORDER BY COALESCE(pr.hot, 0) DESC, COALESCE(p.last_bump_at, '') ASC, p.posted_at DESC LIMIT ?""",
                      (sale["id"], cutoff, fresh, today + "%", per_nick))
         t = now + timedelta(minutes=random.randint(1, 6))

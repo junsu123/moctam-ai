@@ -80,8 +80,11 @@
     "Bình luận công khai"
   ],
   "comment_attach": [
+    "Đính kèm một ảnh hoặc video",
     "Đính kèm ảnh hoặc video",
+    "Đính kèm ảnh",
     "Attach a photo or video",
+    "Attach a photo",
     "Ảnh/video",
     "Photo/video"
   ],

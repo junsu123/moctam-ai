@@ -1318,6 +1318,52 @@ def _bump_done(bump_id: int, status: str, err: str | None = None, shot: str | No
            (status, err, shot, image, db.now(), bump_id))
 
 
+CMT_PIN_JS = """el => {
+  document.querySelectorAll('[data-mt-cmt],[data-mt-box]').forEach(e => { e.removeAttribute('data-mt-cmt'); e.removeAttribute('data-mt-box'); });
+  const ED = '[role=textbox],[contenteditable="true"],textarea';
+  let box = el.matches(ED) ? el : null, up = el;
+  for (let k = 0; !box && k < 6 && up.parentElement; k++) { up = up.parentElement; box = up.querySelector(ED); }  // chữ mờ -> ô soạn cạnh nó
+  box = box || el;
+  box.setAttribute('data-mt-box', '1');
+  let r = box;
+  for (let k = 0; k < 12 && r.parentElement; k++) {
+    r = r.parentElement;
+    if (r.tagName === 'FORM' || r.querySelector('input[type=file]')) break;
+  }
+  if (!(r.tagName === 'FORM' || r.querySelector('input[type=file]'))) return false;
+  r.setAttribute('data-mt-cmt', '1');
+  return true;
+}"""
+CMT_PREVIEW_JS = """() => {
+  const g = [...document.querySelectorAll('img')].filter(i => /^(blob:|data:image)/.test(i.src || '')).length
+          + document.querySelectorAll('[style*="blob:"]').length;
+  const c = document.querySelector('[data-mt-cmt]');
+  if (!c) return g;
+  const imgs = [...c.querySelectorAll('img,video')].filter(i => i.tagName === 'VIDEO' ||
+      ((i.naturalWidth || i.width) >= 40 && !/emoji|rsrc\\.php|static\\.xx/.test(i.src || ''))).length;
+  const rm = c.querySelectorAll('[aria-label*="Gỡ"],[aria-label*="Xóa"],[aria-label*="Remove"]').length;
+  return g + imgs + rm;
+}"""
+
+
+def _cmt_previews(page) -> int:
+    """Số ảnh xem trước: ảnh blob trên trang + ảnh / nút gỡ ảnh trong khung bình luận đã ghim."""
+    try:
+        return page.evaluate(CMT_PREVIEW_JS)
+    except Exception:
+        return 0
+
+
+def _cmt_choose(page, btn, img) -> bool:
+    try:
+        with page.expect_file_chooser(timeout=8000) as fc:
+            btn.click()
+        fc.value.set_files(str(img))
+        return True
+    except Exception:
+        return False
+
+
 def _do_bump(ctx, page, aid: int, bump_id: int):
     b = db.one("SELECT * FROM bumps WHERE id=?", (bump_id,))
     post = db.one("""SELECT p.*, g.url group_url, g.name group_name FROM posts p
@@ -1380,49 +1426,82 @@ def _do_bump(ctx, page, aid: int, bump_id: int):
         box = None
         end = time.time() + 15
         while not box and time.time() < end:
-            box = _visible_first(page, s["comment_box"], role="textbox")
+            # ô soạn thật (role=textbox) trước, rồi mới tới chữ mờ "Viết bình luận..." (chữ mờ biến mất khi gõ)
+            for lb in s["comment_box"]:
+                loc = page.get_by_role("textbox", name=re.compile(re.escape(lb), re.I))
+                try:
+                    for i in range(min(loc.count(), 6)):
+                        if loc.nth(i).is_visible():
+                            box = loc.nth(i)
+                            break
+                except Exception:
+                    pass
+                if box:
+                    break
+            if not box:
+                box = _visible_first(page, s["comment_box"], role=None)
             if not box:
                 page.mouse.wheel(0, 600)
                 page.wait_for_timeout(800)
         if not box:
             raise RuntimeError("Không tìm thấy ô bình luận. Thêm chữ hiển thị mới vào comment_box trong fb_selectors.json")
+        # ghim ô soạn thật và khung bình luận (form chứa ô tệp) để mọi thao tác sau chỉ làm trong đúng khung này:
+        # trên trang bài còn hộp đăng bài "Ảnh/video" và ô tệp khác, chọn nhầm là ảnh không vào bình luận
+        try:
+            scoped = box.evaluate(CMT_PIN_JS)
+        except Exception:
+            scoped = False
+        pin = page.locator("[data-mt-box]")
+        if pin.count():
+            box = pin.first
+        box.scroll_into_view_if_needed()
         box.click()
         _pause(page)
+        comp = page.locator("[data-mt-cmt]")
         text = (b.get("text") or "").strip()
         if text:
             page.keyboard.insert_text(text)
-        def blobs():  # ảnh xem trước: blob/data trên trang + ảnh/video mới quanh ô bình luận
-            try:
-                return box.evaluate("""e => { let r = e; for (let k = 0; k < 6 && r.parentElement; k++) r = r.parentElement;
-                    return [...document.querySelectorAll('img')].filter(i => /^(blob:|data:image)/.test(i.src || '')).length
-                         + document.querySelectorAll('[style*="blob:"]').length + r.querySelectorAll('img,video').length; }""")
-            except Exception:
-                return 0
-        base = blobs()
-        attached = False
-        btn = _visible_first(page, s["comment_attach"])
-        if btn:
-            try:
-                with page.expect_file_chooser(timeout=8000) as fc:
-                    btn.click()
-                fc.value.set_files(str(img))
-                attached = True
-            except Exception:
-                pass
-        if not attached:
-            inp = page.locator('input[type="file"][accept*="image"]')
-            if inp.count():
-                inp.last.set_input_files(str(img))
-                attached = True
-        if not attached:
-            raise RuntimeError("Không đính kèm được ảnh vào bình luận (thêm chữ nút đính kèm vào comment_attach)")
-        end = time.time() + 20  # chờ ảnh hiện trong ô bình luận; không hiện thì không gửi (tránh up bài không ảnh)
-        while blobs() <= base and time.time() < end:
-            page.wait_for_timeout(700)
-        if blobs() <= base:
-            raise RuntimeError("Đã chọn ảnh nhưng Facebook không hiện ảnh trong ô bình luận nên chưa gửi. Xem ảnh chụp lượt up này")
-        page.wait_for_timeout(2500)
-        box.click()
+        base = _cmt_previews(page)
+        tried = []
+        ok = False
+        for how in ("form", "button", "page"):
+            if how == "form":  # ô tệp ngay trong khung bình luận: đặt tệp thẳng vào, không cần bấm nút
+                inp = comp.locator('input[type="file"]') if scoped else None
+                if not inp or not inp.count():
+                    continue
+                try:
+                    inp.first.set_input_files(str(img))
+                except Exception as e:
+                    tried.append(f"ô tệp trong khung: {str(e)[:60]}")
+                    continue
+            elif how == "button":  # nút Đính kèm trong khung bình luận
+                btn = _visible_first(comp, s["comment_attach"]) if scoped and comp.count() else None
+                if not btn:
+                    continue
+                if not _cmt_choose(page, btn, img):
+                    tried.append("nút đính kèm không mở hộp chọn tệp")
+                    continue
+            else:  # dự phòng: nút có chữ dành riêng cho bình luận trên cả trang (không dùng "Ảnh/video" của hộp đăng bài)
+                labels = [x for x in s["comment_attach"] if "đính kèm" in x.lower() or "attach" in x.lower()]
+                btn = _visible_first(page, labels)
+                if not btn or not _cmt_choose(page, btn, img):
+                    tried.append("không thấy nút đính kèm của bình luận")
+                    continue
+            end = time.time() + 20  # chờ ảnh hiện trong ô bình luận; không hiện thì không gửi (tránh up bài không ảnh)
+            while _cmt_previews(page) <= base and time.time() < end:
+                page.wait_for_timeout(700)
+            if _cmt_previews(page) > base:
+                ok = True
+                break
+            tried.append({"form": "đặt tệp vào ô trong khung", "button": "nút đính kèm trong khung",
+                          "page": "nút đính kèm trên trang"}[how] + ": không hiện ảnh")
+        if not ok:
+            raise RuntimeError("Đã chọn ảnh nhưng Facebook không hiện ảnh trong ô bình luận nên chưa gửi ("
+                               + ("; ".join(tried) or "không tìm thấy nút hoặc ô đính kèm ảnh") + "). Xem ảnh chụp lượt up này")
+        _wait_uploaded(page, comp if comp.count() else page.locator("body"), 60)
+        page.wait_for_timeout(2000)
+        pin = page.locator("[data-mt-box]")
+        (pin.first if pin.count() else box).click()
         page.keyboard.press("Enter")
         page.wait_for_timeout(5000)
         _check_blocked(page)
