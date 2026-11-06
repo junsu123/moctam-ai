@@ -19,7 +19,7 @@ OPEN = ["Xưởng vừa ra mẻ {p} mới", "Ảnh thật {p} tại xưởng hô
         "Gửi cả nhà ảnh {p} thực tế tại xưởng", "{p} có sẵn, nhận in nhãn theo yêu cầu", "Bạn nào đang bán {p} online ghé xem"]
 TAIL = ["", " 🌿", " ✨", ", ship toàn quốc", ", có hóa đơn đầy đủ", ", giá sỉ tốt cho shop mới", ", nhận đơn từ 1 thùng",
         " 📦", ", hỗ trợ ảnh và video cho shop"]
-GENERIC = "trà, ngũ cốc"
+GENERIC = "trà và ngũ cốc"
 
 
 def s() -> dict:

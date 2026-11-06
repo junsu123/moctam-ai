@@ -1337,13 +1337,32 @@ CMT_PIN_JS = """el => {
 CMT_PREVIEW_JS = """() => {
   const g = [...document.querySelectorAll('img')].filter(i => /^(blob:|data:image)/.test(i.src || '')).length
           + document.querySelectorAll('[style*="blob:"]').length;
-  const c = document.querySelector('[data-mt-cmt]');
-  if (!c) return g;
-  const imgs = [...c.querySelectorAll('img,video')].filter(i => i.tagName === 'VIDEO' ||
+  let z = document.querySelector('[data-mt-cmt]');
+  if (!z) return g;
+  for (let k = 0; k < 3 && z.parentElement; k++) z = z.parentElement;  // ảnh xem trước có thể nằm ngay dưới khung soạn
+  const imgs = [...z.querySelectorAll('img,video')].filter(i => i.tagName === 'VIDEO' ||
       ((i.naturalWidth || i.width) >= 40 && !/emoji|rsrc\\.php|static\\.xx/.test(i.src || ''))).length;
-  const rm = c.querySelectorAll('[aria-label*="Gỡ"],[aria-label*="Xóa"],[aria-label*="Remove"]').length;
+  const rm = [...z.querySelectorAll('[role=button]')].filter(b => /^(gỡ|xóa|xoá|remove|×|✕)/i.test((b.getAttribute('aria-label') || b.innerText || '').trim())).length;
   return g + imgs + rm;
 }"""
+CMT_STATE_JS = """labels => {
+  // nút gửi (mũi tên) trong vùng bình luận: còn mờ (aria-disabled) nghĩa là ảnh chưa tải xong
+  let z = document.querySelector('[data-mt-cmt]');
+  const box = document.querySelector('[data-mt-box]');
+  if (z) for (let k = 0; k < 3 && z.parentElement; k++) z = z.parentElement;
+  z = z || document;
+  const want = labels.map(l => l.toLowerCase());
+  const btn = [...z.querySelectorAll('[role=button],button')].find(b => want.includes((b.getAttribute('aria-label') || '').trim().toLowerCase()));
+  return {send: !!btn, enabled: !!btn && btn.getAttribute('aria-disabled') !== 'true' && !btn.disabled,
+          busy: z.querySelectorAll('[role=progressbar]').length, text: box ? (box.innerText || '').trim().length : -1};
+}"""
+
+
+def _cmt_state(page, labels) -> dict:
+    try:
+        return page.evaluate(CMT_STATE_JS, labels)
+    except Exception:
+        return {"send": False, "enabled": False, "busy": 0, "text": -1}
 
 
 def _cmt_previews(page) -> int:
@@ -1487,7 +1506,7 @@ def _do_bump(ctx, page, aid: int, bump_id: int):
                 if not btn or not _cmt_choose(page, btn, img):
                     tried.append("không thấy nút đính kèm của bình luận")
                     continue
-            end = time.time() + 20  # chờ ảnh hiện trong ô bình luận; không hiện thì không gửi (tránh up bài không ảnh)
+            end = time.time() + 30  # chờ ảnh hiện trong ô bình luận; không hiện thì không gửi (tránh up bài không ảnh)
             while _cmt_previews(page) <= base and time.time() < end:
                 page.wait_for_timeout(700)
             if _cmt_previews(page) > base:
@@ -1498,11 +1517,51 @@ def _do_bump(ctx, page, aid: int, bump_id: int):
         if not ok:
             raise RuntimeError("Đã chọn ảnh nhưng Facebook không hiện ảnh trong ô bình luận nên chưa gửi ("
                                + ("; ".join(tried) or "không tìm thấy nút hoặc ô đính kèm ảnh") + "). Xem ảnh chụp lượt up này")
-        _wait_uploaded(page, comp if comp.count() else page.locator("body"), 60)
-        page.wait_for_timeout(2000)
-        pin = page.locator("[data-mt-box]")
-        (pin.first if pin.count() else box).click()
-        page.keyboard.press("Enter")
+        # ảnh thường mất 10–20 giây mới tải lên xong: chờ nút gửi (mũi tên) sáng lên, hết thanh tiến trình
+        labels = s.get("comment_send") or ["Bình luận", "Comment"]
+        t0, end = time.time(), time.time() + 90
+        st = _cmt_state(page, labels)
+        while time.time() < end:
+            st = _cmt_state(page, labels)
+            if st["send"] and st["enabled"] and not st["busy"] and time.time() - t0 > 2:
+                break
+            if not st["send"] and not st["busy"] and time.time() - t0 > 20:  # không thấy nút gửi: chờ đủ 20 giây
+                break
+            page.wait_for_timeout(1000)
+        if st["send"] and not st["enabled"]:
+            raise RuntimeError("Ảnh tải lên quá 90 giây chưa xong (nút gửi bình luận vẫn mờ) nên chưa gửi. Xem ảnh chụp lượt up này")
+        page.wait_for_timeout(1500)
+        sent_by = "Enter"
+        if st["send"]:
+            btn = None
+            zone = page.locator("[data-mt-cmt]").locator("xpath=ancestor::*[3]") if comp.count() else page
+            for lb in labels:
+                loc = zone.get_by_role("button", name=re.compile(r"^\s*" + re.escape(lb) + r"\s*$", re.I))
+                try:
+                    if loc.count() and loc.first.is_visible():
+                        btn = loc.first
+                        break
+                except Exception:
+                    pass
+            if btn:
+                btn.click()
+                sent_by = "nút gửi"
+        if sent_by == "Enter":
+            pin = page.locator("[data-mt-box]")
+            (pin.first if pin.count() else box).click()
+            page.keyboard.press("Enter")
+        # kiểm tra đã gửi: ô soạn trống lại (Facebook xóa chữ và ảnh sau khi gửi)
+        end = time.time() + 20
+        while time.time() < end and _cmt_state(page, labels)["text"] > 0:
+            page.wait_for_timeout(800)
+        if _cmt_state(page, labels)["text"] > 0:
+            pin = page.locator("[data-mt-box]")
+            if pin.count():
+                pin.first.click()
+                page.keyboard.press("Enter")
+                page.wait_for_timeout(6000)
+            if _cmt_state(page, labels)["text"] > 0:
+                raise RuntimeError(f"Đã bấm gửi ({sent_by}) nhưng bình luận chưa đi (chữ vẫn nằm trong ô). Xem ảnh chụp lượt up này")
         page.wait_for_timeout(5000)
         _check_blocked(page)
         page.screenshot(path=str(shot))

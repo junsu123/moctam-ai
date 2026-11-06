@@ -541,7 +541,10 @@ vẫn giữ. Tay nghề, số lần gọi Claude và các câu mẫu gần đây
 **Đính ảnh vào bình luận:** sale ghim đúng ô soạn bình luận (không nhầm chữ mờ “Viết bình luận…”) và khung bình luận chứa nó,
 rồi chỉ đính ảnh trong khung đó: đặt tệp thẳng vào ô tệp của khung, không được thì bấm nút “Đính kèm (một) ảnh hoặc video” trong
 khung, cuối cùng mới tìm nút đính kèm của bình luận trên cả trang (không bao giờ dùng nút “Ảnh/video” của hộp đăng bài). Mỗi cách
-chờ ảnh xem trước tới 20 giây; ảnh không hiện thì không gửi, báo lỗi ghi rõ đã thử những cách nào. Lượt up lỗi được thử lại
+chờ ảnh xem trước tới 30 giây; ảnh không hiện thì không gửi, báo lỗi ghi rõ đã thử những cách nào. Ảnh thường mất 10–20 giây
+mới tải lên: sale chờ **nút gửi (mũi tên) sáng lên** và hết thanh tiến trình (tối đa 90 giây), rồi **bấm nút mũi tên** để gửi
+(không thấy nút thì chờ đủ 20 giây và nhấn Enter). Gửi xong sale kiểm tra ô bình luận đã trống; chữ vẫn còn thì thử lại một lần,
+vẫn không đi thì báo lỗi chứ không ghi là đã up. Lượt up lỗi được thử lại
 khi bấm **Up bài ngay** hoặc nhắn CEO “rà soát lại các bài đã đăng”.
 
 Chỉnh ở **Cài đặt → Tự động up bài · Bảo phụ trách**: ô *Dòng liên hệ*, chọn *Bảo tự viết* hoặc *Chọn ngẫu nhiên từ danh sách*,

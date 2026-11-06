@@ -142,5 +142,15 @@
     "is pending",
     "submitted for admin approval",
     "waiting for admin approval"
+  ],
+  "comment_send": [
+    "Bình luận",
+    "Gửi bình luận",
+    "Đăng bình luận",
+    "Gửi",
+    "Comment",
+    "Post comment",
+    "Post",
+    "Send"
   ]
 }
