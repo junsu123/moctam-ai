@@ -1287,6 +1287,7 @@ label.f{font-weight:600;color:var(--muted)}
       <div class="ptabs" role="tablist" aria-label="Website" id="wsTabs">
         <button type="button" role="tab" id="wtab-posts" aria-controls="wpanel-posts" aria-selected="true">Bài viết</button>
         <button type="button" role="tab" id="wtab-kw" aria-controls="wpanel-kw" aria-selected="false" tabindex="-1">Từ khóa</button>
+        <button type="button" role="tab" id="wtab-prod" aria-controls="wpanel-prod" aria-selected="false" tabindex="-1">Sản phẩm</button>
         <button type="button" role="tab" id="wtab-info" aria-controls="wpanel-info" aria-selected="false" tabindex="-1">Thông tin công ty</button>
         <button type="button" role="tab" id="wtab-host" aria-controls="wpanel-host" aria-selected="false" tabindex="-1">Đăng lên hosting</button>
       </div>
@@ -1300,6 +1301,10 @@ label.f{font-weight:600;color:var(--muted)}
           <label class="f" for="wsKwPr" style="flex:0 1 150px">Ưu tiên<select id="wsKwPr"><option value="1">Cao</option><option value="2" selected>Vừa</option><option value="3">Thấp</option></select></label>
           <button class="btn primary" type="submit">Thêm</button><button class="btn" type="button" id="wsKwPlan">Vy nghĩ thêm từ khóa</button></form>
         <div class="tbl-wrap"><table><thead><tr><th>Từ khóa</th><th>Nhóm</th><th>Ưu tiên</th><th>Tình trạng</th><th></th></tr></thead><tbody id="wsKws"></tbody></table></div>
+      </div>
+      <div role="tabpanel" id="wpanel-prod" aria-labelledby="wtab-prod" class="ppanel" hidden>
+        <p class="small muted" style="margin:0 0 10px">Website chỉ hiện từng sản phẩm riêng lẻ. Vy tự bỏ ảnh tổng hợp nhà máy, combo, bộ quà, nhóm nhiều loại. Sản phẩm nào Vy nhận sai thì chọn Hiện hoặc Ẩn, rồi bấm Dựng lại website. Ảnh trên website lấy từ ảnh tải lên và thư mục ảnh riêng của từng sản phẩm (tối đa 10 ảnh).</p>
+        <div class="tbl-wrap"><table class="ws-table"><thead><tr><th>Sản phẩm</th><th>Trên website</th><th>Hiện / ẩn</th></tr></thead><tbody id="wsProds"></tbody></table></div>
       </div>
       <div role="tabpanel" id="wpanel-info" aria-labelledby="wtab-info" class="ppanel" hidden>
         <form class="card" id="wsInfo"><h3>Thông tin hiện trên website</h3><div class="grid3" id="wsInfoFields"></div>
@@ -2231,7 +2236,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/posts/posted") return demoPosted(qs);
       if(P==="/fb-policy"){ const F=S.fbp; return {...F,rules:[...F.rules,...F.custom],nicks:S.accounts.filter(a=>a.enabled!==0).slice(0,6).map((a,i)=>{ const sale=S.sales.find(x=>x.id===a.sale_id)||{}; const f=i===0?0.5:1;
           return {id:a.id,name:a.name,sale_name:sale.name,factor:f,rest_until:F.restNick===a.id?F.restUntil:null,limits:{posts:Math.max(1,Math.floor(6*f)),bumps:Math.max(1,Math.floor(6*f)),joins:Math.floor(2*f),gap:Math.round(30/f)},used:{posts:[2,3,1,0,2,1][i%6],bumps:[3,1,0,2,4,0][i%6],joins:[1,0,0,1,2,0][i%6]}}; }),flagged:S.posts.filter(p=>p.policy_note&&p.status!=="posted").length}; }
-      if(P==="/website") return {...S.ws,posts:S.ws.posts.map(p=>({...p})),stats:{published:S.ws.posts.filter(p=>p.status==="published").length,review:S.ws.posts.filter(p=>p.status==="review").length,planned:S.ws.keywords.filter(k=>k.status==="planned").length,avg_seo:S.ws.posts.length?Math.round(S.ws.posts.reduce((s,p)=>s+p.seo_score,0)/S.ws.posts.length):0},pages:14+S.ws.posts.filter(p=>p.status==="published").length,built:true};
+      if(P==="/website") return {...S.ws,products:S.products.map(p=>{ const m=(p.name||"").match(/combo|\bset\b|bộ quà|các loại|nhiều loại|tổng hợp|(gồm|bộ|hộp)\s*\d+\s*(loại|vị|gói)|\d+\s*(mã|sản phẩm)\b/i); const why=p.is_general?"Ảnh tổng hợp nhà máy, không phải một sản phẩm":m?`Tên có “${m[0]}”: giống combo / nhóm nhiều sản phẩm`:""; const auto=p.site_show==null; return {id:p.id,name:p.name,category:p.category,on:auto?!why:!!p.site_show,why,auto,general:!!p.is_general}; }),posts:S.ws.posts.map(p=>({...p})),stats:{published:S.ws.posts.filter(p=>p.status==="published").length,review:S.ws.posts.filter(p=>p.status==="review").length,planned:S.ws.keywords.filter(k=>k.status==="planned").length,avg_seo:S.ws.posts.length?Math.round(S.ws.posts.reduce((s,p)=>s+p.seo_score,0)/S.ws.posts.length):0},pages:14+S.ws.posts.filter(p=>p.status==="published").length,built:true};
       if((m=P.match(/^\/website\/posts\/(\d+)$/))) return S.ws.posts.find(p=>p.id==m[1]);
       if(P==="/posts/reset"){ const c={approved:0,scheduled:0,failed:0,draft:0}, g={approved:0,scheduled:0,failed:0,draft:0};
         S.posts.forEach(p=>{ if(p.status in c){ c[p.status]++; if(p.target_type==="group") g[p.status]++; } });
@@ -2470,6 +2475,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if((m=P.match(/^\/fb-policy\/changes\/(\d+)\/read$/))){ F.changes.forEach(c=>{ if(c.id==m[1]) c.status="read"; }); return ret(); }
       if((m=P.match(/^\/fb-policy\/nicks\/(\d+)\/lift$/))){ F.restNick=null; return ret(); }
     }
+    if((m=P.match(/^\/website\/products\/(\d+)$/))){ const p=S.products.find(x=>x.id==m[1]); p.site_show=body.show==null?null:(body.show?1:0); return {id:p.id}; }
     if(P.startsWith("/website")){ const W=S.ws, ret=()=>handle("GET","/api/website");
       if(P==="/website/settings"){ for(const [k,v] of Object.entries(body)){ if(k==="site_ftp_pass"){ if(v) W.settings.site_ftp_pass_set=true; continue; } W.settings[k]=k==="site_domain"&&v&&!/^https?:/.test(v)?"https://"+v:v; } return ret(); }
       if(P==="/website/keywords"&&method==="POST"){ W.keywords.push({id:id(),keyword:body.keyword,cluster:"",priority:body.priority||2,status:"planned"}); return ret(); }
@@ -3066,13 +3072,19 @@ $("#fbpWatch").onclick=async e=>{ e.target.disabled=true; try{ await api("/fb-po
 const WS_INFO=[["site_name","Tên thương hiệu"],["site_legal_name","Tên công ty (pháp lý)"],["site_tagline","Khẩu hiệu"],["site_domain","Tên miền (VD moctam.vn)"],["site_phone","Zalo / điện thoại"],["site_email","Email"],
   ["site_address","Địa chỉ nhà máy"],["site_certs","Tiêu chuẩn, chứng nhận"],["site_color","Màu thương hiệu"],["site_ga_id","Mã Google Analytics (G-...)"]];
 const WS_ST={draft:["","Nháp"],review:["warn","Chờ sếp duyệt"],published:["ok","Đã đăng"]};
-function wsTab(k){ ST.wsTab=k; for(const x of ["posts","kw","info","host"]){ const on=x===k; $("#wtab-"+x).setAttribute("aria-selected",on); $("#wtab-"+x).tabIndex=on?0:-1; $("#wpanel-"+x).hidden=!on; } }
+function wsTab(k){ ST.wsTab=k; for(const x of ["posts","kw","prod","info","host"]){ const on=x===k; $("#wtab-"+x).setAttribute("aria-selected",on); $("#wtab-"+x).tabIndex=on?0:-1; $("#wpanel-"+x).hidden=!on; } }
+$("#wsProds").addEventListener("change",async e=>{ const sel=e.target.closest("[data-wsshow]"); if(!sel) return; const v=sel.value;
+  try{ await api(`/website/products/${sel.dataset.wsshow}`,"PUT",{show:v==="auto"?null:v==="1"}); await loadWs(); toast("Đã lưu. Bấm Dựng lại website để cập nhật trang sản phẩm"); }catch(err){ toast(err.message); } });
 $("#wsTabs").addEventListener("click",e=>{ const b=e.target.closest("[role=tab]"); if(b) wsTab(b.id.replace("wtab-","")); });
-$("#wsTabs").addEventListener("keydown",e=>{ const ks=["posts","kw","info","host"]; if(!["ArrowLeft","ArrowRight"].includes(e.key)) return; e.preventDefault();
-  const i=(ks.indexOf(ST.wsTab||"posts")+(e.key==="ArrowRight"?1:3))%4; wsTab(ks[i]); $("#wtab-"+ks[i]).focus(); });
+$("#wsTabs").addEventListener("keydown",e=>{ const ks=["posts","kw","prod","info","host"]; if(!["ArrowLeft","ArrowRight"].includes(e.key)) return; e.preventDefault();
+  const i=(ks.indexOf(ST.wsTab||"posts")+(e.key==="ArrowRight"?1:4))%5; wsTab(ks[i]); $("#wtab-"+ks[i]).focus(); });
 async function loadWs(){ try{ ST.ws=await api("/website"); }catch(e){ toast(e.message); return; } renderWs(); }
 function renderWs(){
   const d=ST.ws; if(!d) return; const s=d.stats, cf=d.settings;
+  const pr=d.products||[]; $("#wsProds").innerHTML=pr.length?pr.map(p=>`<tr><td><b>${esc(p.name)}</b><br><span class="small muted">${esc(p.category||"")}</span></td>
+    <td>${p.on?'<span class="chip ok">Hiện</span>':'<span class="chip">Ẩn</span>'}${p.why?`<br><span class="small muted">${esc(p.why)}</span>`:""}</td>
+    <td><select data-wsshow="${p.id}" aria-label="Hiện hay ẩn ${esc(p.name)} trên website"${p.general?" disabled":""}><option value="auto"${p.auto?" selected":""}>Vy tự nhận</option><option value="1"${!p.auto&&p.on?" selected":""}>Luôn hiện</option><option value="0"${!p.auto&&!p.on?" selected":""}>Luôn ẩn</option></select></td></tr>`).join("")
+    :'<tr><td colspan="3" class="muted small">Chưa có sản phẩm. Thêm ở trang Sản phẩm.</td></tr>';
   $("#wsStats").innerHTML=[[s.published,"Bài đã đăng"],[s.review,"Chờ sếp duyệt"],[s.planned,"Từ khóa chờ viết"],[s.avg_seo||"—","Điểm SEO trung bình"],[d.pages||0,"Trang trên website"]]
     .map(([v,l])=>`<div class="pr-stat" style="cursor:default"><b>${v}</b><span>${l}</span></div>`).join("");
   $("#wsWriteInfo").textContent=`Vy viết ${cf.site_posts_week||3} bài/tuần vào ${(cf.site_write_days||"1,3,5").split(",").map(x=>["","T2","T3","T4","T5","T6","T7","CN"][+x]||x).join(", ")} lúc ${cf.site_write_time||"09:45"}`+(d.last_build?` · dựng website lần cuối ${fmtTime(d.last_build)} ${fmtDate(d.last_build)}`:" · chưa dựng website");

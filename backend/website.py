@@ -505,46 +505,102 @@ def delete(pid: int):
 
 
 # ---------------------------------------------------------------- dựng website tĩnh
-CSS = """:root{--c:%(color)s;--ink:#1d2420;--mut:#5d6a62;--bg:#fbfaf6;--pan:#fff;--line:#e4e2da;--soft:#eef3ee}
-*{box-sizing:border-box}html{-webkit-text-size-adjust:100%%}body{margin:0;font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg)}
-a{color:var(--c)}img{max-width:100%%;height:auto;display:block}
-.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
-header.top{background:var(--pan);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:60px;flex-wrap:wrap}
-.logo{font-weight:800;font-size:20px;color:var(--c);text-decoration:none;letter-spacing:.5px}
-nav.menu{display:flex;gap:4px;flex-wrap:wrap}nav.menu a{padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink);font-size:15px}
-nav.menu a:hover,nav.menu a[aria-current]{background:var(--soft);color:var(--c)}
-.hero{background:linear-gradient(135deg,var(--c),#16301f);color:#fff;padding:56px 0}
-.hero h1{font-size:clamp(28px,4vw,44px);line-height:1.2;margin:0 0 12px}.hero p{font-size:18px;max-width:720px;opacity:.95;margin:0 0 20px}
-.btn{display:inline-block;padding:12px 20px;border-radius:10px;background:#fff;color:var(--c);font-weight:700;text-decoration:none}
-.btn.alt{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.7);margin-left:8px}
-section.blk{padding:44px 0}section.blk h2{font-size:clamp(22px,3vw,30px);margin:0 0 16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%%,250px),1fr));gap:16px}
-.card{background:var(--pan);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
-.card .in{padding:14px 16px;display:flex;flex-direction:column;gap:6px;flex:1}.card h3{margin:0;font-size:18px;line-height:1.35}
-.card h3 a{color:var(--ink);text-decoration:none}.card p{margin:0;color:var(--mut);font-size:15px}
-.card img{aspect-ratio:4/3;object-fit:cover;width:100%%;background:var(--soft)}
-.pill{display:inline-block;background:var(--soft);color:var(--c);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600}
-.feat{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%%,230px),1fr));gap:12px}
-.feat div{background:var(--pan);border:1px solid var(--line);border-radius:12px;padding:16px}.feat b{display:block;color:var(--c);margin-bottom:4px}
-article.post{max-width:780px;margin:0 auto;padding:28px 0 40px}article.post h1{font-size:clamp(26px,3.6vw,38px);line-height:1.25;margin:8px 0}
-article.post h2{margin-top:32px;font-size:24px}article.post h3{font-size:19px}article.post .cover{border-radius:14px;margin:16px 0}
-.meta{color:var(--mut);font-size:14px}.crumbs{font-size:14px;color:var(--mut);padding-top:16px}.crumbs a{color:var(--mut)}
-.toc{background:var(--soft);border-radius:12px;padding:12px 16px;margin:16px 0}.toc ol{margin:6px 0 0;padding-left:20px}
-.cta{background:var(--c);color:#fff;border-radius:14px;padding:20px;margin:28px 0}.cta a{color:#fff;font-weight:700}
-.faq details{background:var(--pan);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
-.faq summary{font-weight:700;cursor:pointer}
-footer{background:#18241c;color:#cfd8d1;padding:32px 0;margin-top:20px;font-size:15px}footer a{color:#fff}
-footer .grid{grid-template-columns:repeat(auto-fill,minmax(min(100%%,240px),1fr))}
-.zalo{position:fixed;right:16px;bottom:16px;background:#0068ff;color:#fff;border-radius:999px;padding:12px 18px;font-weight:700;
-  text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:9}
-.pager{display:flex;gap:6px;flex-wrap:wrap;margin-top:20px}.pager a,.pager span{padding:6px 12px;border:1px solid var(--line);border-radius:8px;text-decoration:none}
-.pager span{background:var(--c);color:#fff;border-color:var(--c)}
-@media (max-width:640px){.btn.alt{margin:8px 0 0}header.top{position:static}header.top .wrap{padding-top:6px;padding-bottom:6px}nav.menu a{padding:6px 8px;font-size:14px}}
-"""
-
-MENU = [("/", "Trang chủ"), ("/gioi-thieu/", "Giới thiệu"), ("/gia-cong/", "Gia công"), ("/san-pham/", "Sản phẩm"),
+ASSETS = Path(__file__).resolve().parent / "site_assets"  # style.css (màu thương hiệu thay vào __C__), site.js
+FONT = ('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+        '<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">')
+ICON = {
+    "zalo": '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.6 1.3 4.9 3.4 6.5L4.6 21l3.4-1.7c1.2.4 2.6.6 4 .6 5.5 0 10-3.9 10-8.7S17.5 3 12 3z"/></svg>',
+    "phone": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
+    "img": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>',
+    "prev": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
+    "next": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>',
+    "box": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>',
+    "tag": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>',
+    "pack": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3h12l2 5v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8z"/><path d="M4 8h16M10 12h4"/></svg>',
+    "flask": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3"/><path d="M7 15h10"/></svg>',
+}
+MENU = [("/", "Trang chủ"), ("/san-pham/", "Sản phẩm"), ("/gia-cong/", "Gia công"), ("/gioi-thieu/", "Giới thiệu"),
         ("/tin-tuc/", "Tin tức"), ("/lien-he/", "Liên hệ")]
+# sản phẩm không phải "một sản phẩm": ảnh tổng hợp, combo, bộ quà, danh mục nhiều loại, bảng giá...
+MULTI_RX = re.compile(r"(combo|\bset\b|bộ quà|bộ sản phẩm|hộp quà|các loại|nhiều loại|tổng hợp|\bmix\b|danh mục|catalog|bảng giá|"
+                      r"(gồm|bộ|hộp|set)\s*\d+\s*(loại|vị|gói|hộp)|\d+\s*(mã|sản phẩm)\b|ảnh nhà máy|ảnh xưởng|mẫu thử các)", re.I)
+# "25 loại hạt", "trà 5 vị" vẫn là MỘT sản phẩm (thành phần), chỉ "gồm / bộ 5 loại" mới là bộ nhiều sản phẩm
+
+
+def single_reason(p: dict) -> str:
+    """Vì sao sản phẩm KHÔNG hiện trên website (rỗng = là một sản phẩm, được hiện)."""
+    if p.get("is_general"):
+        return "Ảnh tổng hợp nhà máy, không phải một sản phẩm"
+    m = MULTI_RX.search(p.get("name") or "")
+    if m:
+        return "Tên có “%s”: giống combo / nhóm nhiều sản phẩm" % m.group(0).strip()
+    return ""
+
+
+def site_products(all_rows: bool = False) -> list[dict]:
+    """Sản phẩm lên website: chỉ từng sản phẩm riêng lẻ. Sếp có thể ép hiện / ẩn (site_show 1 / 0), để trống là tự nhận."""
+    rows = db.q("SELECT * FROM products WHERE COALESCE(is_sample,0)=0 ORDER BY COALESCE(hot,0) DESC, id") or \
+        db.q("SELECT * FROM products ORDER BY id")
+    out = []
+    for p in rows:
+        why = single_reason(p)
+        show = p.get("site_show")
+        on = bool(show) if show is not None and not p.get("is_general") else not why
+        out.append({**p, "site_on": on, "site_why": why, "site_auto": show is None})
+    return out if all_rows else [p for p in out if p["site_on"]]
+
+
+def _thumb(src: Path, name: str, size: int) -> str | None:
+    """Ảnh thu nhỏ cho web vào data/site_media (giữ lại nếu ảnh gốc chưa đổi)."""
+    dst_dir = db.DATA_DIR / "site_media"
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    dst = dst_dir / name
+    try:
+        if dst.exists() and dst.stat().st_mtime >= src.stat().st_mtime:
+            return name
+        from PIL import Image, ImageOps
+        im = ImageOps.exif_transpose(Image.open(src)).convert("RGB")
+        im.thumbnail((size, size))
+        im.save(dst, "JPEG", quality=82, optimize=True, progressive=True)
+        return name
+    except Exception as e:
+        print("[site thumb]", src, e)
+        return None
+
+
+def _site_images(p: dict, slug: str, n: int = 10) -> tuple[list[tuple[str, str]], bool]:
+    """Ảnh của đúng sản phẩm (ảnh tải lên, thư mục riêng của sản phẩm) -> [(ảnh lớn, ảnh nhỏ)], và cờ "chỉ có ảnh nhà máy"."""
+    import media_folder
+    src = [db.DATA_DIR / rel for rel in json.loads(p.get("images") or "[]") if (db.DATA_DIR / rel).exists()]
+    d, kind = media_folder.product_folder(p)
+    if d and kind in ("product", "shared-sub"):
+        src += media_folder.images_for(p)
+    factory = False
+    if not src:  # chưa có ảnh riêng: dùng vài ảnh nhà máy để thẻ không trống
+        g = media_folder.general()
+        src = media_folder.images_for(g)[:3] if g else []
+        factory = bool(src)
+    seen, out = set(), []
+    for f in src:
+        if str(f) in seen:
+            continue
+        seen.add(str(f))
+        k = len(out)
+        big = _thumb(f, "sp-%s-%d.jpg" % (slug, k), 1400)
+        small = _thumb(f, "sp-%s-%d-s.jpg" % (slug, k), 520)
+        if big and small:
+            out.append((big, small))
+        if len(out) >= n:
+            break
+    return out, factory
+
+
+def set_show(pid: int, show) -> dict:
+    """Sếp ép hiện (True) / ẩn (False) sản phẩm trên website, None = để Vy tự nhận (chỉ hiện từng sản phẩm riêng lẻ)."""
+    if not db.one("SELECT id FROM products WHERE id=?", (pid,)):
+        raise KeyError(pid)
+    db.run("UPDATE products SET site_show=? WHERE id=?", (None if show is None else (1 if show else 0), pid))
+    return next(p for p in site_products(all_rows=True) if p["id"] == pid)
 
 
 def _abs(path: str) -> str:
@@ -555,7 +611,8 @@ def _abs(path: str) -> str:
 def _page(path: str, title: str, desc: str, body: str, ld: list | None = None, og_img: str | None = None, og_type: str = "website") -> str:
     c = company()
     e = html.escape
-    nav = "".join(f'<a href="{u}"{" aria-current=page" if (u == path or (u != "/" and path.startswith(u))) else ""}>{n}</a>' for u, n in MENU)
+    nav = "".join('<a href="%s"%s>%s</a>' % (u, " aria-current=page" if (u == path or (u != "/" and path.startswith(u))) else "", n)
+                  for u, n in MENU)
     org = {"@context": "https://schema.org", "@type": "Organization", "name": c["legal"], "alternateName": c["name"],
            "url": _abs("/"), "telephone": c["phone"],
            "contactPoint": {"@type": "ContactPoint", "telephone": c["phone"], "contactType": "sales", "areaServed": "VN",
@@ -565,28 +622,45 @@ def _page(path: str, title: str, desc: str, body: str, ld: list | None = None, o
     if c["address"]:
         org["address"] = {"@type": "PostalAddress", "streetAddress": c["address"], "addressCountry": "VN"}
     lds = [org] + (ld or [])
-    ga = (f'<script async src="https://www.googletagmanager.com/gtag/js?id={e(c["ga"])}"></script><script>window.dataLayer=window.dataLayer||[];'
-          f'function gtag(){{dataLayer.push(arguments)}}gtag("js",new Date());gtag("config","{e(c["ga"])}");</script>') if c["ga"] else ""
+    ga = ('<script async src="https://www.googletagmanager.com/gtag/js?id=%s"></script><script>window.dataLayer=window.dataLayer||[];'
+          'function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","%s");</script>' % (e(c["ga"]), e(c["ga"]))) if c["ga"] else ""
     img = _abs(og_img) if og_img else ""
-    return f"""<!doctype html>
+    zalo = "https://zalo.me/" + c["phone"]
+    ldj = "".join('<script type="application/ld+json">%s</script>' % json.dumps(x, ensure_ascii=False) for x in lds)
+    links = "".join('<a href="%s">%s</a><br>' % (u, n) for u, n in MENU[1:])
+    contact = ('Zalo / Điện thoại: <a href="%s" rel="nofollow">%s</a>' % (zalo, c["phone"])
+               + ("<br>Email: <a href='mailto:%s'>%s</a>" % (e(c["email"]), e(c["email"])) if c["email"] else "")
+               + ("<br>Địa chỉ: %s" % e(c["address"]) if c["address"] else ""))
+    return ("""<!doctype html>
 <html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{e(title)}</title><meta name="description" content="{e(desc)}">
-<link rel="canonical" href="{e(_abs(path))}"><meta name="robots" content="index,follow">
-<meta property="og:type" content="{og_type}"><meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
-<meta property="og:url" content="{e(_abs(path))}"><meta property="og:site_name" content="{e(c['name'])}"><meta property="og:locale" content="vi_VN">
-{f'<meta property="og:image" content="{e(img)}">' if img else ''}<meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="/assets/style.css">
-{''.join(f'<script type="application/ld+json">{json.dumps(x, ensure_ascii=False)}</script>' for x in lds)}{ga}
+<title>%(title)s</title><meta name="description" content="%(desc)s"><meta name="theme-color" content="%(color)s">
+<link rel="canonical" href="%(canon)s"><meta name="robots" content="index,follow">
+<meta property="og:type" content="%(ogt)s"><meta property="og:title" content="%(title)s"><meta property="og:description" content="%(desc)s">
+<meta property="og:url" content="%(canon)s"><meta property="og:site_name" content="%(name)s"><meta property="og:locale" content="vi_VN">
+%(ogimg)s<meta name="twitter:card" content="summary_large_image">
+%(font)s<link rel="stylesheet" href="/assets/style.css">
+%(ld)s%(ga)s
 </head><body>
-<header class="top"><div class="wrap"><a class="logo" href="/">{e(c['name'])}</a><nav class="menu" aria-label="Menu chính">{nav}</nav></div></header>
-<main>{body}</main>
-<footer><div class="wrap grid">
-<div><b>{e(c['legal'])}</b><br>{e(c['tagline'])}<br>Tiêu chuẩn: {e(c['certs'])}</div>
-<div>Zalo / Điện thoại: <a href="https://zalo.me/{c['phone']}">{c['phone']}</a>{f"<br>Email: <a href='mailto:{e(c['email'])}'>{e(c['email'])}</a>" if c['email'] else ''}{f"<br>Địa chỉ: {e(c['address'])}" if c['address'] else ''}</div>
-<div>{''.join(f'<a href="{u}">{n}</a><br>' for u, n in MENU[1:])}</div>
+<a class="skip" href="#main">Bỏ qua menu</a>
+<header class="top"><div class="wrap top-in"><a class="logo" href="/"><b>%(name)s</b><small>%(tag)s</small></a>
+<nav class="menu" aria-label="Menu chính">%(nav)s</nav>
+<a class="b b-buy b-sm" href="%(zalo)s" rel="nofollow">Nhận báo giá</a></div></header>
+<main id="main">%(body)s</main>
+<footer><div class="wrap ft">
+<div><b>%(legal)s</b>%(tagp)s<br>Tiêu chuẩn: %(certs)s</div>
+<div><b>Liên hệ</b>%(contact)s</div>
+<div><b>Trang</b>%(links)s</div>
+<div class="copy">© %(year)s %(legal)s. Nhận sỉ toàn quốc và gia công thương hiệu riêng.</div>
 </div></footer>
-<a class="zalo" href="https://zalo.me/{c['phone']}" rel="nofollow">Chat Zalo</a>
-</body></html>"""
+<a class="b b-zalo fab" href="%(zalo)s" rel="nofollow">%(izalo)s Chat Zalo</a>
+<nav class="mbar" aria-label="Liên hệ nhanh"><a class="b b-line" href="tel:%(phone)s">%(iphone)s Gọi %(phone)s</a><a class="b b-zalo" href="%(zalo)s" rel="nofollow">%(izalo)s Chat Zalo</a></nav>
+<script src="/assets/site.js" defer></script>
+</body></html>""" % {
+        "title": e(title), "desc": e(desc), "color": e(c["color"]), "canon": e(_abs(path)), "ogt": og_type, "name": e(c["name"]),
+        "ogimg": ('<meta property="og:image" content="%s">' % e(img)) if img else "", "font": FONT, "ld": ldj, "ga": ga,
+        "tag": e(c["tagline"] or ""), "nav": nav, "zalo": zalo, "body": body, "legal": e(c["legal"]),
+        "tagp": e(c["tagline"]) if c["tagline"] else "", "certs": e(c["certs"]), "contact": contact, "links": links,
+        "year": db.today()[:4], "izalo": ICON["zalo"], "iphone": ICON["phone"], "phone": c["phone"]})
 
 
 def _crumbs(items: list[tuple[str, str]]) -> tuple[str, dict]:
@@ -603,19 +677,38 @@ def _media_url(name: str | None) -> str | None:
 
 def _product_pages() -> list[dict]:
     out = []
-    for p in db.q("SELECT * FROM products WHERE COALESCE(is_general,0)=0 AND COALESCE(is_sample,0)=0 ORDER BY hot DESC, id"):
+    for p in site_products():
         sl = slugify(p["name"])
-        img = _cover_for([p["id"]], f"sp-{sl}")
-        out.append({**p, "slug": sl, "img": img})
-    if not out:  # chưa có sản phẩm thật: dùng cả sản phẩm mẫu để website không trống
-        for p in db.q("SELECT * FROM products WHERE COALESCE(is_general,0)=0 ORDER BY id"):
-            out.append({**p, "slug": slugify(p["name"]), "img": None})
+        imgs, factory = _site_images(p, sl)
+        out.append({**p, "slug": sl, "imgs": imgs, "factory_img": factory, "img": imgs[0][0] if imgs else None})
     return out
+
+
+def _pcard(p: dict, zalo: str) -> str:
+    """Thẻ sản phẩm: ảnh vuông (rê chuột xem ảnh thứ hai), số ảnh, nhóm, tên, mô tả ngắn, nhập tối thiểu, hỏi giá Zalo."""
+    e = html.escape
+    url = "/san-pham/%s/" % p["slug"]
+    imgs = p.get("imgs") or []
+    if imgs:
+        pics = "".join('<img src="%s" alt="%s" loading="lazy" width="520" height="520">' % (_media_url(s), e(p["name"]) if k == 0 else "")
+                       for k, (_, s) in enumerate(imgs[:2]))
+    else:
+        pics = '<span class="ph" aria-hidden="true">%s</span>' % e((p["name"] or "?")[:1].upper())
+    cnt = ('<span class="cnt">%s %d ảnh</span>' % (ICON["img"], len(imgs))) if len(imgs) > 1 and not p.get("factory_img") else ""
+    hot = '<span class="hot">Bán chạy</span>' if p.get("hot") else ""
+    cat = p.get("category") or "Sản phẩm"
+    desc = (p.get("description") or "").strip().split("\n")[0][:140]
+    moq = p.get("moq") or "Giá sỉ liên hệ"
+    return ('<article class="pc" data-cat="%s"><a class="pc-img" href="%s" tabindex="-1" aria-hidden="true">%s%s%s</a>'
+            '<div class="pc-b"><span class="pc-cat">%s</span><h3><a href="%s">%s</a></h3>%s'
+            '<div class="pc-f"><small>%s</small><a href="%s" rel="nofollow">Hỏi giá sỉ</a></div></div></article>'
+            % (e(cat), url, pics, cnt, hot, e(cat), url, e(p["name"]), ("<p>%s</p>" % e(desc)) if desc else "",
+               e(("Tối thiểu: " + moq) if p.get("moq") else moq), zalo))
 
 
 def _card(url: str, title: str, text: str, img: str | None, pill: str = "") -> str:
     e = html.escape
-    pic = ('<a href="%s"><img src="%s" alt="%s" loading="lazy" width="400" height="300"></a>' % (url, img, e(title))) if img else ""
+    pic = ('<a href="%s" tabindex="-1" aria-hidden="true"><img src="%s" alt="" loading="lazy" width="640" height="400"></a>' % (url, img)) if img else ""
     tag = ('<span class="pill">%s</span>' % e(pill)) if pill else ""
     return ('<div class="card">%s<div class="in">%s<h3><a href="%s">%s</a></h3><p>%s</p></div></div>'
             % (pic, tag, url, e(title), e(text or "")))
@@ -637,51 +730,85 @@ def _build() -> dict:
     tmp = SITE_DIR.with_name("site_tmp")
     shutil.rmtree(tmp, ignore_errors=True)
     (tmp / "assets").mkdir(parents=True)
-    (tmp / "assets" / "style.css").write_text(CSS % {"color": c["color"]}, encoding="utf-8")
+    (tmp / "assets" / "style.css").write_text((ASSETS / "style.css").read_text(encoding="utf-8").replace("__C__", c["color"]), encoding="utf-8")
+    shutil.copyfile(ASSETS / "site.js", tmp / "assets" / "site.js")
     pages = {}  # path -> (html, lastmod, priority)
     prods = _product_pages()
+    used = set()
+    for p in prods:
+        for big, small in p["imgs"]:
+            used |= {big, small}
     posts = [get(r["id"]) for r in db.q("SELECT id FROM site_posts WHERE status='published' ORDER BY COALESCE(published_at, created_at) DESC")]
     today = db.today()
     zalo = f"https://zalo.me/{c['phone']}"
-    services = [("Bỏ sỉ toàn quốc", "Giá xưởng cho shop online, đại lý, nhà phân phối; giao hàng toàn quốc."),
-                ("Gia công thương hiệu riêng", "Sản xuất theo công thức và quy cách của bạn, in thương hiệu của bạn."),
-                ("Thiết kế bao bì theo yêu cầu", "Thiết kế, in ấn bao bì, hướng dẫn ghi nhãn đúng quy định."),
-                ("Phát triển sản phẩm", "Hỗ trợ từ công thức, mẫu thử tới hồ sơ công bố và hoàn thiện sản phẩm.")]
-    # trang chủ
+    zl = '<a href="%s" rel="nofollow">%s</a>' % (zalo, c["phone"])
+    services = [("box", "Bỏ sỉ toàn quốc", "Giá xưởng cho shop online, đại lý, nhà phân phối; giao hàng toàn quốc."),
+                ("tag", "Gia công thương hiệu riêng", "Sản xuất theo công thức và quy cách của bạn, in thương hiệu của bạn."),
+                ("pack", "Thiết kế bao bì theo yêu cầu", "Thiết kế, in ấn bao bì, hướng dẫn ghi nhãn đúng quy định."),
+                ("flask", "Phát triển sản phẩm", "Hỗ trợ từ công thức, mẫu thử tới hồ sơ công bố và hoàn thiện sản phẩm.")]
+
     def li(items):
         return "".join("<li>" + x + "</li>" for x in items)
-    feat = "".join("<div><b>%s</b>%s</div>" % (e(a), e(b)) for a, b in services)
-    prod_cards = "".join(_card("/san-pham/%s/" % p["slug"], p["name"], (p.get("description") or p.get("category") or "")[:120],
-                               _media_url(p["img"]), p.get("category") or "") for p in prods[:8])
+    cats = []
+    for p in prods:
+        k = p.get("category") or "Sản phẩm khác"
+        if k not in cats:
+            cats.append(k)
+    band = ('<section class="band"><div class="wrap"><div><h2>Cần catalog và bảng giá sỉ?</h2><p>Nhắn Zalo %s để nhận catalog, '
+            'giá xưởng và mẫu thử. Tư vấn gia công thương hiệu riêng miễn phí.</p></div>'
+            '<a class="b b-zalo" href="%s" rel="nofollow">%s Nhắn Zalo %s</a></div></section>' % (c["phone"], zalo, ICON["zalo"], c["phone"]))
+    # trang chủ
+    pics = [p["imgs"][0][0] for p in prods if p["imgs"] and not p["factory_img"]][:3]
+    if len(pics) < 3:
+        pics += [p["imgs"][0][0] for p in prods if p["imgs"] and p["imgs"][0][0] not in pics][:3 - len(pics)]
+    if pics:
+        collage = ('<div class="collage">' + "".join('<img src="%s" alt="%s" width="700" height="700"%s>'
+                                                       % (_media_url(x), e(c["name"]) if k == 0 else "", "" if k == 0 else ' loading="lazy"')
+                                                       for k, x in enumerate(pics))
+                   + '<span class="tag">Giá tận xưởng</span></div>')
+    else:
+        collage = '<div class="collage empty">' + "".join("<span>%s</span>" % e(x) for x in (cats or ["Trà túi lọc", "Cà phê", "Ngũ cốc", "Bột thiên nhiên"])) + "</div>"
+    tag = c["tagline"] or "Nhà máy sản xuất & gia công trà, cà phê, ngũ cốc"
+    n_sp = len(prods)
+    cparts = [x.strip() for x in re.split(r"[–\-,]", c["certs"]) if x.strip()]
+    trust = [(cparts[0] if cparts else "GMP", ("Cùng " + ", ".join(cparts[1:])) if len(cparts) > 1 else "Tiêu chuẩn nhà máy"),
+             ("%d+" % max(n_sp, 100) if n_sp >= 100 else "100+", "mã sản phẩm"), ("63", "tỉnh thành giao hàng")]
+    feat = "".join("<div>%s<b>%s</b><p>%s</p></div>" % (ICON[i], e(a), e(b)) for i, a, b in services)
+    prod_cards = "".join(_pcard(p, zalo) for p in prods[:8])
     news = ""
     if posts:
-        news = ('<section class="blk"><div class="wrap"><h2>Kiến thức kinh doanh & gia công</h2><div class="grid">'
+        news = ('<section class="blk"><div class="wrap"><div class="blk-h"><div><h2>Kiến thức kinh doanh & gia công</h2>'
+                '<p>Kinh nghiệm nhập hàng, bán online và làm thương hiệu riêng từ nhà máy.</p></div>'
+                '<a class="more" href="/tin-tuc/">Tất cả bài viết</a></div><div class="grid">'
                 + "".join(_card("/tin-tuc/%s/" % p["slug"], p["title"], p["excerpt"] or p["meta_desc"], _media_url(p["cover"])) for p in posts[:3])
-                + '</div><p><a href="/tin-tuc/">Tất cả bài viết →</a></p></div></section>')
-    tag = c["tagline"] or "nhà máy sản xuất và gia công thực phẩm"
-    home = f"""<section class="hero"><div class="wrap"><h1>{e(c['name'])}: {e(tag)}</h1>
-<p>Nhà máy đạt {e(c['certs'])}. Hơn 100 mã sản phẩm: trà thảo mộc, cà phê, ngũ cốc, bột, cốm, detox. Nhận sỉ toàn quốc và gia công trọn gói cho shop online, đại lý, nhà phân phối và thương hiệu riêng.</p>
-<a class="btn" href="{zalo}" rel="nofollow">Nhận catalog & báo giá qua Zalo</a><a class="btn alt" href="/gia-cong/">Xem dịch vụ gia công</a></div></section>
-<section class="blk"><div class="wrap"><h2>Nhận sỉ & gia công trọn gói</h2><div class="feat">{feat}</div></div></section>
-<section class="blk" style="background:#fff"><div class="wrap"><h2>Sản phẩm của nhà máy</h2><div class="grid">{prod_cards}</div>
-<p><a href="/san-pham/">Xem tất cả sản phẩm →</a></p></div></section>
-{news}
-<section class="blk"><div class="wrap"><div class="cta"><b>Cần catalog sản phẩm và bảng giá sỉ / gia công?</b><br>Nhắn Zalo <a href="{zalo}" rel="nofollow">{c['phone']}</a> để được tư vấn trực tiếp, nhận mẫu thử.</div></div></section>"""
+                + "</div></div></section>")
+    home = ('<section class="hero"><div class="wrap hero-in"><div><h1>%s</h1><p class="lead">%s là nhà máy đạt %s. Trà thảo mộc, cà phê, '
+            'ngũ cốc, bột, cốm, detox: nhận sỉ toàn quốc và gia công trọn gói cho shop online, đại lý, nhà phân phối và thương hiệu riêng.</p>'
+            '<div class="acts"><a class="b b-buy" href="%s" rel="nofollow">%s Nhận catalog & báo giá</a><a class="b b-ghost" href="/san-pham/">Xem sản phẩm</a></div>'
+            '<ul class="trust">%s</ul></div>%s</div></section>'
+            % (e(tag), e(c["name"]), e(c["certs"]), zalo, ICON["zalo"],
+               "".join("<li><b>%s</b>%s</li>" % (e(a), e(b)) for a, b in trust), collage)
+            + '<section class="blk"><div class="wrap"><div class="blk-h"><div><h2>Sản phẩm của nhà máy</h2><p>Giá sỉ theo số lượng, '
+              'nhận in nhãn riêng.</p></div><a class="more" href="/san-pham/">Xem tất cả %d sản phẩm</a></div><div class="pgrid">%s</div></div></section>'
+            % (n_sp, prod_cards)
+            + '<section class="blk tint"><div class="wrap"><div class="blk-h"><div><h2>Nhận sỉ & gia công trọn gói</h2>'
+              '<p>Bạn tập trung bán hàng, nhà máy lo sản xuất.</p></div><a class="more" href="/gia-cong/">Quy trình gia công</a></div>'
+              '<div class="svc">%s</div></div></section>' % feat
+            + news + band)
     site_ld = {"@context": "https://schema.org", "@type": "WebSite", "name": c["name"], "url": _abs("/"), "inLanguage": "vi"}
-    pages["/"] = (_page("/", (c["name"] + " | " + c["tagline"])[:65],
+    pages["/"] = (_page("/", (c["name"] + " | " + (c["tagline"] or "Nhà máy trà, cà phê, ngũ cốc"))[:65],
                         ("%s: nhà máy đạt %s, hơn 100 mã trà, cà phê, ngũ cốc, bột. Nhận sỉ toàn quốc, gia công thương hiệu riêng. Zalo %s."
-                         % (c["name"], c["certs"], c["phone"]))[:160], home, [site_ld]), today, "1.0")
+                         % (c["name"], c["certs"], c["phone"]))[:160], home, [site_ld], _media_url(pics[0]) if pics else None), today, "1.0")
     # giới thiệu
     about = c["about"] or (c["name"] + " là nhà máy sản xuất thực phẩm đạt " + c["certs"] + ", chuyên các dòng trà túi lọc, cà phê hòa tan, cốm, "
                            "bột thiên nhiên và ngũ cốc. Nhà máy nhận sỉ toàn quốc và gia công trọn gói cho shop online, đại lý, nhà phân phối, "
                            "người mới bắt đầu kinh doanh và các thương hiệu muốn phát triển sản phẩm riêng.")
     cr, cld = _crumbs([("/", "Trang chủ"), (None, "Giới thiệu")])
     about_p = "".join("<p>%s</p>" % e(x) for x in about.splitlines() if x.strip())
-    zl = '<a href="%s" rel="nofollow">%s</a>' % (zalo, c["phone"])
     body = ('<div class="wrap">' + cr + '<article class="post"><h1>Giới thiệu nhà máy ' + e(c["name"]) + "</h1>" + about_p
-            + "<h2>Năng lực sản xuất</h2><ul>" + li(["Tiêu chuẩn: " + e(c["certs"]), "Hơn 100 mã sản phẩm: trà thảo mộc, cà phê, ngũ cốc, bột, cốm, detox",
-                                                   "Nhận sỉ toàn quốc, gia công thương hiệu riêng, thiết kế bao bì"]) + "</ul>"
-            + '<div class="cta">Liên hệ Zalo ' + zl + " để tham quan nhà máy và nhận mẫu thử.</div></article></div>")
+            + '<h2>Năng lực sản xuất</h2><ul class="ticks">' + li(["Tiêu chuẩn: " + e(c["certs"]), "Hơn 100 mã sản phẩm: trà thảo mộc, cà phê, ngũ cốc, bột, cốm, detox",
+                                                                 "Nhận sỉ toàn quốc, gia công thương hiệu riêng, thiết kế bao bì"]) + "</ul>"
+            + '<div class="cta">Liên hệ Zalo ' + zl + " để tham quan nhà máy và nhận mẫu thử.</div></article></div>" + band)
     pages["/gioi-thieu/"] = (_page("/gioi-thieu/", ("Giới thiệu nhà máy " + c["name"])[:60], about[:155], body, [cld]), today, "0.8")
     # gia công
     steps = ["Trao đổi nhu cầu: dòng sản phẩm, quy cách, số lượng, kênh bán", "Chọn công thức có sẵn hoặc phát triển công thức riêng, làm mẫu thử",
@@ -698,40 +825,84 @@ def _build() -> dict:
     faq_html = "".join("<details><summary>%s</summary><p>%s</p></details>" % (e(q), e(a)) for q, a in faq)
     body = ('<div class="wrap">' + cr + '<article class="post"><h1>Gia công trà túi lọc, cà phê, ngũ cốc, bột theo yêu cầu</h1>'
             + "<p>%s nhận gia công trọn gói thương hiệu riêng tại nhà máy đạt %s. Bạn tập trung bán hàng, nhà máy lo sản xuất.</p>" % (e(c["name"]), e(c["certs"]))
-            + "<h2>Hạng mục nhà máy hỗ trợ</h2><ul>" + li("<b>%s</b>: %s" % (e(a), e(b)) for a, b in services) + "</ul>"
-            + "<h2>Quy trình gia công</h2><ol>" + li(e(x) for x in steps) + "</ol>"
+            + '<h2>Hạng mục nhà máy hỗ trợ</h2><ul class="ticks">' + li("<b>%s</b>: %s" % (e(a), e(b)) for _, a, b in services) + "</ul>"
+            + '<h2>Quy trình gia công</h2><ol class="steps">' + li(e(x) for x in steps) + "</ol>"
             + '<h2>Câu hỏi thường gặp</h2><div class="faq">' + faq_html + "</div>"
-            + '<div class="cta">Gửi nhu cầu qua Zalo ' + zl + " để nhận báo giá gia công.</div></article></div>")
+            + '<div class="cta">Gửi nhu cầu qua Zalo ' + zl + " để nhận báo giá gia công.</div></article></div>" + band)
     pages["/gia-cong/"] = (_page("/gia-cong/", ("Gia công trà túi lọc, cà phê, ngũ cốc | " + c["name"])[:60],
                                  ("Gia công trọn gói tại nhà máy đạt %s: công thức, mẫu thử, bao bì, hồ sơ công bố, sản xuất và giao hàng toàn quốc."
                                   % c["certs"])[:160], body, [cld, faq_ld, svc_ld]), today, "0.9")
-    # sản phẩm
+    # sản phẩm: lọc theo nhóm
     cr, cld = _crumbs([("/", "Trang chủ"), (None, "Sản phẩm")])
-    all_cards = "".join(_card("/san-pham/%s/" % p["slug"], p["name"], (p.get("description") or "")[:120], _media_url(p["img"]),
-                              p.get("category") or "") for p in prods)
-    body = ('<div class="wrap">' + cr + '<section class="blk" style="padding-top:12px"><h1>Sản phẩm của nhà máy</h1><p>Giá sỉ vui lòng liên hệ Zalo '
-            + zl + '.</p><div class="grid">' + all_cards + "</div></section></div>")
+    counts = {k: sum(1 for p in prods if (p.get("category") or "Sản phẩm khác") == k) for k in cats}
+    chips = ('<div class="cats" role="group" aria-label="Lọc theo nhóm sản phẩm"><button type="button" data-cat="" aria-pressed="true">'
+             'Tất cả<span>%d</span></button>' % len(prods)
+             + "".join('<button type="button" data-cat="%s" aria-pressed="false">%s<span>%d</span></button>' % (e(k), e(k), counts[k]) for k in cats)
+             + "</div>") if len(cats) > 1 else ""
+    for p in prods:
+        p.setdefault("category", None)
+    all_cards = "".join(_pcard({**p, "category": p.get("category") or "Sản phẩm khác"}, zalo) for p in prods)
+    list_ld = {"@context": "https://schema.org", "@type": "ItemList", "itemListElement": [
+        {"@type": "ListItem", "position": i + 1, "url": _abs("/san-pham/%s/" % p["slug"]), "name": p["name"]} for i, p in enumerate(prods)]}
+    body = ('<div class="wrap">' + cr + '<section class="blk" style="padding-top:14px"><div class="blk-h"><div><h1 style="margin:0">Sản phẩm của nhà máy</h1>'
+            '<p>%d sản phẩm. Giá sỉ theo số lượng, liên hệ Zalo %s.</p></div></div>' % (len(prods), zl)
+            + chips + '<div class="pgrid">' + (all_cards or "<p>Chưa có sản phẩm.</p>") + "</div></section></div>" + band)
     pages["/san-pham/"] = (_page("/san-pham/", ("Sản phẩm nhà máy %s: trà, cà phê, ngũ cốc" % c["name"])[:60],
                                  ("Danh mục sản phẩm nhà máy %s: trà túi lọc, cà phê hòa tan, ngũ cốc, bột thiên nhiên, cốm. Nhận sỉ và gia công. Zalo %s."
-                                  % (c["name"], c["phone"]))[:160], body, [cld]), today, "0.8")
+                                  % (c["name"], c["phone"]))[:160], body, [cld, list_ld]), today, "0.8")
     for p in prods:
         path = "/san-pham/%s/" % p["slug"]
         rel = [x for x in posts if p["id"] in (x.get("product_ids") or [])][:3]
+        cat = p.get("category") or "Sản phẩm"
+        same = [x for x in prods if x["id"] != p["id"] and (x.get("category") or "Sản phẩm") == cat]
+        same = (same + [x for x in prods if x["id"] != p["id"] and x not in same])[:4]  # cùng nhóm trước, thiếu thì thêm sản phẩm khác
         cr, cld = _crumbs([("/", "Trang chủ"), ("/san-pham/", "Sản phẩm"), (None, p["name"])])
         pld = {"@context": "https://schema.org", "@type": "Product", "name": p["name"], "description": (p.get("description") or p["name"])[:500],
                "brand": {"@type": "Brand", "name": c["name"]}}
-        if p["img"]:
-            pld["image"] = _abs(_media_url(p["img"]))
+        if p["imgs"]:
+            pld["image"] = [_abs(_media_url(b)) for b, _ in p["imgs"][:6]]
         if p.get("category"):
             pld["category"] = p["category"]
-        img = ('<img class="cover" src="%s" alt="%s" width="1200" height="900">' % (_media_url(p["img"]), e(p["name"]))) if p["img"] else ""
-        desc = "".join("<p>%s</p>" % e(x) for x in (p.get("description") or "").splitlines() if x.strip())
+        imgs = p["imgs"]
+        if imgs:
+            figs = "".join('<figure id="anh-%d"><img src="%s" data-full="%s" alt="%s" width="1400" height="1400"%s></figure>'
+                           % (k + 1, _media_url(b), _media_url(b), e("%s, ảnh %d" % (p["name"], k + 1)), "" if k == 0 else ' loading="lazy"')
+                           for k, (b, _) in enumerate(imgs))
+            thumbs = ('<div class="gal-thumbs">' + "".join('<a href="#anh-%d" aria-label="Xem ảnh %d"><img src="%s" alt="" loading="lazy" width="120" height="120"></a>'
+                                                           % (k + 1, k + 1, _media_url(s)) for k, (_, s) in enumerate(imgs)) + "</div>") if len(imgs) > 1 else ""
+            nav = ('<button type="button" class="gal-nav prev" aria-label="Ảnh trước">%s</button><button type="button" class="gal-nav next" aria-label="Ảnh sau">%s</button>'
+                   % (ICON["prev"], ICON["next"])) if len(imgs) > 1 else ""
+            gallery = ('<div class="gal"><div class="gal-wrap"><div class="gal-main" tabindex="0" aria-label="Ảnh sản phẩm, vuốt để xem thêm">%s</div>%s'
+                       '<span class="gal-ctr">1 / %d</span></div>%s%s</div>'
+                       % (figs, nav, len(imgs), thumbs, '<p class="meta" style="margin:8px 0 0">Ảnh tại nhà máy</p>' if p["factory_img"] else ""))
+            lightbox = ('<dialog class="lb" aria-label="Xem ảnh lớn"><span class="c"></span><img alt=""><button type="button" class="x" aria-label="Đóng">×</button>'
+                        '<button type="button" class="p" aria-label="Ảnh trước">‹</button><button type="button" class="n" aria-label="Ảnh sau">›</button></dialog>')
+        else:
+            gallery = ('<div class="gal"><div class="gal-main" style="display:grid;place-items:center;font-size:72px;font-weight:800;color:var(--c-m)">%s</div></div>'
+                       % e(p["name"][:1].upper()))
+            lightbox = ""
+        dl = [x.strip() for x in (p.get("description") or "").splitlines() if x.strip()]
+        lead = dl[0][:220] if dl else ""
+        rest = dl[1:] if dl and len(dl[0]) <= 220 else dl  # câu đầu đã hiện ở trên, không lặp lại
+        desc = "".join("<p>%s</p>" % e(x) for x in rest)
         sp = [e(x.strip(" -•")) for x in (p.get("selling_points") or "").splitlines() if x.strip()]
+        spec = [("Nhóm sản phẩm", e(cat)), ("Nhập tối thiểu", e(p.get("moq") or "Liên hệ")),
+                ("Giá sỉ", "<b>Liên hệ Zalo %s</b>" % c["phone"]), ("Gia công", "Nhận in nhãn, thương hiệu riêng")]
         rel_html = ("<h2>Bài viết liên quan</h2><ul>" + li('<a href="/tin-tuc/%s/">%s</a>' % (x["slug"], e(x["title"])) for x in rel) + "</ul>") if rel else ""
-        body = ('<div class="wrap">' + cr + '<article class="post"><span class="pill">' + e(p.get("category") or "Sản phẩm") + "</span><h1>" + e(p["name"])
-                + "</h1>" + img + desc + (("<h2>Điểm nổi bật</h2><ul>" + li(sp) + "</ul>") if sp else "")
-                + "<ul>" + li(["Nhập tối thiểu: " + e(p.get("moq") or "liên hệ"), "Giá sỉ: liên hệ Zalo " + c["phone"], "Nhận gia công thương hiệu riêng"]) + "</ul>"
-                + rel_html + '<div class="cta">Nhận báo giá sỉ ' + e(p["name"]) + ": Zalo " + zl + "</div></article></div>")
+        info = ('<div class="pi"><span class="pill">%s</span><h1>%s</h1>%s%s'
+                '<table class="spec"><tbody>%s</tbody></table>'
+                '<div class="acts"><a class="b b-zalo" href="%s" rel="nofollow">%s Nhận báo giá qua Zalo</a>'
+                '<a class="b b-line" href="tel:%s">%s Gọi %s</a></div>'
+                '<div class="assure"><span><b>Nhà máy</b>%s</span><span><b>Giao hàng</b>Toàn quốc</span><span><b>Mẫu thử</b>Có trước khi nhập</span></div></div>'
+                % (e(cat), e(p["name"]), ('<p class="lead">%s</p>' % e(lead)) if lead else "",
+                   ('<ul class="ticks">' + li(sp[:6]) + "</ul>") if sp else "",
+                   "".join("<tr><th>%s</th><td>%s</td></tr>" % (a, b) for a, b in spec),
+                   zalo, ICON["zalo"], c["phone"], ICON["phone"], c["phone"], e(c["certs"])))
+        more = ('<section class="blk tint"><div class="wrap"><div class="blk-h"><h2>Sản phẩm khác của nhà máy</h2><a class="more" href="/san-pham/">Tất cả sản phẩm</a></div>'
+                '<div class="pgrid">' + "".join(_pcard(x, zalo) for x in same) + "</div></div></section>") if same else ""
+        body = ('<div class="wrap">' + cr + '<div class="pd">' + gallery + info + "</div>"
+                + (('<section class="pdesc"><h2>Mô tả sản phẩm</h2>' + desc + rel_html + "</section>") if (desc or rel_html) else "")
+                + "</div>" + more + band + lightbox)
         pages[path] = (_page(path, (p["name"] + " | " + c["name"])[:60],
                              ("%s: %s. Nhận sỉ, gia công. Zalo %s." % (p["name"], (p.get("description") or "sản phẩm nhà máy")[:100], c["phone"]))[:160],
                              body, [cld, pld], _media_url(p["img"]), "product"), today, "0.7")
@@ -812,7 +983,7 @@ def _build() -> dict:
     media = db.DATA_DIR / "site_media"
     if media.exists():
         (tmp / "media").mkdir(exist_ok=True)
-        used = {p["cover"] for p in posts if p.get("cover")} | {p["img"] for p in prods if p.get("img")}
+        used |= {p["cover"] for p in posts if p.get("cover")}
         for name in used:
             if (media / name).exists():
                 shutil.copyfile(media / name, tmp / "media" / name)
@@ -965,7 +1136,9 @@ def overview() -> dict:
             "site_auto_publish", "site_min_seo", "site_ftp_host", "site_ftp_user", "site_ftp_dir", "site_ftp_tls"]
     cfg = {k: st.get(k) for k in keys}
     cfg["site_ftp_pass_set"] = bool(st.get("site_ftp_pass"))
-    return {"posts": posts, "keywords": kws, "settings": cfg, "built": (SITE_DIR / "index.html").exists(),
+    prods = [{"id": p["id"], "name": p["name"], "category": p.get("category"), "on": p["site_on"], "why": p["site_why"],
+              "auto": p["site_auto"], "general": bool(p.get("is_general"))} for p in site_products(all_rows=True)]
+    return {"posts": posts, "products": prods, "keywords": kws, "settings": cfg, "built": (SITE_DIR / "index.html").exists(),
             "last_build": st.get("site_last_build"), "last_deploy": st.get("site_last_deploy"), "last_write": st.get("site_last_write"),
             "stats": {"published": sum(p["status"] == "published" for p in posts), "review": sum(p["status"] == "review" for p in posts),
                       "planned": sum(k["status"] == "planned" for k in kws),

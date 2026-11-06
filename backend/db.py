@@ -327,7 +327,7 @@ CREATE TABLE IF NOT EXISTS sales (
 MIGRATIONS = [
     ("posts", "source", "TEXT"),
     ("products", "hot", "INTEGER DEFAULT 0"), ("products", "hot_note", "TEXT DEFAULT ''"), ("products", "hot_since", "TEXT"),
-    ("products", "is_general", "INTEGER DEFAULT 0"),
+    ("products", "is_general", "INTEGER DEFAULT 0"), ("products", "site_show", "INTEGER"),
     ("posts", "img_fails", "INTEGER DEFAULT 0"),  # số lần Facebook không nhận ảnh khi đăng
     ("posts", "policy_note", "TEXT"),  # bài vi phạm luật Facebook (CEO kiểm)
     ("fb_accounts", "rest_until", "TEXT"), ("fb_accounts", "limit_factor", "REAL DEFAULT 1"), ("fb_accounts", "factor_until", "TEXT"),

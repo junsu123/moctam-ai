@@ -194,6 +194,24 @@ trang, rồi **Duyệt & đăng**. Bật “Vy tự đăng” để bài đạt 
 công ty. Đăng lên hosting bằng FTP / FTPS (tab Đăng lên hosting) hoặc tải zip rồi tải lên `public_html`. Sau đó gửi
 `https://ten-mien/sitemap.xml` vào Google Search Console.
 
+### Giao diện website (bán hàng)
+
+- **Trang chủ**: khối đầu màu lá trà đậm với lời giới thiệu nhà máy, nút **Nhận catalog & báo giá** (Zalo) và **Xem sản phẩm**,
+  3 con số tin cậy (tiêu chuẩn, số mã sản phẩm, giao toàn quốc) và cụm 3 ảnh sản phẩm thật kèm nhãn “Giá tận xưởng”; rồi lưới
+  sản phẩm, dịch vụ sỉ / gia công, bài viết, dải kêu gọi màu mật ong “Cần catalog và bảng giá sỉ?”.
+- **Danh sách sản phẩm** (`/san-pham/`): **chỉ hiện từng sản phẩm riêng lẻ**. Vy tự bỏ sản phẩm “Ảnh tổng hợp nhà máy”, combo,
+  bộ / hộp quà, “các loại”, “nhiều loại”, bảng giá, danh mục; “25 loại hạt”, “trà 5 vị” vẫn là một sản phẩm. Nhận sai thì vào
+  **Website → Sản phẩm** chọn *Luôn hiện* / *Luôn ẩn*. Nút lọc theo nhóm sản phẩm (kèm số lượng). Thẻ sản phẩm: ảnh vuông,
+  rê chuột xem ảnh thứ hai, nhãn “Bán chạy”, số ảnh, nhóm, tên, mô tả 2 dòng, nhập tối thiểu, nút **Hỏi giá sỉ** (Zalo).
+- **Trang sản phẩm**: **thư viện tối đa 10 ảnh** của đúng sản phẩm (ảnh tải lên trong phần mềm và thư mục ảnh riêng của sản
+  phẩm), vuốt trên điện thoại, nút trước / sau, dải ảnh nhỏ, bộ đếm “3 / 6”, bấm ảnh để **phóng to toàn màn hình** (phím ←/→,
+  Esc). Sản phẩm chưa có ảnh riêng thì dùng tạm vài ảnh nhà máy (ghi rõ “Ảnh tại nhà máy”). Bên phải: tên, mô tả ngắn, điểm nổi
+  bật, bảng thông tin (nhóm, nhập tối thiểu, giá sỉ, gia công), nút **Nhận báo giá qua Zalo** và **Gọi**, cam kết nhà máy / giao
+  hàng / mẫu thử; dưới cùng là mô tả đầy đủ và sản phẩm khác. Schema Product có danh sách ảnh.
+- **Chuẩn dùng**: chữ Be Vietnam Pro (dành cho tiếng Việt), co giãn theo màn hình (điện thoại 2 cột sản phẩm, menu cuộn ngang),
+  thanh **Gọi / Chat Zalo** cố định đáy màn hình trên điện thoại, nút Chat Zalo nổi trên máy tính, viền nổi khi dùng bàn phím,
+  tôn trọng chế độ giảm chuyển động. Ảnh được thu nhỏ (ảnh lớn 1400px, ảnh thẻ 520px) và chỉ tạo lại khi ảnh gốc đổi.
+
 ## Bảng bài đã đăng (phân trang)
 
 Mục **Bài đăng** có 2 tab (số bên cạnh tên tab là số bài; tab Bài đã đăng hiện đỏ khi có bài chưa có link):

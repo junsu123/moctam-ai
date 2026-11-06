@@ -2743,6 +2743,20 @@ def website_delete(pid: int):
     return {"ok": True}
 
 
+class SiteShow(BaseModel):
+    show: bool | None = None
+
+
+@app.put("/api/website/products/{pid}")
+def website_product_show(pid: int, b: SiteShow):
+    import website
+    try:
+        p = website.set_show(pid, b.show)
+    except KeyError:
+        raise HTTPException(404, "Không tìm thấy sản phẩm")
+    return {"id": pid, "on": p["site_on"], "why": p["site_why"], "auto": p["site_auto"]}
+
+
 @app.post("/api/website/build")
 def website_build():
     import website
