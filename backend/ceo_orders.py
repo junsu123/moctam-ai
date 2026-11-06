@@ -193,6 +193,47 @@ def _write_and_report(n, pid, tt, angle, note, via):
     followup(msg, via)
 
 
+def _push_report(plan: list[dict], kws: list[str], want: int) -> str:
+    kw = ", ".join(f"“{k}”" for k in kws)
+    if not plan:
+        return (f"Chưa xếp được bài nào vào nhóm có từ khóa {kw}: " +
+                (why_no_sales() if not __import__("group_finder")._working_sales()
+                 else "các nick đã đủ bài hôm nay hoặc hết giờ đăng. Bài chờ lượt sau, Tuấn vẫn ưu tiên nhóm này tới hết hôm nay."))
+    msg = f"Tuấn xếp {len(plan)} bài vào nhóm có từ khóa {kw}: " + "; ".join(
+        f"{x['time'][11:16]} {x['sale'] + ' → ' if x.get('sale') else ''}{x['group']}" for x in plan[:6]) + \
+        (f" và {len(plan) - 6} bài nữa" if len(plan) > 6 else "") + "."
+    if len(plan) < want:
+        msg += (f" Còn {want - len(plan)} nhóm chưa xếp được vì nick đã đủ bài hôm nay hoặc hết giờ đăng (luật Facebook), "
+                "Tuấn vẫn ưu tiên các nhóm này tới hết hôm nay.")
+    return msg
+
+
+def _push_write(need: int, pid, kws: list[str], want: int, via: str):
+    """Thiếu bài đã duyệt: Lan viết thêm, CEO duyệt (chế độ tự động), Tuấn xếp vào nhóm khớp từ khóa."""
+    import workflows
+    kw = ", ".join(kws)
+    try:
+        made = workflows.generate_posts(need, pid, "group", None, f"Bài đăng vào các nhóm về: {kw}. Viết hợp với thành viên nhóm đó.")
+    except Exception as e:
+        made = []
+        print("[push write]", e)
+    if made and autopilot():
+        for m in made:
+            p = db.one("SELECT * FROM posts WHERE id=?", (m["id"],))
+            if p and p["status"] == "draft":
+                good, why = review_post(p)
+                _apply_review(p, good, why)
+    ok = sum(1 for m in made if (db.one("SELECT status FROM posts WHERE id=?", (m["id"],)) or {}).get("status") == "approved")
+    if made and not autopilot():
+        plan = workflows.plan_distribution(kws, want)  # bài đã duyệt sẵn (nếu có) xếp luôn
+        followup((f"Lan viết xong {len(made)} bài cho nhóm có từ khóa “{kw}”. Sếp duyệt ở trang Bài đăng; duyệt xong Tuấn ưu tiên "
+                  "xếp vào các nhóm này tới hết hôm nay.") + (" " + _push_report(plan, kws, want) if plan else ""), via)
+        return
+    plan = workflows.plan_distribution(kws, want)
+    head = f"Lan viết {len(made)} bài, {ok} bài đạt. " if made else ("Lan chưa viết được bài mới. " if need else "")
+    followup(head + _push_report(plan, kws, want), via)
+
+
 def _find_product(pid=None, name=None) -> dict | None:
     if str(pid or "").isdigit():
         p = db.one("SELECT * FROM products WHERE id=?", (int(pid),))
@@ -356,6 +397,39 @@ def execute(act: dict) -> str:
         if not on:
             db.run("UPDATE posts SET status='approved', sale_id=NULL, scheduled_for=NULL WHERE sale_id=? AND status='scheduled'", (sid,))
         return f"{'Bật lại' if on else 'Tạm dừng'} tự đăng của {r['name']}"
+    if t == "post_keyword":
+        import group_target
+        raw = act.get("keyword") or act.get("keywords") or ""
+        kws = group_target.words(", ".join(raw) if isinstance(raw, list) else str(raw))
+        if not kws:
+            return "Sếp cho em từ khóa nhóm, VD: đăng bài lên các nhóm có từ khóa trà sữa"
+        kw = ", ".join(f"“{k}”" for k in kws)
+        info = group_target.push_groups(kws)
+        if not info["found"]:
+            return (f"Chưa có nhóm nào có từ khóa {kw} trong danh sách nhóm. Sếp nhắn “tìm nhóm theo chủ đề {kws[0]}” để sale đi "
+                    "tìm và xin vào nhóm trước")
+        why = "; ".join(f"{k} {v}" for k, v in info["why"].items())
+        if not info["ready"]:
+            return f"Có {len(info['found'])} nhóm có từ khóa {kw} nhưng hôm nay chưa nhóm nào đăng được ({why})"
+        ready = len(info["ready"])
+        try:
+            want = max(1, min(int(act.get("count") or ready), ready, 10))
+        except (TypeError, ValueError):
+            want = min(ready, 10)
+        group_target.push_set(kws, want)
+        import post_template
+        approved = len(workflows.with_images(db.q("SELECT * FROM posts WHERE status='approved' AND target_type='group'"
+                                                  + (" AND source='template'" if post_template.enabled() else ""))))
+        head = (f"Có {len(info['found'])} nhóm có từ khóa {kw}, hôm nay đăng được {ready} nhóm"
+                + (f" ({why})" if why else "") + f". Em giao đăng {want} nhóm. ")
+        if approved >= want:
+            return head + _push_report(workflows.plan_distribution(kws, want), kws, want)
+        need = want - approved
+        p = _find_product(act.get("product_id"), act.get("product") or " ".join(kws))
+        _bg(_push_write, need, p["id"] if p else None, kws, want, act.get("_via", "web"))
+        return head + (f"Đang có {approved} bài đã duyệt, " if approved else "Chưa có bài đã duyệt, ") + \
+            f"em giao Lan viết thêm {need} bài" + (f" về {p['name']}" if p else "") + \
+            (", viết xong em duyệt rồi Tuấn xếp vào các nhóm này và báo lại sếp" if autopilot() else ", viết xong sếp duyệt giúp em")
     if t == "focus_group":
         import group_target
         from knowledge import plain
@@ -502,6 +576,8 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - pause_sale {sale_id} / resume_sale {sale_id}: tạm dừng / bật lại tự đăng của nick
 - setting {key, value}: đổi cài đặt trong danh sách cai_dat_duoc_doi (nơi đăng: post_target_mode, post_group_keywords,
   post_group_exclude)
+- post_keyword {keyword, count?, product?}: sếp bảo ĐĂNG BÀI NGAY lên các nhóm có từ khóa (một lần, hôm nay). Tuấn xếp bài đã
+  duyệt vào nhóm khớp từ khóa, thiếu bài thì Lan viết thêm. Khác setting post_group_keywords (chỉ đạo lâu dài)
 - focus_group {group, on}: sếp bảo tập trung đăng (on=true) / thôi tập trung (on=false) vào một nhóm theo tên
 - find_friends {}: Tuấn đọc nhóm sôi nổi nhất của các nick, chuẩn bị danh sách người nên kết bạn (sale tự bấm gửi, không tự gửi)
 - hire {reason}: tuyển thêm sale; fire {sale_id, reason}: cho sale nghỉ (chỉ khi sếp nói rõ)
@@ -616,7 +692,19 @@ def _rule_plan(text: str) -> dict:
         else:
             acts.append({"type": "setting", "key": "post_group_keywords", "value": ", ".join(cur["include"] + kws)})
             acts.append({"type": "setting", "key": "post_target_mode", "value": "only" if how == "chỉ" else "prefer"})
-    if acts and all(a["type"] in ("setting", "focus_group") for a in acts):
+    kwp = None if tgt else re.search(r"(đăng|post)\s*(\d+\s*)?(bài\s*)?(viết\s*)?(ngay\s*)?(lên|vào|ở|trong|tại|cho)\s*(các\s*|những\s*|mấy\s*)?"
+                                      r"(nhóm|group|hội)\s*(có\s*)?(từ khóa|tên|chữ|về|liên quan( tới| đến)?)?\s*[:“\"']?\s*(.+)", low)
+    if kwp and (len(low[:kwp.start()].split()) > 6 or re.search(r"không|đừng|chưa|sao|bị|vì|lúc", low[:kwp.start()])
+                or low.rstrip().endswith("?") or re.search(r"\bbị\b|tại sao|vì sao|hôm qua|lúc nãy|đã đăng|bài đăng", low)):
+        kwp = None  # "đăng" nằm giữa câu kể / câu hỏi, không phải lệnh
+    if kwp and not want_friends:
+        what = re.sub(r"[”\"'.!?]+$", "", kwp.group(12)).strip()
+        what = re.sub(r"\s+(ngay|luôn|hôm nay|nhé|nha|giúp|giùm)(\s.*)?$", "", what).strip()
+        n = re.search(r"(\d+)\s*(bài|nhóm)", low)
+        kws = [w.strip() for w in re.split(r",|;| và | hoặc ", what) if w.strip()][:8]
+        if kws:
+            acts.append({"type": "post_keyword", "keyword": ", ".join(kws), "count": int(n.group(1)) if n else None})
+    if acts and all(a["type"] in ("setting", "focus_group", "post_keyword") for a in acts):
         pass
     elif want_friends:
         acts.append({"type": "find_friends"})
@@ -816,6 +904,6 @@ def overview() -> dict:
             running.append(f"{r['name']}: {JOB_TXT.get(b, b)}" + (f" (+{browser_poster.queued(r['id']) - 1} việc chờ)"
                                                                      if browser_poster.queued(r["id"]) > 1 else ""))
     return {"autopilot": autopilot(), "history": history(), "orders": orders(), "running": running,
-            "suggestions": ["Tình hình hôm nay thế nào?", "Viết 3 bài về trà gừng mật ong", "Xếp lịch đăng nhóm",
+            "suggestions": ["Tình hình hôm nay thế nào?", "Đăng bài lên các nhóm có từ khóa nguồn hàng, bán hàng online", "Viết 3 bài về trà gừng mật ong", "Xếp lịch đăng nhóm",
                             "Tìm nhóm theo chủ đề “hội chạy quảng cáo facebook”", "Lan viết bài dài quá, viết dưới 150 chữ",
                             "Từ nay bài nào cũng nhắc giao hàng toàn quốc"]}

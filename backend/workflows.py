@@ -373,8 +373,9 @@ def with_images(posts: list[dict]) -> list[dict]:
     return ok
 
 
-def plan_distribution() -> list[dict]:
+def plan_distribution(keywords: list[str] | None = None, limit: int | None = None) -> list[dict]:
     """Tuấn ghép bài đã duyệt với (nhóm, nick sale, giờ đăng).
+    keywords: lệnh một lần của sếp "đăng bài lên các nhóm có từ khóa X": chỉ xếp vào nhóm khớp, không xếp trang cá nhân / Fanpage.
 
     Quy tắc: nick phải là thành viên nhóm; mỗi nhóm chỉ nhận 1 bài trong 1 lượt và phải hết giãn cách;
     mỗi nick không vượt số bài/ngày, cách nhau ít nhất N phút, chỉ đăng trong khung giờ của nick;
@@ -384,7 +385,7 @@ def plan_distribution() -> list[dict]:
     import accounts
     import my_groups
     try:
-        admin_plan = my_groups.plan_admin()  # nhóm mình quản lý: 5–10 bài/ngày, xếp trước
+        admin_plan = [] if keywords else my_groups.plan_admin()  # nhóm mình quản lý: 5–10 bài/ngày, xếp trước
     except Exception as e:
         print("[plan_admin]", e)
         admin_plan = []
@@ -409,7 +410,15 @@ def plan_distribution() -> list[dict]:
     import group_finder
     groups.sort(key=lambda g: not group_finder.matches_today(g))  # ưu tiên nhóm hợp chủ đề CEO chọn hôm nay
     import group_target
-    groups = group_target.apply(groups)  # sếp chỉ đạo: nhóm tập trung / có từ khóa trước, bỏ nhóm có từ khóa tránh
+    push = None if keywords else group_target.push_get()
+    if keywords:  # lệnh một lần: chỉ nhóm khớp từ khóa (bỏ qua chế độ "chỉ nhóm chỉ định" vì sếp vừa nói rõ)
+        groups = group_target.filter_push(groups, keywords)
+    elif push:  # hôm nay sếp vừa giao đăng theo từ khóa: bài duyệt sau cũng vào nhóm khớp trước
+        first = group_target.filter_push(groups, push["keywords"])
+        ids = {g["id"] for g in first}
+        groups = first + [g for g in group_target.apply(groups) if g["id"] not in ids]
+    else:
+        groups = group_target.apply(groups)  # sếp chỉ đạo: nhóm tập trung / có từ khóa trước, bỏ nhóm có từ khóa tránh
     plan = []
 
     import learning
@@ -460,6 +469,8 @@ def plan_distribution() -> list[dict]:
                                 + (" AND source='template'" if post_template.enabled() else "") + " ORDER BY id"))
     if sales:
         for post in approved:
+            if limit and len(plan) >= limit:
+                break
             for g in list(groups):
                 # nhóm sale tự tìm được: chỉ nick đã vào nhóm mới đăng; nhóm sếp nhập chưa đánh dấu nick: coi như mọi nick đã vào
                 cands = [(t, load[s["id"]]["count"], s) for s in sales
@@ -469,7 +480,7 @@ def plan_distribution() -> list[dict]:
                     assign(post, s, t.strftime("%Y-%m-%d %H:%M"), g)
                     groups.remove(g)
                     break
-        for post in with_images(db.q("SELECT * FROM posts WHERE status='approved' AND target_type='profile' ORDER BY id")):
+        for post in ([] if keywords else with_images(db.q("SELECT * FROM posts WHERE status='approved' AND target_type='profile' ORDER BY id"))):
             cands = [(t, s) for s in sales if load[s["id"]]["profile"] == 0 and (t := next_slot(s))]
             if cands:
                 t, s = min(cands, key=lambda c: c[0])
@@ -477,11 +488,11 @@ def plan_distribution() -> list[dict]:
     else:  # chưa có nick sale tự động -> xếp lịch để người đăng tay
         per_day = int(db.get_settings().get("posts_per_day", 4))
         slots = ["09:00", "11:30", "15:00", "20:00", "21:30"]
-        for post, group in zip(approved[:per_day], groups):
+        for post, group in zip(approved[:min(per_day, limit or per_day)], groups):
             assign(post, None, f"{today} {slots[len(plan) % len(slots)]}", group)
     # Bài Fanpage đã duyệt: xếp giờ, đến giờ hệ thống tự đăng qua Graph API
     page_slots = ["10:00", "19:30"]
-    for i, post in enumerate(with_images(db.q("SELECT * FROM posts WHERE status='approved' AND target_type='page' ORDER BY id"))[:2]):
+    for i, post in enumerate([] if keywords else with_images(db.q("SELECT * FROM posts WHERE status='approved' AND target_type='page' ORDER BY id"))[:2]):
         when = f"{db.today()} {page_slots[i]}"
         db.run("UPDATE posts SET scheduled_for=?, status='scheduled' WHERE id=?", (when, post["id"]))
         plan.append({"post_id": post["id"], "group": "Fanpage", "time": when})

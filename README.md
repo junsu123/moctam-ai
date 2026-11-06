@@ -238,6 +238,21 @@ Tuấn áp dụng từ lần xếp lịch tiếp theo, bài đã xếp lịch gi
 chăm đều mỗi ngày. Tuấn, CEO và Lan đều thấy chỉ đạo này trong lời dặn. Nhắn CEO cũng được: “chỉ đăng ở nhóm có từ khóa trà túi
 lọc, ngũ cốc”, “không đăng vào nhóm mẹ bỉm”, “tập trung đăng vào nhóm Hội Bán Hàng Online”.
 
+### Lệnh CEO: đăng bài ngay lên các nhóm theo từ khóa
+
+Nhắn CEO (trên web hoặc Telegram), VD:
+- “Đăng bài lên các nhóm có từ khóa trà, ngũ cốc”
+- “Đăng 3 bài vào nhóm về mẹ bỉm”
+- “Post bài lên group bán hàng online”
+
+CEO tìm các nhóm có từ khóa (tên, chủ đề nhóm, không phân biệt dấu) và báo: có bao nhiêu nhóm khớp, hôm nay đăng được bao nhiêu
+nhóm, nhóm còn lại vì sao chưa đăng (thiếu link, đang giãn cách, đã có bài chờ, sếp cấm, Tuấn đánh giá không nên đăng). Số bài:
+theo số sếp nói, không nói thì mỗi nhóm đăng được một bài (tối đa 10). Đủ bài đã duyệt thì Tuấn xếp lịch ngay vào đúng các nhóm
+đó; thiếu thì Lan viết thêm, CEO duyệt (chế độ CEO tự vận hành) rồi Tuấn xếp và CEO báo lại giờ đăng, nick đăng, tên nhóm.
+Đây là lệnh một lần trong ngày: bài duyệt sau trong ngày vẫn được ưu tiên vào các nhóm này; khác với “chỉ đăng ở nhóm có từ khóa …”
+là chỉ đạo lâu dài ở trên. Luật Facebook vẫn giữ (trần bài/nick/ngày, giãn cách, giờ đăng). Chưa có nhóm nào khớp thì CEO gợi ý
+nhắn “tìm nhóm theo chủ đề …” để sale đi tìm nhóm trước.
+
 ## Kết bạn với thành viên trong nhóm sôi nổi
 
 Mục **Kết bạn** (nhóm Facebook ở thanh bên).

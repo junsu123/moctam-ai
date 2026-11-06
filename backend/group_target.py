@@ -145,3 +145,52 @@ def prompt_line() -> str:
     if c["exclude"]:
         parts.append("tránh nhóm có: " + ", ".join(c["exclude"]))
     return "\n\nCHỈ ĐẠO NƠI ĐĂNG CỦA SẾP: " + " · ".join(parts)
+
+
+# ---------------------------------------------------------------- lệnh một lần: "đăng bài lên các nhóm có từ khóa X"
+def push_get() -> dict | None:
+    """Đợt đăng theo từ khóa sếp giao hôm nay (còn hiệu lực tới hết ngày)."""
+    import json
+    try:
+        p = json.loads(db.get_settings().get("kw_push") or "{}")
+    except Exception:
+        return None
+    return p if p.get("date") == db.today() and p.get("keywords") else None
+
+
+def push_set(kws: list[str], count: int) -> dict:
+    import json
+    p = {"date": db.today(), "keywords": kws, "count": count, "at": db.now()}
+    db.set_setting("kw_push", json.dumps(p, ensure_ascii=False))
+    return p
+
+
+def push_groups(kws: list[str]) -> dict:
+    """Nhóm khớp từ khóa: tổng số, số nhóm đăng được ngay (có link, hết giãn cách, chưa có bài chờ), lý do nhóm còn lại."""
+    import workflows
+    c = settings()
+    taken = {r["group_id"] for r in db.q("SELECT group_id FROM posts WHERE status IN ('scheduled','posting') AND group_id IS NOT NULL")}
+    found, ready, why = [], [], {"Thiếu link nhóm": 0, "Đang giãn cách (vừa đăng)": 0, "Đã có bài chờ đăng": 0, "Sếp đã cấm": 0,
+                                 "Tuấn đánh giá không nên đăng": 0}
+    for g in db.q("SELECT * FROM groups WHERE COALESCE(is_sample,0)=0 AND COALESCE(managed,0)=0"):
+        if not hit(g, kws):
+            continue
+        found.append(g)
+        if hit(g, c["exclude"]):
+            why["Sếp đã cấm"] += 1
+        elif g.get("verdict") == "skip" and not g.get("leads_count") and not g.get("pinned"):
+            why["Tuấn đánh giá không nên đăng"] += 1
+        elif not (g.get("url") or "").strip():
+            why["Thiếu link nhóm"] += 1
+        elif g["id"] in taken:
+            why["Đã có bài chờ đăng"] += 1
+        elif not workflows.group_ready(g):
+            why["Đang giãn cách (vừa đăng)"] += 1
+        else:
+            ready.append(g)
+    return {"found": found, "ready": ready, "why": {k: v for k, v in why.items() if v}}
+
+
+def filter_push(groups: list[dict], kws: list[str]) -> list[dict]:
+    c = settings()
+    return [g for g in groups if hit(g, kws) and not hit(g, c["exclude"])]
