@@ -544,6 +544,11 @@ def _join_some(page, aid: int) -> dict:
     if s().get("join_enabled", "1") != "1":
         return res
     cap = max(0, int(s().get("join_per_nick_day") or 2) - joins_today(aid))
+    try:
+        import fb_policy
+        cap = min(cap, fb_policy.remaining(aid, "join"))  # luật Facebook: không xin vào nhiều nhóm liền nhau
+    except Exception as e:
+        print("[fb policy]", e)
     for g in db.q("""SELECT * FROM groups g WHERE source='search' AND COALESCE(url,'')!='' AND COALESCE(verdict,'join')!='skip'
                      AND NOT EXISTS (SELECT 1 FROM account_groups j WHERE j.group_id=g.id AND j.account_id=?)
                      ORDER BY COALESCE(eng_score, score / 2) DESC, members DESC LIMIT ?""", (aid, cap)):

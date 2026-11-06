@@ -688,6 +688,31 @@ def _job_check(pw, aid: int):
         ctx.close()
 
 
+def _policy_hold(post: dict, aid: int, agent: str) -> bool:
+    """Kiểm luật Facebook ngay trước khi đăng. Trả về True nếu phải hoãn / dừng bài này."""
+    import fb_policy
+    if not fb_policy.enabled():
+        return False
+    bad = fb_policy.blocking(fb_policy.check_text(post.get("content") or "", post["id"], aid))
+    if bad:
+        why = fb_policy.summary(bad)
+        db.run("""UPDATE posts SET status='draft', sale_id=NULL, account_id=NULL, scheduled_for=NULL, review_ok=0, policy_note=?,
+                  error=? WHERE id=?""", (why[:500], ("Không đăng vì phạm luật Facebook: " + why)[:300], post["id"]))
+        db.log("tuan", "Giữ bài phạm luật Facebook", f"Bài #{post['id']}: {why[:300]}. Đưa về chờ duyệt để sửa.")
+        return True
+    ok, why, until = fb_policy.allow(aid, "post", post.get("group_id") if post.get("target_type") == "group" else None)
+    if ok:
+        return False
+    if until:  # dời giờ đăng của nick này
+        db.run("UPDATE posts SET status='scheduled', scheduled_for=?, error=? WHERE id=?",
+               (until[:16], f"Hoãn theo luật Facebook: {why}"[:300], post["id"]))
+    else:  # nhóm đang tạm ngừng: trả bài về hàng đợi cho nhóm khác
+        db.run("UPDATE posts SET status='approved', sale_id=NULL, account_id=NULL, group_id=NULL, scheduled_for=NULL, error=? WHERE id=?",
+               (f"Hoãn theo luật Facebook: {why}"[:300], post["id"]))
+    db.log(agent, "Hoãn đăng theo luật Facebook", f"Bài #{post['id']}: {why}" + (f", dời tới {until[11:16]}" if until else ""))
+    return True
+
+
 def _block(aid: int, reason: str):
     """Nick bị checkpoint/khóa: dừng riêng nick đó (các nick khác của sale vẫn làm), trả bài của nick về hàng đợi."""
     import errors
@@ -703,6 +728,11 @@ def _block(aid: int, reason: str):
     db.log("tuan", "Nick gặp sự cố", f"Nick {accounts.label(acc)} của {sale.get('name')}: {reason}. Đã dừng riêng nick này "
            "và trả các bài chờ về hàng đợi.")
     try:
+        import fb_policy
+        fb_policy.on_block(aid, reason)  # nghỉ, giảm giới hạn, rút kinh nghiệm
+    except Exception as e:
+        print("[fb policy]", e)
+    try:
         import telegram_bot
         telegram_bot.alert_nick(aid, reason)
     except Exception as e:
@@ -717,6 +747,8 @@ def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
     if not post:
         return
     where = post.get("group_name") or "trang cá nhân"
+    if not dry_run and _policy_hold(post, aid, agent):  # luật Facebook: nhịp đăng / nội dung chưa an toàn -> chưa đăng
+        return
     workflows.set_status(agent, "working", f"{'Đăng thử' if dry_run else 'Đang đăng'} bài vào {where} (nick {accounts.label(acc)})")
     if not dry_run:
         db.run("UPDATE posts SET status='posting', error=NULL, account_id=?, sale_id=? WHERE id=?", (aid, acc["sale_id"], post_id))
@@ -1204,6 +1236,11 @@ def _do_scan(ctx, page, aid: int, post_ids: list[int]) -> dict:
             body = page.inner_text("body").lower()
             if any(t.lower() in body for t in selectors()["removed_texts"]):
                 db.run("UPDATE posts SET permalink_status='removed', bump_enabled=0 WHERE id=?", (pid,))
+                try:
+                    import fb_policy
+                    fb_policy.on_removed(post)
+                except Exception as e:
+                    print("[fb policy]", e)
                 continue
             r = _scan_comments(page, post, sale, acc)
             for k in total:
@@ -1254,6 +1291,11 @@ def _do_bump(ctx, page, aid: int, bump_id: int):
         return
     acc, sale, agent = _ctx_names(aid)
     where = post.get("group_name") or "trang cá nhân"
+    import fb_policy
+    ok, why, _ = fb_policy.allow(aid, "bump")
+    if not ok:
+        _bump_done(bump_id, "skipped", f"Không up theo luật Facebook: {why}")
+        return
     img = media_folder.pick(post)
     if not img:
         _bump_done(bump_id, "failed", "Thư mục ảnh trống hoặc chưa cài. Vào Cài đặt → Up bài để chọn thư mục")
@@ -1292,6 +1334,11 @@ def _do_bump(ctx, page, aid: int, bump_id: int):
                 errors.report_exc("scan", f"Quét bình luận bài #{post['id']} bị lỗi", e, screen="kpi")
         if any(t.lower() in body for t in s["removed_texts"]):
             db.run("UPDATE posts SET permalink_status='removed', bump_enabled=0 WHERE id=?", (post["id"],))
+            try:
+                import fb_policy
+                fb_policy.on_removed(post)
+            except Exception as e:
+                print("[fb policy]", e)
             _bump_done(bump_id, "skipped", "Bài đã bị xóa hoặc ẩn, đã ngừng up bài này")
             db.log(agent, "Bài bị gỡ", f"Bài #{post['id']} ở {where} không còn hiển thị, ngừng up")
             return

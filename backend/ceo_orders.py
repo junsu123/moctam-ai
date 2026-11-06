@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 
 import db
 
-AGENT_ALIASES = {"minh": "minh", "lan": "lan", "tuan": "tuan", "tuấn": "tuan", "ha": "ha", "hà": "ha", "khoa": "khoa", "mai": "mai",
+AGENT_ALIASES = {"minh": "minh", "lan": "lan", "tuan": "tuan", "tuấn": "tuan", "ha": "ha", "hà": "ha", "khoa": "khoa", "mai": "mai", "vy": "vy",
                  "đức": "ceo", "duc": "ceo", "ceo": "ceo", "trưởng phòng": "minh"}
 SETTINGS_OK = {
     "posts_per_day": ("int", 1, 20, "số bài Lan viết mỗi ngày"), "kpi_min": ("int", 1, 50, "KPI tối thiểu khách có SĐT/ngày"),
@@ -436,7 +436,8 @@ def _context() -> str:
     return json.dumps({
         "hom_nay": db.today(),
         "agents": {"minh": "Minh, trưởng phòng, chủ trì họp", "lan": "Lan, viết bài", "tuan": "Tuấn, chọn nhóm và xếp lịch đăng",
-                   "ha": "Hà, chăm sóc khách, soạn tin", "khoa": "Khoa, số liệu", "mai": "Mai, tìm khách sỉ (người bán online, livestream) trên Facebook, TikTok, Shopee"},
+                   "ha": "Hà, chăm sóc khách, soạn tin", "khoa": "Khoa, số liệu", "mai": "Mai, tìm khách sỉ (người bán online, livestream) trên Facebook, TikTok, Shopee",
+                   "vy": "Vy, quản lý website công ty và viết bài chuẩn SEO"},
         "sales": [{"id": r["id"], "ten": r["name"], "nick": r["fb_name"], "dang_nhap": r["login_status"] == "ok",
                    "tu_dang": bool(r["auto_post"])} for r in sales],
         "san_pham": [{"id": p["id"], "ten": p["name"], "dang_ban_chay": bool(p["hot"])} for p in prods],

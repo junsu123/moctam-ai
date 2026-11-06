@@ -73,6 +73,12 @@ def _tick():
     knowledge.tick(now)
     import growth
     growth.tick(now)  # agent rảnh thì tự học / luyện tập để lên cấp
+    import fb_policy
+    if fb_policy.watch_due():  # Tuấn đọc lại chính sách Facebook mỗi tuần, báo sếp khi có thay đổi
+        db.set_setting("fbp_watch_last", db.now())
+        threading.Thread(target=fb_policy.check_sources, daemon=True).start()
+    import website
+    website.tick(now)  # Vy viết bài website theo lịch
     # KPI: chuyển khách cần sếp, nhắc lại; báo cáo Telegram
     kpi.check_escalations()
     telegram_bot.tick()

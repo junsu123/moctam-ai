@@ -11,7 +11,7 @@ from agents import system_prompt
 from llm import llm, month_spent, parse_json
 
 # Trạng thái hiện tại của từng agent (hiển thị trên văn phòng 3D)
-STATUS = {a: {"state": "idle", "text": "Đang sẵn sàng"} for a in ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai"]}
+STATUS = {a: {"state": "idle", "text": "Đang sẵn sàng"} for a in ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy"]}
 
 
 TARGET_NAME = {"group": "Hội nhóm", "profile": "Trang cá nhân", "page": "Fanpage"}
@@ -395,7 +395,7 @@ def plan_distribution() -> list[dict]:
                     (s["id"], today + "%", today + "%"))
         times = [r["scheduled_for"] or r["posted_at"] for r in rows]
         load[s["id"]] = {"count": sum(1 for r in rows if not r["managed"]), "last": max(times) if times else None,  # bài nhóm mình quản lý không tính giới hạn
-                         "profile": sum(r["target_type"] == "profile" for r in rows)}
+                         "profile": sum(r["target_type"] == "profile" for r in rows), "all": len(rows)}  # all: tính trần luật Facebook
         for t in times:
             sale_last[s["sale_id"]] = max(sale_last.get(s["sale_id"]) or "", t)
     taken = {r["group_id"] for r in db.q("SELECT group_id FROM posts WHERE status IN ('scheduled','posting') AND group_id IS NOT NULL")}
@@ -411,13 +411,19 @@ def plan_distribution() -> list[dict]:
     golden = learning.golden_hours()
     explore = float(db.get_settings().get("learn_explore") or 0.25)
 
+    import fb_policy
+
     def next_slot(s):
         L = load[s["id"]]
-        if L["count"] >= int(s["max_posts_per_day"] or 5):
+        lim = fb_policy.limits(s) if fb_policy.enabled() else {"posts": 99, "gap": 0}
+        if L["count"] >= int(s["max_posts_per_day"] or 5) or L["all"] >= lim["posts"]:
+            return None
+        if fb_policy.enabled() and (s.get("rest_until") or "") > db.now():  # nick đang nghỉ sau sự cố
             return None
         start = max(now + timedelta(minutes=3), _dt(f"{today} {s['active_from'] or '08:00'}"))
         if L["last"]:
-            start = max(start, _dt(L["last"]) + timedelta(minutes=int(s["min_gap_minutes"] or 40) + random.randint(0, 12)))
+            gap = max(int(s["min_gap_minutes"] or 40), lim["gap"])
+            start = max(start, _dt(L["last"]) + timedelta(minutes=gap + random.randint(0, 12)))
         if sale_last.get(s["sale_id"]):  # sale làm từng nick một: chừa thời gian xong ca nick trước
             start = max(start, _dt(sale_last[s["sale_id"]]) + timedelta(minutes=8 + random.randint(0, 6)))
         end = _dt(f"{today} {s['active_to'] or '22:00'}")
@@ -437,6 +443,7 @@ def plan_distribution() -> list[dict]:
         if acc:
             L = load[acc["id"]]
             L["count"] += 1
+            L["all"] += 1
             L["last"] = when
             L["profile"] += post["target_type"] == "profile"
             sale_last[acc["sale_id"]] = max(sale_last.get(acc["sale_id"]) or "", when)

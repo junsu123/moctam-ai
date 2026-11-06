@@ -25,7 +25,7 @@ import mock_brain
 LEAD_W = 5                 # 1 khách = 5 bình luận
 MAX_ACTIVE = 10            # số bài học tối đa đang dùng của mỗi agent (bài ghim không tính)
 PROMPT_LESSONS = 6         # số bài học đưa vào prompt (giữ chi phí thấp)
-CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai"]
+CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy"]
 BANNED = re.compile(r"(tăng|nâng).{0,20}(số bài|tần suất|giới hạn)|bỏ qua luật|lách|spam|chữa (khỏi|bệnh)|trị bệnh", re.I)
 _running = {"on": False}
 

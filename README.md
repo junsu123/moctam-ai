@@ -27,6 +27,7 @@ Trang **Tìm khách sỉ** có dòng số SĐT tìm được theo từng kênh t
 | **Hà** | Chăm sóc khách | Chấm điểm khách, soạn tin nhắn trả lời, nhắc bám khách sau 2 ngày |
 | **Khoa** | Phân tích | Đo số bài, số khách, nhóm hiệu quả nhất; đưa số liệu vào cuộc họp |
 | **Mai** | Tìm khách sỉ | Tìm người đang bán hàng online (livestream, Facebook, TikTok Shop, Shopee, đa nền tảng), chấm điểm 100 có bằng chứng, đưa khách hạng A/B vào mục Khách hàng; không tự nhắn tin |
+| **Vy** | Website & SEO | Quản lý website công ty, lên kế hoạch từ khóa, viết bài chuẩn SEO (tự chấm theo bảng kiểm), dựng website và đăng lên hosting |
 | **Sale 1…8** | Nhân viên sale | Mỗi sale giữ **3–5 tài khoản Facebook**, mỗi nick một hồ sơ Chrome riêng; làm theo ca từng nick: đăng bài vào nhóm và trang cá nhân, up bài, quét bình luận, rồi chuyển nick kế tiếp |
 
 ## Một ngày làm việc
@@ -99,6 +100,70 @@ sang giao diện máy tính. Nếu không đính được ảnh, sale vẫn đă
 **Lưu ý:** Điều khoản của Facebook không cho phép tự động hóa đăng bài bằng tài khoản cá nhân. Nick vẫn có thể bị
 hạn chế dù đã giãn cách, nên giữ số bài/ngày vừa phải, nội dung có giá trị và đúng luật từng nhóm.
 Máy chạy phần mềm phải bật trong giờ đăng bài; Chrome của các nick chạy trên chính máy đó.
+
+## Luật Facebook: học luật, kiểm bài, giữ nhịp đăng an toàn
+
+Mục **Luật Facebook** (nhóm Facebook ở thanh bên). Cả đội học luật từ chính sách của Meta và luật quảng cáo thực phẩm Việt Nam:
+- Meta Community Standards: Spam, Tính toàn vẹn của tài khoản, Danh tính thật, Hành vi không xác thực, cách Meta hạn chế tài khoản.
+- Tin Meta siết nội dung spam (04/2025).
+- Luật Quảng cáo sửa đổi (hiệu lực 01/01/2026).
+
+**Nói thẳng điều quan trọng nhất:** chính sách Tính toàn vẹn của tài khoản cấm dùng tài khoản bằng phần mềm tự động
+(script), trừ khi qua kênh được phép. Đăng bằng nick cá nhân qua Chrome tự động vẫn có thể bị khóa dù làm đúng mọi giới hạn.
+Các giới hạn dưới đây giảm rủi ro chứ không loại bỏ được. Kênh tự động được phép là Fanpage qua Graph API.
+
+**Luật nằm ở đâu trong công việc:**
+- **Sổ kiến thức**: mỗi luật được ghi vào sổ kiến thức của Lan, Tuấn, CEO, sale, Vy; lời dặn của mọi agent khi viết bài có
+  phần “Luật Facebook cả đội phải giữ”.
+- **CEO kiểm bài khi duyệt**: phạm nặng (hứa chữa bệnh, giảm cân, link rút gọn, nhồi hashtag, bài gần như y hệt bài đã đăng)
+  thì không duyệt; phạm nhẹ (“nhất”, “số 1”, cam kết 100%, câu like/share/tag, bài khá giống bài cũ) thì trừ điểm và góp ý.
+  Thẻ bài hiện chip **⚠ Luật Facebook**.
+- **Sale kiểm lại ngay trước khi đăng**: bài phạm nặng về chờ duyệt để sửa; nick chưa đủ khoảng cách, hết trần bài/ngày, hoặc
+  đã đăng vào nhóm đó trong 24 giờ thì bài được dời giờ, không đăng dồn.
+- **Giới hạn an toàn mỗi nick** (sửa được): 6 bài/ngày tính cả bài nhóm mình quản lý, cách nhau ít nhất 30 phút, 6 lượt up bài,
+  2 lần xin vào nhóm, 1 bài/nhóm/24 giờ, tối đa 5 hashtag. Nick mới (dưới 14 ngày) chạy nửa giới hạn. Bảng **Nhịp đăng hôm
+  nay** cho thấy mỗi nick đã làm bao nhiêu trên trần.
+- **Rút kinh nghiệm**: nick bị chặn thì nghỉ 3 ngày rồi chạy nửa giới hạn 7 ngày; Tuấn ghi lại 24 giờ trước đó nick đã đăng, up,
+  xin vào nhóm bao nhiêu. 2 nick bị chặn trong 7 ngày thì tự hạ trần chung 1 bài. Nhóm gỡ 2 bài trong 30 ngày thì ngừng đăng
+  nhóm đó 30 ngày.
+- **Luật của sếp**: thêm luật riêng kèm cụm từ cấm (VD tên đối thủ); bài có cụm đó bị chặn, cả đội học luật mới.
+- **Kiểm thử một bài**: dán bài để xem phạm luật nào.
+
+**Luôn cập nhật chính sách:** mỗi tuần (mặc định thứ Hai 06:40) Tuấn mở lại các trang chính sách của Meta bằng Chrome ẩn
+(các trang này dựng bằng JavaScript), so với lần trước. Trang có thay đổi thì ghi dòng thêm / bớt, tóm tắt (có Claude thì
+tóm tắt ảnh hưởng tới việc đăng bài), báo lên đầu mục Luật Facebook, nhật ký và Telegram. Bấm **Đọc lại chính sách ngay**
+để đọc bất cứ lúc nào.
+
+Lưu ý về bài mẫu: các biến thể của cùng một bài mẫu giống nhau khoảng 76–91% chữ. Bài giống từ 95% bị chặn, từ 85% bị nhắc.
+Thêm nhiều bài mẫu khác nhau vào thư viện (hoặc bật Claude viết biến thể) giúp các nick ít bị coi là đăng lặp lại.
+
+## Website công ty: Vy viết bài chuẩn SEO
+
+Mục **Website** (nhóm Bán hàng). Vy (Biên tập Website & SEO) quản lý một website giới thiệu nhà máy:
+- **Các trang**: Trang chủ, Giới thiệu, Gia công, Sản phẩm (mỗi sản phẩm một trang, không ghi giá, mời liên hệ Zalo), Tin
+  tức (phân trang 12 bài), Liên hệ, 404.
+- **Chuẩn kỹ thuật**: sitemap.xml, robots.txt, thẻ canonical và Open Graph, dữ liệu có cấu trúc schema.org (Organization,
+  WebSite, Article, FAQPage, BreadcrumbList, Product, Service), mục lục bài, nút Chat Zalo, HTML tĩnh nhẹ, chạy tốt trên điện thoại.
+
+**Kế hoạch từ khóa**: 16 từ khóa ban đầu cho người tìm xưởng gia công và nguồn sỉ (gia công trà túi lọc, OEM thương hiệu
+riêng, nguồn hàng trà túi lọc sỉ...). Sếp thêm từ khóa; bấm **Vy nghĩ thêm từ khóa** để Vy đề xuất theo sản phẩm thật.
+
+**Vy viết bài** (mặc định 3 bài/tuần vào T2, T4, T6 lúc 09:45, hoặc bấm **Vy viết bài mới** / **Viết ngay**). Có Claude thì
+Vy viết 1000–1400 chữ theo từ khóa và sản phẩm thật; chưa có Claude thì dựng bài từ thông tin nhà máy và sản phẩm. Ảnh đại diện
+lấy từ thư mục ảnh sản phẩm (ảnh tổng hợp nhà máy nếu đã tích), thu nhỏ cho web. Vy tự chấm theo **bảng kiểm SEO 100 điểm**:
+- Từ khóa trong tiêu đề, 100 chữ đầu và 1 mục H2.
+- Tiêu đề 30–65 ký tự, thẻ title 30–60, mô tả 120–160.
+- Đường dẫn không dấu, ít nhất 4 mục H2, từ 900 chữ, mật độ từ khóa 0,5–2,5%.
+- Ít nhất 2 liên kết nội bộ, 3 câu hỏi thường gặp, ảnh có chữ thay thế, đoạn văn ngắn.
+
+Chưa đạt thì Vy sửa tối đa 2 lần. Bài hứa chữa bệnh bị chặn, không đăng được.
+
+**Sếp duyệt**: mở bài trong bảng để sửa tiêu đề, mô tả, nội dung, câu hỏi thường gặp (điểm SEO chấm lại khi lưu), xem dạng
+trang, rồi **Duyệt & đăng**. Bật “Vy tự đăng” để bài đạt điểm tối thiểu (mặc định 75) tự lên website.
+
+**Đưa lên mạng**: website dựng vào `data/site/`, xem trước tại `/site/` trên máy chạy phần mềm. Điền tên miền ở tab Thông tin
+công ty. Đăng lên hosting bằng FTP / FTPS (tab Đăng lên hosting) hoặc tải zip rồi tải lên `public_html`. Sau đó gửi
+`https://ten-mien/sitemap.xml` vào Google Search Console.
 
 ## Bảng bài đã đăng (phân trang)
 
@@ -757,6 +822,8 @@ backend/
   my_groups.py   Nhóm có sẵn trong nick: đọc danh sách nhóm, Tuấn đánh giá, tự thoát nhóm kém, nhóm mới vào nghỉ, chăm sóc nhóm quản lý
   prospect_rules.py  Điều kiện tìm khách sỉ sếp đặt, bài sếp dạy Mai, chấm lại theo điều kiện
   junk.py        Data rác sếp loại: chặn đích danh, học chữ chung của data rác, trừ điểm/loại khách giống vậy
+  fb_policy.py   Luật Facebook: bộ luật, kiểm bài, giới hạn an toàn mỗi nick, sự cố & bài học, theo dõi chính sách Meta
+  website.py     Website công ty + Vy: từ khóa, viết bài, bảng kiểm SEO, dựng trang tĩnh, sitemap, schema, zip, FTP
   prospect.py    Mai tìm khách sỉ: tìm, đọc trang công khai, phân loại người bán, chấm điểm 100 có bằng chứng, lưu CRM
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm
   group_review.py  Tuấn đánh giá nhóm theo chuẩn nhóm tương tác cao: chấm điểm, Nên vào / Cân nhắc / Bỏ qua, lý do

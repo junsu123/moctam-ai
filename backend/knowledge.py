@@ -20,7 +20,8 @@ import db
 STOP = set("""co khong la cua va cho voi thi ma nay do em anh chi ben minh a nhe oi duoc nhung cac mot nao gi sao the nhu de khi
 neu vay roi con hay hoac ve tu tren duoi trong ngoai ra vao lai nua cung rat qua lam bi da se ban toi chung ta ho no
 nha nhi ah u uh ok vang da cai chiec bao nhieu may""".split())
-ROLE_NAME = {"ceo": "CEO Đức", "minh": "Minh", "lan": "Lan", "tuan": "Tuấn", "ha": "Hà", "khoa": "Khoa", "mai": "Mai", "sale": "Nhân viên sale",
+ROLE_NAME = {"ceo": "CEO Đức", "minh": "Minh", "lan": "Lan", "tuan": "Tuấn", "ha": "Hà", "khoa": "Khoa", "mai": "Mai", "vy": "Vy",
+             "sale": "Nhân viên sale",
              "all": "Cả đội"}
 SOURCE_TXT = {"study": "Tự học", "claude": "Hỏi Claude", "boss": "Sếp dạy", "library": "Thư viện có sẵn", "experience": "Kinh nghiệm thực tế"}
 
@@ -35,7 +36,8 @@ CURRICULUM = {
              "cách thuật toán Facebook xếp bài trong nhóm", "giờ vàng đăng bài nhóm bán hàng ở Việt Nam",
              "cách tránh bị quản trị viên nhóm xóa bài và chặn", "dấu hiệu nhóm tương tác thật và nhóm ảo",
              "giới hạn an toàn khi một nick đăng nhiều nhóm", "cách up bài bằng bình luận cho bài nổi lên",
-             "cách đọc luật nhóm trước khi đăng", "quản lý nhiều nick Facebook không bị liên kết"],
+             "cách đọc luật nhóm trước khi đăng", "tiêu chuẩn cộng đồng Facebook về spam và tần suất đăng",
+             "vì sao Facebook cấm dùng tài khoản cá nhân bằng phần mềm tự động", "cách Facebook tính gậy vi phạm và chặn tính năng"],
     "ha": ["cách trả lời khách hỏi giá sỉ để chốt được số điện thoại", "xử lý khách chê giá cao",
            "cách hỏi nhu cầu khách sỉ (kênh bán, số lượng, tần suất nhập)", "chính sách gửi mẫu thử cho khách sỉ",
            "cách bám khách sau 2 ngày không trả lời", "cách trả lời khách hỏi giấy tờ kiểm nghiệm, hóa đơn",
@@ -48,8 +50,13 @@ CURRICULUM = {
             "cách viết lời kêu gọi để người bán hàng để lại SĐT", "cách viết tiêu đề bài đăng nhóm thu hút người bán online",
             "cách mở rộng kênh bán sỉ qua cộng tác viên", "cách định giá sỉ theo bậc số lượng",
             "khi nào nên tuyển thêm nhân sự bán hàng", "cách xây thương hiệu xưởng trên Facebook"],
-    "sale": ["cách nuôi nick Facebook an toàn", "dấu hiệu nick sắp bị checkpoint và cách tránh",
+    "sale": ["luật Facebook: một người một tài khoản thật, không đăng quá dày", "dấu hiệu nick sắp bị checkpoint và cách tránh",
              "cách trả lời bình luận xin số điện thoại tự nhiên", "cách tham gia nhóm mới không bị từ chối"],
+    "vy": ["cách nghiên cứu từ khóa cho website nhà máy gia công thực phẩm", "cấu trúc bài viết chuẩn SEO: tiêu đề, mô tả, H2, FAQ",
+           "cách viết thẻ meta description thu hút người tìm kiếm", "liên kết nội bộ giữa bài viết và trang sản phẩm",
+           "cách viết bài cho từ khóa gia công trà túi lọc", "nội dung E-E-A-T: kinh nghiệm, chuyên môn, uy tín của nhà máy",
+           "schema Organization, Article, FAQ cho website doanh nghiệp", "tốc độ trang và ảnh nhẹ cho SEO",
+           "quy định quảng cáo thực phẩm trên website", "cách cập nhật bài cũ để lên hạng lại"],
     "mai": ["cách dùng thư viện quảng cáo Facebook để tìm người bán thực phẩm đang chạy quảng cáo",
             "cách nhận ra bài và bình luận hỏi tìm nguồn hàng trong nhóm Facebook",
             "cách tìm số điện thoại kinh doanh công khai của shop trên Facebook", "từ khóa Facebook để tìm người bán hàng có để lại SĐT",
@@ -392,7 +399,7 @@ def study_agent(agent_id: str, n: int = 2) -> list[int]:
     return saved
 
 
-STUDY_AGENTS = ["lan", "tuan", "ha", "khoa", "mai", "minh", "ceo", "sale"]
+STUDY_AGENTS = ["lan", "tuan", "ha", "khoa", "mai", "vy", "minh", "ceo", "sale"]
 
 
 def study_all(n: int | None = None) -> dict:

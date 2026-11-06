@@ -371,6 +371,43 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:
 /* Bài đăng */
 .board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
 .posted-card{margin-top:0}
+.fbp-risk{border-left:4px solid var(--danger);background:var(--danger-soft);margin:0 0 12px}
+.fbp-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;margin:12px 0;align-items:start}
+#fbpNicks td{white-space:nowrap}
+@media (max-width:980px){.fbp-grid{grid-template-columns:minmax(0,1fr)}}
+#v-fbrules > .card{margin:12px 0}
+.fbp-cat{margin:12px 0 4px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.fbp-rules{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:8px}
+.fbp-rule{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;background:var(--panel)}
+.fbp-rule.high{border-left:3px solid var(--danger)}.fbp-rule.medium{border-left:3px solid var(--honey,#c99a2e)}
+.fbp-rule b{font-size:14px}.fbp-rule p{margin:0;font-size:13px}.fbp-rule .do{color:var(--ink)}.fbp-rule .src{font-size:12px}
+.fbp-rule .chips{display:flex;gap:4px;flex-wrap:wrap}
+.fbp-add{margin-top:12px}.fbp-add summary{cursor:pointer;font-weight:600}
+.fbp-inc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.fbp-inc li{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px}
+.fbp-chg{border:1px solid var(--honey,#c99a2e);background:var(--honey-soft,#fff6e0);border-radius:12px;padding:12px 14px;margin:0 0 10px}
+.fbp-chg pre{white-space:pre-wrap;font:inherit;font-size:13px;margin:6px 0}
+.fbp-issue{display:flex;gap:6px;align-items:baseline;font-size:13px;margin:6px 0}
+.ws-stats{grid-template-columns:repeat(5,minmax(0,1fr));margin:0 0 12px}
+@media (max-width:760px){.ws-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.ws-table{min-width:720px}.ws-table td{vertical-align:middle}.ws-table .ws-t{font-weight:600}
+.ws-edit > td{background:var(--panel-2);padding:12px}
+.ws-ed{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px}
+@media (max-width:980px){.ws-ed{grid-template-columns:minmax(0,1fr)}}
+.ws-ed textarea{font:14px/1.6 var(--f-body,inherit)}
+.ws-seo{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.ws-seo li{display:flex;gap:6px;align-items:baseline}.ws-seo .ok{color:var(--accent)}.ws-seo .no{color:var(--danger)}
+.ws-cnt{font-size:12px;color:var(--muted);font-weight:400}.ws-cnt.bad{color:var(--danger)}
+.ws-prev{border:1px solid var(--line);border-radius:12px;padding:6px 18px;background:#fff;max-height:520px;overflow:auto;color:#1d2420}
+.ws-prev h2{font-size:20px}.ws-prev h3{font-size:16px}
+#v-website .ptabs{margin-top:0}
+@media (max-width:760px){
+  .ws-table{min-width:0}.ws-table thead{display:none}
+  .ws-table tbody tr.ws-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .ws-table tbody tr.ws-row td{border:0;padding:0;font-size:12.5px}.ws-table tbody tr.ws-row td.ws-main{grid-column:1/-1}
+  .ws-table tbody tr.ws-row td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--muted)}
+  .ws-table tr.ws-edit,.ws-table tr.ws-edit > td{display:block}
+}
 .ptabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:4px 0 14px;overflow-x:auto}
 .ptabs button{border:0;background:transparent;padding:10px 14px;font:600 14px var(--f-body,inherit);color:var(--muted);cursor:pointer;
   border-bottom:3px solid transparent;margin-bottom:-1px;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;border-radius:8px 8px 0 0}
@@ -827,10 +864,12 @@ label.f{font-weight:600;color:var(--muted)}
       <button data-v="posts" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Bài đăng<span class="badge" id="draftBadge" hidden></span></button>
       <button data-v="leads" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>Khách hàng</button>
       <button data-v="prospects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21M8 10.5h5M10.5 8v5"/></svg>Tìm khách sỉ<span class="badge" id="prBadge" hidden></span></button>
+      <button data-v="website"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></svg>Website</button>
       <button data-v="kpi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>KPI & Báo cáo<span class="badge" id="bossBadge" hidden></span></button>
       <span class="nav-g">Facebook</span>
       <button data-v="sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M8 9.5l2.5 2.5L16 7"/></svg>Nhân viên sale<span class="badge" id="saleBadge" hidden>!</span></button>
       <button data-v="groups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 2 6 5.5"/></svg>Hội nhóm</button>
+      <button data-v="fbrules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Luật Facebook<span class="badge" id="fbpBadge" hidden></span></button>
       <span class="nav-g">Kho tri thức</span>
       <button data-v="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8l8-4 8 4v9l-8 4-8-4zM4 8l8 4 8-4M12 12v9"/></svg>Sản phẩm</button>
       <button data-v="samples"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h11l3 3v13H5z"/><path d="M8 10h8M8 14h8M8 18h5"/></svg>Bài mẫu sỉ</button>
@@ -1104,6 +1143,82 @@ label.f{font-weight:600;color:var(--muted)}
         <div class="card-h"><div><h3>CEO học duyệt bài</h3><p class="small muted" style="margin:2px 0 0">CEO Đức học cách viết bài từ thư viện bài mẫu trên, từ quy định của sếp và từ mỗi lần sếp sửa hay hủy bài CEO đã duyệt. Mọi bài đăng nhóm đều được CEO chấm điểm trước khi đăng; chưa đạt thì Lan viết lại theo góp ý.</p></div></div>
         <div id="crBody"><p class="muted small">Đang tải…</p></div>
       </section>
+    </section>
+
+    <!-- LUẬT FACEBOOK -->
+    <section class="view" id="v-fbrules" hidden>
+      <div class="vh"><div><h1>Luật Facebook</h1><p>Cả đội học luật Facebook và luật quảng cáo thực phẩm: CEO kiểm bài trước khi duyệt, sale kiểm lại ngay trước khi đăng, mỗi nick có nhịp đăng an toàn. Nick bị chặn hay bài bị gỡ thì Tuấn rút kinh nghiệm. Mỗi tuần Tuấn đọc lại chính sách của Meta và báo sếp khi có thay đổi.</p></div>
+        <div class="actions"><button class="btn" id="fbpWatch">Đọc lại chính sách ngay</button></div></div>
+      <div class="banner fbp-risk"><b>Điều quan trọng nhất:</b> chính sách “Tính toàn vẹn của tài khoản” của Meta cấm dùng tài khoản bằng phần mềm tự động (script), trừ khi qua kênh được phép. Đăng bằng nick cá nhân qua Chrome tự động vẫn có thể bị khóa dù làm đúng mọi giới hạn dưới đây; các giới hạn này giảm rủi ro chứ không loại bỏ được. Kênh tự động được phép là <b>Fanpage qua API</b> (Cài đặt → Fanpage).</div>
+      <div id="fbpChanges"></div>
+      <div class="fbp-grid">
+        <section class="card"><div class="card-h"><div><h3>Nhịp đăng hôm nay của từng nick</h3><p class="small muted" style="margin:2px 0 0">Đã làm / trần an toàn. Nick mới (dưới 14 ngày) và nick vừa bị chặn chạy nửa giới hạn.</p></div></div>
+          <div class="tbl-wrap"><table><thead><tr><th>Nick</th><th class="num">Bài</th><th class="num">Up</th><th class="num">Vào nhóm</th><th class="num" title="Khoảng cách tối thiểu giữa 2 bài">Cách</th><th>Tình trạng</th></tr></thead><tbody id="fbpNicks"></tbody></table></div></section>
+        <form class="card" id="fbpLimits"><div class="card-h"><div><h3>Giới hạn an toàn</h3><p class="small muted" style="margin:2px 0 0">Áp dụng cho mọi nick, kể cả bài đăng vào nhóm mình quản lý.</p></div></div>
+          <div class="grid3" id="fbpLimitFields"></div>
+          <label class="row small"><input type="checkbox" id="fbpOn"> Bật kiểm luật Facebook</label>
+          <label class="row small"><input type="checkbox" id="fbpTighten"> Nhiều nick bị chặn trong 7 ngày thì tự hạ trần bài/ngày</label>
+          <div><button class="btn primary" type="submit">Lưu giới hạn</button></div></form>
+      </div>
+      <section class="card"><div class="card-h"><div><h3>Luật cả đội đang giữ</h3><p class="small muted" style="margin:2px 0 0" id="fbpRuleStats"></p></div></div>
+        <div id="fbpRules"></div>
+        <details class="fbp-add"><summary>Thêm luật của sếp</summary>
+          <form id="fbpRuleForm" class="stack" style="margin-top:8px">
+            <label class="f" for="fbrTitle">Tên luật<input type="text" id="fbrTitle" required placeholder="VD: Không nhắc tên đối thủ"></label>
+            <label class="f" for="fbrText">Giải thích cho cả đội (không bắt buộc)<input type="text" id="fbrText" placeholder="VD: Nhóm báo cáo bài so sánh thương hiệu khác"></label>
+            <label class="f" for="fbrPhr">Cụm từ bị cấm, cách nhau dấu phẩy (bài có cụm này sẽ bị chặn)<input type="text" id="fbrPhr" placeholder="VD: trà Phúc Long, rẻ hơn Cozy"></label>
+            <label class="f" for="fbrLvl">Mức<select id="fbrLvl"><option value="high">Chặn, không cho đăng</option><option value="medium">Nhắc, trừ điểm khi duyệt</option></select></label>
+            <div><button class="btn primary" type="submit">Thêm luật</button></div></form></details>
+      </section>
+      <div class="fbp-grid">
+        <section class="card"><div class="card-h"><div><h3>Kiểm thử một bài</h3><p class="small muted" style="margin:2px 0 0">Dán bài để xem có phạm luật không, như CEO và sale kiểm.</p></div></div>
+          <label class="f" for="fbpText">Nội dung bài<textarea id="fbpText" rows="6" placeholder="Dán bài đăng vào đây"></textarea></label>
+          <div><button class="btn" type="button" id="fbpCheck">Kiểm tra</button></div><div id="fbpCheckRes" aria-live="polite"></div></section>
+        <section class="card"><div class="card-h"><div><h3>Sự cố &amp; bài học</h3><p class="small muted" style="margin:2px 0 0">Nick bị chặn, bài bị gỡ và điều Tuấn rút ra.</p></div></div>
+          <ul class="fbp-inc" id="fbpInc"></ul><div id="fbpRested"></div></section>
+      </div>
+      <section class="card"><div class="card-h"><div><h3>Chính sách Meta đang theo dõi</h3><p class="small muted" style="margin:2px 0 0" id="fbpWatchInfo"></p></div>
+          <label class="row small"><input type="checkbox" id="fbpWatchOn"> Đọc lại mỗi tuần lúc <input type="time" id="fbpWatchTime" style="width:auto;padding:3px 6px"></label></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Trang chính sách</th><th>Đọc lần cuối</th><th>Thay đổi lần cuối</th><th>Tình trạng</th></tr></thead><tbody id="fbpSources"></tbody></table></div></section>
+    </section>
+
+    <!-- WEBSITE -->
+    <section class="view" id="v-website" hidden>
+      <div class="vh"><div><h1>Website công ty</h1><p>Vy (Biên tập Website &amp; SEO) quản lý website giới thiệu nhà máy, lên kế hoạch từ khóa và viết bài chuẩn SEO để chủ shop, chủ thương hiệu tự tìm thấy xưởng trên Google. Bài nào cũng qua bảng kiểm SEO và luật quảng cáo, sếp duyệt rồi mới đăng.</p></div>
+        <div class="actions"><a class="btn" id="wsView" href="/site/" target="_blank" rel="noopener">Xem website</a><button class="btn" id="wsBuild">Dựng lại website</button></div></div>
+      <div class="pr-stats ws-stats" id="wsStats"></div>
+      <div class="ptabs" role="tablist" aria-label="Website" id="wsTabs">
+        <button type="button" role="tab" id="wtab-posts" aria-controls="wpanel-posts" aria-selected="true">Bài viết</button>
+        <button type="button" role="tab" id="wtab-kw" aria-controls="wpanel-kw" aria-selected="false" tabindex="-1">Từ khóa</button>
+        <button type="button" role="tab" id="wtab-info" aria-controls="wpanel-info" aria-selected="false" tabindex="-1">Thông tin công ty</button>
+        <button type="button" role="tab" id="wtab-host" aria-controls="wpanel-host" aria-selected="false" tabindex="-1">Đăng lên hosting</button>
+      </div>
+      <div role="tabpanel" id="wpanel-posts" aria-labelledby="wtab-posts" class="ppanel">
+        <div class="row wrap"><button class="btn primary" type="button" id="wsWrite">Vy viết bài mới</button><span class="small muted" id="wsWriteInfo"></span></div>
+        <div class="tbl-wrap"><table class="ws-table"><thead><tr><th>Bài viết</th><th class="num">SEO</th><th>Tình trạng</th><th class="num">Chữ</th><th>Ngày</th></tr></thead><tbody id="wsPosts"></tbody></table></div>
+      </div>
+      <div role="tabpanel" id="wpanel-kw" aria-labelledby="wtab-kw" class="ppanel" hidden>
+        <form class="card row wrap" id="wsKwForm" style="align-items:flex-end">
+          <label class="f grow" for="wsKw" style="flex:2 1 240px">Từ khóa khách hay tìm trên Google<input type="text" id="wsKw" required placeholder="VD: gia công trà gừng túi lọc"></label>
+          <label class="f" for="wsKwPr" style="flex:0 1 150px">Ưu tiên<select id="wsKwPr"><option value="1">Cao</option><option value="2" selected>Vừa</option><option value="3">Thấp</option></select></label>
+          <button class="btn primary" type="submit">Thêm</button><button class="btn" type="button" id="wsKwPlan">Vy nghĩ thêm từ khóa</button></form>
+        <div class="tbl-wrap"><table><thead><tr><th>Từ khóa</th><th>Nhóm</th><th>Ưu tiên</th><th>Tình trạng</th><th></th></tr></thead><tbody id="wsKws"></tbody></table></div>
+      </div>
+      <div role="tabpanel" id="wpanel-info" aria-labelledby="wtab-info" class="ppanel" hidden>
+        <form class="card" id="wsInfo"><h3>Thông tin hiện trên website</h3><div class="grid3" id="wsInfoFields"></div>
+          <h3 style="margin-top:6px">Lịch viết bài của Vy</h3><div class="grid3" id="wsSchedFields"></div>
+          <label class="row small"><input type="checkbox" id="wsAuto"> Bài đạt điểm SEO tối thiểu và không phạm luật thì Vy tự đăng (không chờ sếp duyệt)</label>
+          <div><button class="btn primary" type="submit">Lưu</button></div></form>
+      </div>
+      <div role="tabpanel" id="wpanel-host" aria-labelledby="wtab-host" class="ppanel" hidden>
+        <section class="card"><h3>Cách đưa website lên mạng</h3>
+          <ol class="steps"><li>Mua tên miền (VD moctam.vn) và gói hosting có FTP ở nhà cung cấp hosting.</li><li>Điền tên miền ở tab <b>Thông tin công ty</b> để thẻ canonical và sitemap dùng đúng địa chỉ.</li>
+            <li>Điền FTP bên dưới rồi bấm <b>Đăng lên hosting</b>, hoặc <a href="/api/website/export.zip" id="wsZip">tải file zip</a> và tải lên thư mục public_html.</li>
+            <li>Vào Google Search Console, thêm tên miền, gửi địa chỉ <code id="wsSitemap">/sitemap.xml</code> để Google đọc website.</li></ol></section>
+        <form class="card" id="wsFtp"><h3>FTP của hosting</h3><div class="grid3" id="wsFtpFields"></div>
+          <label class="row small"><input type="checkbox" id="wsFtpTls"> Kết nối bảo mật (FTPS)</label>
+          <div class="row wrap"><button class="btn" type="submit">Lưu FTP</button><button class="btn primary" type="button" id="wsDeploy">Đăng lên hosting</button><span class="small muted" id="wsDeployInfo"></span></div></form>
+      </div>
     </section>
 
     <!-- SẢN PHẨM -->
@@ -1455,6 +1570,7 @@ const AGENT_DEFS = [
  {id:"tuan",name:"Tuấn",role:"Chuyên viên Hội nhóm",short:"Rà soát nhóm trong các nick, chọn nhóm đăng, thoát nhóm kém, chăm sóc nhóm mình quản lý",personality:"Thực tế, cẩn thận, thuộc luật từng nhóm, ghét spam.",look:{skin:"#e8b88f",shirt:"#2e9e6b",pants:"#2c3a33",hair:"#1d1d1d",hairStyle:"cap",accessory:"cap",accent:"#bff0d4"},desk:2},
  {id:"ha",name:"Hà",role:"Chăm sóc & Chốt khách",short:"Phân loại khách, soạn tin nhắn, bám đuổi đơn sỉ",personality:"Ngọt ngào nhưng bám khách rất chặt.",look:{skin:"#f3cfae",shirt:"#f08a24",pants:"#3b3b52",hair:"#2a1810",hairStyle:"bun",accessory:"headset",accent:"#ffe2c2"},desk:3},
  {id:"khoa",name:"Khoa",role:"Phân tích số liệu",short:"Đo hiệu quả bài, nhóm, sản phẩm; báo cáo hằng ngày",personality:"Ít nói, chỉ tin vào con số.",look:{skin:"#eec29b",shirt:"#7a4fc9",pants:"#25223a",hair:"#3a2a20",hairStyle:"spiky",accessory:"none",accent:"#d9c8ff"},desk:4},
+ {id:"vy",name:"Vy",role:"Biên tập Website & SEO",short:"Quản lý website công ty, lên kế hoạch từ khóa, viết bài chuẩn SEO để khách sỉ tự tìm thấy xưởng trên Google",personality:"Kỹ tính với từng thẻ tiêu đề, không nhồi từ khóa, không hứa công dụng.",look:{skin:"#f5d3b5",shirt:"#3c6fd8",pants:"#2b2f3c",hair:"#2a1a12",hairStyle:"long",accessory:"none",accent:"#cfe0ff"},desk:15},
  {id:"mai",name:"Mai",role:"Chuyên viên Tìm khách sỉ",short:"Tìm người đang bán online, livestream trên Facebook, TikTok, Shopee; chấm điểm và lưu vào CRM",personality:"Tỉ mỉ, chỉ tin bằng chứng có link, không đoán doanh thu.",look:{skin:"#f4cdb0",shirt:"#0f8b8d",pants:"#2b3440",hair:"#1f1410",hairStyle:"long",accessory:"glasses",accent:"#bfeeee"},desk:14},
 ];
 const AGENT = Object.fromEntries(AGENT_DEFS.map(a => [a.id, a]));
@@ -1515,7 +1631,7 @@ const Demo = (() => {
       cta:[{text:"👉 Bình luận \"quan tâm\" mình inbox tư vấn ngay nhé!",score:7.1,uses:4},{text:"Để lại SĐT/Zalo dưới bình luận, xưởng gọi tư vấn trong 15 phút 📞",score:5.4,uses:2}],point:[]},
     recent:S.posts.slice(0,6).map((p,i)=>({id:p.id,source:i%3===0?"self":"claude",product_name:p.product_name,title:p.title,content:p.content.slice(0,400),status:p.status==="posted"?"approved":"draft",leads:p.leads||0,created_at:p.created_at}))});
   S.kbLog={memory:31,claude:12,study:18}; S.kbSet={knowledge_enabled:"1",study_time:"07:00",study_per_agent:"2",idle_learning:"1",idle_study_per_day:"6"};
-  const KB_ROLES={ceo:"CEO Đức",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",sale:"Nhân viên sale",all:"Cả đội"};
+  const KB_ROLES={ceo:"CEO Đức",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",vy:"Vy",sale:"Nhân viên sale",all:"Cả đội"};
   const kbPlain=t=>(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d");
   const kbHit=q=>{ const w=kbPlain(q).split(/\W+/).filter(x=>x.length>2); let best=null,bs=0; S.kb.filter(k=>k.status==="active").forEach(k=>{ const h=kbPlain(k.topic+" "+k.question); const sc=w.filter(x=>h.includes(x)).length/(w.length||1); if(sc>bs){bs=sc;best=k;} }); return bs>=0.6?best:null; };
   const demoKB=(agent,q)=>{ const act=S.kb.filter(k=>k.status==="active"); const m=S.kbLog; let items=S.kb.slice().reverse(); if(agent) items=items.filter(k=>k.agent_id===agent); if(q){ const w=kbPlain(q).split(/\W+/).filter(x=>x.length>1); items=items.filter(k=>w.every(x=>kbPlain(k.topic+" "+k.question+" "+k.content).includes(x))); }
@@ -1560,6 +1676,33 @@ const Demo = (() => {
         link_error:st==="not_found"?"Chưa tìm thấy bài trên Facebook để lấy link. Đã thử nhiều lần không được: mở bài trên Facebook, chép link dán vào thẻ bài ở mục Bài đăng":null,
         images_used:JSON.stringify(["D:\\AnhSanPham\\Tong hop\\anh-"+(i%9+1)+".jpg","D:\\AnhSanPham\\Tong hop\\anh-"+(i%7+2)+".jpg"]),bump_count:i%4,comments:(i*7)%11,leads:i%5===0?2:i%3===0?1:0,bump_enabled:1}); }
   }
+  { // Luật Facebook & website (demo)
+    const RL={"rules":[{"id":"automation","cat":"account","how":"guide","level":"high","src":"account_integrity","title":"Tự động hóa tài khoản cá nhân là rủi ro lớn nhất","rule":"Meta cấm tạo hoặc dùng tài khoản bằng phương tiện tự động như script, trừ khi qua kênh được phép. Đăng bằng nick cá nhân qua Chrome tự động vẫn có thể bị khóa dù làm đúng mọi giới hạn.","do":"Ưu tiên Fanpage qua Graph API (kênh được phép). Nick cá nhân: ít bài, nhịp chậm, nội dung khác nhau, người thật kiểm tra."},{"id":"real_identity","cat":"account","how":"guide","level":"high","src":"authentic_identity","title":"Mỗi nick là một người thật, tên thật","rule":"Không dùng tài khoản giả, tên giả, mua bán hay cho mượn tài khoản; không tạo tài khoản mới để lách khi bị chặn.","do":"Chỉ thêm nick là tài khoản thật của nhân viên. Nick bị chặn thì nghỉ, không tạo nick mới thay."},{"id":"high_frequency","cat":"rate","how":"limit","level":"high","src":"spam","title":"Không đăng, bình luận, tham gia nhóm với tần suất rất cao","rule":"Meta cấm đăng, chia sẻ, tương tác hoặc tạo nhóm, trang với tần suất rất cao, dù thủ công hay tự động.","do":"Mỗi nick có trần bài/ngày, khoảng cách tối thiểu giữa 2 bài, trần bình luận up bài và trần xin vào nhóm (bảng giới hạn)."},{"id":"repetitive","cat":"content","how":"check","level":"high","src":"spam","title":"Không đăng nội dung lặp lại","rule":"Meta có thể hạn chế cả nick đăng ít nếu có dấu hiệu spam như nội dung lặp lại.","do":"Mỗi bài là một biến thể khác; bài giống bài nick đã đăng trong 7 ngày, hoặc giống bài nick khác đăng hôm nay, bị chặn."},{"id":"network","cat":"account","how":"check","level":"high","src":"inauthentic","title":"Không dùng nhiều nick đăng cùng một nội dung","rule":"Mạng lưới nhiều tài khoản cùng chia sẻ một nội dung bị giảm hiển thị hoặc xử lý như hành vi không xác thực.","do":"Không 2 nick đăng bài giống nhau cùng ngày; các nick không bình luận dàn dựng vào bài của nhau."},{"id":"hashtags","cat":"content","how":"check","level":"medium","src":"spam_news","title":"Không nhồi hashtag, caption không lan man","rule":"Bài có caption dài lan man, quá nhiều hashtag chỉ được hiện cho người theo dõi (giảm tiếp cận).","do":"Tối đa 5 hashtag mỗi bài, đúng chủ đề."},{"id":"engagement_bait","cat":"content","how":"check","level":"medium","src":"spam_news","title":"Không câu tương tác","rule":"Kêu gọi like, share, tag bạn bè, bình luận số để nhận quà là câu tương tác, bị giảm hiển thị.","do":"Kêu gọi đúng việc: inbox / nhắn Zalo để nhận catalog, báo giá."},{"id":"links","cat":"content","how":"check","level":"high","src":"spam","title":"Không dùng link rút gọn, link chuyển hướng","rule":"Link gây hiểu nhầm, che giấu đích đến là dấu hiệu spam.","do":"Không đặt link rút gọn (bit.ly, tinyurl...). Liên hệ bằng số Zalo."},{"id":"going_fast","cat":"rate","how":"limit","level":"high","src":"restricting","title":"Tránh bị chặn vì “thao tác quá nhanh”","rule":"Xin vào nhiều nhóm liền nhau, bình luận giống nhau ở nhiều bài trong vài giây, kết bạn hàng loạt sẽ bị chặn tạm thời.","do":"Mỗi nick xin vào tối đa 2 nhóm/ngày, mỗi lượt up bài cách nhau vài phút và lời up khác nhau, không kết bạn hàng loạt."},{"id":"strikes","cat":"account","how":"learn","level":"high","src":"restricting","title":"Vi phạm cộng dồn thành “gậy”","rule":"Mỗi vi phạm cộng một gậy; gậy tăng dần dẫn tới chặn đăng 1, 3, 7, 30 ngày rồi khóa hẳn. Gậy hết hạn sau khoảng 90 ngày.","do":"Nick bị chặn: nghỉ 3 ngày, sau đó chạy nửa giới hạn trong 7 ngày. Tuấn ghi lại nick đã làm gì trước khi bị chặn để rút kinh nghiệm."},{"id":"group_rules","cat":"group","how":"learn","level":"medium","src":null,"title":"Tôn trọng nội quy từng nhóm","rule":"Quản trị viên nhóm được xóa bài, báo cáo, chặn thành viên; bị báo cáo nhiều làm nick dễ bị Facebook hạn chế.","do":"Nhóm cấm bán hàng thì không đăng. Bài bị gỡ 2 lần trong 30 ngày ở cùng nhóm: ngừng đăng nhóm đó 30 ngày."},{"id":"same_group","cat":"group","how":"limit","level":"medium","src":"spam","title":"Không đăng dồn vào một nhóm","rule":"Đăng nhiều bài vào cùng một nhóm trong ngày dễ bị thành viên và quản trị viên báo cáo spam.","do":"Một nick đăng tối đa 1 bài/nhóm trong 24 giờ (trừ nhóm mình quản lý)."},{"id":"health_claims","cat":"law","how":"check","level":"high","src":null,"title":"Không hứa công dụng chữa bệnh","rule":"Thực phẩm không được quảng cáo chữa, trị, phòng bệnh hay thay thế thuốc (Luật Quảng cáo, Luật An toàn thực phẩm; Meta cũng hạn chế nội dung sức khỏe gây hiểu nhầm).","do":"Chỉ nói thành phần, quy trình, tiêu chuẩn nhà máy, hương vị, cách dùng."},{"id":"superlatives","cat":"law","how":"check","level":"medium","src":null,"title":"Không dùng “nhất”, “số 1” khi không chứng minh được","rule":"Luật Quảng cáo cấm dùng từ “nhất”, “duy nhất”, “tốt nhất”, “số một” khi không có tài liệu hợp pháp chứng minh.","do":"Thay bằng sự thật kiểm chứng được: “nhà máy đạt GMP”, “hơn 100 mã sản phẩm”."},{"id":"guarantee","cat":"law","how":"check","level":"medium","src":null,"title":"Không cam kết tuyệt đối","rule":"“Cam kết 100%”, “an toàn tuyệt đối”, “không tác dụng phụ” là quảng cáo gây hiểu nhầm.","do":"Nói điều xưởng làm được và chứng minh được."}],"cats":{"rate":"Nhịp đăng & hành vi","content":"Nội dung bài","account":"Tài khoản","group":"Hội nhóm","law":"Quảng cáo thực phẩm (luật Việt Nam)"},"how":{"limit":"Tự giới hạn","check":"Tự kiểm bài","learn":"Tự rút kinh nghiệm","guide":"Nguyên tắc"},"sources":[{"key":"spam","name":"Meta: Spam (tiêu chuẩn cộng đồng)","url":"https://transparency.meta.com/policies/community-standards/spam/"},{"key":"account_integrity","name":"Meta: Tính toàn vẹn của tài khoản","url":"https://transparency.meta.com/policies/community-standards/account-integrity/"},{"key":"authentic_identity","name":"Meta: Danh tính thật","url":"https://transparency.meta.com/policies/community-standards/authentic-identity-representation/"},{"key":"inauthentic","name":"Meta: Hành vi không xác thực","url":"https://transparency.meta.com/policies/community-standards/inauthentic-behavior/"},{"key":"restricting","name":"Meta: Cách hạn chế tài khoản (gậy, chặn tính năng)","url":"https://transparency.meta.com/enforcement/taking-action/restricting-accounts/"},{"key":"commerce","name":"Meta: Chính sách thương mại","url":"https://transparency.meta.com/policies/commerce-policies/"},{"key":"spam_news","name":"Meta: Tin siết nội dung spam (04/2025)","url":"https://about.fb.com/news/2025/04/cracking-down-spammy-content-facebook/"}]};
+    S.fbp={rules:RL.rules,cats:RL.cats,how:RL.how,settings:{fbp_enabled:"1",fbp_posts_day:"6",fbp_gap_minutes:"30",fbp_bumps_day:"6",fbp_joins_day:"2",fbp_same_group_hours:"24",fbp_new_nick_days:"14",fbp_new_nick_factor:"0.5",fbp_rest_days:"3",fbp_after_days:"7",fbp_after_factor:"0.5",fbp_hashtags_max:"5",fbp_similar_max:"0.85",fbp_removed_max:"2",fbp_group_rest_days:"30",fbp_watch_enabled:"1",fbp_watch_time:"06:40",fbp_auto_tighten:"1"},
+      sources:RL.sources.map((s,i)=>({...s,last_checked:now(),last_changed:i===0?now():null,status:i===0?"có thay đổi":"đã đọc"})),watch_last:now(),
+      changes:[{id:1,name:RL.sources[0].name,url:RL.sources[0].url,detected_at:now(),status:"new",summary:"• Meta làm rõ: đăng, chia sẻ, bình luận hoặc tham gia nhóm với tần suất rất cao (kể cả bằng công cụ tự động) là spam.\n• Có thể hạn chế cả tài khoản đăng ít nếu nội dung lặp lại.\n• Việc của đội: giữ trần bài/ngày, mỗi bài một cách viết khác."}],
+      incidents:[{id:1,kind:"block",account_name:"Linh Nguyễn",detail:"Facebook báo bạn thao tác quá nhanh, tạm chặn đăng bài",lesson:"24 giờ trước khi bị chặn nick đã đăng 7 bài, up 8 lượt, xin vào 3 nhóm. Facebook báo thao tác quá nhanh: nghỉ 3 ngày, sau đó chạy 50% giới hạn trong 7 ngày.",created_at:now()}],
+      custom:[],rested_groups:[]};
+    S.ws={settings:{site_name:"MỘC TÂM",site_legal_name:"",site_tagline:"Nhà máy sản xuất & gia công trà túi lọc, cà phê, ngũ cốc, bột thiên nhiên",site_domain:"",site_about:"",site_address:"",site_email:"",site_phone:"0386992326",site_certs:"GMP – ISO – FDA – VSATTP",site_color:"#2f5d3a",site_ga_id:"",site_posts_week:"3",site_write_days:"1,3,5",site_write_time:"09:45",site_auto_publish:"0",site_min_seo:"75",site_ftp_host:"",site_ftp_user:"",site_ftp_dir:"/public_html",site_ftp_tls:"1",site_ftp_pass_set:false},
+      keywords:[["gia công trà túi lọc","gia công",1],["gia công trà thảo mộc theo yêu cầu","gia công",1],["OEM trà túi lọc thương hiệu riêng","gia công",1],["gia công bột ngũ cốc","gia công",1],["nguồn hàng trà túi lọc sỉ","bán sỉ",1],["gia công cà phê hòa tan","gia công",2],["thủ tục công bố sản phẩm trà túi lọc","pháp lý",2],["cách chọn xưởng gia công thực phẩm uy tín","gia công",2]].map(([k,c,p],i)=>({id:i+1,keyword:k,cluster:c,priority:p,status:i<2?"written":"planned"})),
+      posts:[],last_build:now(),last_deploy:null};
+  }
+  function demoArticle(kw){ const K=kw[0].toUpperCase()+kw.slice(1), P=S.products.slice(0,3);
+    const body=`${K} là lựa chọn của nhiều người bán hàng online và chủ thương hiệu muốn có sản phẩm riêng mà không phải tự đầu tư nhà xưởng. Bài viết chia sẻ kinh nghiệm thực tế của nhà máy MỘC TÂM.\n\n## ${K} là gì và phù hợp với ai?\n\nBạn đặt nhà máy sản xuất theo công thức, quy cách và bao bì mang thương hiệu của bạn.\n\n- Người bán hàng online muốn có sản phẩm riêng\n- Chủ shop, đại lý, nhà phân phối\n- Người mới bắt đầu kinh doanh\n\n## Quy trình làm việc với nhà máy\n\n1. Trao đổi nhu cầu\n2. Chọn công thức, làm mẫu thử\n3. Thiết kế bao bì\n4. Hồ sơ công bố\n5. Sản xuất và giao hàng\n\n## Tiêu chuẩn nhà máy cần có\n\nNhà máy MỘC TÂM sản xuất theo tiêu chuẩn GMP – ISO – FDA – VSATTP, hơn 100 mã sản phẩm.\n\n## Gợi ý sản phẩm để bắt đầu\n\nBạn có thể bắt đầu từ ${P.map(p=>`[${p.name}](/san-pham/)`).join(", ")}. Xem thêm [gia công trọn gói](/gia-cong/).\n\n## Vì sao chọn MỘC TÂM\n\nNhận sỉ toàn quốc, gia công thương hiệu riêng, thiết kế bao bì. Liên hệ [trang liên hệ](/lien-he/) hoặc Zalo 0386992326.`;
+    return {keyword:kw,title:`${K}: quy trình và kinh nghiệm chọn xưởng`.slice(0,65),slug:kw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""),
+      meta_title:`${K} | MỘC TÂM`.slice(0,60),meta_desc:`${K} tại nhà máy đạt GMP – ISO – FDA – VSATTP: quy trình, tiêu chuẩn, mẫu thử, bao bì. Nhận báo giá qua Zalo 0386992326.`.slice(0,160),body,
+      faq:[{q:`${K} cần số lượng tối thiểu bao nhiêu?`,a:"Tùy dòng sản phẩm và quy cách, nhắn Zalo 0386992326 để được báo cụ thể."},{q:"Nhà máy có hỗ trợ bao bì không?",a:"Có, nhà máy thiết kế bao bì theo yêu cầu."},{q:"Có mẫu thử không?",a:"Có, bạn nhận mẫu trước khi sản xuất."}],
+      cover:"anh-tong-hop-1.jpg",cover_alt:`${K} tại nhà máy MỘC TÂM`}; }
+  function demoSeo(p){ const k=(p.keyword||"").toLowerCase(), W=(p.body||"").split(/\s+/).filter(Boolean).length, has=x=>(x||"").toLowerCase().includes(k), h2=((p.body||"").match(/^## /gm)||[]).length, links=((p.body||"").match(/\]\(\//g)||[]).length;
+    const it=[["Từ khóa chính có trong tiêu đề",has(p.title),10,"đưa từ khóa vào tiêu đề"],["Tiêu đề dài 30–65 ký tự",p.title.length>=30&&p.title.length<=65,5,`tiêu đề đang ${p.title.length} ký tự`],["Thẻ tiêu đề (title) 30–60 ký tự, có từ khóa",p.meta_title.length>=30&&p.meta_title.length<=60&&has(p.meta_title),10,`thẻ tiêu đề đang ${p.meta_title.length} ký tự`],
+      ["Mô tả (meta description) 120–160 ký tự, có từ khóa",p.meta_desc.length>=120&&p.meta_desc.length<=160&&has(p.meta_desc),10,`mô tả đang ${p.meta_desc.length} ký tự`],["Đường dẫn ngắn, không dấu, có từ khóa",true,5,""],["Từ khóa xuất hiện trong 100 chữ đầu",has((p.body||"").split(/\s+/).slice(0,110).join(" ")),10,"nhắc từ khóa ở đoạn mở đầu"],
+      ["Có ít nhất 4 mục H2, 1 mục chứa từ khóa",h2>=4,10,`đang có ${h2} mục H2`],["Bài dài từ 900 chữ (600 chữ được nửa điểm)",W>=900,10,`bài đang ${W} chữ`],["Mật độ từ khóa 0,5%–2,5% (không nhồi)",true,5,""],["Có ít nhất 2 liên kết nội bộ (sản phẩm, gia công, liên hệ)",links>=2,10,`đang có ${links} liên kết`],
+      ["Có 3 câu hỏi thường gặp (FAQ) trở lên",(p.faq||[]).length>=3,5,""],["Có ảnh đại diện, chữ thay thế (alt) có từ khóa",!!p.cover,5,""],["Đoạn văn ngắn, dễ đọc trên điện thoại (trung bình dưới 90 chữ/đoạn)",true,5,""]]
+      .map(([label,ok,mx,tip])=>({label,ok,points:ok?mx:0,max:mx,tip:ok?"":tip}));
+    const pol=/chữa (khỏi|bệnh|dứt)|trị (bệnh|dứt điểm)|thay thuốc|giảm \d+\s*kg/i.test(p.body)?[{level:"high",msg:"hứa công dụng chữa bệnh, giảm cân (thực phẩm không được quảng cáo như thuốc)",hit:(p.body.match(/chữa (khỏi|bệnh|dứt)|trị (bệnh|dứt điểm)|thay thuốc|giảm \d+\s*kg/i)||[""])[0]}]:[];
+    let sc=it.reduce((s,i)=>s+i.points,0); if(pol.length) sc=Math.min(sc,40); return {score:sc,items:it,words:W,density:1.2,policy:pol}; }
+  { const a=demoArticle("gia công trà túi lọc"), b=demoArticle("gia công trà thảo mộc theo yêu cầu");
+    [[a,"published"],[b,"review"]].forEach(([x,st],i)=>{ const sc=demoSeo(x); S.ws.posts.push({id:i+1,...x,status:st,seo_score:sc.score,seo:sc,words:sc.words,policy_note:null,created_at:now(),published_at:st==="published"?now():null}); }); }
   function demoPosted(qs){ const q=new URLSearchParams(qs||""), page=+(q.get("page")||1), size=+(q.get("size")||20), s=(q.get("q")||"").toLowerCase(), gid=+(q.get("group_id")||0), aid=+(q.get("account_id")||0), link=q.get("link")||"", days=+(q.get("days")||0), sort=q.get("sort")||"new";
     const all=S.posts.filter(p=>p.status==="posted"); let L=all.filter(p=>(!s||[p.title,p.content,p.group_name,p.posted_url,"#"+p.id].join(" ").toLowerCase().includes(s.replace(/^#/,"")))&&(!gid||p.group_id===gid)&&(!aid||p.account_id===aid)
       &&(!link||(link==="missing"?!["found","pending","removed"].includes(p.permalink_status):p.permalink_status===link))&&(!days||(Date.now()-new Date((p.posted_at||"").replace(" ","T")))/864e5<=days));
@@ -1573,7 +1716,7 @@ const Demo = (() => {
   const SALE_LOOKS=[{skin:"#f3cfae",shirt:"#d64545",pants:"#2d2d3a",hair:"#2a1810",hairStyle:"long",accessory:"none"},{skin:"#e8b88f",shirt:"#2f86c9",pants:"#25303a",hair:"#1d1d1d",hairStyle:"spiky",accessory:"glasses"},{skin:"#f6d2b3",shirt:"#e0a12a",pants:"#3a2d2a",hair:"#5a3520",hairStyle:"bun",accessory:"none"},{skin:"#eec29b",shirt:"#1f9a8a",pants:"#22332f",hair:"#2b2018",hairStyle:"side",accessory:"headset"},{skin:"#f2c9a0",shirt:"#a24fb5",pants:"#2c2236",hair:"#3b2414",hairStyle:"long",accessory:"beret"},{skin:"#e9bd96",shirt:"#5b7f2a",pants:"#2a3020",hair:"#141414",hairStyle:"cap",accessory:"cap"},{skin:"#f3d0b0",shirt:"#c4572b",pants:"#30262a",hair:"#4a2a1a",hairStyle:"bun",accessory:"glasses"},{skin:"#e6b48a",shirt:"#3b5bb5",pants:"#232a3a",hair:"#2a1d14",hairStyle:"spiky",accessory:"none"}];
   const saleAgents=()=>S.sales.map((r,i)=>({id:`sale-${r.id}`,sale_id:r.id,kind:"sale",name:r.name,role:`Sale · nick ${r.fb_name||r.name}`,short:"Đăng bài lên trang cá nhân và hội nhóm bằng tài khoản Facebook mình quản lý",personality:"Chăm chỉ, đúng giờ, báo ngay khi tài khoản gặp sự cố.",look:SALE_LOOKS[(r.id-1)%8],desk:5+i,login_status:r.login_status,sample:!!r.is_sample,
     status:(S.status[`sale-${r.id}`]&&S.status[`sale-${r.id}`].state!=="idle")?S.status[`sale-${r.id}`]:{state:"idle",text:{ok:"Nick sẵn sàng",not_logged_in:"Chờ sếp đăng nhập Facebook",checkpoint:"Nick bị checkpoint, đã dừng"}[r.login_status]}}));
-  S.xp={minh:140,lan:310,tuan:230,ha:180,khoa:95,mai:160,"sale-1":120,"sale-2":75,"sale-3":20}; S.learnRunning=false;
+  S.xp={minh:140,lan:310,tuan:230,ha:180,khoa:95,mai:160,vy:60,"sale-1":120,"sale-2":75,"sale-3":20}; S.learnRunning=false;
   S.goals={minh:"Theo dõi để 4 việc giao trong cuộc họp được hoàn thành trong ngày.",lan:"Viết ít nhất 2 bài góc 'Sản phẩm dễ livestream' và thử 1 bài góc OEM để so sánh.",tuan:"Xếp ít nhất một nửa số bài vào giờ vàng 20h, 11h.",ha:"Liên hệ hết 2 khách mới trước 11h.",khoa:"Đảm bảo bài đăng hôm qua đều có số bình luận và số khách.",mai:"Tìm ít nhất 2 khách sỉ hạng A/B có bằng chứng bán hàng thật và link nguồn."};
   S.lessons=[
     {id:901,agent_id:"lan",text:"Ưu tiên góc 'Sản phẩm dễ livestream' (điểm 8,4/bài); hạn chế góc 'Câu chuyện xưởng' (1,2/bài).",evidence:"9 và 6 bài trong 30 ngày",source:"auto",confidence:0.8,pinned:0},
@@ -1890,6 +2033,10 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products.slice().sort((a,b)=>(b.is_general||0)-(a.is_general||0)||(b.hot||0)-(a.hot||0)||a.id-b.id).map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g),joins:g.joins||{},today:gfToday(g)}));
       if(P==="/posts/posted") return demoPosted(qs);
+      if(P==="/fb-policy"){ const F=S.fbp; return {...F,rules:[...F.rules,...F.custom],nicks:S.accounts.filter(a=>a.enabled!==0).slice(0,6).map((a,i)=>{ const sale=S.sales.find(x=>x.id===a.sale_id)||{}; const f=i===0?0.5:1;
+          return {id:a.id,name:a.name,sale_name:sale.name,factor:f,rest_until:F.restNick===a.id?F.restUntil:null,limits:{posts:Math.max(1,Math.floor(6*f)),bumps:Math.max(1,Math.floor(6*f)),joins:Math.floor(2*f),gap:Math.round(30/f)},used:{posts:[2,3,1,0,2,1][i%6],bumps:[3,1,0,2,4,0][i%6],joins:[1,0,0,1,2,0][i%6]}}; }),flagged:S.posts.filter(p=>p.policy_note&&p.status!=="posted").length}; }
+      if(P==="/website") return {...S.ws,posts:S.ws.posts.map(p=>({...p})),stats:{published:S.ws.posts.filter(p=>p.status==="published").length,review:S.ws.posts.filter(p=>p.status==="review").length,planned:S.ws.keywords.filter(k=>k.status==="planned").length,avg_seo:S.ws.posts.length?Math.round(S.ws.posts.reduce((s,p)=>s+p.seo_score,0)/S.ws.posts.length):0},pages:14+S.ws.posts.filter(p=>p.status==="published").length,built:true};
+      if((m=P.match(/^\/website\/posts\/(\d+)$/))) return S.ws.posts.find(p=>p.id==m[1]);
       if(P==="/posts/reset"){ const c={approved:0,scheduled:0,failed:0,draft:0}, g={approved:0,scheduled:0,failed:0,draft:0};
         S.posts.forEach(p=>{ if(p.status in c){ c[p.status]++; if(p.target_type==="group") g[p.status]++; } });
         return {counts:c,group_counts:g,scheduled_today:S.posts.filter(p=>p.status==="scheduled"&&(p.scheduled_for||"").startsWith(now().slice(0,10))).length,posting:S.posts.filter(p=>p.status==="posting").length}; }
@@ -2114,6 +2261,33 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/junk/exclude"){ S.prCrit.exclude.push(body.word); log("mai","Ghi nhớ data rác",`Sếp cho loại hẳn khách có chữ “${body.word}”`); return ov(); }
       if(P==="/junk/dismiss"){ J.dismissed.push(body.word); return ov(); }
       return ov(); }
+    if(P.startsWith("/fb-policy")){ const F=S.fbp, ret=()=>handle("GET","/api/fb-policy");
+      if(P==="/fb-policy/settings"){ Object.assign(F.settings,body); log("tuan","Sếp chỉnh giới hạn an toàn",Object.entries(body).map(([k,v])=>`${k.replace("fbp_","")}=${v}`).join(", ")); return ret(); }
+      if(P==="/fb-policy/check"){ const t=body.text||"", is=[]; const tests=[[/chữa (khỏi|bệnh|dứt)|trị (bệnh|dứt điểm)|thay (thế )?thuốc|giảm \d+\s*(kg|ký|cân)|đặc trị/i,"high","hứa công dụng chữa bệnh, giảm cân (thực phẩm không được quảng cáo như thuốc)"],[/cam kết\s*100\s*%|an toàn tuyệt đối|không (có )?tác dụng phụ/i,"medium","cam kết tuyệt đối, dễ thành quảng cáo gây hiểu nhầm"],
+          [/(tốt|rẻ|ngon|uy tín|chất lượng) nhất|duy nhất|số\s*(1|một)\b/i,"medium","dùng từ “nhất” / “số 1” khi không có chứng minh"],[/(like|thích)\s*(và|\+|&)?\s*(share|chia sẻ)|tag\s*\d*\s*(người|bạn)/i,"medium","câu tương tác (like/share/tag/bình luận số) bị Facebook giảm hiển thị"],[/\b(bit\.ly|tinyurl\.com|goo\.gl|cutt\.ly)\/\S*/i,"high","link rút gọn / chuyển hướng là dấu hiệu spam"]];
+          tests.forEach(([rx,lv,msg])=>{ const m2=t.match(rx); if(m2) is.push({level:lv,msg,hit:m2[0]}); }); const tags=t.match(/(^|\s)#[^\s#]{2,}/g)||[]; if(tags.length>5) is.push({level:tags.length>10?"high":"medium",msg:`${tags.length} hashtag (tối đa 5)`,hit:""});
+          F.custom.forEach(r=>(r.phrases||[]).forEach(ph=>{ if(ph&&t.toLowerCase().includes(ph.toLowerCase())) is.push({level:r.level,msg:`sếp cấm: ${r.title}`,hit:ph}); }));
+          return {issues:is,ok:!is.some(i=>i.level==="high")}; }
+      if(P==="/fb-policy/rules"&&method==="POST"){ F.custom.push({id:"c"+id(),cat:"content",how:body.phrases&&body.phrases.length?"check":"guide",level:body.level,title:body.title,rule:body.text||"",do:body.phrases&&body.phrases.length?"Bài có cụm: "+body.phrases.join(", ")+" sẽ bị chặn":"",custom:true,phrases:body.phrases}); log("tuan","Sếp thêm luật Facebook",body.title); return ret(); }
+      if((m=P.match(/^\/fb-policy\/rules\/(.+)$/))){ F.custom=F.custom.filter(r=>r.id!==m[1]); return ret(); }
+      if(P==="/fb-policy/watch"){ setTimeout(()=>{ F.watch_last=now(); F.sources.forEach(s=>s.last_checked=now()); log("tuan","Đọc lại chính sách Facebook",`Đọc ${F.sources.length} trang chính sách, không có gì mới`); },3000); return {started:true}; }
+      if((m=P.match(/^\/fb-policy\/changes\/(\d+)\/read$/))){ F.changes.forEach(c=>{ if(c.id==m[1]) c.status="read"; }); return ret(); }
+      if((m=P.match(/^\/fb-policy\/nicks\/(\d+)\/lift$/))){ F.restNick=null; return ret(); }
+    }
+    if(P.startsWith("/website")){ const W=S.ws, ret=()=>handle("GET","/api/website");
+      if(P==="/website/settings"){ for(const [k,v] of Object.entries(body)){ if(k==="site_ftp_pass"){ if(v) W.settings.site_ftp_pass_set=true; continue; } W.settings[k]=k==="site_domain"&&v&&!/^https?:/.test(v)?"https://"+v:v; } return ret(); }
+      if(P==="/website/keywords"&&method==="POST"){ W.keywords.push({id:id(),keyword:body.keyword,cluster:"",priority:body.priority||2,status:"planned"}); return ret(); }
+      if(P==="/website/keywords/plan"){ const add=["gia công trà gừng túi lọc","nguồn sỉ cà phê hòa tan 3in1","gia công bột cần tây sấy lạnh"].filter(k=>!W.keywords.some(x=>x.keyword===k)); add.forEach(k=>W.keywords.push({id:id(),keyword:k,cluster:"gia công",priority:2,status:"planned"})); if(add.length) log("vy","Lên kế hoạch từ khóa",`Thêm ${add.length} từ khóa mới cho website`); return {added:add.length,...(await ret())}; }
+      if((m=P.match(/^\/website\/keywords\/(\d+)$/))){ W.keywords=W.keywords.filter(k=>k.id!=m[1]||k.status!=="planned"); return ret(); }
+      if(P==="/website/write"){ const k=body.kid?W.keywords.find(x=>x.id==body.kid):W.keywords.filter(x=>x.status==="planned").sort((a,b)=>a.priority-b.priority)[0]; if(!k) throw new Error("Hết từ khóa trong kế hoạch. Thêm từ khóa mới ở mục Website");
+        S.status.vy={state:"working",text:`Viết bài SEO: ${k.keyword}`}; setTimeout(()=>{ const a=demoArticle(k.keyword), sc=demoSeo(a); const pid=id(); W.posts.unshift({id:pid,...a,status:"review",seo_score:sc.score,seo:sc,words:sc.words,policy_note:null,created_at:now(),published_at:null}); k.status="written"; S.status.vy={state:"idle",text:"Chờ lịch viết bài tiếp theo"}; log("vy","Viết bài website",`“${a.title}” (từ khóa: ${k.keyword}), ${sc.words} chữ, điểm SEO ${sc.score}/100`); },2500); return {started:true}; }
+      if((m=P.match(/^\/website\/posts\/(\d+)$/))){ const p=W.posts.find(x=>x.id==m[1]);
+        if(method==="DELETE"){ W.posts=W.posts.filter(x=>x!==p); W.keywords.forEach(k=>{ if(k.keyword===p.keyword) k.status="planned"; }); return {ok:true}; }
+        Object.assign(p,body); const sc=demoSeo(p); Object.assign(p,{seo:sc,seo_score:sc.score,words:sc.words,policy_note:sc.policy.map(x=>x.msg).join("; ")||null}); return p; }
+      if((m=P.match(/^\/website\/posts\/(\d+)\/(publish|unpublish)$/))){ const p=W.posts.find(x=>x.id==m[1]); if(m[2]==="publish"){ if(p.seo.policy.some(x=>x.level==="high")) throw new Error("Bài phạm luật quảng cáo: "+p.seo.policy.map(x=>x.msg).join("; ")); p.status="published"; p.published_at=now(); log("vy","Đăng bài website",`“${p.title}” lên mục Tin tức`); } else p.status="review"; W.last_build=now(); return p; }
+      if(P==="/website/build"){ W.last_build=now(); return {pages:14+W.posts.filter(p=>p.status==="published").length,posts:W.posts.filter(p=>p.status==="published").length,products:S.products.length}; }
+      if(P==="/website/deploy"){ if(!W.settings.site_ftp_host) throw new Error("Chưa điền máy chủ FTP, tài khoản và mật khẩu ở mục Website → Đăng lên hosting"); throw new Error("Bản demo không kết nối được hosting thật"); }
+    }
     if(method==="POST"&&(m=P.match(/^\/posts\/(\d+)\/fetch-link$/))){ const po=S.posts.find(x=>x.id==m[1]); if(!po.sale_id) throw new Error("Bài này đăng tay, không có nick để tìm lại. Dán link bài vào ô bên dưới");
       po.link_error="Sale đang tìm lại link…"; setTimeout(()=>{ if(po.permalink_status!=="pending"){ Object.assign(po,{permalink_status:"found",posted_url:`https://www.facebook.com/groups/demo/posts/${100000+po.id}`,link_error:null,link_next_at:null}); log(`sale-${po.sale_id}`,"Đã lưu link bài",`Bài #${po.id}: ${po.posted_url}`); } else po.link_error="Bài vẫn đang chờ quản trị viên nhóm duyệt, sale sẽ tự lấy link khi bài được duyệt"; },4000); return {ok:true,queued:1}; }
     if(method==="POST"&&(m=P.match(/^\/leads\/(\d+)\/order$/))){ const l=S.leads.find(x=>x.id==m[1]); l.status="ordered"; S.co.orders.unshift({id:id(),lead_name:l.name,amount:body.amount,via:"app",created_at:now()}); log("ha","Có đơn hàng",`${l.name}: ${body.amount}`); return {ok:true}; }
@@ -2261,7 +2435,8 @@ const World = (() => {
   const DESKS=[[-1.4,-2.8],[-9.4,-2.8],[-5.4,-2.8],[-9.4,2.6],[-5.4,2.6],
     [-11,6.2],[-8,6.2],[-5,6.2],[-2,6.2],[-11,9.6],[-8,9.6],[-5,9.6],[-2,9.6],
     [-1.4,2.6], // 13: bàn CEO
-    [0.9,6.2]]; // 14: bàn Mai (tìm khách sỉ)
+    [0.9,6.2], // 14: bàn Mai (tìm khách sỉ)
+    [0.9,9.6]]; // 15: bàn Vy (website & SEO)
   const deskObjs={};
   function buildDesk(i,color,isSale){ const [x,z]=DESKS[i]; const g=new THREE.Group(); scene.add(g); const P={parent:g};
     mesh(box(2,0.1,0.95),"#d8b48a",{...P,x,y:0.76,z:z+0.95}); for(const dx of [-0.9,0.9]) mesh(box(0.08,0.74,0.85),"#a7835c",{...P,x:x+dx,y:0.37,z:z+0.95});
@@ -2272,6 +2447,7 @@ const World = (() => {
     if(isSale){ mesh(box(0.34,0.6,0.04),"#1877f2",{...P,x:x-0.75,y:1.12,z:z+1.25}); } // biểu tượng nick Facebook trên bàn
     g.add(chair(x,z-0.05,0,"#3d4b44",true)); return g; }
   for(let i=0;i<5;i++) buildDesk(i,["#2f4b8f","#e2557a","#2e9e6b","#f08a24","#7a4fc9"][i]);
+  { const g=buildDesk(15,"#3c6fd8"); const [x,z]=DESKS[15]; mesh(new THREE.SphereGeometry(0.12,14,10),"#3c6fd8",{parent:g,x:x-0.7,y:0.95,z:z+0.75}); } // quả địa cầu trên bàn Vy
   { const g=buildDesk(14,"#0f8b8d"); const [x,z]=DESKS[14]; mesh(new THREE.TorusGeometry(0.13,0.03,8,18),"#0f8b8d",{parent:g,x:x-0.7,y:1.02,z:z+0.75}); } // kính lúp trên bàn Mai
   { const g=buildDesk(13,"#d4af37"); const [x,z]=DESKS[13]; // bàn CEO: biển tên mạ vàng + cờ nhỏ
     mesh(box(0.7,0.18,0.05),"#d4af37",{parent:g,x:x-0.55,y:0.9,z:z+0.5}); mesh(box(0.66,0.12,0.02),"#1f2a3a",{parent:g,x:x-0.55,y:0.9,z:z+0.47,shadow:false});
@@ -2442,7 +2618,7 @@ function show(v){
   if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
   if(v==="ceo") loadCeoChat(true);
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
-  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="samples"){ loadPostSamples(); loadCeoReview(); } if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="samples"){ loadPostSamples(); loadCeoReview(); } if(v==="fbrules") loadFbp(); if(v==="website") loadWs(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
 $("#nav").addEventListener("click",e=>{ if(e.target.closest("#navMore")){ const o=!document.body.classList.contains("nav-open"); document.body.classList.toggle("nav-open",o); $("#navMore").setAttribute("aria-expanded",o); return; }
@@ -2633,6 +2809,155 @@ function postsTab(tab, focus){
 }
 $(".ptabs").addEventListener("click",e=>{ const b=e.target.closest("[role=tab]"); if(b) postsTab(b.id.replace("ptab-","")); });
 $(".ptabs").addEventListener("keydown",e=>{ if(["ArrowLeft","ArrowRight","Home","End"].includes(e.key)){ e.preventDefault(); postsTab(ST.postsTab==="work"?"posted":"work",true); } });
+/* ---------- LUẬT FACEBOOK ---------- */
+const FBP_LIMITS=[["fbp_posts_day","Bài / nick / ngày",1,20],["fbp_gap_minutes","Cách nhau tối thiểu (phút)",10,240],["fbp_bumps_day","Lượt up bài / nick / ngày",0,20],
+  ["fbp_joins_day","Xin vào nhóm / nick / ngày",0,10],["fbp_same_group_hours","1 nick đăng lại cùng nhóm sau (giờ)",6,168],["fbp_hashtags_max","Hashtag tối đa / bài",0,15],
+  ["fbp_new_nick_days","Nick mới chạy nửa giới hạn (ngày)",0,60],["fbp_rest_days","Nick bị chặn nghỉ (ngày)",0,30],["fbp_after_days","Sau khi nghỉ chạy nửa giới hạn (ngày)",0,30]];
+async function loadFbp(){ try{ ST.fbp=await api("/fb-policy"); }catch(e){ toast(e.message); return; } renderFbp(); }
+function renderFbp(){
+  const d=ST.fbp; if(!d) return; const st=d.settings;
+  const nw=(d.changes||[]).filter(x=>x.status==="new");
+  $("#fbpChanges").innerHTML=nw.map(x=>`<div class="fbp-chg"><b>⚠ Facebook đổi chính sách: ${esc(x.name)}</b> <span class="small muted">phát hiện ${fmtTime(x.detected_at)} ${fmtDate(x.detected_at)}</span><pre>${esc(x.summary||"")}</pre>
+     <div class="row wrap"><a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Đọc trang gốc</a><button class="btn sm" data-chg="${x.id}">Đã đọc</button></div></div>`).join("");
+  $("#fbpNicks").innerHTML=d.nicks.length?d.nicks.map(n=>{ const L=n.limits,U=n.used; const st=n.rest_until?`<span class="chip bad">Nghỉ tới ${fmtTime(n.rest_until)} ${fmtDate(n.rest_until)}</span> <button class="btn sm ghost" data-lift="${n.id}">Cho làm lại</button>`:n.factor<1?`<span class="chip warn">Nửa giới hạn</span>`:`<span class="chip ok">Bình thường</span>`;
+    const c=(u,l)=>`<span${u>=l?' style="color:var(--danger);font-weight:700"':""}>${u}/${l}</span>`;
+    return `<tr><td>${esc((n.sale_name?n.sale_name+" · ":"")+n.name)}</td><td class="num">${c(U.posts,L.posts)}</td><td class="num">${c(U.bumps,L.bumps)}</td><td class="num">${c(U.joins,L.joins)}</td><td class="num">${L.gap}′</td><td>${st}</td></tr>`; }).join("")
+    :`<tr><td colspan="6" class="muted small">Chưa có nick nào đang chạy.</td></tr>`;
+  $("#fbpLimitFields").innerHTML=FBP_LIMITS.map(([k,l,mn,mx])=>`<label class="f" for="fl-${k}">${l}<input type="number" id="fl-${k}" data-k="${k}" min="${mn}" max="${mx}" value="${esc(st[k]||"")}"></label>`).join("");
+  $("#fbpOn").checked=st.fbp_enabled!=="0"; $("#fbpTighten").checked=st.fbp_auto_tighten!=="0";
+  const rules=d.rules||[], cats=d.cats||{}, how=d.how||{}, srcs=Object.fromEntries((d.sources||[]).map(s=>[s.key,s]));
+  $("#fbpRuleStats").textContent=`${rules.length} luật · ${rules.filter(r=>r.how==="check").length} luật CEO và sale tự kiểm trong bài · ${rules.filter(r=>r.how==="limit").length} luật giữ bằng giới hạn · luật đã ghi vào sổ kiến thức của Lan, Tuấn, CEO, sale, Vy`;
+  $("#fbpRules").innerHTML=Object.entries(cats).map(([ck,cn])=>{ const rs=rules.filter(r=>r.cat===ck); if(!rs.length) return "";
+    return `<div class="fbp-cat">${esc(cn)}</div><div class="fbp-rules">${rs.map(r=>`<div class="fbp-rule ${r.level}"><div class="chips"><span class="chip">${esc(how[r.how]||r.how)}</span>${r.level==="high"?'<span class="chip bad">Nghiêm trọng</span>':""}${r.custom?'<span class="chip ok">Luật của sếp</span>':""}</div>
+      <b>${esc(r.title)}</b><p>${esc(r.rule)}</p>${r.do?`<p class="do"><b style="font-size:13px">Đội làm:</b> ${esc(r.do)}</p>`:""}
+      ${r.src&&srcs[r.src]?`<a class="src" href="${esc(srcs[r.src].url)}" target="_blank" rel="noopener">Nguồn: ${esc(srcs[r.src].name)}</a>`:""}${r.custom?`<div><button class="btn sm ghost" data-delrule="${esc(r.id)}">Xóa luật</button></div>`:""}</div>`).join("")}</div>`; }).join("");
+  const inc=d.incidents||[];
+  $("#fbpInc").innerHTML=inc.length?inc.slice(0,8).map(i=>`<li><b>${i.kind==="block"?"Nick bị chặn":"Bài bị gỡ"}</b>${i.account_name?` · ${esc(i.account_name)}`:""}${i.group_name?` · ${esc(i.group_name)}`:""} <span class="muted">${fmtTime(i.created_at)} ${fmtDate(i.created_at)}</span><br>${esc(i.detail||"")}${i.lesson?`<br><b>Bài học:</b> ${esc(i.lesson)}`:""}</li>`).join("")
+    :`<li class="muted">Chưa có sự cố nào. Khi nick bị chặn hay bài bị gỡ, Tuấn ghi lại nick đã làm gì và tự điều chỉnh.</li>`;
+  $("#fbpRested").innerHTML=(d.rested_groups||[]).length?`<p class="small" style="margin:8px 0 0"><b>Nhóm đang tạm ngừng đăng:</b> ${d.rested_groups.map(g=>`${esc(g.name)} (tới ${fmtDate(g.policy_rest_until)})`).join(", ")}</p>`:"";
+  $("#fbpWatchOn").checked=st.fbp_watch_enabled!=="0"; $("#fbpWatchTime").value=st.fbp_watch_time||"06:40";
+  $("#fbpWatchInfo").textContent=d.watch_last?`Tuấn đọc lần cuối ${fmtTime(d.watch_last)} ${fmtDate(d.watch_last)}. Trang có thay đổi thì Tuấn tóm tắt và báo sếp qua đây và Telegram.`:"Chưa đọc lần nào. Bấm “Đọc lại chính sách ngay” để Tuấn đọc lần đầu.";
+  $("#fbpSources").innerHTML=(d.sources||[]).map(s=>`<tr><td><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></td><td class="small">${s.last_checked?fmtTime(s.last_checked)+" "+fmtDate(s.last_checked):"—"}</td><td class="small">${s.last_changed?fmtDate(s.last_changed):"—"}</td>
+    <td>${s.status==="lỗi"?`<span class="chip bad" title="${esc(s.error||"")}">Không mở được</span>`:s.status==="có thay đổi"?'<span class="chip warn">Có thay đổi</span>':s.status==="đã đọc"?'<span class="chip ok">Đã đọc</span>':'<span class="chip">Chưa đọc</span>'}</td></tr>`).join("");
+  const b=$("#fbpBadge"); if(b){ b.hidden=!nw.length; b.textContent=nw.length||""; }
+}
+$("#fbpLimits").addEventListener("submit",async e=>{ e.preventDefault(); const body={};
+  e.target.querySelectorAll("[data-k]").forEach(i=>{ if(i.value!=="") body[i.dataset.k]=i.value; });
+  body.fbp_enabled=$("#fbpOn").checked?"1":"0"; body.fbp_auto_tighten=$("#fbpTighten").checked?"1":"0";
+  try{ ST.fbp=await api("/fb-policy/settings","PUT",body); renderFbp(); toast("Đã lưu giới hạn an toàn, Tuấn áp dụng từ lượt xếp lịch tới"); }catch(err){ toast(err.message); } });
+$("#v-fbrules").addEventListener("change",async e=>{ if(e.target.id==="fbpWatchOn"||e.target.id==="fbpWatchTime"){
+  try{ ST.fbp=await api("/fb-policy/settings","PUT",{fbp_watch_enabled:$("#fbpWatchOn").checked?"1":"0",fbp_watch_time:$("#fbpWatchTime").value||"06:40"}); renderFbp(); toast("Đã lưu lịch đọc chính sách"); }catch(err){ toast(err.message); } } });
+$("#v-fbrules").addEventListener("click",async e=>{
+  const c=e.target.closest("[data-chg]"), l=e.target.closest("[data-lift]"), d=e.target.closest("[data-delrule]");
+  try{
+    if(c){ ST.fbp=await api(`/fb-policy/changes/${c.dataset.chg}/read`,"POST"); renderFbp(); }
+    if(l){ ST.fbp=await api(`/fb-policy/nicks/${l.dataset.lift}/lift`,"POST"); renderFbp(); toast("Nick làm lại, vẫn chạy nửa giới hạn tới hết hạn"); }
+    if(d){ ST.fbp=await api(`/fb-policy/rules/${d.dataset.delrule}`,"DELETE"); renderFbp(); toast("Đã xóa luật"); }
+  }catch(err){ toast(err.message); } });
+$("#fbpRuleForm").addEventListener("submit",async e=>{ e.preventDefault();
+  try{ ST.fbp=await api("/fb-policy/rules","POST",{title:$("#fbrTitle").value,text:$("#fbrText").value,phrases:$("#fbrPhr").value.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean),level:$("#fbrLvl").value});
+    e.target.reset(); renderFbp(); toast("Đã thêm luật. Cả đội học luật này và CEO, sale kiểm bài theo luật mới"); }catch(err){ toast(err.message); } });
+$("#fbpCheck").onclick=async()=>{ const t=$("#fbpText").value.trim(); if(!t){ toast("Dán bài cần kiểm"); return; }
+  try{ const r=await api("/fb-policy/check","POST",{text:t});
+    $("#fbpCheckRes").innerHTML=r.issues.length?r.issues.map(i=>`<div class="fbp-issue"><span class="chip ${i.level==="high"?"bad":"warn"}">${i.level==="high"?"Chặn":"Nhắc"}</span><span>${esc(i.msg)}${i.hit?` (“${esc(i.hit)}”)`:""}</span></div>`).join("")
+      +`<p class="small ${r.ok?"muted":"err"}">${r.ok?"Không có lỗi nghiêm trọng, bài vẫn được đăng nhưng CEO trừ điểm.":"Bài này sẽ bị chặn, không được đăng."}</p>`
+      :`<p class="small" style="color:var(--accent)">✓ Không phạm luật nào.</p>`; }catch(err){ toast(err.message); } };
+$("#fbpWatch").onclick=async e=>{ e.target.disabled=true; try{ await api("/fb-policy/watch","POST"); toast("Tuấn đang đọc lại các trang chính sách của Meta (khoảng 1 phút)"); setTimeout(loadFbp,6000); setTimeout(loadFbp,60000); }catch(err){ toast(err.message); } setTimeout(()=>e.target.disabled=false,8000); };
+
+/* ---------- WEBSITE ---------- */
+const WS_INFO=[["site_name","Tên thương hiệu"],["site_legal_name","Tên công ty (pháp lý)"],["site_tagline","Khẩu hiệu"],["site_domain","Tên miền (VD moctam.vn)"],["site_phone","Zalo / điện thoại"],["site_email","Email"],
+  ["site_address","Địa chỉ nhà máy"],["site_certs","Tiêu chuẩn, chứng nhận"],["site_color","Màu thương hiệu"],["site_ga_id","Mã Google Analytics (G-...)"]];
+const WS_ST={draft:["","Nháp"],review:["warn","Chờ sếp duyệt"],published:["ok","Đã đăng"]};
+function wsTab(k){ ST.wsTab=k; for(const x of ["posts","kw","info","host"]){ const on=x===k; $("#wtab-"+x).setAttribute("aria-selected",on); $("#wtab-"+x).tabIndex=on?0:-1; $("#wpanel-"+x).hidden=!on; } }
+$("#wsTabs").addEventListener("click",e=>{ const b=e.target.closest("[role=tab]"); if(b) wsTab(b.id.replace("wtab-","")); });
+$("#wsTabs").addEventListener("keydown",e=>{ const ks=["posts","kw","info","host"]; if(!["ArrowLeft","ArrowRight"].includes(e.key)) return; e.preventDefault();
+  const i=(ks.indexOf(ST.wsTab||"posts")+(e.key==="ArrowRight"?1:3))%4; wsTab(ks[i]); $("#wtab-"+ks[i]).focus(); });
+async function loadWs(){ try{ ST.ws=await api("/website"); }catch(e){ toast(e.message); return; } renderWs(); }
+function renderWs(){
+  const d=ST.ws; if(!d) return; const s=d.stats, cf=d.settings;
+  $("#wsStats").innerHTML=[[s.published,"Bài đã đăng"],[s.review,"Chờ sếp duyệt"],[s.planned,"Từ khóa chờ viết"],[s.avg_seo||"—","Điểm SEO trung bình"],[d.pages||0,"Trang trên website"]]
+    .map(([v,l])=>`<div class="pr-stat" style="cursor:default"><b>${v}</b><span>${l}</span></div>`).join("");
+  $("#wsWriteInfo").textContent=`Vy viết ${cf.site_posts_week||3} bài/tuần vào ${(cf.site_write_days||"1,3,5").split(",").map(x=>["","T2","T3","T4","T5","T6","T7","CN"][+x]||x).join(", ")} lúc ${cf.site_write_time||"09:45"}`+(d.last_build?` · dựng website lần cuối ${fmtTime(d.last_build)} ${fmtDate(d.last_build)}`:" · chưa dựng website");
+  ST.wsOpen=ST.wsOpen||null;
+  $("#wsPosts").innerHTML=d.posts.length?d.posts.map(p=>{ const [cls,lab]=WS_ST[p.status]||["",p.status]; const open=ST.wsOpen===p.id;
+    return `<tr class="click ws-row${open?" open":""}" data-ws="${p.id}" tabindex="0" aria-expanded="${open}"><td class="ws-main"><div class="ws-t">${esc(p.title)}</div><div class="small muted">Từ khóa: ${esc(p.keyword)}${p.policy_note?` · <span class="err">⚠ ${esc(p.policy_note)}</span>`:""}</div></td>
+      <td data-l="SEO" class="num"><span class="chip ${p.seo_score>=(+cf.site_min_seo||75)?"ok":p.seo_score>=50?"warn":"bad"}">${p.seo_score}</span></td><td data-l="Tình trạng"><span class="chip ${cls}">${lab}</span></td>
+      <td data-l="Chữ" class="num">${p.words||0}</td><td data-l="Ngày" class="small">${fmtDate(p.published_at||p.created_at)}</td></tr>`
+      +(open?`<tr class="ws-edit"><td colspan="5" id="wsEd-${p.id}"><p class="muted small">Đang tải…</p></td></tr>`:""); }).join("")
+    :`<tr><td colspan="5"><div class="empty">Chưa có bài nào. Bấm “Vy viết bài mới”.</div></td></tr>`;
+  if(ST.wsOpen&&d.posts.some(p=>p.id===ST.wsOpen)) openWsPost(ST.wsOpen);
+  $("#wsKws").innerHTML=d.keywords.map(k=>`<tr><td>${esc(k.keyword)}</td><td class="small">${esc(k.cluster||"")}</td><td class="small">${["","Cao","Vừa","Thấp"][k.priority]||k.priority}</td>
+    <td>${k.status==="written"?'<span class="chip ok">Đã viết</span>':'<span class="chip">Chờ viết</span>'}</td>
+    <td>${k.status==="planned"?`<button class="btn sm" data-kwwrite="${k.id}">Viết ngay</button> <button class="btn sm ghost" data-kwdel="${k.id}">Xóa</button>`:""}</td></tr>`).join("");
+  $("#wsInfoFields").innerHTML=WS_INFO.map(([k,l])=>`<label class="f" for="wi-${k}">${l}<input type="${k==="site_color"?"color":"text"}" id="wi-${k}" data-k="${k}" value="${esc(cf[k]||"")}"></label>`).join("")
+    +`<label class="f" for="wi-site_about" style="grid-column:1/-1">Giới thiệu nhà máy (trang Giới thiệu)<textarea id="wi-site_about" data-k="site_about" rows="4" placeholder="Để trống: Vy viết đoạn giới thiệu từ thông tin nhà máy">${esc(cf.site_about||"")}</textarea></label>`;
+  $("#wsSchedFields").innerHTML=[["site_posts_week","Số bài / tuần","number"],["site_write_days","Ngày viết (1=T2 … 7=CN)","text"],["site_write_time","Giờ viết","time"],["site_min_seo","Điểm SEO tối thiểu để đăng","number"]]
+    .map(([k,l,ty])=>`<label class="f" for="wi-${k}">${l}<input type="${ty}" id="wi-${k}" data-k="${k}" value="${esc(cf[k]||"")}"></label>`).join("");
+  $("#wsAuto").checked=cf.site_auto_publish==="1";
+  $("#wsFtpFields").innerHTML=[["site_ftp_host","Máy chủ FTP (VD ftp.moctam.vn)","text"],["site_ftp_user","Tài khoản FTP","text"],["site_ftp_pass",cf.site_ftp_pass_set?"Mật khẩu (đã lưu, để trống nếu giữ nguyên)":"Mật khẩu FTP","password"],["site_ftp_dir","Thư mục trên hosting","text"]]
+    .map(([k,l,ty])=>`<label class="f" for="wf-${k}">${l}<input type="${ty}" id="wf-${k}" data-k="${k}" autocomplete="off" value="${k==="site_ftp_pass"?"":esc(cf[k]||"")}"></label>`).join("");
+  $("#wsFtpTls").checked=cf.site_ftp_tls!=="0";
+  $("#wsDeployInfo").textContent=d.last_deploy?`Đăng lần cuối ${fmtTime(d.last_deploy)} ${fmtDate(d.last_deploy)}`:"Chưa đăng lên hosting";
+  $("#wsSitemap").textContent=(cf.site_domain||"https://ten-mien-cua-ban")+"/sitemap.xml";
+}
+function wsMd(b){ const e=esc; let out=[],lst=null; const inl=x=>e(x).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="#" title="$2">$1</a>');
+  const close=()=>{ if(lst){ out.push(`</${lst}>`); lst=null; } };
+  (b||"").split("\n").forEach(r=>{ const l=r.trim(); if(!l){ close(); return; }
+    if(l.startsWith("### ")){ close(); out.push(`<h3>${inl(l.slice(4))}</h3>`); } else if(l.startsWith("## ")){ close(); out.push(`<h2>${inl(l.slice(3))}</h2>`); }
+    else if(/^[-*•]\s+/.test(l)){ if(lst!=="ul"){ close(); out.push("<ul>"); lst="ul"; } out.push(`<li>${inl(l.replace(/^[-*•]\s+/,""))}</li>`); }
+    else if(/^\d+[.)]\s+/.test(l)){ if(lst!=="ol"){ close(); out.push("<ol>"); lst="ol"; } out.push(`<li>${inl(l.replace(/^\d+[.)]\s+/,""))}</li>`); }
+    else { close(); out.push(`<p>${inl(l)}</p>`); } }); close(); return out.join(""); }
+async function openWsPost(pid){
+  let p; try{ p=await api(`/website/posts/${pid}`); }catch(e){ toast(e.message); return; }
+  const box=$(`#wsEd-${pid}`); if(!box) return; ST.wsCur=p;
+  const cnt=(v,a,b)=>`<span class="ws-cnt${v<a||v>b?" bad":""}">${v} ký tự (${a}–${b})</span>`;
+  const seo=p.seo||{items:[],policy:[]};
+  const faqTxt=(p.faq||[]).map(q=>`H: ${q.q}\nĐ: ${q.a||""}`).join("\n\n");
+  box.innerHTML=`<div class="ws-ed"><div class="stack">
+      <label class="f" for="we-title">Tiêu đề (H1) ${cnt(p.title.length,30,65)}<input type="text" id="we-title" value="${esc(p.title)}"></label>
+      <div class="grid2"><label class="f" for="we-kw">Từ khóa chính<input type="text" id="we-kw" value="${esc(p.keyword)}"></label><label class="f" for="we-slug">Đường dẫn<input type="text" id="we-slug" value="${esc(p.slug)}"></label></div>
+      <label class="f" for="we-mt">Thẻ tiêu đề trên Google ${cnt((p.meta_title||"").length,30,60)}<input type="text" id="we-mt" value="${esc(p.meta_title||"")}"></label>
+      <label class="f" for="we-md">Mô tả trên Google ${cnt((p.meta_desc||"").length,120,160)}<textarea id="we-md" rows="2">${esc(p.meta_desc||"")}</textarea></label>
+      <label class="f" for="we-body"><span>Nội dung (<code>## Mục</code>, <code>- gạch đầu dòng</code>, <code>[chữ](/san-pham/...)</code>)</span><textarea id="we-body" rows="16">${esc(p.body)}</textarea></label>
+      <label class="f" for="we-faq"><span>Câu hỏi thường gặp (mỗi câu: dòng <code>H:</code> rồi dòng <code>Đ:</code>)</span><textarea id="we-faq" rows="6">${esc(faqTxt)}</textarea></label>
+      <div class="row wrap"><button class="btn" data-wsact="save">Lưu & chấm lại</button>${p.status==="published"?`<button class="btn" data-wsact="unpub">Gỡ khỏi website</button><a class="btn ghost" href="/site/tin-tuc/${esc(p.slug)}/" target="_blank" rel="noopener" data-wsview>Xem trên website</a>`:`<button class="btn primary" data-wsact="pub">Duyệt &amp; đăng</button>`}<button class="btn ghost" data-wsact="prev">Xem dạng trang</button><button class="btn ghost danger" data-wsact="del">Xóa bài</button></div>
+      <div class="ws-prev" id="wsPrev" hidden></div></div>
+    <div class="stack"><div><b>Điểm SEO ${seo.score??p.seo_score}/100</b> <span class="small muted">· ${seo.words||p.words} chữ · mật độ từ khóa ${seo.density??"—"}%</span></div>
+      <ul class="ws-seo">${(seo.items||[]).map(i=>`<li><span class="${i.ok?"ok":"no"}">${i.ok?"✓":"✗"}</span><span>${esc(i.label)} <span class="muted">(${i.points}/${i.max})</span>${i.tip?`<br><span class="small muted">${esc(i.tip)}</span>`:""}</span></li>`).join("")}</ul>
+      ${(seo.policy||[]).length?`<div><b class="err">Luật quảng cáo</b>${seo.policy.map(x=>`<div class="fbp-issue"><span class="chip ${x.level==="high"?"bad":"warn"}">${x.level==="high"?"Chặn":"Nhắc"}</span><span>${esc(x.msg)}${x.hit?` (“${esc(x.hit)}”)`:""}</span></div>`).join("")}</div>`:`<p class="small" style="color:var(--accent);margin:0">✓ Không phạm luật quảng cáo</p>`}
+      ${p.cover?`<p class="small muted" style="margin:0">Ảnh đại diện: ${esc(p.cover)} · alt: ${esc(p.cover_alt||"")}</p>`:`<p class="small err" style="margin:0">Chưa có ảnh đại diện (thêm thư mục ảnh ở mục Sản phẩm)</p>`}</div></div>`;
+}
+$("#wsPosts").addEventListener("click",async e=>{
+  const a=e.target.closest("[data-wsact]");
+  if(a){ const p=ST.wsCur; if(!p) return; const act=a.dataset.wsact;
+    const faq=$("#we-faq").value.split(/\n\s*\n/).map(b=>{ const q=(b.match(/^H:\s*(.+)$/m)||[])[1], an=(b.match(/^Đ:\s*([\s\S]+)$/m)||[])[1]; return q?{q:q.trim(),a:(an||"").trim()}:null; }).filter(Boolean);
+    try{
+      if(act==="prev"){ const pv=$("#wsPrev"); pv.hidden=!pv.hidden; if(!pv.hidden) pv.innerHTML=`<h1 style="font-size:24px">${esc($("#we-title").value)}</h1>`+wsMd($("#we-body").value); return; }
+      if(act==="save"){ await api(`/website/posts/${p.id}`,"PATCH",{title:$("#we-title").value,keyword:$("#we-kw").value,slug:$("#we-slug").value,meta_title:$("#we-mt").value,meta_desc:$("#we-md").value,body:$("#we-body").value,faq}); toast("Đã lưu, Vy chấm lại SEO"); }
+      if(act==="pub"){ await api(`/website/posts/${p.id}`,"PATCH",{title:$("#we-title").value,keyword:$("#we-kw").value,slug:$("#we-slug").value,meta_title:$("#we-mt").value,meta_desc:$("#we-md").value,body:$("#we-body").value,faq});
+        await api(`/website/posts/${p.id}/publish`,"POST"); toast("Đã đăng bài lên website"); }
+      if(act==="unpub"){ await api(`/website/posts/${p.id}/unpublish`,"POST"); toast("Đã gỡ bài khỏi website"); }
+      if(act==="del"){ if(a.dataset.c!=="1"){ a.dataset.c="1"; a.textContent="Bấm lần nữa để xóa"; return; } await api(`/website/posts/${p.id}`,"DELETE"); ST.wsOpen=null; toast("Đã xóa bài, từ khóa về lại kế hoạch"); }
+    }catch(err){ toast(err.message); return; }
+    return loadWs(); }
+  if(e.target.closest("tr.ws-edit")) return;
+  const r=e.target.closest("tr[data-ws]"); if(!r) return; const id=+r.dataset.ws; ST.wsOpen=ST.wsOpen===id?null:id; renderWs(); });
+$("#wsPosts").addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches("tr[data-ws]")){ e.preventDefault(); e.target.click(); } });
+$("#wsWrite").onclick=async e=>{ e.target.disabled=true; try{ await api("/website/write","POST",{}); toast("Vy đang viết bài theo từ khóa ưu tiên kế tiếp (khoảng 1–2 phút)"); setTimeout(loadWs,4000); setTimeout(loadWs,30000); setTimeout(loadWs,90000); }catch(err){ toast(err.message); } setTimeout(()=>e.target.disabled=false,5000); };
+$("#wsKwForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ ST.ws=await api("/website/keywords","POST",{keyword:$("#wsKw").value,priority:+$("#wsKwPr").value}); e.target.reset(); $("#wsKwPr").value="2"; renderWs(); toast("Đã thêm từ khóa vào kế hoạch của Vy"); }catch(err){ toast(err.message); } });
+$("#wsKwPlan").onclick=async e=>{ e.target.disabled=true; try{ const r=await api("/website/keywords/plan","POST"); ST.ws=r; renderWs(); toast(r.added?`Vy thêm ${r.added} từ khóa mới`:"Vy chưa nghĩ ra từ khóa mới"); }catch(err){ toast(err.message); } e.target.disabled=false; };
+$("#wsKws").addEventListener("click",async e=>{ const w=e.target.closest("[data-kwwrite]"), d=e.target.closest("[data-kwdel]");
+  try{ if(w){ w.disabled=true; await api("/website/write","POST",{kid:+w.dataset.kwwrite}); toast("Vy đang viết bài cho từ khóa này"); setTimeout(loadWs,4000); setTimeout(loadWs,30000); }
+    if(d){ ST.ws=await api(`/website/keywords/${d.dataset.kwdel}`,"DELETE"); renderWs(); } }catch(err){ toast(err.message); } });
+$("#wsInfo").addEventListener("submit",async e=>{ e.preventDefault(); const body={}; e.target.querySelectorAll("[data-k]").forEach(i=>body[i.dataset.k]=i.value); body.site_auto_publish=$("#wsAuto").checked?"1":"0";
+  try{ ST.ws=await api("/website/settings","PUT",body); renderWs(); toast("Đã lưu thông tin. Bấm “Dựng lại website” để cập nhật trang"); }catch(err){ toast(err.message); } });
+$("#wsFtp").addEventListener("submit",async e=>{ e.preventDefault(); const body={}; e.target.querySelectorAll("[data-k]").forEach(i=>body[i.dataset.k]=i.value); body.site_ftp_tls=$("#wsFtpTls").checked?"1":"0";
+  try{ ST.ws=await api("/website/settings","PUT",body); renderWs(); toast("Đã lưu FTP"); }catch(err){ toast(err.message); } });
+$("#wsDeploy").onclick=async e=>{ e.target.disabled=true; $("#wsDeployInfo").textContent="Đang tải website lên hosting…";
+  try{ const r=await api("/website/deploy","POST"); toast(`Đã đăng ${r.files} tệp lên ${r.host}`); loadWs(); }catch(err){ toast(err.message); $("#wsDeployInfo").textContent=err.message; } e.target.disabled=false; };
+$("#wsBuild").onclick=async e=>{ e.target.disabled=true; try{ const r=await api("/website/build","POST"); toast(`Đã dựng lại website: ${r.pages} trang, ${r.posts} bài viết`); loadWs(); }catch(err){ toast(err.message); } e.target.disabled=false; };
+document.addEventListener("click",e=>{ const a=e.target.closest("#wsView,#wsZip,[data-wsview]"); if(a&&DEMO){ e.preventDefault(); toast("Bản demo: website thật nằm trên máy chạy phần mềm, mở tại địa chỉ /site/"); } });
+
 ST.pd=ST.pd||{page:1,size:20,q:"",group_id:"",account_id:"",link:"",days:"0",sort:"new"};
 ST.pdOpen=ST.pdOpen||new Set();
 async function loadPosted(){
@@ -2687,7 +3012,7 @@ $("#pdRows").addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&
 function postCard(p){
   const open=ST.openPost.has(p.id), editing=ST.editPost===p.id, posting=ST.postedForm===p.id;
   const SRCP={self:["ok","Lan tự viết"],claude:["","Claude viết"],boss:["talking","Sếp sửa"],template:["ok","Từ bài mẫu"]};
-  const meta=`<div class="meta">${SRCP[p.source]?`<span class="chip ${SRCP[p.source][0]}" title="Ai viết nội dung bài này">${SRCP[p.source][1]}</span>`:""}<span class="chip">${TARGET[p.target_type]||p.target_type}</span>${p.product_name?`<span class="chip">${esc(p.product_name)}</span>`:""}${p.group_name?`<span class="chip ok">${esc(p.group_name)}</span>`:""}${p.scheduled_for&&p.status==="scheduled"?`<span class="chip warn">${fmtTime(p.scheduled_for)} ${fmtDate(p.scheduled_for)}</span>`:""}${p.sale_name?`<span class="chip">${esc(p.sale_name)}${p.account_name?` · nick ${esc(p.account_name)}`:""}</span>`:""}${p.status==="posting"?`<span class="chip talking">Đang đăng…</span>`:""}${p.status==="failed"?`<span class="chip bad">Đăng lỗi</span>`:""}${noImg(p)?`<span class="chip bad" title="Bài đăng lên Facebook bắt buộc kèm ảnh">📷 Thiếu ảnh, không đăng</span>`:p.img_count&&p.status!=="posted"?`<span class="chip" title="Số ảnh sản phẩm sẵn để đính kèm">📷 ${p.img_count} ảnh</span>`:""}</div>`;
+  const meta=`<div class="meta">${SRCP[p.source]?`<span class="chip ${SRCP[p.source][0]}" title="Ai viết nội dung bài này">${SRCP[p.source][1]}</span>`:""}<span class="chip">${TARGET[p.target_type]||p.target_type}</span>${p.product_name?`<span class="chip">${esc(p.product_name)}</span>`:""}${p.group_name?`<span class="chip ok">${esc(p.group_name)}</span>`:""}${p.scheduled_for&&p.status==="scheduled"?`<span class="chip warn">${fmtTime(p.scheduled_for)} ${fmtDate(p.scheduled_for)}</span>`:""}${p.sale_name?`<span class="chip">${esc(p.sale_name)}${p.account_name?` · nick ${esc(p.account_name)}`:""}</span>`:""}${p.status==="posting"?`<span class="chip talking">Đang đăng…</span>`:""}${p.status==="failed"?`<span class="chip bad">Đăng lỗi</span>`:""}${p.policy_note&&p.status!=="posted"?`<span class="chip bad" title="${esc(p.policy_note)}">⚠ Luật Facebook</span>`:""}${noImg(p)?`<span class="chip bad" title="Bài đăng lên Facebook bắt buộc kèm ảnh">📷 Thiếu ảnh, không đăng</span>`:p.img_count&&p.status!=="posted"?`<span class="chip" title="Số ảnh sản phẩm sẵn để đính kèm">📷 ${p.img_count} ảnh</span>`:""}</div>`;
   let acts="";
   const shot = p.screenshot?`<a class="btn sm ghost" href="${esc(p.screenshot)}" target="_blank" rel="noopener">Ảnh chụp</a>`:"";
   const salePick = p.target_type!=="page" && ST.sales?.some(s=>(s.accounts||[]).length) ? `<select class="sm" id="sale-${p.id}" aria-label="Nick đăng bài" style="width:auto;max-width:100%;padding:4px 8px;font-size:12.5px">${ST.sales.filter(s=>s.status!=="fired"&&(s.accounts||[]).length).map(s=>`<optgroup label="${esc(s.name)}">${s.accounts.map(n=>`<option value="${n.id}" ${n.id===p.account_id?"selected":""}>${esc(n.name)}${n.login_status!=="ok"||!n.enabled?" (chưa sẵn sàng)":""}</option>`).join("")}</optgroup>`).join("")}</select><button class="btn sm primary" data-act="runNow">Đăng ngay</button><button class="btn sm" data-act="dry">Đăng thử</button>`:"";
@@ -3168,7 +3493,7 @@ $("#groupForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ aw
 
 /* --------------------------------------------- sếp giao việc cho CEO */
 async function renderOrders(){ const box=$("#ceoOrders"); if(!box) return; let d; try{ d=await api("/ceo/chat"); }catch(e){ return; }
-  const AG={all:"Cả đội",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",ceo:"CEO"};
+  const AG={all:"Cả đội",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",vy:"Vy",ceo:"CEO"};
   box.innerHTML=d.orders.length?`<h4 style="margin:4px 0 6px;font-size:13px">Chỉ đạo lâu dài của sếp (CEO đưa vào lời dặn của agent)</h4><ul class="recent">${d.orders.map(o=>`<li><b>${esc(AG[o.agent]||o.agent)}</b><span>${esc(o.text)}</span><span class="muted small">${fmtDate(o.created_at)}</span><button type="button" class="btn sm ghost danger" data-orderoff="${o.id}">Bỏ</button></li>`).join("")}</ul>`:""; }
 document.addEventListener("click",async e=>{ const b=e.target.closest("[data-orderoff]"); if(!b) return; await api(`/ceo/orders/${b.dataset.orderoff}`,"DELETE"); toast("Đã bỏ chỉ đạo"); renderOrders(); });
 async function loadCeoChat(force){

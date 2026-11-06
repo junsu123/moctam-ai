@@ -74,9 +74,20 @@ AGENTS = {
                  "hairStyle": "long", "accessory": "glasses", "accent": "#bfeeee"},
         "desk": 14,
     },
+    "vy": {
+        "id": "vy",
+        "name": "Vy",
+        "role": "Biên tập Website & SEO",
+        "short": "Quản lý website công ty, lên kế hoạch từ khóa, viết bài chuẩn SEO để khách sỉ tự tìm thấy xưởng trên Google",
+        "personality": "Kỹ tính với từng thẻ tiêu đề, từng đường link; viết dài nhưng dễ đọc, có số liệu thật của nhà máy. "
+                       "Không viết bài câu khách, không hứa công dụng, không nhồi từ khóa.",
+        "look": {"skin": "#f5d3b5", "shirt": "#3c6fd8", "pants": "#2b2f3c", "hair": "#2a1a12",
+                 "hairStyle": "long", "accessory": "none", "accent": "#cfe0ff"},
+        "desk": 15,
+    },
 }
 
-ORDER = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai"]
+ORDER = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy"]
 
 COMPANY_CONTEXT = """Bạn là nhân viên của một xưởng sản xuất thực phẩm thường tại Việt Nam
 (trà túi lọc, bột ngũ cốc, bột thiên nhiên sấy lạnh, cà phê hòa tan...).
@@ -138,7 +149,25 @@ def system_prompt(agent_id: str, settings: dict | None = None, with_learning: bo
             f"Bạn tên là {a['name']}, vị trí: {a['role']} ({a['short']}).\n"
             f"Tính cách: {a['personality']}\n"
             "Luôn trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, đúng vai." + (_learned(agent_id) if with_learning else "")
-            + _orders(agent_id) + _hot_products() + _mai_rules(agent_id) + _price_rule())
+            + _orders(agent_id) + _hot_products() + _mai_rules(agent_id) + _price_rule() + _fb_rules() + _vy_rules(agent_id))
+
+
+def _fb_rules() -> str:
+    try:
+        import fb_policy
+        return fb_policy.prompt_rule()
+    except Exception:
+        return ""
+
+
+def _vy_rules(agent_id: str) -> str:
+    if agent_id != "vy":
+        return ""
+    try:
+        import website
+        return website.prompt_block()
+    except Exception:
+        return ""
 
 
 def _price_rule() -> str:

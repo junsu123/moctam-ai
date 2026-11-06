@@ -142,6 +142,17 @@ def review(text: str, post_id: int | None = None, sample: str | None = None) -> 
     if ai:
         sc = round((sc + ai["score"]) / 2)  # CEO tự chấm + Claude góp ý
         tips += [x for x in ai.get("tips", []) if x not in tips][:3]
+    try:  # luật Facebook: phạm nặng thì không duyệt, phạm nhẹ thì trừ điểm và góp ý
+        import fb_policy
+        if fb_policy.enabled():
+            for iss in fb_policy.check_text(t, post_id):
+                if iss["level"] == "high":
+                    hard.append("phạm luật Facebook: " + iss["msg"] + (f" (“{iss['hit']}”)" if iss.get("hit") else ""))
+                else:
+                    sc -= 5
+                    tips.append("luật Facebook: " + iss["msg"] + (f" (“{iss['hit']}”)" if iss.get("hit") else ""))
+    except Exception as e:
+        print("[fb policy review]", e)
     if hard:
         reasons = hard + reasons
         sc = min(sc, 30)
@@ -175,8 +186,9 @@ def note(r: dict) -> str:
 
 
 def save(post_id: int, r: dict):
-    db.run("UPDATE posts SET review_score=?, review_note=?, reviewed_by='ceo', reviewed_at=?, review_ok=? WHERE id=?",
-           (r["score"], note(r)[:600], db.now(), 1 if r["ok"] else 0, post_id))
+    pn = "; ".join(x for x in r["reasons"] + r["tips"] if "luật Facebook" in x)
+    db.run("UPDATE posts SET review_score=?, review_note=?, reviewed_by='ceo', reviewed_at=?, review_ok=?, policy_note=? WHERE id=?",
+           (r["score"], note(r)[:600], db.now(), 1 if r["ok"] else 0, pn[:500] or None, post_id))
 
 
 # ---------------------------------------------------------------- sếp sửa / hủy bài CEO đã duyệt -> CEO rút kinh nghiệm

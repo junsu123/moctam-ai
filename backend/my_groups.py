@@ -505,6 +505,13 @@ def plan_admin() -> list[dict]:
         if start >= end:
             continue
         need = min(need, int((end - start).total_seconds() // (30 * 60)) + 1)  # chỉ làm số bài còn kịp đăng hôm nay
+        import fb_policy
+        if fb_policy.enabled():  # luật Facebook: bài nhóm quản lý cũng tính vào trần bài/ngày của nick
+            sched = db.one("""SELECT COUNT(*) n FROM posts WHERE account_id=? AND status IN ('scheduled','posting')
+                              AND scheduled_for LIKE ?""", (acc["id"], today + "%"))["n"]
+            need = min(need, max(0, fb_policy.remaining(acc["id"], "post") - sched))
+            if need <= 0:
+                continue
         import post_template
         src_sql = " AND source='template'" if post_template.enabled() else ""
         items = workflows.with_images(db.q(f"SELECT * FROM posts WHERE status='approved' AND target_type='group'{src_sql} ORDER BY id LIMIT ?", (need,)))

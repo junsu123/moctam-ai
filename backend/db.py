@@ -245,6 +245,29 @@ CREATE TABLE IF NOT EXISTS junk (
 );
 CREATE INDEX IF NOT EXISTS idx_junk_url ON junk(url);
 CREATE INDEX IF NOT EXISTS idx_junk_phone ON junk(phone);
+CREATE TABLE IF NOT EXISTS fb_policy_sources (
+  key TEXT PRIMARY KEY, name TEXT, url TEXT, kind TEXT, last_hash TEXT, last_text TEXT, last_checked TEXT, last_changed TEXT,
+  status TEXT, error TEXT
+);
+CREATE TABLE IF NOT EXISTS fb_policy_changes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, source_key TEXT, name TEXT, url TEXT, detected_at TEXT, added TEXT, removed TEXT,
+  summary TEXT, status TEXT DEFAULT 'new'
+);
+CREATE TABLE IF NOT EXISTS fb_incidents (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, kind TEXT, detail TEXT, posts_24h INTEGER DEFAULT 0,
+  bumps_24h INTEGER DEFAULT 0, joins_24h INTEGER DEFAULT 0, group_id INTEGER, post_id INTEGER, lesson TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS site_posts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, keyword TEXT, title TEXT, slug TEXT, meta_title TEXT, meta_desc TEXT, excerpt TEXT,
+  body TEXT, faq TEXT, product_ids TEXT, cover TEXT, cover_alt TEXT, status TEXT DEFAULT 'draft', seo_score INTEGER DEFAULT 0,
+  seo_report TEXT, policy_note TEXT, words INTEGER DEFAULT 0, author TEXT DEFAULT 'vy', note TEXT, created_at TEXT, updated_at TEXT,
+  published_at TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_site_slug ON site_posts(slug);
+CREATE TABLE IF NOT EXISTS site_keywords (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, keyword TEXT UNIQUE, intent TEXT, cluster TEXT, priority INTEGER DEFAULT 2,
+  status TEXT DEFAULT 'planned', post_id INTEGER, source TEXT DEFAULT 'vy', created_at TEXT
+);
 CREATE TABLE IF NOT EXISTS post_samples (
   id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, enabled INTEGER DEFAULT 1, note TEXT, created_at TEXT, updated_at TEXT
 );
@@ -297,6 +320,9 @@ MIGRATIONS = [
     ("products", "hot", "INTEGER DEFAULT 0"), ("products", "hot_note", "TEXT DEFAULT ''"), ("products", "hot_since", "TEXT"),
     ("products", "is_general", "INTEGER DEFAULT 0"),
     ("posts", "img_fails", "INTEGER DEFAULT 0"),  # số lần Facebook không nhận ảnh khi đăng
+    ("posts", "policy_note", "TEXT"),  # bài vi phạm luật Facebook (CEO kiểm)
+    ("fb_accounts", "rest_until", "TEXT"), ("fb_accounts", "limit_factor", "REAL DEFAULT 1"), ("fb_accounts", "factor_until", "TEXT"),
+    ("groups", "policy_rest_until", "TEXT"),  # nhóm hay gỡ bài: tạm ngừng đăng
     ("posts", "link_tries", "INTEGER DEFAULT 0"), ("posts", "link_next_at", "TEXT"), ("posts", "link_error", "TEXT"),  # lấy lại link bài  # ảnh tổng hợp nhà máy: tích thì mọi bài chỉ lấy ảnh ở đây
     # chỉ số tương tác của nhóm (sale khảo sát) và đánh giá của Tuấn
     ("group_candidates", "posts_today", "REAL"), ("group_candidates", "posts_month", "INTEGER"), ("group_candidates", "new_members_week", "INTEGER"), ("group_candidates", "avg_reactions", "REAL"), ("group_candidates", "avg_comments", "REAL"), ("group_candidates", "sampled_posts", "INTEGER"), ("group_candidates", "last_post_hours", "REAL"), ("group_candidates", "selling_ratio", "REAL"), ("group_candidates", "no_selling", "INTEGER DEFAULT 0"), ("group_candidates", "rules_note", "TEXT"), ("group_candidates", "scouted_at", "TEXT"), ("group_candidates", "eng_score", "REAL"), ("group_candidates", "verdict", "TEXT"), ("group_candidates", "review_note", "TEXT"), ("group_candidates", "reviewed_at", "TEXT"),
@@ -425,6 +451,20 @@ DEFAULT_SETTINGS = {
     "tg_sent_log": "{}",
     "attach_images": "1",
     "require_images": "1",  # bài đăng Facebook bắt buộc kèm ảnh, không có ảnh thì không đăng
+    # Luật Facebook: giới hạn an toàn cho mỗi nick, kiểm bài, theo dõi chính sách
+    "fbp_enabled": "1", "fbp_posts_day": "6", "fbp_gap_minutes": "30", "fbp_bumps_day": "6", "fbp_joins_day": "2",
+    "fbp_same_group_hours": "24", "fbp_new_nick_days": "14", "fbp_new_nick_factor": "0.5", "fbp_rest_days": "3",
+    "fbp_after_days": "7", "fbp_after_factor": "0.5", "fbp_hashtags_max": "5", "fbp_caption_max": "2500",
+    "fbp_similar_block": "0.95", "fbp_similar_max": "0.85", "fbp_removed_max": "2", "fbp_group_rest_days": "30",
+    "fbp_auto_tighten": "1", "fbp_custom_rules": "[]", "fbp_extra_sources": "[]",
+    "fbp_watch_enabled": "1", "fbp_watch_time": "06:40", "fbp_watch_every_days": "7", "fbp_watch_last": "",
+    # Website công ty + Vy viết bài chuẩn SEO
+    "site_name": "MỘC TÂM", "site_legal_name": "", "site_tagline": "Nhà máy sản xuất & gia công trà túi lọc, cà phê, ngũ cốc, bột thiên nhiên",
+    "site_domain": "", "site_about": "", "site_address": "", "site_email": "", "site_phone": "0386992326",
+    "site_certs": "GMP – ISO – FDA – VSATTP", "site_founded": "", "site_color": "#2f5d3a", "site_ga_id": "",
+    "site_posts_week": "3", "site_write_days": "1,3,5", "site_write_time": "09:45", "site_auto_publish": "0",
+    "site_min_seo": "75", "site_last_write": "", "site_last_build": "", "site_last_deploy": "",
+    "site_ftp_host": "", "site_ftp_user": "", "site_ftp_pass": "", "site_ftp_dir": "/public_html", "site_ftp_tls": "1",
 }
 
 DATA_DIR = DB_PATH.parent
@@ -529,6 +569,17 @@ def init():
         pricing.migrate()  # sếp chốt: bỏ giá khỏi sản phẩm, mời liên hệ Zalo
     except Exception as e:
         print("[pricing migrate]", e)  # bản cũ 1 sale = 1 nick -> bảng nick riêng, mỗi sale nhiều nick
+    try:
+        import website
+        website.seed()  # kế hoạch từ khóa ban đầu cho Vy
+    except Exception as e:
+        print("[website seed]", e)
+    if not get_settings().get("fbp_taught"):
+        try:
+            import fb_policy
+            fb_policy.teach()  # ghi luật Facebook vào sổ kiến thức của các agent (1 lần, cập nhật khi sếp thêm luật)
+        except Exception as e:
+            print("[fb policy teach]", e)
 
 
 def sample_counts() -> dict:
