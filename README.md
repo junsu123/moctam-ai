@@ -102,6 +102,20 @@ sang giao diện máy tính. Nếu không đính được ảnh, sale vẫn đă
 hạn chế dù đã giãn cách, nên giữ số bài/ngày vừa phải, nội dung có giá trị và đúng luật từng nhóm.
 Máy chạy phần mềm phải bật trong giờ đăng bài; Chrome của các nick chạy trên chính máy đó.
 
+### Chrome chạy ngầm: sếp vẫn dùng máy bình thường
+
+**Cài đặt → Chrome của sale khi làm việc** (mặc định **Chạy ngầm**):
+- **Chạy ngầm** (nên dùng): sale vẫn dùng Google Chrome thật với hồ sơ của nick, nhưng cửa sổ được đặt ra ngoài vùng màn hình.
+  Sếp không thấy cửa sổ, dùng máy, gõ phím, chép dán bình thường. Phần mềm điều khiển Chrome qua kênh riêng của trình duyệt,
+  **không dùng chuột, bàn phím hay khay nhớ tạm của máy**, nên sale và sếp không giành nhau. Đã tắt cơ chế Chrome tự giảm tốc
+  tab bị che / không được chú ý, nên sale vẫn thao tác đều khi sếp mở cửa sổ khác. Biểu tượng Chrome vẫn có ở thanh tác vụ;
+  đừng đóng nó khi sale đang làm.
+- **Hiện cửa sổ**: xem sale làm việc (cửa sổ có thể hiện lên mỗi khi sale bắt đầu việc mới).
+- **Ẩn hoàn toàn**: không có cửa sổ. Facebook dễ nhận ra trình duyệt chạy ẩn và hay hỏi xác minh hơn; chỉ nên dùng trên máy chủ.
+
+Đăng nhập nick, nút **Mở Chrome** và **Mở hồ sơ** (kết bạn) luôn hiện cửa sổ trên màn hình vì cần người thao tác. Đổi chế độ
+áp dụng từ lượt việc tiếp theo. Máy vẫn phải bật, không ngủ và còn mạng thì sale mới làm việc được.
+
 ## Luật Facebook: học luật, kiểm bài, giữ nhịp đăng an toàn
 
 Mục **Luật Facebook** (nhóm Facebook ở thanh bên). Cả đội học luật từ chính sách của Meta và luật quảng cáo thực phẩm Việt Nam:

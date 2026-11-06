@@ -75,11 +75,37 @@ def submit(sale_id: int, job: dict):
 
 
 # ---------------------------------------------------------------- trình duyệt
+BROWSER_MODES = {"background": "Chạy ngầm (cửa sổ nằm ngoài màn hình)", "show": "Hiện cửa sổ để xem sale làm",
+                 "headless": "Ẩn hoàn toàn (không có cửa sổ)"}
+# Chrome tự giảm tốc tab bị che / nằm ngoài màn hình / không được chú ý: tắt để sale vẫn thao tác đều khi sếp dùng máy việc khác
+NO_THROTTLE = ["--disable-backgrounding-occluded-windows", "--disable-renderer-backgrounding",
+               "--disable-background-timer-throttling"]
+
+
+def browser_mode() -> str:
+    st = db.get_settings()
+    if st.get("browser_headless") == "1":
+        return "headless"
+    m = st.get("browser_mode") or "background"
+    return m if m in BROWSER_MODES else "background"
+
+
 def _launch(pw, aid: int, headless: bool | None = None):
+    """headless=None: theo cài đặt Chế độ Chrome. headless=False: luôn hiện cửa sổ (đăng nhập, mở hồ sơ cho sale bấm)."""
+    args = ["--disable-notifications", *NO_THROTTLE]
     if headless is None:
-        headless = db.get_settings().get("browser_headless") == "1"
+        mode = browser_mode()
+        headless = mode == "headless"
+        if mode == "background":
+            # Chrome thật có cửa sổ, chỉ đặt ra ngoài vùng màn hình: sếp không thấy, không bị giành chuột / bàn phím
+            # (phần mềm điều khiển Chrome qua kênh riêng, không dùng chuột, bàn phím, khay nhớ tạm của máy)
+            args += ["--window-position=-32000,-32000", "--window-size=1280,900"]
+        elif mode == "show":
+            args += ["--window-position=60,40"]  # Chrome nhớ vị trí cũ (có thể đang ngoài màn hình sau khi chạy ngầm)
+    else:
+        args += ["--window-position=60,40"]  # cửa sổ cần người thao tác: luôn hiện trên màn hình
     kw = dict(user_data_dir=str(profile_dir(aid)), headless=headless, locale="vi-VN",
-              viewport={"width": 1280, "height": 900}, args=["--disable-notifications"])
+              viewport={"width": 1280, "height": 900}, args=args)
     try:
         return pw.chromium.launch_persistent_context(channel="chrome", **kw)  # Google Chrome đã cài
     except Exception as e:

@@ -376,6 +376,7 @@ DEFAULT_SETTINGS = {
     "brand_voice": "Thân thiện, chân thật, nói chuyện như người làm xưởng; nhấn mạnh nguồn hàng tận gốc, giá sỉ tốt, hỗ trợ người bán online.",
     "contact_info": "Inbox trang hoặc Zalo 09xx.xxx.xxx",
     "browser_headless": "0",
+    "browser_mode": "background",  # background: chạy ngầm ngoài màn hình; show: hiện cửa sổ; headless: ẩn hoàn toàn
     "cost_preset": "can_bang",
     "model_posts": "claude-sonnet-5-5",
     "model_replies": "claude-haiku-5-5",
