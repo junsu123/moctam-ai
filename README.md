@@ -54,6 +54,14 @@ của nick đó (đăng bài, up bài, quét bình luận), đóng Chrome rồi 
 sale bắt đầu từ nick sau nick vừa làm, nên các nick được làm xoay vòng đều nhau. Tìm nhóm và xin vào nhóm cũng
 xoay vòng theo nick (mỗi nick xin vào tối đa 2 nhóm/ngày).
 
+**Chia bài đều cho mọi nick.** Khi xếp lịch, Tuấn chọn nick đang có ít bài nhất hôm nay trước, rồi lấy nhóm tốt nhất mà nick
+đó đăng được (trước đây chọn nhóm tốt nhất rồi mới tới nick, nên nick không ở các nhóm tốt nhất hay bị bỏ cả ngày). Thẻ nick
+ở trang **Nhân viên sale** có ô **“Vì sao hôm nay nick chưa có việc”** khi nick chưa có bài, lượt up nào trong ngày (hoặc có điều
+cần lưu ý), kèm cách xử lý: nick tắt, chưa đăng nhập, sale tạm dừng, đang nghỉ theo Luật Facebook, chưa rà soát nhóm,
+không ở nhóm nào trong danh sách đăng (hay chỉ 1–2 nhóm), hết giờ làm, đã đủ bài, nick mới đang chạy nửa trần, chưa có bài
+đã duyệt. Nick chỉ được xếp vào nhóm nick đó thật sự đang ở; nick không ở nhóm nào trong danh sách thì phải cho nick vào nhóm
+(hoặc Rà soát nhóm của nick để thêm nhóm nick đang ở) mới có việc.
+
 **Lần đầu cho mỗi nick:**
 
 1. Vào **Nhân viên sale** → *Tuyển sale* (tối đa 8 người, mỗi người có bàn riêng trong văn phòng 3D), đặt tên nick đầu tiên.

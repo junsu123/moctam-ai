@@ -471,15 +471,22 @@ def plan_distribution(keywords: list[str] | None = None, limit: int | None = Non
         for post in approved:
             if limit and len(plan) >= limit:
                 break
-            for g in list(groups):
-                # nhóm sale tự tìm được: chỉ nick đã vào nhóm mới đăng; nhóm sếp nhập chưa đánh dấu nick: coi như mọi nick đã vào
-                cands = [(t, load[s["id"]]["count"], s) for s in sales
-                         if accounts.can_post_in(g, s["id"]) and (t := next_slot(s))]
-                if cands:
-                    t, _, s = min(cands, key=lambda c: (c[0], c[1]))
-                    assign(post, s, t.strftime("%Y-%m-%d %H:%M"), g)
-                    groups.remove(g)
-                    break
+            # chia đều cho mọi nick: nick ít bài nhất hôm nay được chọn trước, lấy nhóm tốt nhất mà nick đó đăng được
+            # (trước đây chọn theo nhóm rồi mới tới nick sớm giờ nhất, nick ít nhóm chung hay bị bỏ quên cả ngày)
+            # nhóm sale tự tìm được: chỉ nick đã vào nhóm mới đăng; nhóm sếp nhập chưa đánh dấu nick: coi như mọi nick đã vào
+            opts = []
+            for s in sales:
+                t = next_slot(s)
+                if not t:
+                    continue
+                g = next((g for g in groups if accounts.can_post_in(g, s["id"])), None)
+                if g:
+                    opts.append((load[s["id"]]["all"], t, s, g))
+            if not opts:
+                break
+            _, t, s, g = min(opts, key=lambda o: (o[0], o[1]))
+            assign(post, s, t.strftime("%Y-%m-%d %H:%M"), g)
+            groups.remove(g)
         for post in ([] if keywords else with_images(db.q("SELECT * FROM posts WHERE status='approved' AND target_type='profile' ORDER BY id"))):
             cands = [(t, s) for s in sales if load[s["id"]]["profile"] == 0 and (t := next_slot(s))]
             if cands:

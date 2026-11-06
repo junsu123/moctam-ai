@@ -401,6 +401,9 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:
 .ws-prev{border:1px solid var(--line);border-radius:12px;padding:6px 18px;background:#fff;max-height:520px;overflow:auto;color:#1d2420}
 .ws-prev h2{font-size:20px}.ws-prev h3{font-size:16px}
 #v-website .ptabs{margin-top:0}
+.nick-why{display:flex;flex-direction:column;gap:2px;border-left:3px solid var(--honey);background:var(--panel-2);border-radius:6px;padding:6px 9px;margin:6px 0;min-width:0;max-width:100%}
+.nick-why.bad{border-left-color:var(--danger)}
+.nick-why span,.nick-why b{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;min-width:0;max-width:100%}
 /* tay nghề viết câu của Bảo */
 .bk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;background:var(--panel-2)}
 .bk-top{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
@@ -2088,7 +2091,11 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
         products:[["Bột ngũ cốc dinh dưỡng 25 loại hạt",.31],["Trà hoa đậu biếc - cỏ ngọt",.22],["Trà gừng mật ong túi lọc",.17],["Bột cần tây sấy lạnh",.12],["Cà phê hòa tan 3in1 vị đậm",.1],["Bột diếp cá - rau má",.08]].map(([name,weight])=>({name,weight}))}};
   }
   const nickOut=a=>{ const mine=S.posts.filter(p=>p.account_id===a.id); return {...a,posted_today:mine.filter(p=>p.status==="posted").length,scheduled_today:mine.filter(p=>["scheduled","posting"].includes(p.status)).length,
-    groups_joined:S.groups.filter(g=>((g.joins||{})[a.id]||{}).status==="joined").length}; };
+    groups_joined:S.groups.filter(g=>((g.joins||{})[a.id]||{}).status==="joined").length,
+    diag:(()=>{ const n=mine.filter(p=>["posted","scheduled","posting"].includes(p.status)).length; const why=[];
+      if(a.login_status!=="ok") why.push({level:"bad",text:"Nick chưa đăng nhập hoặc phiên đã hết",fix:"Bấm Mở Chrome, đăng nhập lại rồi bấm Kiểm tra"});
+      else if(!n) why.push({level:"bad",text:"Nick không ở nhóm nào trong danh sách đăng",fix:"Cho nick xin vào nhóm (Hội nhóm → Tìm nhóm) hoặc Rà soát nhóm của nick"});
+      return {idle:!n,why}; })()}; };
   const saleOut=r=>{ const mine=S.posts.filter(p=>p.sale_id===r.id); return {...r,agent_id:`sale-${r.id}`,busy:S.busy[r.id]||null,busy_account:S.busyAcc[r.id]||null,accounts:nicksOf(r.id).map(nickOut),max_accounts:5,posted_today:mine.filter(p=>p.status==="posted").length,scheduled_today:mine.filter(p=>["scheduled","posting"].includes(p.status)).length,failed:mine.filter(p=>p.status==="failed").length,
     recent:mine.slice(0,6).map(p=>({id:p.id,status:p.status,target_type:p.target_type,group_name:p.group_name,account_name:p.account_name,posted_at:p.posted_at,scheduled_for:p.scheduled_for,error:p.error,screenshot:null}))}; };
   function plan(only,limit){
@@ -3350,6 +3357,7 @@ async function loadSales(){
           <div class="nick-top"><span class="nick-name" title="${esc(n.name)}">${on?'<span class="dot live" aria-hidden="true"></span>':""}${esc(n.name)}</span><span class="chip ${nc}">${on?"Đang làm":nt}</span></div>
           <div class="small muted">${n.posted_today}/${n.max_posts_per_day} bài hôm nay · ${n.scheduled_today} trong lịch · vào ${n.groups_joined} nhóm${n.last_session_at?` · ca gần nhất ${fmtTime(n.last_session_at)}`:""}</div>
           ${n.last_error&&n.login_status!=="ok"?`<div class="err">${esc(n.last_error)}</div>`:""}
+          ${n.diag&&n.diag.why&&n.diag.why.length&&(n.diag.idle||n.diag.why.some(w=>w.level!=="info"))?`<div class="nick-why${n.diag.why.some(w=>w.level==="bad")?" bad":""}" role="note"><b class="small">${n.diag.idle?"Vì sao hôm nay nick chưa có việc":"Lưu ý"}</b>${n.diag.why.map(w=>`<span class="small">• ${esc(w.text)}${w.fix?` <span class="muted">→ ${esc(w.fix)}</span>`:""}</span>`).join("")}</div>`:""}
           <div class="actions"><button class="btn sm${n.login_status==="ok"?"":" primary"}" data-na="open" ${s.busy?"disabled":""}>Mở Chrome${n.login_status==="ok"?"":" để đăng nhập"}</button><button class="btn sm" data-na="check" ${s.busy?"disabled":""}>Kiểm tra</button>
             <button class="btn sm ghost" data-na="toggle">${n.enabled?"Tạm dừng nick":"Bật lại nick"}</button></div>
           <details class="limits"><summary>Giới hạn: ${n.max_posts_per_day} bài/ngày, cách ${n.min_gap_minutes} phút, ${esc(n.active_from)}–${esc(n.active_to)}</summary>

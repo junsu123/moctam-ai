@@ -1450,6 +1450,10 @@ def _acc_out(a: dict) -> dict:
     a["posted_today"] = db.one("SELECT COUNT(*) n FROM posts WHERE account_id=? AND status='posted' AND posted_at LIKE ?", (a["id"], t))["n"]
     a["scheduled_today"] = db.one("SELECT COUNT(*) n FROM posts WHERE account_id=? AND status IN ('scheduled','posting') AND scheduled_for LIKE ?", (a["id"], t))["n"]
     a["groups_joined"] = db.one("SELECT COUNT(*) n FROM account_groups WHERE account_id=? AND status='joined'", (a["id"],))["n"]
+    try:
+        a["diag"] = accounts.diagnose(a["id"])  # vì sao nick có / không có việc hôm nay
+    except Exception as e:
+        print("[diagnose]", e)
     a.pop("profile_dir", None)
     return a
 

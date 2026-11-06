@@ -134,3 +134,61 @@ def can_post_in(g: dict, aid: int) -> bool:
         return st == "ok"
     mem = member_ids(g)
     return aid in mem if (mem or g.get("source") == "search") else True
+
+
+def diagnose(aid: int) -> dict:
+    """Vì sao nick có / không có việc hôm nay: số việc trong ngày và các lý do chặn (đọc từ dữ liệu, không mở Chrome)."""
+    import my_groups
+    a = db.one("""SELECT a.*, s.name sale_name, s.auto_post, COALESCE(s.status,'active') sale_status FROM fb_accounts a
+                  JOIN sales s ON s.id=a.sale_id WHERE a.id=?""", (aid,))
+    if not a:
+        return {}
+    t = db.today()
+    work = {
+        "posted": db.one("SELECT COUNT(*) n FROM posts WHERE account_id=? AND status='posted' AND posted_at LIKE ?", (aid, t + "%"))["n"],
+        "scheduled": db.one("""SELECT COUNT(*) n FROM posts WHERE account_id=? AND status IN ('scheduled','posting')
+                               AND scheduled_for LIKE ?""", (aid, t + "%"))["n"],
+        "bumps": db.one("SELECT COUNT(*) n FROM bumps WHERE account_id=? AND created_at LIKE ? AND status!='skipped'", (aid, t + "%"))["n"],
+        "posts_7d": db.one("SELECT COUNT(*) n FROM posts WHERE account_id=? AND status='posted' AND posted_at >= ?",
+                           (aid, (db.clock() - __import__("datetime").timedelta(days=7)).strftime("%Y-%m-%d")))["n"],
+    }
+    groups = db.q("SELECT * FROM groups WHERE COALESCE(url,'')!='' AND COALESCE(managed,0)=0 AND COALESCE(is_sample,0)=0")
+    st = {"ok": 0, "rest": 0, "no": 0, "leave": 0, "unknown": 0}
+    for g in groups:
+        m = my_groups.membership(g, aid)
+        st[m] = st.get(m, 0) + 1
+    can = sum(1 for g in groups if can_post_in(g, aid))
+    why = []  # (mức, lý do, cách xử lý)
+    if not a["enabled"]:
+        why.append(("bad", "Nick đang tắt", "Bật nick ở thẻ nick"))
+    if a["login_status"] != "ok":
+        why.append(("bad", "Nick chưa đăng nhập hoặc phiên đã hết", "Bấm Mở Chrome, đăng nhập lại rồi bấm Kiểm tra"))
+    if not a["auto_post"] or a["sale_status"] != "active":
+        why.append(("bad", "Sale đang tạm dừng hoặc đã nghỉ", "Bật lại sale ở trang Nhân viên sale"))
+    if (a.get("rest_until") or "") > db.now():
+        why.append(("warn", f"Nick đang nghỉ theo Luật Facebook tới {a['rest_until'][:16]}", "Chờ hết giờ nghỉ hoặc gỡ nghỉ ở trang Luật Facebook"))
+    if not a.get("groups_synced_at") and not can:
+        why.append(("bad", "Chưa biết nick đang ở nhóm nào", "Hội nhóm → Rà soát nhóm của nick"))
+    elif not can:
+        why.append(("bad", f"Nick không ở nhóm nào trong danh sách đăng ({st['no']} nhóm nick chưa vào"
+                    + (f", {st['rest']} nhóm mới vào đang chờ đủ ngày" if st["rest"] else "") + ")",
+                    "Cho nick xin vào nhóm (Hội nhóm → Tìm nhóm) hoặc Rà soát nhóm của nick để thêm nhóm nick đang ở"))
+    elif can <= 2:
+        why.append(("warn", f"Nick chỉ đăng được {can} nhóm, nhóm vừa đăng phải giãn cách vài ngày nên nhiều hôm không có lượt",
+                    "Cho nick vào thêm nhóm"))
+    now_hm = db.clock().strftime("%H:%M")
+    if now_hm > (a.get("active_to") or "22:00"):
+        why.append(("info", f"Đã hết giờ làm của nick ({a.get('active_from') or '08:00'}–{a.get('active_to') or '22:00'})", "Mai nick làm tiếp"))
+    try:
+        import fb_policy
+        lim = fb_policy.limits(a) if fb_policy.enabled() else None
+        if lim and work["posted"] + work["scheduled"] >= min(lim["posts"], int(a.get("max_posts_per_day") or 5)):
+            why.append(("info", "Nick đã đủ số bài hôm nay", "Mai nick làm tiếp"))
+        elif lim and lim["factor"] < 1:
+            why.append(("info", f"Nick mới hoặc vừa bị chặn: trần {lim['posts']} bài/ngày", "Tự tăng dần khi nick ổn định"))
+    except Exception:
+        pass
+    if not why and not (work["posted"] + work["scheduled"] + work["bumps"]):
+        why.append(("info", "Chưa có bài đã duyệt để xếp cho nick", "Lan viết thêm bài hoặc sếp duyệt bài ở trang Bài đăng"))
+    return {"id": aid, "name": label(a), "work": work, "groups_can": can, "groups": st, "why":
+            [{"level": l, "text": x, "fix": f} for l, x, f in why], "idle": not (work["posted"] + work["scheduled"] + work["bumps"])}
