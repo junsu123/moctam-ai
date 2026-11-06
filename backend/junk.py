@@ -98,6 +98,22 @@ def mark(lead_id: int, reason: str, note: str = "") -> dict:
     return {"id": jid, "learned": learned}
 
 
+def mark_url(name: str, url: str, reason: str = "other", note: str = "", text: str = "") -> dict:
+    """Loại một tài khoản chưa thành khách (vd. người trong gợi ý kết bạn): Mai không tìm lại, Tuấn không gợi ý lại."""
+    _cache.clear()
+    reason = reason if reason in REASONS else "other"
+    c = _canon(url)
+    old = db.one("SELECT id FROM junk WHERE url=?", (c,)) if c else None
+    if old:
+        return {"id": old["id"], "learned": ""}
+    jid = db.run("""INSERT INTO junk(lead_id, prospect_id, name, phone, url, seller_type, reason, note, text, created_at)
+                    VALUES (NULL,NULL,?,?,?,?,?,?,?,?)""",
+                 (name, "", c, None, reason, (note or "").strip()[:300], (text or "")[:4000], db.now()))
+    learned = _learn_from(reason, note, None)
+    db.log("mai", "Ghi nhớ data rác", f"Sếp loại {name}: {REASONS[reason]}{(' – ' + note) if note else ''}. " + learned)
+    return {"id": jid, "learned": learned}
+
+
 def _learn_from(reason: str, note: str, pr: dict | None) -> str:
     """Biến lý do sếp chọn thành điều kiện Mai áp dụng."""
     import knowledge

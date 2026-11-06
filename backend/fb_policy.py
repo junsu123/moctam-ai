@@ -84,6 +84,12 @@ RULES = [
      "title": "Tránh bị chặn vì \u201cthao tác quá nhanh\u201d",
      "rule": "Xin vào nhiều nhóm liền nhau, bình luận giống nhau ở nhiều bài trong vài giây, kết bạn hàng loạt sẽ bị chặn tạm thời.",
      "do": "Mỗi nick xin vào tối đa 2 nhóm/ngày, mỗi lượt up bài cách nhau vài phút và lời up khác nhau, không kết bạn hàng loạt."},
+    {"id": "friend_requests", "cat": "rate", "how": "limit", "level": "high", "src": "restricting",
+     "title": "Kết bạn: ít, đúng người, gửi bằng tay",
+     "rule": "Gửi nhiều lời mời kết bạn cho người lạ, nhiều lời mời bị bỏ qua hoặc bấm \u201cKhông biết người này\u201d làm nick bị chặn "
+             "tính năng kết bạn, nặng thì khóa. Công cụ tự động gửi lời mời hàng loạt là spam.",
+     "do": "Tuấn chỉ gợi ý người đang hoạt động trong nhóm chung, hợp tệp khách; sale tự bấm Thêm bạn bè, tối đa 10 lời mời/nick/ngày "
+           "(nick mới một nửa), dừng khi tỷ lệ đồng ý thấp."},
     {"id": "strikes", "cat": "account", "how": "learn", "level": "high", "src": "restricting",
      "title": "Vi phạm cộng dồn thành \u201cgậy\u201d",
      "rule": "Mỗi vi phạm cộng một gậy; gậy tăng dần dẫn tới chặn đăng 1, 3, 7, 30 ngày rồi khóa hẳn. Gậy hết hạn sau khoảng 90 ngày.",
@@ -273,6 +279,7 @@ def limits(acc: dict) -> dict:
         posts = min(posts, own)
     gap = max(_i("fbp_gap_minutes", 30), int(acc.get("min_gap_minutes") or 0))
     return {"posts": posts, "bumps": cap("fbp_bumps_day", 6), "joins": max(0, int(_i("fbp_joins_day", 2) * f)),
+            "friends": max(0, int(_i("fbp_friends_day", 10) * f)),
             "gap": int(gap / f) if f < 1 else gap, "factor": f}
 
 
@@ -287,7 +294,12 @@ def used_today(aid: int) -> dict:
                           AND COALESCE(requested_at, updated_at) >= ?""", (aid, today))["n"]
     except Exception:
         joins = 0
-    return {"posts": posts["n"], "last_post": posts["last"], "bumps": bumps["n"], "last_bump": bumps["last"], "joins": joins}
+    try:
+        friends = db.one("SELECT COUNT(*) n FROM friend_suggestions WHERE account_id=? AND sent_at >= ?", (aid, today))["n"]
+    except Exception:
+        friends = 0
+    return {"posts": posts["n"], "last_post": posts["last"], "bumps": bumps["n"], "last_bump": bumps["last"], "joins": joins,
+            "friends": friends}
 
 
 def allow(aid: int, kind: str, group_id: int | None = None) -> tuple[bool, str, str | None]:
@@ -557,7 +569,7 @@ def overview() -> dict:
         nicks.append({"id": a["id"], "name": a["name"], "sale_name": a.get("sale_name"), "limits": L, "used": U,
                       "rest_until": a["rest_until"] if (a.get("rest_until") or "") > db.now() else None,
                       "factor": L["factor"], "login_status": a.get("login_status")})
-    keys = ["fbp_enabled", "fbp_posts_day", "fbp_gap_minutes", "fbp_bumps_day", "fbp_joins_day", "fbp_same_group_hours",
+    keys = ["fbp_enabled", "fbp_posts_day", "fbp_gap_minutes", "fbp_bumps_day", "fbp_joins_day", "fbp_friends_day", "fbp_same_group_hours",
             "fbp_new_nick_days", "fbp_new_nick_factor", "fbp_rest_days", "fbp_after_days", "fbp_after_factor", "fbp_hashtags_max",
             "fbp_similar_max", "fbp_removed_max", "fbp_group_rest_days", "fbp_watch_enabled", "fbp_watch_time", "fbp_auto_tighten"]
     return {

@@ -268,6 +268,12 @@ CREATE TABLE IF NOT EXISTS site_keywords (
   id INTEGER PRIMARY KEY AUTOINCREMENT, keyword TEXT UNIQUE, intent TEXT, cluster TEXT, priority INTEGER DEFAULT 2,
   status TEXT DEFAULT 'planned', post_id INTEGER, source TEXT DEFAULT 'vy', created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS friend_suggestions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, group_id INTEGER, name TEXT, profile_url TEXT, reason TEXT,
+  score INTEGER DEFAULT 0, snippet TEXT, status TEXT DEFAULT 'suggested', created_at TEXT, opened_at TEXT, sent_at TEXT,
+  decided_at TEXT, UNIQUE(account_id, profile_url)
+);
+CREATE INDEX IF NOT EXISTS idx_friend_status ON friend_suggestions(account_id, status);
 CREATE TABLE IF NOT EXISTS post_samples (
   id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, enabled INTEGER DEFAULT 1, note TEXT, created_at TEXT, updated_at TEXT
 );
@@ -355,6 +361,7 @@ MIGRATIONS = [
     ("account_groups", "role", "TEXT DEFAULT 'member'"), ("account_groups", "origin", "TEXT"), ("account_groups", "joined_at", "TEXT"),
     ("account_groups", "verdict", "TEXT"), ("account_groups", "verdict_note", "TEXT"), ("account_groups", "left_at", "TEXT"),
     ("account_groups", "seen_at", "TEXT"), ("groups", "managed", "INTEGER DEFAULT 0"), ("groups", "pinned", "INTEGER DEFAULT 0"),
+    ("groups", "focus", "INTEGER DEFAULT 0"), ("groups", "friends_scanned_at", "TEXT"),
     ("groups", "slug", "TEXT"), ("posts", "managed", "INTEGER DEFAULT 0"), ("fb_accounts", "groups_synced_at", "TEXT"),
 ]
 
@@ -452,6 +459,11 @@ DEFAULT_SETTINGS = {
     "attach_images": "1",
     "require_images": "1",  # bài đăng Facebook bắt buộc kèm ảnh, không có ảnh thì không đăng
     # Luật Facebook: giới hạn an toàn cho mỗi nick, kiểm bài, theo dõi chính sách
+    # Sếp chỉ đạo nơi đăng: all / prefer / only, từ khóa nhóm nên đăng, từ khóa nhóm tránh
+    "post_target_mode": "all", "post_group_keywords": "", "post_group_exclude": "",
+    # Gợi ý kết bạn: Tuấn tìm người trong nhóm sôi nổi, sale tự bấm Thêm bạn bè
+    "friends_enabled": "1", "friends_time": "10:40", "friends_groups_per_run": "2", "friends_per_group": "12",
+    "friends_last": "", "fbp_friends_day": "10",
     "fbp_enabled": "1", "fbp_posts_day": "6", "fbp_gap_minutes": "30", "fbp_bumps_day": "6", "fbp_joins_day": "2",
     "fbp_same_group_hours": "24", "fbp_new_nick_days": "14", "fbp_new_nick_factor": "0.5", "fbp_rest_days": "3",
     "fbp_after_days": "7", "fbp_after_factor": "0.5", "fbp_hashtags_max": "5", "fbp_caption_max": "2500",
@@ -574,9 +586,10 @@ def init():
         website.seed()  # kế hoạch từ khóa ban đầu cho Vy
     except Exception as e:
         print("[website seed]", e)
-    if not get_settings().get("fbp_taught"):
+    import fb_policy
+    if not get_settings().get("fbp_taught") or get_settings().get("fbp_rules_n") != str(len(fb_policy.RULES)):
         try:
-            import fb_policy
+            set_setting("fbp_rules_n", str(len(fb_policy.RULES)))
             fb_policy.teach()  # ghi luật Facebook vào sổ kiến thức của các agent (1 lần, cập nhật khi sếp thêm luật)
         except Exception as e:
             print("[fb policy teach]", e)

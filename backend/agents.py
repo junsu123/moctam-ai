@@ -149,13 +149,24 @@ def system_prompt(agent_id: str, settings: dict | None = None, with_learning: bo
             f"Bạn tên là {a['name']}, vị trí: {a['role']} ({a['short']}).\n"
             f"Tính cách: {a['personality']}\n"
             "Luôn trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, đúng vai." + (_learned(agent_id) if with_learning else "")
-            + _orders(agent_id) + _hot_products() + _mai_rules(agent_id) + _price_rule() + _fb_rules() + _vy_rules(agent_id))
+            + _orders(agent_id) + _hot_products() + _mai_rules(agent_id) + _price_rule() + _fb_rules() + _vy_rules(agent_id) + _target_rule(agent_id))
 
 
 def _fb_rules() -> str:
     try:
         import fb_policy
         return fb_policy.prompt_rule()
+    except Exception:
+        return ""
+
+
+def _target_rule(agent_id: str) -> str:
+    """Tuấn, CEO và Lan biết sếp đang chỉ đạo đăng bài ở nhóm nào."""
+    if agent_id not in ("tuan", "ceo", "lan"):
+        return ""
+    try:
+        import group_target
+        return group_target.prompt_line()
     except Exception:
         return ""
 

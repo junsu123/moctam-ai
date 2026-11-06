@@ -77,6 +77,8 @@ def _tick():
     if fb_policy.watch_due():  # Tuấn đọc lại chính sách Facebook mỗi tuần, báo sếp khi có thay đổi
         db.set_setting("fbp_watch_last", db.now())
         threading.Thread(target=fb_policy.check_sources, daemon=True).start()
+    import friends
+    friends.tick(now)  # Tuấn tìm người đáng kết bạn trong nhóm sôi nổi (sale tự bấm gửi)
     import website
     website.tick(now)  # Vy viết bài website theo lịch
     # KPI: chuyển khách cần sếp, nhắc lại; báo cáo Telegram

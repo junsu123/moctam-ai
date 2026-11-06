@@ -638,13 +638,22 @@ def _ctx_names(aid: int) -> tuple[dict, dict, str]:
     return acc, sale, f"sale-{sale['id']}"
 
 
-def _job_open(pw, aid: int, minutes: int = 30):
-    """Mở Chrome của một nick để sếp đăng nhập / vào nhóm; đóng cửa sổ là xong."""
+def _job_open(pw, aid: int, minutes: int = 30, urls: list[str] | None = None):
+    """Mở Chrome của một nick để sếp đăng nhập / vào nhóm; đóng cửa sổ là xong.
+    urls: mở sẵn mỗi link một tab (vd. trang cá nhân người Tuấn gợi ý kết bạn, sale tự bấm Thêm bạn bè)."""
     acc, sale, agent = _ctx_names(aid)
-    workflows.set_status(agent, "working", f"Mở Chrome nick {accounts.label(acc)} chờ sếp đăng nhập")
+    workflows.set_status(agent, "working", f"Mở Chrome nick {accounts.label(acc)} " +
+                         (f"với {len(urls)} trang cá nhân chờ sale kết bạn" if urls else "chờ sếp đăng nhập"))
     ctx, page = _open(pw, aid, headless=False)
     try:
-        page.goto(FB_BASE, wait_until="domcontentloaded")
+        page.goto(urls[0] if urls else FB_BASE, wait_until="domcontentloaded")
+        for u in (urls or [])[1:10]:
+            try:
+                ctx.new_page().goto(u, wait_until="domcontentloaded")
+            except Exception as e:
+                if is_closed_error(e):
+                    raise
+                print("[open tab]", u, e)
     except Exception as e:
         if not is_closed_error(e):  # sếp tự đóng cửa sổ ngay: không phải lỗi
             raise
@@ -1544,7 +1553,8 @@ def _fail(page, post_id: int, msg: str, dry_run: bool):
 
 JOB_NAME = {"open": "mở Chrome", "check": "kiểm tra phiên", "post": "đăng bài", "bump": "up bài", "scan": "quét bình luận",
             "discover": "tìm nhóm mới", "join": "xin vào nhóm", "session": "làm ca trên nick",
-            "prospect": "mở trang tìm khách sỉ cho Mai", "mygroups": "rà soát nhóm của nick", "link": "lấy link bài đã đăng"}
+            "prospect": "mở trang tìm khách sỉ cho Mai", "mygroups": "rà soát nhóm của nick", "link": "lấy link bài đã đăng",
+            "friends": "đọc nhóm tìm người kết bạn"}
 
 
 def _worker(sale_id: int, q: Queue):
@@ -1565,7 +1575,7 @@ def _worker(sale_id: int, q: Queue):
             with sync_playwright() as pw:
                 k = job["kind"]
                 if k == "open":
-                    _job_open(pw, aid)
+                    _job_open(pw, aid, 15 if job.get("urls") else 30, urls=job.get("urls"))  # mở hồ sơ kết bạn: giữ cửa sổ tối đa 15 phút
                 elif k == "check":
                     _job_check(pw, aid)
                 elif k == "post":
@@ -1587,6 +1597,9 @@ def _worker(sale_id: int, q: Queue):
                 elif k == "mygroups":
                     import my_groups
                     my_groups.job_sync(pw, aid, job.get("notify"), job.get("leave"))
+                elif k == "friends":
+                    import friends
+                    friends.job(pw, aid, job.get("group_ids"), job.get("notify"))
                 elif k == "prospect":
                     import prospect
                     prospect.job(pw, aid, job.get("plan"), job.get("urls"), job.get("notify"))

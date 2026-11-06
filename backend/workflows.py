@@ -70,7 +70,10 @@ def group_ready(g: dict) -> bool:
     if not g.get("last_posted_at"):
         return True
     last = datetime.strptime(g["last_posted_at"][:10], "%Y-%m-%d")
-    return (db.clock() - last).days >= int(g.get("min_days_between_posts") or 3)
+    days = int(g.get("min_days_between_posts") or 3)
+    if g.get("focus"):  # sếp chọn tập trung đăng: mỗi ngày một bài (luật Facebook vẫn giữ tối thiểu 24 giờ/nhóm)
+        days = min(days, 1)
+    return (db.clock() - last).days >= days
 
 
 # ---------------------------------------------------------------- Lan: viết bài
@@ -405,6 +408,8 @@ def plan_distribution() -> list[dict]:
               if group_ready(g) and g["id"] not in taken and (g.get("url") or "").strip()]  # nhóm chưa có link: không xếp
     import group_finder
     groups.sort(key=lambda g: not group_finder.matches_today(g))  # ưu tiên nhóm hợp chủ đề CEO chọn hôm nay
+    import group_target
+    groups = group_target.apply(groups)  # sếp chỉ đạo: nhóm tập trung / có từ khóa trước, bỏ nhóm có từ khóa tránh
     plan = []
 
     import learning

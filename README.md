@@ -121,7 +121,7 @@ Các giới hạn dưới đây giảm rủi ro chứ không loại bỏ đượ
 - **Sale kiểm lại ngay trước khi đăng**: bài phạm nặng về chờ duyệt để sửa; nick chưa đủ khoảng cách, hết trần bài/ngày, hoặc
   đã đăng vào nhóm đó trong 24 giờ thì bài được dời giờ, không đăng dồn.
 - **Giới hạn an toàn mỗi nick** (sửa được): 6 bài/ngày tính cả bài nhóm mình quản lý, cách nhau ít nhất 30 phút, 6 lượt up bài,
-  2 lần xin vào nhóm, 1 bài/nhóm/24 giờ, tối đa 5 hashtag. Nick mới (dưới 14 ngày) chạy nửa giới hạn. Bảng **Nhịp đăng hôm
+  2 lần xin vào nhóm, 10 lời mời kết bạn (sale tự bấm), 1 bài/nhóm/24 giờ, tối đa 5 hashtag. Nick mới (dưới 14 ngày) chạy nửa giới hạn. Bảng **Nhịp đăng hôm
   nay** cho thấy mỗi nick đã làm bao nhiêu trên trần.
 - **Rút kinh nghiệm**: nick bị chặn thì nghỉ 3 ngày rồi chạy nửa giới hạn 7 ngày; Tuấn ghi lại 24 giờ trước đó nick đã đăng, up,
   xin vào nhóm bao nhiêu. 2 nick bị chặn trong 7 ngày thì tự hạ trần chung 1 bài. Nhóm gỡ 2 bài trong 30 ngày thì ngừng đăng
@@ -220,6 +220,44 @@ Khung **CEO học duyệt bài** ở cuối trang Bài mẫu sỉ. Mọi bài đ
 Ghi giá, hứa công dụng chữa bệnh, có cụm câu sếp từng bỏ, hoặc trùng y hệt bài đã đăng thì không duyệt. Từ **70 điểm** trở lên mới duyệt (sửa được). Bài viết lại từ bài mẫu mà chưa đạt thì Lan viết lại bản khác (tối đa 4 lần) theo góp ý của CEO. Có khóa Claude thì CEO nhờ Claude đọc bài cùng thư viện mẫu và các bài học để góp ý thêm.
 
 **CEO rút kinh nghiệm từ sếp**: sếp sửa hoặc hủy một bài CEO đã duyệt (trang Bài đăng) thì CEO ghi bài học vào sổ tay và sổ kiến thức: sếp rút ngắn thì hạ độ dài tối đa, sếp bỏ câu nào thì lần sau gặp câu đó không duyệt, sếp hủy vì “nhiều emoji” thì giới hạn emoji chặt hơn. Khung CEO học duyệt bài hiện: chuẩn CEO đang dùng, bài học từ sếp, số bài CEO duyệt/loại trong 30 ngày, tỉ lệ **duyệt đúng ý sếp**, và ô **CEO chấm thử** để sếp dán một bài bất kỳ. CEO cũng tự học thêm các chủ đề viết bài (tiêu chí bài tốt, dấu hiệu bài bị coi là spam, cách viết lời kêu gọi) lúc rảnh.
+
+## Chỉ đạo nơi đăng: nhóm có từ khóa nào, tập trung nhóm nào
+
+Ô **Chỉ đạo nơi đăng** ở trang **Bài đăng** (tab Bài đăng). Bấm **Sửa chỉ đạo**:
+- **Đăng ở đâu**: *Mọi nhóm đủ điều kiện* (như cũ), *Ưu tiên nhóm chỉ định* (nhóm tập trung trước, rồi nhóm có từ khóa, còn bài
+  thì đăng nhóm khác) hoặc *Chỉ nhóm chỉ định* (chỉ đăng nhóm tập trung hoặc nhóm có từ khóa, không đăng nhóm khác).
+- **Đăng ở nhóm có từ khóa**: VD “trà, ngũ cốc, nguồn hàng sỉ”. So với tên, chủ đề và từ khóa tìm ra nhóm, không phân biệt dấu
+  (gõ “ngu coc” cũng khớp “Ngũ Cốc”), khớp trọn cụm từ.
+- **Không đăng nhóm có từ khóa**: VD “quần áo, mỹ phẩm”. Áp dụng cả khi chọn *Mọi nhóm*.
+- **Nhóm tập trung đăng**: chọn nhóm từ danh sách (hoặc bấm **☆ Tập trung** cạnh tên nhóm ở trang Hội nhóm). Nhóm tập trung được
+  xếp trước và đăng **mỗi ngày 1 bài** thay vì giãn cách vài ngày; luật 1 bài/nhóm/24 giờ của mỗi nick vẫn giữ.
+- **Xem trước** ngay khi gõ: nhóm nào sẽ được đăng, nhóm nào không và vì sao. Chọn *Chỉ nhóm chỉ định* mà không nhóm nào khớp
+  thì có cảnh báo: Tuấn sẽ không xếp bài vào nhóm nào.
+
+Tuấn áp dụng từ lần xếp lịch tiếp theo, bài đã xếp lịch giữ nguyên. Chỉ đạo áp dụng cho nhóm thường; nhóm nick quản lý vẫn được
+chăm đều mỗi ngày. Tuấn, CEO và Lan đều thấy chỉ đạo này trong lời dặn. Nhắn CEO cũng được: “chỉ đăng ở nhóm có từ khóa trà túi
+lọc, ngũ cốc”, “không đăng vào nhóm mẹ bỉm”, “tập trung đăng vào nhóm Hội Bán Hàng Online”.
+
+## Kết bạn với thành viên trong nhóm sôi nổi
+
+Mục **Kết bạn** (nhóm Facebook ở thanh bên).
+
+- **Nhóm sôi nổi nhất**: Tuấn chấm điểm 0–100 mỗi nhóm nick đang ở: số bài mỗi ngày (30 điểm), bình luận trung bình mỗi bài (30),
+  cảm xúc (15), thành viên mới mỗi tuần so với tổng (15), quy mô (10); 3 ngày không ai đăng thì chia đôi. Nhóm sếp chọn tập trung
+  đăng được xếp trên. Nhóm sếp cấm đăng không được chọn.
+- **Tìm người**: mỗi ngày (mặc định 10:40, hoặc bấm **Tuấn tìm người ngay** / **Tìm người** ở một nhóm, hoặc nhắn CEO “cho các
+  nick kết bạn với thành viên nhóm”), nick còn lượt mời mở bảng tin 2 nhóm sôi nổi nhất lâu chưa đọc (bài mới nhất), cuộn đọc
+  bài và bình luận, chỉ đọc. Tuấn chọn người đang đăng bài, bình luận và chấm điểm hợp tệp khách: đang hỏi nguồn hàng hợp ngành
+  (+45), quan tâm trà, ngũ cốc, đồ uống (+20), đang bán hàng online (+15), hoạt động nhiều lần (+5 mỗi lần). Bỏ xưởng / người bán
+  sỉ cạnh tranh, tên nick của mình, data sếp đã loại. Một người chỉ được **một nick** của công ty mời (nhiều nick cùng mời một
+  người là dấu hiệu mạng lưới tài khoản). Tối đa 12 người mỗi nhóm.
+- **Gửi lời mời: sale tự bấm.** Phần mềm **không tự bấm “Thêm bạn bè”**: Facebook coi gửi lời mời hàng loạt bằng công cụ tự động
+  là spam, nick bị chặn tính năng kết bạn hoặc khóa. Bấm **Mở hồ sơ** ở nick: Chrome của nick mở sẵn tối đa 5 trang cá nhân
+  (mỗi trang một tab, trong trần còn lại). Bấm Thêm bạn bè trên từng trang, rồi đánh dấu **Đã gửi lời mời**. Người không hợp
+  bấm **Bỏ qua** hoặc **Không hợp** (Mai ghi nhớ là data rác). Khi họ đồng ý, bấm **Họ đã đồng ý** để theo dõi tỷ lệ đồng ý.
+- **Trần lời mời** (Luật Facebook): mặc định 10 lời mời/nick/ngày, nick mới hoặc vừa bị chặn còn một nửa, nick đang nghỉ không mời.
+  Hết trần thì nút Mở hồ sơ khóa tới hôm sau. Tỷ lệ đồng ý dưới 30% là dấu hiệu mời nhầm người: giảm lời mời, chọn kỹ hơn.
+- Đọc bảng tin xong, Tuấn cập nhật luôn chỉ số tương tác của nhóm (khi đọc được đủ bài).
 
 ## Nhóm có sẵn trong nick: đăng ở đâu, thoát nhóm nào, chăm sóc nhóm mình quản lý
 
@@ -824,6 +862,8 @@ backend/
   junk.py        Data rác sếp loại: chặn đích danh, học chữ chung của data rác, trừ điểm/loại khách giống vậy
   fb_policy.py   Luật Facebook: bộ luật, kiểm bài, giới hạn an toàn mỗi nick, sự cố & bài học, theo dõi chính sách Meta
   website.py     Website công ty + Vy: từ khóa, viết bài, bảng kiểm SEO, dựng trang tĩnh, sitemap, schema, zip, FTP
+  group_target.py Sếp chỉ đạo nơi đăng: chế độ all/prefer/only, từ khóa nên đăng / tránh, nhóm tập trung, xem trước
+  friends.py     Kết bạn trong nhóm: điểm sôi nổi của nhóm, đọc bảng tin tìm người hợp tệp khách, trần lời mời, mở hồ sơ cho sale
   prospect.py    Mai tìm khách sỉ: tìm, đọc trang công khai, phân loại người bán, chấm điểm 100 có bằng chứng, lưu CRM
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm
   group_review.py  Tuấn đánh giá nhóm theo chuẩn nhóm tương tác cao: chấm điểm, Nên vào / Cân nhắc / Bỏ qua, lý do

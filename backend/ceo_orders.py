@@ -30,6 +30,12 @@ SETTINGS_OK = {
     "admin_posts_max": ("int", 1, 20, "số bài tối đa/ngày ở nhóm mình quản lý"),
     "prospect_tiktok": ("bool", 0, 0, "Mai tìm khách trên TikTok"), "prospect_shopee": ("bool", 0, 0, "Mai tìm khách trên Shopee"),
     "prospect_enabled": ("bool", 0, 0, "Mai tự tìm khách sỉ mỗi ngày"), "prospect_time": ("time", 0, 0, "giờ Mai đi tìm khách sỉ"),
+    "post_target_mode": ("choice", ("all", "prefer", "only"), 0,
+                         "nơi đăng bài (all: mọi nhóm, prefer: ưu tiên nhóm chỉ định, only: chỉ nhóm chỉ định)"),
+    "post_group_keywords": ("text", 0, 300, "từ khóa nhóm nên đăng (cách nhau dấu phẩy)"),
+    "post_group_exclude": ("text", 0, 300, "từ khóa nhóm không đăng (cách nhau dấu phẩy)"),
+    "friends_enabled": ("bool", 0, 0, "Tuấn tìm người kết bạn trong nhóm mỗi ngày"),
+    "fbp_friends_day": ("int", 0, 30, "số lời mời kết bạn tối đa/nick/ngày"),
 }
 REVIEW_BAD = re.compile(r"chữa (khỏi|bệnh|dứt)|trị (bệnh|dứt điểm|khỏi)|điều trị|khỏi hẳn|thần dược|thay thế thuốc|"
                         r"cam kết (giảm|khỏi|trị)|giảm \d+ ?kg|100 ?% (khỏi|hiệu quả)|đặc trị|chữa được", re.I)
@@ -350,6 +356,24 @@ def execute(act: dict) -> str:
         if not on:
             db.run("UPDATE posts SET status='approved', sale_id=NULL, scheduled_for=NULL WHERE sale_id=? AND status='scheduled'", (sid,))
         return f"{'Bật lại' if on else 'Tạm dừng'} tự đăng của {r['name']}"
+    if t == "focus_group":
+        import group_target
+        from knowledge import plain
+        name = plain(str(act.get("group") or "")).strip()
+        rows = [g for g in db.q("SELECT id, name FROM groups WHERE COALESCE(is_sample,0)=0") if name and name in plain(g["name"])]
+        if not rows:
+            return "Không tìm thấy nhóm có tên đó"
+        on = str(act.get("on", True)).lower() not in ("false", "0", "no", "tắt")
+        for g in rows[:5]:
+            group_target.set_focus(g["id"], on)
+        return f"{'Tập trung đăng' if on else 'Thôi tập trung đăng'} nhóm " + "; ".join(g["name"] for g in rows[:5])
+    if t == "find_friends":
+        import friends
+        try:
+            r = friends.start(notify=act.get("_via", "web"))
+        except ValueError as e:
+            return str(e)
+        return f"Nick {r['account']} đi đọc nhóm sôi nổi để Tuấn chọn người kết bạn (sale tự bấm gửi)"
     if t == "setting":
         k, v = act.get("key"), str(act.get("value", "")).strip()
         if k not in SETTINGS_OK:
@@ -365,6 +389,12 @@ def execute(act: dict) -> str:
             if not re.fullmatch(r"\d{1,2}:\d{2}", v):
                 return f"Giờ {label} phải có dạng HH:MM"
             v = v.zfill(5)
+        elif kind == "choice":
+            if v not in lo:
+                return f"{label}: chọn một trong {', '.join(lo)}"
+        elif kind == "text":
+            import group_target
+            v = ", ".join(group_target.words(v))[:hi]
         elif kind == "times":
             parts = [p.strip().zfill(5) for p in re.split(r"[,; ]+", v) if p.strip()]
             if not parts or not all(re.fullmatch(r"\d{2}:\d{2}", p) for p in parts):
@@ -470,7 +500,10 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - order {agent: all|lan|tuan|..., text}: chỉ đạo lâu dài (từ nay trở đi luôn/không được ...)
 - cancel_order {id}: bỏ một chỉ đạo
 - pause_sale {sale_id} / resume_sale {sale_id}: tạm dừng / bật lại tự đăng của nick
-- setting {key, value}: đổi cài đặt trong danh sách cai_dat_duoc_doi
+- setting {key, value}: đổi cài đặt trong danh sách cai_dat_duoc_doi (nơi đăng: post_target_mode, post_group_keywords,
+  post_group_exclude)
+- focus_group {group, on}: sếp bảo tập trung đăng (on=true) / thôi tập trung (on=false) vào một nhóm theo tên
+- find_friends {}: Tuấn đọc nhóm sôi nổi nhất của các nick, chuẩn bị danh sách người nên kết bạn (sale tự bấm gửi, không tự gửi)
 - hire {reason}: tuyển thêm sale; fire {sale_id, reason}: cho sale nghỉ (chỉ khi sếp nói rõ)
 - task {agent, title}: việc khác ghi vào danh sách việc của agent
 - status {}: báo cáo tình hình
@@ -563,8 +596,30 @@ def _rule_plan(text: str) -> dict:
     want_ads = re.search(r"(quét|tìm|xem|soi)\b.{0,25}(quảng cáo|chạy ads|chạy quảng cáo|thư viện quảng cáo)", low)
     want_demand = re.search(r"(bình luận|comment|cmt|bài)\s*(trong|ở|của)\s*(các\s*)?(nhóm|group|hội)|hỏi nguồn|tìm nguồn hàng|cần nhập hàng", low)
     teach_mai = re.search(r"\b(dạy|hướng dẫn|chỉ)\s+(cho\s+)?mai\b|\bmai\s+(học|nhớ|ghi nhớ)\b|điều kiện tìm khách", low)
-    if acts and all(a["type"] == "setting" for a in acts):
+    want_friends = re.search(r"kết bạn|add (bạn|friend)|thêm bạn", low)
+    tgt = re.search(r"\b(chỉ|ưu tiên|tập trung|không|đừng|cấm|tránh)\s+(đăng|post)\s*(bài\s*)?(ở|vào|lên|trong|tại)?\s*(các\s*)?"
+                    r"(nhóm|group|hội)\s*(có\s*)?(từ khóa|tên|chữ|về)?\s*[:“\"']?\s*(.+)", low)
+    if tgt and not want_friends:
+        how, what = tgt.group(1), re.sub(r"[”\"'.!?]+$", "", tgt.group(9)).strip()
+        kws = [w.strip() for w in re.split(r",|;| và | hoặc ", what) if w.strip()][:8]
+        import group_target
+        cur = group_target.settings()
+        from knowledge import plain
+        named = [g for g in db.q("SELECT id, name FROM groups WHERE COALESCE(is_sample,0)=0")
+                 if len(plain(what)) >= 6 and plain(what) in plain(g["name"])]
+        if how in ("không", "đừng", "cấm", "tránh"):
+            acts.append({"type": "setting", "key": "post_group_exclude", "value": ", ".join(cur["exclude"] + kws)})
+        elif named and how == "tập trung":
+            acts.append({"type": "focus_group", "group": what, "on": True})
+            if cur["mode"] == "all":
+                acts.append({"type": "setting", "key": "post_target_mode", "value": "prefer"})
+        else:
+            acts.append({"type": "setting", "key": "post_group_keywords", "value": ", ".join(cur["include"] + kws)})
+            acts.append({"type": "setting", "key": "post_target_mode", "value": "only" if how == "chỉ" else "prefer"})
+    if acts and all(a["type"] in ("setting", "focus_group") for a in acts):
         pass
+    elif want_friends:
+        acts.append({"type": "find_friends"})
     elif teach_mai:
         acts.append({"type": "teach_mai", "text": t})
     elif want_review_groups and not links:
