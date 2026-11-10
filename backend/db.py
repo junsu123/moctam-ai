@@ -339,6 +339,7 @@ CREATE TABLE IF NOT EXISTS sales (
 # Cột thêm cho cơ sở dữ liệu tạo từ phiên bản trước
 MIGRATIONS = [
     ("posts", "source", "TEXT"),
+    ("leads", "lost_reason", "TEXT"), ("leads", "lost_note", "TEXT"), ("leads", "lost_at", "TEXT"),  # vì sao khách không mua
     ("posts", "orig_content", "TEXT"), ("posts", "fit_group_id", "INTEGER"), ("posts", "fit_note", "TEXT"),  # Lan chỉnh bài theo nhóm
     ("products", "hot", "INTEGER DEFAULT 0"), ("products", "hot_note", "TEXT DEFAULT ''"), ("products", "hot_since", "TEXT"),
     ("products", "is_general", "INTEGER DEFAULT 0"), ("products", "site_show", "INTEGER"),

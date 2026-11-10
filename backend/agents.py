@@ -161,7 +161,16 @@ def system_prompt(agent_id: str, settings: dict | None = None, with_learning: bo
             f"Bạn tên là {a['name']}, vị trí: {a['role']} ({a['short']}).\n"
             f"Tính cách: {a['personality']}\n"
             "Luôn trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, đúng vai." + (_learned(agent_id) if with_learning else "")
-            + _orders(agent_id) + _hot_products() + _mai_rules(agent_id) + _price_rule() + _fb_rules() + _vy_rules(agent_id) + _target_rule(agent_id))
+            + _orders(agent_id) + _hot_products() + _mai_rules(agent_id) + _price_rule() + _fb_rules() + _vy_rules(agent_id) + _target_rule(agent_id) + _funnel(agent_id))
+
+
+def _funnel(agent_id: str) -> str:
+    """Kết quả sếp gọi khách thật: vì sao khách không mua, theo kênh nào."""
+    try:
+        import funnel
+        return funnel.prompt_block(agent_id)
+    except Exception:
+        return ""
 
 
 def _fb_rules() -> str:

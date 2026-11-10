@@ -1201,10 +1201,38 @@ def patch_lead(lid: int, p: LeadPatch):
     if p.contacted:
         fields["last_contact_at"] = db.now()
     old = db.one("SELECT status FROM leads WHERE id=?", (lid,))
+    if p.status == "lost" and old and old["status"] != "lost":  # không mua: ghi qua funnel (lý do chọn sau)
+        import funnel
+        funnel.mark_lost(lid)
+        fields.pop("status")
+        old = None
     db.run(f"UPDATE leads SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), lid))
     if p.status and old and p.status != old["status"]:
         learning.on_lead_status(lid, p.status)
     return db.one("SELECT * FROM leads WHERE id=?", (lid,))
+
+
+class LostIn(BaseModel):
+    reason: str = ""
+    note: str = ""
+
+
+@app.post("/api/leads/{lid}/lost")
+def lead_lost(lid: int, p: LostIn):
+    """Khách không mua: ghi kèm lý do để cả đội biết vì sao (Mai, Lan, Hà học theo)."""
+    import funnel
+    if p.reason not in funnel.LOST_REASONS:
+        raise HTTPException(400, "Chọn lý do khách không mua")
+    r = funnel.mark_lost(lid, p.reason, p.note)
+    if not r:
+        raise HTTPException(404)
+    return r
+
+
+@app.get("/api/funnel")
+def funnel_report(days: int = 30):
+    import funnel
+    return funnel.report(max(7, min(180, days)))
 
 
 class JunkIn(BaseModel):

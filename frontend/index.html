@@ -157,6 +157,10 @@ details.limits .grid2{margin-top:8px}
 .reset-panel .rk label:has(input:checked){border-color:var(--danger);background:var(--danger-soft)}
 .reset-panel .rk b{font-size:18px;font-variant-numeric:tabular-nums}
 .reasons button.on{border-color:var(--danger);color:var(--danger);background:var(--danger-soft);font-weight:600}
+.fn-tbl td,.fn-tbl th{white-space:nowrap}.fn-tbl td:first-child{white-space:normal;min-width:150px}
+.fn-rate{font-size:11px;color:var(--muted);display:block}
+.fn-rs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.lostbox{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:4px;background:var(--panel-2)}
 .junkbox{border:1px dashed var(--line);border-radius:10px;padding:8px 10px;margin-top:4px}
 .junkbox summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--danger)}
 .junkbox .stack{margin-top:8px}
@@ -1401,6 +1405,10 @@ label.f{font-weight:600;color:var(--muted)}
         <div class="sidecol">
           <div class="card"><div class="card-h"><h3>14 ngày gần nhất</h3><span class="small muted" id="kStreak"></span></div><div class="khist" id="kHist"></div></div>
           <div class="tbl-wrap"><table style="min-width:520px"><thead><tr><th>Nick</th><th class="num">SĐT / KPI</th><th class="num">Khách</th><th class="num">Đã xin SĐT</th><th class="num">Bài</th><th class="num">Up</th></tr></thead><tbody id="kSales"></tbody></table></div>
+          <div class="card" id="fnCard"><div class="card-h"><h3>Từ SĐT tới đơn hàng</h3>
+            <select id="fnDays" aria-label="Khoảng thời gian"><option value="30">30 ngày</option><option value="7">7 ngày</option><option value="90">90 ngày</option></select></div>
+            <p class="small muted">Kênh nào ra khách mua thật, không chỉ ra số điện thoại. “Sếp đã gọi” tính khách sếp bấm Đã gọi / Chốt đơn / Không mua hoặc đã liên hệ.</p>
+            <div id="fnBody"></div></div>
           <form class="card" id="kpiForm">
             <h3>Đặt KPI</h3>
             <div class="grid3">
@@ -1721,6 +1729,7 @@ function toast(t){ const el=$("#toast"); const isErr=Date.now()-(ERR.lastAt||0)<
   el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,isErr?6000:2600); }
 async function copyText(t){ try{ await navigator.clipboard.writeText(t); toast("Đã sao chép nội dung"); }catch(e){ toast("Không sao chép được, hãy bôi đen và sao chép thủ công"); } }
 const STATUS_TXT = {idle:"Rảnh", working:"Đang làm", meeting:"Đang họp", talking:"Đang nói", learning:"Đang học"};
+const LOST_R = {no_answer:"Không nghe máy / sai số",wrong_fit:"Sai tệp (không bán online, chỉ mua lẻ)",has_supplier:"Đã có nguồn hàng",moq:"Chê số lượng nhập tối thiểu",price:"Chê giá",product:"Không hợp sản phẩm",later:"Hẹn để sau",other:"Lý do khác"};
 const LEAD_ST = {new:"Mới", contacted:"Đã liên hệ", sample:"Đã gửi mẫu", ordered:"Đã nhập hàng", lost:"Không mua"};
 const PHASE = {open:"Mở đầu", report:"Báo cáo", debate:"Tranh luận", close:"Chốt", boss:"Sếp"};
 const TARGET = {group:"Hội nhóm", profile:"Trang cá nhân", page:"Fanpage"};
@@ -2380,6 +2389,10 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/ceo-review") return demoCR();
       if(P==="/knowledge"){ const u=new URLSearchParams(qs||""); return demoKB(u.get("agent")||"",u.get("q")||""); }
       if(P==="/kpi") return demoKpi();
+      if(P==="/funnel"){ const ch=[{key:"comment",label:"Bình luận dưới bài mình đăng",leads:46,phones:21,called:17,won:3,lost:9,lost_noreason:1,revenue:7400000},{key:"demand",label:"Người hỏi nguồn trong nhóm (Mai đọc)",leads:14,phones:9,called:8,won:2,lost:4,lost_noreason:0,revenue:5200000},{key:"pages",label:"Trang, shop livestream (Mai tìm)",leads:18,phones:18,called:11,won:0,lost:8,lost_noreason:0,revenue:0}];
+        return {days:30,channels:ch,total:{leads:78,phones:48,called:36,won:5,lost:21,lost_noreason:1,revenue:12600000},ai_vnd:186000,per_phone:3875,per_order:37200,
+          reasons:[{key:"wrong_fit",label:"Sai tệp (không bán online, chỉ mua lẻ)",n:8,by_channel:{pages:6,comment:2}},{key:"moq",label:"Chê số lượng nhập tối thiểu",n:6,by_channel:{comment:4,demand:2}},{key:"no_answer",label:"Không nghe máy / sai số",n:4,by_channel:{pages:2,comment:2}},{key:"has_supplier",label:"Đã có nguồn hàng",n:2,by_channel:{demand:2}}],
+          channel_names:{comment:"Bình luận dưới bài mình đăng",demand:"Người hỏi nguồn trong nhóm (Mai đọc)",pages:"Trang, shop livestream (Mai tìm)"}}; }
       if(P==="/telegram") return demoTg();
       if(P==="/posts/recent-posted") return S.posts.filter(p=>p.status==="posted").map(p=>({id:p.id,title:p.title,posted_at:p.posted_at,group_name:p.group_name,target_type:p.target_type}));
       if(P==="/bump/folder"){ const f=S.settings.bump_folder; return f?{path:f,exists:true,count:23,root_count:5,products:[{id:1,name:"Trà gừng mật ong túi lọc",count:8},{id:3,name:"Bột ngũ cốc dinh dưỡng 25 loại hạt",count:6},{id:4,name:"Bột cần tây sấy lạnh",count:4}],samples:[]}:{path:"",exists:false,count:0,products:[],samples:[]}; }
@@ -2450,6 +2463,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
         return {deleted:del.length,rewrite:body.rewrite||0}; }
       if(P==="/run/daily-work"){ genPosts(3,null,"group"); const pl=plan(); return {drafts:3,scheduled:pl.length,follow_ups:S.leads.filter(l=>l.status==="new").length}; }
     }
+     if(method==="POST"&&(m=P.match(/^\/leads\/(\d+)\/lost$/))){ const l=S.leads.find(x=>x.id==m[1]); if(!body.reason) throw new Error("Chọn lý do khách không mua"); Object.assign(l,{status:"lost",boss_status:"lost",lost_reason:body.reason,lost_note:body.note||""}); return l; }
     if(method==="PATCH"){
       if((m=P.match(/^\/posts\/(\d+)$/))){ const po=S.posts.find(x=>x.id==m[1]);
         if(body.posted_url&&!/(\/groups\/[^/?#]+\/(posts|permalink)\/\w+|\/posts\/(pfbid\w+|\d+)|story_fbid=|\/permalink\.php|multi_permalinks=\d+|\/share\/p\/\w+)/.test(body.posted_url)) throw new Error("Đây chưa phải link bài viết. Mở bài trên Facebook, bấm vào giờ đăng (VD “2 giờ”) rồi chép link trên thanh địa chỉ (có /posts/ hoặc /permalink/)");
@@ -3722,7 +3736,22 @@ function kpiHero(k,pace,extra=""){
     <div style="text-align:right"><span class="chip ${st[0]}">${st[1]}</span>${extra}</div>`;
 }
 const fmtPhone=p=>p&&p.length===10?`${p.slice(0,4)} ${p.slice(4,7)} ${p.slice(7)}`:(p||"");
+async function loadFunnel(){
+  let d; try{ d=await api(`/funnel?days=${$("#fnDays").value||30}`); }catch(e){ return; }
+  const T=d.total, pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
+  if(!d.channels.length){ $("#fnBody").innerHTML='<p class="muted small">Chưa có khách trong khoảng này.</p>'; return; }
+  $("#fnBody").innerHTML=`<div class="tbl-wrap"><table class="fn-tbl" style="min-width:560px"><thead><tr><th>Kênh</th><th class="num">SĐT</th><th class="num">Sếp đã gọi</th><th class="num">Chốt</th><th class="num">Không mua</th><th class="num">Doanh thu</th></tr></thead><tbody>
+    ${d.channels.map(c=>`<tr><td>${esc(c.label)}</td><td class="num"><b>${c.phones}</b><span class="fn-rate">${c.leads} khách</span></td><td class="num">${c.called}<span class="fn-rate">${pct(c.called,c.phones)} số</span></td><td class="num"><b>${c.won}</b><span class="fn-rate">${pct(c.won,c.called)} đã gọi</span></td><td class="num">${c.lost}${c.lost_noreason?`<span class="fn-rate" style="color:var(--honey)">${c.lost_noreason} chưa lý do</span>`:""}</td><td class="num">${c.revenue?vnd(c.revenue):"—"}</td></tr>`).join("")}
+    <tr><td><b>Tổng</b></td><td class="num"><b>${T.phones}</b></td><td class="num"><b>${T.called}</b></td><td class="num"><b>${T.won}</b></td><td class="num"><b>${T.lost}</b></td><td class="num"><b>${T.revenue?vnd(T.revenue):"—"}</b></td></tr></tbody></table></div>
+    <p class="small" style="margin-top:8px">Chi phí AI ${d.days} ngày: <b>${vnd(d.ai_vnd)}</b> · ${d.per_phone!=null?`${vnd(d.per_phone)}/SĐT`:"chưa có SĐT"} · ${d.per_order!=null?`<b>${vnd(d.per_order)}/đơn</b>`:"chưa có đơn"}</p>
+    ${d.reasons.length?`<div class="small"><b>Khách không mua vì</b><div class="fn-rs">${d.reasons.map(r=>`<span class="chip" title="${esc(Object.entries(r.by_channel).map(([k,n])=>`${d.channel_names[k]||k}: ${n}`).join(" · "))}">${esc(r.label)} · ${r.n}</span>`).join("")}</div>
+      <p class="muted" style="margin-top:6px">Lý do được đưa vào lời dặn của Mai, Lan, Hà, CEO và Minh để đổi cách tìm khách, viết bài, tư vấn.</p></div>`
+      :`<p class="small muted">Chưa có khách không mua nào được ghi lý do. Bấm “Không mua” trên Telegram hoặc trang Khách hàng rồi chọn lý do.</p>`}
+    ${T.lost_noreason?`<p class="small" style="color:var(--honey)">${T.lost_noreason} khách không mua chưa ghi lý do: mở khách ở trang Khách hàng để chọn.</p>`:""}`;
+}
+$("#fnDays").onchange=loadFunnel;
 async function loadKpi(){
+  loadFunnel();
   const [d,s,tg]=await Promise.all([api("/kpi"),api("/settings"),api("/telegram")]);
   $("#kpiHero").innerHTML=kpiHero(d.today,d.pace);
   $("#kStreak").textContent=d.streak?`Đạt KPI liên tiếp ${d.streak} ngày`:"";
@@ -4296,6 +4325,9 @@ function renderLead(){
    <dl class="kv"><dt>Số điện thoại</dt><dd>${l.phone?`<span class="phone">${esc(fmtPhone(l.phone))}</span>`:"Chưa có"}</dd><dt>Liên hệ</dt><dd>${esc(l.contact)}</dd><dt>Kinh doanh</dt><dd>${esc(l.business_type)}</dd><dt>Nguồn</dt><dd>${esc(l.source)}</dd><dt>Nhu cầu</dt><dd>${esc(l.need)}</dd></dl>
    <form class="row" id="lOrder"><input type="text" class="grow" id="lAmt" inputmode="numeric" placeholder="Giá trị đơn, VD 2,5tr" aria-label="Giá trị đơn hàng"><button class="btn primary" type="submit">Ghi đơn hàng</button></form>
    <label class="f" for="lStatus">Trạng thái<select id="lStatus">${Object.entries(LEAD_ST).map(([k,v])=>`<option value="${k}" ${k===l.status?"selected":""}>${v}</option>`).join("")}</select></label>
+   <div class="lostbox" id="lLost" ${l.status==="lost"?"":"hidden"}><span class="small"><b>Vì sao khách không mua?</b> ${l.lost_reason?`Đã ghi: ${esc(LOST_R[l.lost_reason]||l.lost_reason)}${l.lost_note?` — ${esc(l.lost_note)}`:""}`:'<span style="color:var(--honey)">Chưa chọn lý do</span>'}</span>
+     <div class="reasons" id="lLr" style="margin-top:6px">${Object.entries(LOST_R).map(([k,v])=>`<button type="button" data-lr="${k}" class="${k===l.lost_reason?"on":""}">${esc(v)}</button>`).join("")}</div>
+     <div class="row" style="margin-top:6px"><input type="text" class="grow" id="lLn" placeholder="Ghi thêm (không bắt buộc), VD: đang nhập trà ở xưởng khác" value="${esc(l.lost_note||"")}" aria-label="Ghi chú lý do"><button class="btn sm primary" type="button" id="lLgo" ${l.lost_reason?"":"disabled"}>Lưu lý do</button></div></div>
    <label class="f" for="lMsg">Khách vừa nhắn gì?<textarea id="lMsg" rows="3" placeholder="Dán tin nhắn của khách, để trống nếu muốn Hà nhắn chủ động"></textarea></label>
    <div class="actions"><button class="btn primary" id="lDraft">Hà soạn tin trả lời</button>${l.escalated_at?"":`<button class="btn" id="lEsc">Chuyển cho sếp qua Telegram</button>`}</div>
    <div id="lReply"></div>
@@ -4311,7 +4343,10 @@ function renderLead(){
   const esc2=$("#lEsc"); if(esc2) esc2.onclick=async()=>{ esc2.disabled=true; const r=await api(`/leads/${l.id}/escalate`,"POST"); toast(r.telegram?"Đã gửi phiếu khách kèm kịch bản tư vấn qua Telegram":"Đã chuyển cho sếp. Kết nối Telegram ở trang KPI & Báo cáo để nhận phiếu trên điện thoại."); loadLeads(); };
   $("#lOrder").addEventListener("submit",async ev=>{ ev.preventDefault(); const a=parseVnd($("#lAmt").value); if(a===null){ toast("Nhập giá trị đơn, ví dụ 2500000 hoặc 2,5tr"); return; }
     try{ await api(`/leads/${l.id}/order`,"POST",{amount:a}); toast(`Đã ghi đơn ${vnd(a)} cho ${l.name}`); }catch(err){ toast(err.message); } loadLeads(); refresh(); });
-  $("#lStatus").onchange=async e=>{ if(e.target.value==="ordered"){ e.target.value=l.status; $("#lAmt").focus(); toast("Nhập giá trị đơn rồi bấm Ghi đơn hàng để tính doanh thu"); return; } await api(`/leads/${l.id}`,"PATCH",{status:e.target.value}); toast("Đã cập nhật trạng thái"); loadLeads(); };
+  let lr=l.lost_reason||null;
+  $("#lLr").onclick=e=>{ const b=e.target.closest("[data-lr]"); if(!b) return; lr=b.dataset.lr; $("#lLr").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); $("#lLgo").disabled=false; };
+  $("#lLgo").onclick=async e=>{ e.target.disabled=true; try{ await api(`/leads/${l.id}/lost`,"POST",{reason:lr,note:$("#lLn").value}); toast("Đã ghi lý do. Cả đội sẽ rút kinh nghiệm từ lý do này"); loadLeads(); }catch(err){ toast(err.message); e.target.disabled=false; } };
+  $("#lStatus").onchange=async e=>{ if(e.target.value==="lost"){ $("#lLost").hidden=false; toast("Chọn lý do khách không mua rồi bấm Lưu lý do"); return; } if(e.target.value==="ordered"){ e.target.value=l.status; $("#lAmt").focus(); toast("Nhập giá trị đơn rồi bấm Ghi đơn hàng để tính doanh thu"); return; } await api(`/leads/${l.id}`,"PATCH",{status:e.target.value}); toast("Đã cập nhật trạng thái"); loadLeads(); };
   $("#lDraft").onclick=async e=>{ e.target.disabled=true; e.target.textContent="Hà đang soạn…"; const r=await api(`/leads/${l.id}/reply`,"POST",{message:$("#lMsg").value});
     $("#lReply").innerHTML=`<label class="f" for="lReplyTxt">Tin nhắn đề xuất (sửa được)<textarea id="lReplyTxt" rows="7">${esc(r.reply)}</textarea></label><div class="actions"><button class="btn" id="lCopy">Sao chép</button><button class="btn primary" id="lSent">Đã gửi cho khách</button></div>`;
     $("#lCopy").onclick=()=>copyText($("#lReplyTxt").value);

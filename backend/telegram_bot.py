@@ -287,6 +287,13 @@ def evening_text() -> str:
     won = db.one("SELECT COUNT(*) n FROM leads WHERE status='ordered' AND updated_at LIKE ?", (db.today() + "%",))["n"]
     if won:
         lines.append(f"\n🎉 Chốt đơn hôm nay: {won}")
+    try:
+        import funnel
+        ft = funnel.text_summary(7)
+        if ft:
+            lines.append("\n🔻 <b>Từ SĐT tới đơn hàng</b>\n" + e(ft))
+    except Exception as ex:
+        print("[telegram] funnel", ex)
     les = db.q("SELECT agent_id, text FROM lessons WHERE created_at LIKE ? ORDER BY id DESC LIMIT 3", (db.today() + "%",))
     if les:
         import agents
@@ -329,6 +336,12 @@ def lead_text(l: dict, reminder: bool = False) -> str:
         "",
         f"<b>Hà gợi ý kịch bản:</b>\n{e((l.get('consult_note') or '')[:700])}",
     ])
+
+
+def lost_buttons(lid: int):
+    import funnel
+    items = [{"text": v.split(" (")[0], "callback_data": f"l:{lid}:lr_{k}"} for k, v in funnel.LOST_REASONS.items()]
+    return [items[i:i + 2] for i in range(0, len(items), 2)]
 
 
 def lead_buttons(lid: int):
@@ -608,10 +621,17 @@ def handle_callback(cb: dict):
         threading.Timer(1.0, lambda: _reply(chat_id, f"💰 Đơn của <b>{e(lead['name'])}</b> bao nhiêu tiền? "
                                                     "Trả lời bằng số, ví dụ <b>2500000</b>, <b>2,5tr</b> hoặc <b>800k</b>. "
                                                     "Gõ <i>bỏ qua</i> nếu chưa rõ.")).start()
-    elif act == "lost":
-        db.run("UPDATE leads SET boss_status='lost', status='lost', updated_at=? WHERE id=?", (db.now(), lid))
-        learning.on_lead_status(lid, "lost")
-        note, toast = f"❌ Khách không mua ({hm})", "Đã ghi nhận"
+    elif act == "lost":  # ghi không mua ngay, rồi hỏi lý do bằng nút
+        import funnel
+        funnel.mark_lost(lid, via="telegram")
+        note, toast = f"❌ Khách không mua ({hm}). Vì sao? Bấm 1 lý do để cả đội rút kinh nghiệm:", "Chọn lý do khách không mua"
+    elif act.startswith("lr_"):
+        import funnel
+        key = act[3:]
+        if key not in funnel.LOST_REASONS:
+            return
+        funnel.mark_lost(lid, key, via="telegram")
+        note, toast = f"Lý do: {funnel.LOST_REASONS[key]}", "Đã ghi lý do, cả đội sẽ rút kinh nghiệm"
     elif act == "junk":
         import junk
         junk.mark(lid, "other", "Sếp bấm Data rác trên Telegram")
@@ -631,6 +651,8 @@ def handle_callback(cb: dict):
                   "text": e(old)[:3500] + f"\n\n<b>{e(note)}</b>", "parse_mode": "HTML", "disable_web_page_preview": True}
         if keep:
             params["reply_markup"] = {"inline_keyboard": [lead_buttons(lid)[0][1:] + lead_buttons(lid)[1][:1]]}
+        elif act == "lost":
+            params["reply_markup"] = {"inline_keyboard": lost_buttons(lid)}
         call("editMessageText", **params)
     except Exception as ex:
         print("[telegram] sửa tin lỗi:", ex)

@@ -701,6 +701,22 @@ nguồn, lý do chuyển và **kịch bản tư vấn Hà soạn sẵn** (báo g
 cầu, đề nghị chốt). Nút bấm ngay trên tin: **Đã gọi**, **Chốt đơn**, **Không mua**, **Nhắc sau 2 giờ**. Kết quả được ghi
 lại vào phần mềm và dùng cho việc tự học của Hà.
 
+**Từ SĐT tới đơn hàng (đo tới khách mua, không chỉ tới số điện thoại):** KPI đếm SĐT, nhưng thứ cần là đơn hàng. Thẻ
+**Từ SĐT tới đơn hàng** ở trang KPI & Báo cáo cho từng kênh (bình luận dưới bài mình, người hỏi nguồn trong nhóm, trang chạy quảng
+cáo, trang / shop livestream, link sếp dán, sếp nhập tay): số khách → có SĐT → sếp đã gọi → chốt đơn → không mua → doanh thu, kèm
+**chi phí AI mỗi SĐT và mỗi đơn** (7 / 30 / 90 ngày).
+
+- **Khách không mua phải có lý do**: Không nghe máy / sai số, Sai tệp (không bán online, chỉ mua lẻ), Đã có nguồn hàng, Chê số lượng
+  nhập tối thiểu, Chê giá, Không hợp sản phẩm, Hẹn để sau, Lý do khác. Trên Telegram, bấm **❌ Không mua** thì phiếu khách hiện ngay
+  các nút lý do; ở trang Khách hàng, chọn trạng thái “Không mua” thì hiện hộp chọn lý do (ghi thêm được). Khách chưa ghi lý do
+  được nhắc ở thẻ phễu và báo cáo tối.
+- **Cả đội học từ lý do**: từ 3 khách không mua có lý do (60 ngày), kết quả gọi khách và lý do (kênh nào nhiều nhất) được đưa vào lời
+  dặn của Mai, Lan, Hà, CEO, Minh, kèm việc mỗi người nên làm khác đi: VD “Sai tệp” → Mai đòi bằng chứng đang bán online, Lan nói rõ
+  bài dành cho người bán lại; “Chê số lượng nhập tối thiểu” → Lan ghi rõ mức nhập, Hà hỏi sức bán trước; “Đã có nguồn” → Hà đề nghị
+  gửi mẫu so sánh. Chỉ đổi cách làm, không đổi quy định giá của sếp.
+- Báo cáo tối trên Telegram có dòng **Từ SĐT tới đơn hàng** 7 ngày: SĐT → sếp gọi → chốt, chi phí AI mỗi đơn, kênh ra đơn nhiều
+  nhất, 3 lý do không mua hay gặp.
+
 **Kết nối Telegram (5 phút):**
 
 1. Trên Telegram, nhắn **@BotFather** → `/newbot` → đặt tên → nhận token.
