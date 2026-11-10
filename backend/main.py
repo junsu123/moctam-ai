@@ -1106,6 +1106,8 @@ def patch_post(pid: int, p: PostPatch):
             fields["bump_enabled"] = 1
     if fields:
         db.run(f"UPDATE posts SET {', '.join(k + '=?' for k in fields)} WHERE id=?", (*fields.values(), pid))
+        if "content" in fields:  # sếp sửa chữ là bản cuối: Lan không chỉnh theo nhóm đè lên nữa
+            db.run("UPDATE posts SET orig_content=NULL, fit_group_id=COALESCE(group_id, -1), fit_note=NULL WHERE id=?", (pid,))
     if p.posted_url and p.posted_url.strip():
         db.run("""UPDATE errors SET status='resolved' WHERE source='link' AND ref_type='post' AND ref_id=?
                   AND status!='resolved'""", (pid,))  # sếp đã dán link: lỗi “không lưu được link” xong

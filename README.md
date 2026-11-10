@@ -300,6 +300,22 @@ theo số sếp nói, không nói thì mỗi nhóm đăng được một bài (t
 là chỉ đạo lâu dài ở trên. Luật Facebook vẫn giữ (trần bài/nick/ngày, giãn cách, giờ đăng). Chưa có nhóm nào khớp thì CEO gợi ý
 nhắn “tìm nhóm theo chủ đề …” để sale đi tìm nhóm trước.
 
+## Lan chỉnh bài theo nhóm sắp đăng (dữ liệu thật của nhóm)
+
+Bài được viết trước khi biết đăng nhóm nào. Khi Tuấn đã xếp bài vào một nhóm, Lan xem nhóm đó có **dữ liệu thật** không:
+câu người trong nhóm đăng hỏi mua / tìm nguồn mà nick đọc được (lướt bảng tin, trả lời khách), bình luận của khách dưới bài mình
+từng đăng ở nhóm, bài mình từng đăng ở nhóm có khách hoặc nhiều bình luận. Đủ dữ liệu (mặc định từ 2 tín hiệu) thì Lan nhờ Claude
+sửa **câu mở đầu và thứ tự ý** cho trúng điều người nhóm đó đang hỏi, dùng cách gọi tên hàng giống họ.
+
+- **Không thêm thông tin mới**: chỉ dùng thông tin của bài gốc (giá, chứng nhận, số liệu, quà tặng mới đều không được thêm), giữ dòng
+  Zalo (thiếu thì tự gắn lại), độ dài gần bài gốc, luật nhóm được đưa vào lời dặn.
+- **Giữ bài gốc** khi nhóm chưa đủ dữ liệu, bản chỉnh phạm luật Facebook, hoặc dài / ngắn quá. Thẻ bài ở mục Bài đăng hiện
+  **✎ Chỉnh theo nhóm** (rê chuột xem đã sửa gì, dựa trên mấy câu hỏi, bình luận) hoặc **Giữ bài gốc** kèm lý do.
+- Bài gốc được lưu lại: bài đổi sang nhóm khác thì chỉnh lại từ bài gốc, nhóm mới chưa có dữ liệu thì dùng bài gốc. Sếp sửa chữ
+  bài thì bản của sếp là bản cuối, Lan không chỉnh đè. Bài còn dưới 3 phút nữa là đăng thì không đụng tới.
+- Áp dụng cho bài đăng nhóm thường (cả bài viết lại từ bài mẫu); nhóm mình quản lý không chỉnh. Mỗi bài chỉnh 1 lần gọi Claude
+  (mô hình của việc Viết bài đăng). Tắt ở **Cài đặt → Nhân viên sale đăng bài → Lan chỉnh bài theo nhóm**.
+
 ## Kết bạn với thành viên trong nhóm sôi nổi
 
 Mục **Kết bạn** (nhóm Facebook ở thanh bên).

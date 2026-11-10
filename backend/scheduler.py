@@ -71,6 +71,8 @@ def _tick():
     my_groups.tick(now)  # Tuấn rà soát nhóm trong nick, thoát nhóm kém; bù bài cho nhóm mình quản lý
     import knowledge
     knowledge.tick(now)
+    import group_fit
+    group_fit.tick(now)  # bài đã có nhóm: Lan chỉnh theo câu hỏi thật của người trong nhóm đó
     import growth
     growth.tick(now)  # agent rảnh thì tự học / luyện tập để lên cấp
     import fb_policy

@@ -339,6 +339,7 @@ CREATE TABLE IF NOT EXISTS sales (
 # Cột thêm cho cơ sở dữ liệu tạo từ phiên bản trước
 MIGRATIONS = [
     ("posts", "source", "TEXT"),
+    ("posts", "orig_content", "TEXT"), ("posts", "fit_group_id", "INTEGER"), ("posts", "fit_note", "TEXT"),  # Lan chỉnh bài theo nhóm
     ("products", "hot", "INTEGER DEFAULT 0"), ("products", "hot_note", "TEXT DEFAULT ''"), ("products", "hot_since", "TEXT"),
     ("products", "is_general", "INTEGER DEFAULT 0"), ("products", "site_show", "INTEGER"),
     ("posts", "img_fails", "INTEGER DEFAULT 0"),  # số lần Facebook không nhận ảnh khi đăng
@@ -431,7 +432,7 @@ DEFAULT_SETTINGS = {
     "join_enabled": "1", "join_per_nick_day": "2", "browse_minutes": "2",
     "app_tz": "",  # trống = giờ Việt Nam (hoặc APP_TZ trong .env)
     "idle_learning": "1", "idle_study_per_day": "6", "growth_state": "",
-    "knowledge_enabled": "1", "self_study": "0", "study_time": "07:00", "study_per_agent": "2", "knowledge_answer_threshold": "0.8",
+    "knowledge_enabled": "1", "self_study": "0", "group_fit": "1", "group_fit_min": "2", "study_time": "07:00", "study_per_agent": "2", "knowledge_answer_threshold": "0.8",
     "study_last_date": "", "model_knowledge": "claude-haiku-5-5",
     "self_write_mode": "auto", "self_write_min": "12", "lan_style": "", "content_library_migrated": "",
     "hot_share": "0.7",  # tỉ lệ bài Lan viết về sản phẩm đang bán chạy (khi sếp có tích sản phẩm bán chạy)
