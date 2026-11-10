@@ -17,6 +17,19 @@ import db
 
 AGENT_ALIASES = {"minh": "minh", "lan": "lan", "tuan": "tuan", "tuấn": "tuan", "ha": "ha", "hà": "ha", "khoa": "khoa", "mai": "mai", "vy": "vy", "bao": "bao",
                  "đức": "ceo", "duc": "ceo", "ceo": "ceo", "trưởng phòng": "minh"}
+def _aliases() -> dict:
+    """Tên gọi agent: tên mặc định + tên sếp đã đổi (CEO hiểu “Ngọc viết dài quá” là nói Lan nếu sếp đổi tên Lan thành Ngọc)."""
+    import agents
+    import unicodedata
+    agents.apply_profiles()
+    out = dict(AGENT_ALIASES)
+    for aid, a in agents.AGENTS.items():
+        n = a["name"].lower()
+        out[n] = aid
+        out[unicodedata.normalize("NFD", n).encode("ascii", "ignore").decode().replace("đ", "d")] = aid
+    return dict(sorted(out.items(), key=lambda kv: -len(kv[0])))  # tên dài khớp trước
+
+
 SETTINGS_OK = {
     "posts_per_day": ("int", 1, 20, "số bài Lan viết mỗi ngày"), "kpi_min": ("int", 1, 50, "KPI tối thiểu khách có SĐT/ngày"),
     "kpi_max": ("int", 1, 100, "KPI phấn đấu"), "scan_times": ("times", 0, 0, "giờ quét bình luận"),
@@ -89,8 +102,9 @@ def _agent_id(name: str) -> str | None:
         return "all"
     if n.startswith("sale-") and n[5:].isdigit():
         return n
-    if n in AGENT_ALIASES:
-        return AGENT_ALIASES[n]
+    al = _aliases()
+    if n in al:
+        return al[n]
     for r in _sales():
         if r["name"].lower() == n or (r["fb_name"] or "").lower() == n:
             return f"sale-{r['id']}"
@@ -602,10 +616,11 @@ def _context() -> str:
     od = orders()
     return json.dumps({
         "hom_nay": db.today(),
-        "agents": {"minh": "Minh, trưởng phòng, chủ trì họp", "lan": "Lan, viết bài", "tuan": "Tuấn, chọn nhóm và xếp lịch đăng",
-                   "ha": "Hà, chăm sóc khách, soạn tin", "khoa": "Khoa, số liệu", "mai": "Mai, tìm khách sỉ (người bán online, livestream) trên Facebook, TikTok, Shopee",
-                   "vy": "Vy, quản lý website công ty và viết bài chuẩn SEO",
-                   "bao": "Bảo, rà soát bài đã đăng, cho nick bình luận ảnh kèm câu ngắn và Zalo liên hệ (up bài)"},
+        "agents": {k: f"{__import__('agents').name_of(k)}, {v}" for k, v in {
+            "minh": "trưởng phòng, chủ trì họp", "lan": "viết bài", "tuan": "chọn nhóm và xếp lịch đăng", "ha": "chăm sóc khách, soạn tin",
+            "khoa": "số liệu", "mai": "tìm khách sỉ (người bán online, livestream) trên Facebook, TikTok, Shopee",
+            "vy": "quản lý website công ty và viết bài chuẩn SEO",
+            "bao": "rà soát bài đã đăng, cho nick bình luận ảnh kèm câu ngắn và Zalo liên hệ (up bài)"}.items()},
         "sales": [{"id": r["id"], "ten": r["name"], "nick": r["fb_name"], "dang_nhap": r["login_status"] == "ok",
                    "tu_dang": bool(r["auto_post"])} for r in sales],
         "san_pham": [{"id": p["id"], "ten": p["name"], "dang_ban_chay": bool(p["hot"])} for p in prods],
@@ -735,7 +750,7 @@ def _rule_plan(text: str) -> dict:
     low = t.lower()
     acts = []
     agent = None
-    for alias, aid in AGENT_ALIASES.items():
+    for alias, aid in _aliases().items():
         if re.search(rf"(?<!\w){re.escape(alias)}(?!\w)", low) and aid != "ceo":
             agent = aid
             break

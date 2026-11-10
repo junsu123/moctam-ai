@@ -140,6 +140,7 @@ def sale_agent(row: dict) -> dict:
         "short": "Đăng bài lên trang cá nhân và hội nhóm bằng tài khoản Facebook mình quản lý",
         "personality": "Chăm chỉ, đúng giờ, làm đúng lịch được giao, báo ngay khi tài khoản gặp sự cố.",
         "look": look, "desk": 5 + (row.get("_slot") or 0), "sample": bool(row.get("is_sample")),
+        "face": face_of(f"sale-{row['id']}"),
     }
 
 
@@ -156,7 +157,9 @@ def system_prompt(agent_id: str, settings: dict | None = None, with_learning: bo
     else:
         a = AGENTS[agent_id]
     s = settings or {}
-    return (f"{COMPANY_CONTEXT}\n\nTên công ty: {s.get('company_name', '')}\n"
+    apply_profiles()
+    ctx = COMPANY_CONTEXT.replace("Lan viết bài", f"{AGENTS['lan']['name']} viết bài").replace("Mai tìm trang", f"{AGENTS['mai']['name']} tìm trang")
+    return (f"{ctx}\n\nTên công ty: {s.get('company_name', '')}\n"
             f"Giọng thương hiệu: {s.get('brand_voice', '')}\n\n"
             f"Bạn tên là {a['name']}, vị trí: {a['role']} ({a['short']}).\n"
             f"Tính cách: {a['personality']}\n"
@@ -261,8 +264,9 @@ def sales_rows() -> list[dict]:
 
 
 def public_list() -> list[dict]:
-    core = [{**{k: AGENTS[i][k] for k in ("id", "name", "role", "short", "personality", "look", "desk")}, "kind": "core"}
-            for i in ORDER]
+    apply_profiles()
+    core = [{**{k: AGENTS[i][k] for k in ("id", "name", "role", "short", "personality", "look", "desk")}, "kind": "core",
+             "face": face_of(i), "default_name": DEFAULT_NAMES[i]} for i in ORDER]
     return core + [sale_agent(r) for r in sales_rows()]
 
 
@@ -273,3 +277,114 @@ def name_of(agent_id: str) -> str:
         if a["id"] == agent_id:
             return a["name"]
     return agent_id
+
+
+# ---------------------------------------------------------------- tên và khuôn mặt sếp đặt
+DEFAULT_NAMES = {k: v["name"] for k, v in AGENTS.items()}
+
+
+def _profiles() -> dict:
+    import json
+    import db
+    try:
+        return json.loads(db.get_settings().get("agent_profiles") or "{}")
+    except Exception:
+        return {}
+
+
+def _save_profiles(p: dict):
+    import json
+    import db
+    db.set_setting("agent_profiles", json.dumps(p, ensure_ascii=False))
+
+
+def faces_dir():
+    import db
+    d = db.DATA_DIR / "faces"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def apply_profiles():
+    """Đặt tên sếp đổi vào AGENTS (mọi nơi đọc AGENTS[...]['name'] đều thấy tên mới)."""
+    p = _profiles()
+    for k in AGENTS:
+        AGENTS[k]["name"] = (p.get(k) or {}).get("name") or DEFAULT_NAMES[k]
+        AGENTS[k]["face"] = (p.get(k) or {}).get("face") or ""
+
+
+def face_of(agent_id: str) -> str:
+    return (_profiles().get(agent_id) or {}).get("face") or ""
+
+
+def _all_names(exclude: str = "") -> set:
+    import db
+    names = {AGENTS[k]["name"].lower() for k in AGENTS if k != exclude}
+    names |= {r["name"].lower() for r in db.q("SELECT id, name FROM sales WHERE COALESCE(status,'active')!='fired'")
+              if f"sale-{r['id']}" != exclude}
+    return names
+
+
+def rename(agent_id: str, name: str) -> dict:
+    import re
+    import db
+    name = re.sub(r"\s+", " ", (name or "")).strip()
+    if not 1 <= len(name) <= 20:
+        raise ValueError("Tên từ 1 đến 20 ký tự")
+    if re.search(r"[<>\"{}]", name):
+        raise ValueError("Tên không được có ký tự < > \" { }")
+    if name.lower() in _all_names(agent_id):
+        raise ValueError(f"Đã có người tên “{name}”, chọn tên khác để CEO không nhầm người")
+    if agent_id.startswith("sale-"):
+        db.run("UPDATE sales SET name=? WHERE id=?", (name, int(agent_id[5:])))
+    elif agent_id in AGENTS:
+        p = _profiles()
+        p.setdefault(agent_id, {})["name"] = name
+        if name == DEFAULT_NAMES[agent_id]:
+            p[agent_id].pop("name", None)
+        _save_profiles(p)
+        apply_profiles()
+    else:
+        raise ValueError("Không có agent này")
+    db.log(agent_id, "Đổi tên", f"Sếp đặt tên mới: {name}")
+    return {"id": agent_id, "name": name, "face": face_of(agent_id)}
+
+
+def set_face(agent_id: str, data_url: str) -> str:
+    """Ảnh mặt sếp tải lên: cắt vuông giữa ảnh, thu nhỏ 320px, lưu data/faces/<id>.jpg."""
+    import base64
+    import io
+    import time
+    from PIL import Image, ImageOps
+    if agent_id not in AGENTS and not agent_id.startswith("sale-"):
+        raise ValueError("Không có agent này")
+    raw = (data_url or "").split(",", 1)[-1]
+    try:
+        img = Image.open(io.BytesIO(base64.b64decode(raw)))
+        img = ImageOps.exif_transpose(img).convert("RGB")
+    except Exception:
+        raise ValueError("Không đọc được ảnh. Chọn ảnh JPG, PNG hoặc WEBP")
+    if min(img.size) < 48:
+        raise ValueError("Ảnh quá nhỏ, chọn ảnh từ 48×48 điểm ảnh trở lên")
+    img = ImageOps.fit(img, (320, 320), Image.LANCZOS, centering=(0.5, 0.4))  # lệch lên trên một chút: giữ mặt, bỏ bớt cằm
+    img.save(faces_dir() / f"{agent_id}.jpg", "JPEG", quality=85)
+    url = f"/faces/{agent_id}.jpg?v={int(time.time())}"
+    p = _profiles()
+    p.setdefault(agent_id, {})["face"] = url
+    _save_profiles(p)
+    apply_profiles()
+    return url
+
+
+def reset_profile(agent_id: str, what: str = "all") -> dict:
+    p = _profiles()
+    cur = p.get(agent_id) or {}
+    if what in ("all", "face"):
+        cur.pop("face", None)
+        (faces_dir() / f"{agent_id}.jpg").unlink(missing_ok=True)
+    if what in ("all", "name") and agent_id in AGENTS:
+        cur.pop("name", None)
+    p[agent_id] = cur
+    _save_profiles(p)
+    apply_profiles()
+    return {"id": agent_id, "name": name_of(agent_id), "face": face_of(agent_id)}

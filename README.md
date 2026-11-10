@@ -851,6 +851,17 @@ Trang Đào tạo cho biết: số kiến thức, số học hôm nay, số lầ
 khách" để Hà tự dùng khi khách hỏi đúng ý đó). Trên Telegram: hỏi CEO bằng câu hỏi (VD "Khách chê giá cao thì trả lời sao?"),
 hoặc nhắn "Cho cả đội học thêm kiến thức". Kiến thức học mỗi ngày được báo trong tin "Việc vừa hoàn thành".
 
+## Đổi tên và khuôn mặt của agent
+
+**Cài đặt → Tên và khuôn mặt của đội**: mỗi agent (cả nhân viên sale) một dòng.
+- **Đổi tên** (1–20 ký tự, không trùng người khác để CEO không nhầm): agent tự giới thiệu bằng tên mới trong lời dặn, văn phòng 3D,
+  danh sách đội, nhật ký đều hiện tên mới. CEO hiểu cả tên cũ lẫn tên mới (VD đổi Lan thành Ngọc: “Ngọc viết dài quá” và
+  “Lan viết dài quá” đều là nói Lan). Dòng nhỏ ghi tên gốc. Đổi tên nhân viên sale là đổi tên người giữ nick, không đổi nick Facebook.
+- **Ảnh mặt**: chọn ảnh JPG / PNG / WEBP, phần mềm thu nhỏ trên trình duyệt rồi cắt vuông lấy phần giữa (hơi lệch lên để giữ mặt),
+  lưu `data/faces/<agent>.jpg` 320×320. Ảnh hiện ở ảnh đại diện mọi nơi và **dán lên mặt nhân vật 3D** (thay mắt, miệng vẽ sẵn).
+  Ảnh hỏng hoặc nhỏ hơn 48×48 bị từ chối. Chỉ dùng ảnh anh có quyền dùng.
+- **Về mặc định**: trả lại tên gốc và nhân vật 3D vẽ sẵn, xóa ảnh.
+
 ## Văn phòng: agent luôn làm việc hoặc học để lên cấp
 
 Trang **Văn phòng** chỉ có văn phòng 3D và cột **Đội đang làm gì**: mỗi agent (cả nhân viên sale) hiện trạng thái

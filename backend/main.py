@@ -151,6 +151,29 @@ def health():
             "restarting": _restart["at"], "idle": _idle(), "time": db.tz_info()}
 
 
+class AgentProfile(BaseModel):
+    name: str | None = None
+    face: str | None = None  # ảnh dạng data URL (base64)
+
+
+@app.put("/api/agents/{aid}")
+def agent_profile(aid: str, p: AgentProfile):
+    """Sếp đổi tên / ảnh mặt của một agent (cả nhân viên sale)."""
+    try:
+        if p.face:
+            agents.set_face(aid, p.face)
+        if p.name is not None:
+            agents.rename(aid, p.name)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"id": aid, "name": agents.name_of(aid), "face": agents.face_of(aid)}
+
+
+@app.delete("/api/agents/{aid}/profile")
+def agent_profile_reset(aid: str, what: str = "all"):
+    return agents.reset_profile(aid, what)
+
+
 @app.get("/api/agents")
 def list_agents():
     out = agents.public_list()
@@ -3018,6 +3041,7 @@ def index():
 app.mount("/static", StaticFiles(directory=FRONTEND), name="static")
 app.mount("/media", StaticFiles(directory=db.MEDIA_DIR), name="media")   # chỉ ảnh sản phẩm
 app.mount("/shots", StaticFiles(directory=db.SHOTS_DIR), name="shots")   # ảnh chụp kết quả đăng bài
+app.mount("/faces", StaticFiles(directory=agents.faces_dir()), name="faces")   # ảnh mặt agent sếp tải lên
 
 # ------------------------------------------------------------------ chỉ cho chạy 1 bản phần mềm
 def _port_owners(port: int) -> list:

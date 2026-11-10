@@ -163,6 +163,12 @@ details.limits .grid2{margin-top:8px}
 .fc-list{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
 .fc-list li{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px}
 .fc-list li>div{min-width:0}.fc-list .small{display:block}
+.team-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.team-list li{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 10px;min-width:0}
+.team-list .ava{width:48px;height:48px;font-size:20px}
+.team-list .tl-main{flex:1;min-width:0;display:grid;gap:4px}.team-list .tl-main input{width:100%}
+.team-list .tl-act{display:flex;gap:4px;flex-wrap:wrap}
+@media(max-width:480px){.team-list{grid-template-columns:minmax(0,1fr)}}
 .lostbox{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:4px;background:var(--panel-2)}
 .junkbox{border:1px dashed var(--line);border-radius:10px;padding:8px 10px;margin-top:4px}
 .junkbox summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--danger)}
@@ -1555,6 +1561,9 @@ label.f{font-weight:600;color:var(--muted)}
 
     <section class="view" id="v-setup" hidden>
       <div class="vh"><div><h1>Cài đặt</h1><p>Chi phí AI, lịch làm việc tự động, giọng văn thương hiệu và kết nối Fanpage.</p></div></div>
+      <div class="card" id="teamCard"><div class="card-h"><h3>Tên và khuôn mặt của đội</h3><span class="small muted">Áp dụng cho văn phòng 3D, lời CEO, Telegram</span></div>
+        <p class="small muted">Đổi tên gọi của từng agent (cả nhân viên sale) và tải ảnh mặt lên. Ảnh được cắt vuông lấy phần giữa, hiện trên nhân vật 3D và ảnh đại diện. Agent tự giới thiệu bằng tên mới; CEO hiểu cả tên cũ lẫn tên mới. Chỉ dùng ảnh anh có quyền dùng.</p>
+        <ul class="team-list" id="teamList"></ul></div>
       <form class="card" id="costForm">
         <div class="card-h"><h3>Chi phí AI</h3><span class="chip" id="costState">—</span></div>
         <div class="cost-top">
@@ -2369,7 +2378,11 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     if(P==="/bump/preview-text") return {texts:demoBumpLines(+(new URLSearchParams(qs||"").get("n"))||3),mode:S.settings.bump_text_mode||"ai",contact:S.settings.bump_contact||"",ai:false};
     if(P.startsWith("/post-target")||P.startsWith("/friends")||/^\/groups\/\d+\/focus$/.test(P)) return demoFr(method,P,qs,body||{});
     if(P.startsWith("/replies")||P.startsWith("/feed")) return demoRp(method,P,qs,body||{});
-      if(P==="/focus"||P==="/focus/run"||P==="/focus/settings"||P.startsWith("/focus/resume/")){ S.fc=S.fc||{enabled:true,paused:{}};
+      if(P.startsWith("/agents/")&&(method==="PUT"||method==="DELETE")){ S.prof=S.prof||{}; const aid=P.split("/")[2], cur=S.prof[aid]=S.prof[aid]||{};
+       if(method==="DELETE"){ delete S.prof[aid]; return {id:aid}; }
+       if(body.name!=null){ const n=String(body.name).trim(); if(!n||n.length>20) throw new Error("Tên từ 1 đến 20 ký tự"); cur.name=n; }
+       if(body.face) cur.face=body.face; return {id:aid,...cur}; }
+     if(P==="/focus"||P==="/focus/run"||P==="/focus/settings"||P.startsWith("/focus/resume/")){ S.fc=S.fc||{enabled:true,paused:{}};
         if(P==="/focus/settings") S.fc.enabled=!!body.enabled; if(P.startsWith("/focus/resume/")) delete S.fc.paused[P.split("/").pop()];
         if(P==="/focus/run") S.fc.paused.pages=new Date(Date.now()+30*864e5).toISOString().slice(0,10);
         const ch=[{key:"comment",label:"Bình luận dưới bài mình đăng",verdict:"good",text:"Ra 3 đơn từ 21 SĐT: dồn thêm sức"},{key:"demand",label:"Người hỏi nguồn trong nhóm (Mai đọc)",verdict:"good",text:"Ra 2 đơn từ 9 SĐT: dồn thêm sức"},{key:"pages",label:"Trang, shop livestream (Mai tìm)",verdict:"weak",text:"18 SĐT, sếp đã gọi 11, chưa có đơn nào"},{key:"ads",label:"Trang chạy quảng cáo (Mai quét)",verdict:"call",text:"Có 8 SĐT nhưng sếp mới gọi 2/5: cần gọi thêm mới biết kênh này ra đơn không"}].map(c=>({...c,paused_until:S.fc.paused[c.key]||null}));
@@ -2381,8 +2394,10 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(P==="/agents"){ const prog=id=>{ const x=S.xp[id]||0, l=lvl(x); return {xp:x,level:l,level_xp:lxp(l),next_xp:lxp(l+1)}; };
         const rec=id=>S.activity.filter(x=>x.agent_id===id).slice(0,2);
         const learnSt=id=>{ const st=S.status[id]; if(st&&st.state!=="idle") return st; const t=DEMO_LEARN[id]||["Ôn lại: cách giữ nick an toàn","Ôn cách trả lời bình luận xin số điện thoại"]; return {state:"learning",text:t[Math.floor(Date.now()/40000)%t.length]}; };
-        return AGENT_DEFS.map(a=>({...a,kind:"core",level:lvl(S.xp[a.id]||0),progress:prog(a.id),recent:rec(a.id),learned_today:(a.id.length%3)+1,status:learnSt(a.id),tasks:S.tasks.filter(t=>t.agent_id===a.id&&t.status!=="done")}))
-          .concat(saleAgents().map(a=>({...a,level:lvl(S.xp[a.id]||0),progress:prog(a.id),recent:rec(a.id),learned_today:1,status:learnSt(a.id),tasks:[]}))); }
+        S.prof=S.prof||{}; const pf=a=>({default_name:a.default_name||a.name,...a,...(S.prof[a.id]||{})});
+        return AGENT_DEFS.map(a=>pf({...a,default_name:a.name,kind:"core",level:lvl(S.xp[a.id]||0),progress:prog(a.id),recent:rec(a.id),learned_today:(a.id.length%3)+1,status:learnSt(a.id),tasks:S.tasks.filter(t=>t.agent_id===a.id&&t.status!=="done")}))
+.map(x=>({...x,...(S.prof[x.id]||{})}))
+          .concat(saleAgents().map(a=>({...a,level:lvl(S.xp[a.id]||0),progress:prog(a.id),recent:rec(a.id),learned_today:1,status:learnSt(a.id),tasks:[],...(S.prof[a.id]||{})}))); }
       if(P==="/sales") return S.sales.map(saleOut);
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products.slice().sort((a,b)=>(b.is_general||0)-(a.is_general||0)||(b.hot||0)-(a.hot||0)||a.id-b.id).map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g),joins:g.joins||{},today:gfToday(g)}));
@@ -2846,7 +2861,7 @@ const World = (() => {
       mesh(new THREE.SphereGeometry(0.085,14,10),"#ffffff",{parent:e,shadow:false}).scale.set(1,1.15,0.5);
       mesh(new THREE.SphereGeometry(0.055,12,10),"#1b1b1b",{z:0.035,y:-0.01,parent:e,shadow:false}).scale.set(1,1.2,0.6);
       mesh(new THREE.SphereGeometry(0.018,8,6),"#ffffff",{x:0.02,y:0.025,z:0.07,parent:e,shadow:false}); return e; });
-    [-1,1].forEach(s=>{ const c=mesh(new THREE.CircleGeometry(0.065,16),"#f39a9a",{x:0.27*s,y:-0.11,z:0.35,parent:head,shadow:false}); c.rotation.y=0.6*s; c.material=new THREE.MeshBasicMaterial({color:0xf3a1a1,transparent:true,opacity:0.7}); });
+    const cheeks=[]; [-1,1].forEach(s=>{ const c=mesh(new THREE.CircleGeometry(0.065,16),"#f39a9a",{x:0.27*s,y:-0.11,z:0.35,parent:head,shadow:false}); c.rotation.y=0.6*s; c.material=new THREE.MeshBasicMaterial({color:0xf3a1a1,transparent:true,opacity:0.7}); cheeks.push(c); });
     const mouth=mesh(new THREE.TorusGeometry(0.06,0.017,8,16,Math.PI),"#7a2b2b",{y:-0.15,z:0.42,parent:head,shadow:false}); mouth.rotation.z=Math.PI;
     // tóc
     const capGeo=new THREE.SphereGeometry(0.47,28,14,0,Math.PI*2,0,Math.PI*0.52);
@@ -2867,7 +2882,20 @@ const World = (() => {
     if(L.tie){ mesh(box(0.1,0.36,0.03),L.tie,{y:0.9,z:0.345,parent:body}); mesh(box(0.13,0.08,0.04),L.tie,{y:1.1,z:0.33,parent:body});
       [-1,1].forEach(s=>{ const c=mesh(box(0.14,0.1,0.02),"#f4f4f4",{x:0.07*s,y:1.13,z:0.31,parent:body}); c.rotation.z=0.5*s; }); }
     root.traverse(o=>o.userData.agent=a.id);
-    return {id:a.id,a,root,body,legs,arms,head,mouth,eyes,path:[],mode:"desk",state:"idle",talk:0,blink:Math.random()*4,phase:Math.random()*10};
+    const c={id:a.id,a,root,body,legs,arms,head,mouth,eyes,cheeks,path:[],mode:"desk",state:"idle",talk:0,blink:Math.random()*4,phase:Math.random()*10};
+    if(a.face) setFace(c,a.face);
+    return c;
+  }
+  // ảnh mặt sếp tải lên: dán thành mặt tròn phía trước đầu, ẩn mắt / miệng / má vẽ sẵn
+  function setFace(c,url){
+    if(c.faceUrl===url) return; c.faceUrl=url||"";
+    if(c.facePlane){ c.head.remove(c.facePlane); c.facePlane.geometry.dispose(); c.facePlane.material.map?.dispose(); c.facePlane.material.dispose(); c.facePlane=null; }
+    const show=!url; c.eyes.forEach(e=>e.visible=show); c.mouth.visible=show; (c.cheeks||[]).forEach(x=>x.visible=show);
+    if(!url) return;
+    new THREE.TextureLoader().load(url,tex=>{ if(c.faceUrl!==url) return;
+      const m=new THREE.Mesh(new THREE.CircleGeometry(0.33,40),new THREE.MeshBasicMaterial({map:tex}));
+      m.position.set(0,-0.03,0.452); m.userData.agent=c.id; c.head.add(m); c.facePlane=m; },
+      undefined,()=>{ c.eyes.forEach(e=>e.visible=true); c.mouth.visible=true; (c.cheeks||[]).forEach(x=>x.visible=true); });
   }
 
   const chars={}, tags={}, bubbles={};
@@ -2959,6 +2987,7 @@ const World = (() => {
     const ids=new Set(agents.map(a=>a.id)); let changed=false;
     for(const a of agents) if(!chars[a.id]){ addAgent(a); changed=true; }
     for(const id of Object.keys(chars)) if(!ids.has(id)){ removeAgent(id); changed=true; }
+    for(const a of agents){ if(chars[a.id]&&(chars[a.id].faceUrl||"")!==(a.face||"")) setFace(chars[a.id],a.face||""); if(AGENT[a.id]&&(AGENT[a.id].name!==a.name||AGENT[a.id].face!==a.face)) AGENT[a.id]={...AGENT[a.id],name:a.name,face:a.face||""}; }
     for(const a of agents){ const label=(a.level?`${a.name} · Cấp ${a.level}`:a.name)+(a.status?.state==="learning"?" · đang học":""); if(chars[a.id] && tags[a.id] && tags[a.id].textContent!==label){ tags[a.id].textContent=label; AGENT[a.id]={...AGENT[a.id],...a}; } }
     if(changed){ layoutSeats(agents.map(a=>a.id)); for(const c of Object.values(chars)) if(c.mode==="meeting"){ const s=SEATS[c.id]; c.root.position.set(s.x,0,s.z); c.final=s; } }
     for(const a of agents){ const c=chars[a.id]; if(!c) continue; const st=a.status||{}; c.state=st.state||"idle"; c.statusText=st.text||"";
@@ -2970,7 +2999,7 @@ const World = (() => {
 
 /* =========================================================== trạng thái giao diện */
 const ST = {view:"office", agents:[], dash:null, posts:[], groups:[], leads:[], products:[], meetingId:null, lastMsg:0, msgs:[], selLead:null, openPost:new Set(), editPost:null, postedForm:null};
-const avaHtml=(id,size)=>{ const a=AGENT[id]; if(!a) return `<div class="ava" style="background:#a86f0e${size?`;width:${size}px;height:${size}px`:""}">S</div>`; return `<div class="ava" style="background:${a.look.shirt}">${a.name[0]}</div>`; };
+const avaHtml=(id,size)=>{ const a=AGENT[id]; if(!a) return `<div class="ava" style="background:#a86f0e${size?`;width:${size}px;height:${size}px`:""}">S</div>`; return a.face?`<img class="ava" src="${esc(a.face)}" alt="${esc(a.name)}" style="object-fit:cover${size?`;width:${size}px;height:${size}px`:""}">`:`<div class="ava" style="background:${a.look.shirt}">${a.name[0]}</div>`; };
 
 function show(v){
   let sub=""; if(v&&v.includes("/")) [v,sub]=v.split("/");
@@ -3759,6 +3788,25 @@ function kpiHero(k,pace,extra=""){
     <div style="text-align:right"><span class="chip ${st[0]}">${st[1]}</span>${extra}</div>`;
 }
 const fmtPhone=p=>p&&p.length===10?`${p.slice(0,4)} ${p.slice(4,7)} ${p.slice(7)}`:(p||"");
+async function loadTeam(){
+  let list; try{ list=await api("/agents"); }catch(e){ return; }
+  list.forEach(a=>{ AGENT[a.id]={...(AGENT[a.id]||{}),...a}; });
+  $("#teamList").innerHTML=list.filter(a=>!a.sample).map(a=>`<li data-tm="${a.id}">${avaHtml(a.id,48)}<div class="tl-main">
+      <div class="small muted">${esc(a.role||"")}${a.default_name&&a.default_name!==a.name?` · tên gốc ${esc(a.default_name)}`:""}</div>
+      <input type="text" maxlength="20" value="${esc(a.name)}" aria-label="Tên của ${esc(a.name)}" data-tmname>
+      <div class="tl-act"><button class="btn sm primary" type="button" data-tmsave>Lưu tên</button>
+        <label class="btn sm" style="cursor:pointer">${a.face?"Đổi ảnh mặt":"Tải ảnh mặt"}<input type="file" accept="image/*" hidden data-tmface></label>
+        ${a.face||(a.default_name&&a.default_name!==a.name)?`<button class="btn sm ghost" type="button" data-tmreset>Về mặc định</button>`:""}</div></div></li>`).join("");
+}
+function shrinkImage(file,max=640){ return new Promise((ok,bad)=>{ const r=new FileReader(); r.onerror=()=>bad(new Error("Không đọc được ảnh"));
+  r.onload=()=>{ const im=new Image(); im.onerror=()=>bad(new Error("Không đọc được ảnh. Chọn ảnh JPG, PNG hoặc WEBP"));
+    im.onload=()=>{ const k=Math.min(1,max/Math.max(im.width,im.height)); const cv=document.createElement("canvas"); cv.width=Math.round(im.width*k); cv.height=Math.round(im.height*k);
+      cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height); ok(cv.toDataURL("image/jpeg",0.88)); }; im.src=r.result; }; r.readAsDataURL(file); }); }
+$("#teamList").addEventListener("click",async e=>{ const li=e.target.closest("[data-tm]"); if(!li) return; const id=li.dataset.tm;
+  if(e.target.closest("[data-tmsave]")){ try{ const r=await api(`/agents/${id}`,"PUT",{name:li.querySelector("[data-tmname]").value}); toast(`Đã đổi tên thành ${r.name}`); }catch(err){ toast(err.message); } loadTeam(); refresh(); }
+  if(e.target.closest("[data-tmreset]")){ await api(`/agents/${id}/profile`,"DELETE"); toast("Đã trả về tên và mặt mặc định"); loadTeam(); refresh(); } });
+$("#teamList").addEventListener("change",async e=>{ const inp=e.target.closest("[data-tmface]"); if(!inp||!inp.files[0]) return; const id=inp.closest("[data-tm]").dataset.tm;
+  try{ const url=await shrinkImage(inp.files[0]); await api(`/agents/${id}`,"PUT",{face:url}); toast("Đã đổi ảnh mặt"); }catch(err){ toast(err.message); } loadTeam(); refresh(); });
 async function loadFunnel(){
   let d; try{ d=await api(`/funnel?days=${$("#fnDays").value||30}`); }catch(e){ return; }
   const T=d.total, pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
@@ -4663,7 +4711,7 @@ $("#resetForm").addEventListener("submit",async e=>{ e.preventDefault(); const b
 async function loadSettings(){
   loadReset();
   loadSamples();
-  loadCosts();
+  loadCosts(); loadTeam();
   const s=await api("/settings");
   $("#sName").value=s.company_name||""; $("#sVoice").value=s.brand_voice||""; $("#sContact").value=s.contact_info||""; $("#sZalo").value=s.price_zalo||"0386992326"; $("#sPriceLine").value=s.price_contact||""; ST.zalo=s.price_zalo||"0386992326"; $("#sTime").value=s.meeting_time||"08:30";
   $("#sPer").value=s.posts_per_day||4; $("#sAutoM").checked=s.auto_meeting==="1"; $("#sAutoW").checked=s.auto_daily_work==="1"; $("#sPage").value=s.fb_page_id||""; $("#sToken").value=s.fb_page_token||""; loadBump(s); $("#sImgReq").checked=s.require_images!=="0"; $("#sGroupFit").checked=s.group_fit!=="0"; $("#sImg").checked=s.attach_images!=="0"||$("#sImgReq").checked; $("#sImg").disabled=$("#sImgReq").checked; $("#sImgMin").value=s.images_min||2; $("#sImgMax").value=s.images_max||4; $("#sImgDays").value=s.image_reuse_days||14; { const bm=s.browser_headless==="1"?"headless":(s.browser_mode||"background"); const r=document.querySelector(`input[name=sBrowser][value=${bm}]`); if(r) r.checked=true; }
