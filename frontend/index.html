@@ -1473,6 +1473,7 @@ label.f{font-weight:600;color:var(--muted)}
         <div class="actions" data-direct><button class="btn primary" id="btnLearn">Cho cả đội học ngay</button></div></div>
       <div class="learn-top">
         <div class="card"><div class="card-h"><h3>Lan đang chọn góc viết như thế nào</h3><span class="small muted" id="explTxt"></span></div>
+          <p class="small" id="learnData"></p>
           <p class="small muted">Cơ hội được chọn của mỗi góc, tính từ số khách và bình luận thật của bài đã đăng, nhân với mức sếp duyệt bài góc đó.</p>
           <div class="wbars" id="angleBars"></div></div>
         <div class="sidecol">
@@ -2166,7 +2167,8 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       return {id:a.id,name:a.name,role:a.role,kind:a.kind,look:a.look,progress:{xp,level:L,level_xp:lxp(L),next_xp:lxp(L+1),goal:S.goals[a.id]||null},
         skills:SK[a.id]||[{label:"Khách mỗi bài",unit:"",now:0.7,prev:0.5},{label:"Đăng thành công",unit:"%",now:92,prev:85},{label:"Lượt up bài",unit:"",now:18,prev:9}],
         lessons:S.lessons.filter(l=>l.agent_id===a.id).sort((x,y)=>y.pinned-x.pinned||y.confidence-x.confidence),retired:a.id==="lan"?3:0}; }),
-      choices:{explore:+(S.settings.learn_explore||0.25),golden_hours:[20,11],
+      data:{posts:23,need:40,each:15,ready:false},ai_last:"",
+      choices:{explore:+(S.settings.learn_explore||0.25),golden_hours:[],
         angles:[["Sản phẩm dễ livestream",.38,9,8.4],["Biên lợi nhuận cho người bán",.19,7,4.6],["Nguồn hàng tận xưởng",.15,8,3.5],["Sản phẩm dễ chạy quảng cáo",.12,5,2.9],["Nhận in nhãn riêng (OEM)",.09,3,1.8],["Câu chuyện xưởng",.07,6,1.2]].map(([name,weight,n,avg])=>({name,weight,n,avg})),
         products:[["Bột ngũ cốc dinh dưỡng 25 loại hạt",.31],["Trà hoa đậu biếc - cỏ ngọt",.22],["Trà gừng mật ong túi lọc",.17],["Bột cần tây sấy lạnh",.12],["Cà phê hòa tan 3in1 vị đậm",.1],["Bột diếp cá - rau má",.08]].map(([name,weight])=>({name,weight}))}};
   }
@@ -3830,6 +3832,10 @@ async function loadLearn(){
   const d=await api("/learning"); ST.learn=d; const s=await api("/settings");
   $("#angleBars").innerHTML=wbars(d.choices.angles.map(a=>({...a,name:`${a.name} · ${a.n} bài`})));
   $("#prodBars").innerHTML=d.choices.products.length?wbars(d.choices.products):'<p class="small muted">Chưa có sản phẩm.</p>';
+  const dr=d.data||{}; $("#learnData").innerHTML=dr.need?(dr.ready
+    ?`<span class="muted">Đủ dữ liệu (${dr.posts} bài/30 ngày). Chỉ góc, sản phẩm, giờ có từ ${dr.each} bài và chênh lệch rõ (không phải may rủi) mới được ưu tiên hay thành bài học.</span>`
+    :`<span style="color:var(--honey)">Mới ${dr.posts}/${dr.need} bài đã đăng trong 30 ngày: chưa đủ để biết góc nào, giờ nào tốt hơn, nên Lan thử đều các góc và chưa rút bài học từ số liệu.</span>`)
+    +(d.ai_last?` <span class="muted">Claude xem lại số liệu mỗi tuần, lần gần nhất ${fmtDate(d.ai_last)}.</span>`:""):"";
   $("#explTxt").textContent=`Thử cái mới ${Math.round(d.choices.explore*100)}%${d.choices.golden_hours.length?` · Giờ vàng: ${d.choices.golden_hours.map(h=>h+"h").join(", ")}`:""}`;
   $("#learnLast").textContent=d.last?`Lần học gần nhất: ${fmtDate(d.last)}`:"Chưa học lần nào";
   $("#lnOn").checked=s.learn_enabled!=="0"; $("#lnTime").value=s.learn_time||"23:15"; $("#lnExp").value=s.learn_explore||"0.25";

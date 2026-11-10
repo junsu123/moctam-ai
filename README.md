@@ -782,13 +782,17 @@ Mỗi agent có **sổ tay kinh nghiệm**, **cấp độ** và **mục tiêu h�
 
 **Học thế nào:**
 
-1. **Thống kê (không tốn AI):** điểm mỗi bài = khách × 5 + bình luận, làm mượt để vài bài may mắn không làm lệch.
-   Lan chọn góc viết và sản phẩm theo điểm này (vẫn dành 25% để thử cái mới, chỉnh được), Tuấn dời lịch đăng vào
-   "giờ vàng" khi có đủ dữ liệu.
+1. **Thống kê (không tốn AI), không học từ số ít:** điểm mỗi bài = khách × 5 + bình luận, làm mượt mạnh (coi như mỗi lựa chọn
+   đã có 10 bài ở mức trung bình). Một góc viết, sản phẩm, giờ đăng chỉ được coi là tốt / kém hơn khi **mỗi bên có từ 15 bài**
+   và **chênh lệch rõ, khó là may rủi** (kiểm định thống kê, mức tin cậy ~95%); nhóm đăng từ 5 bài mỗi nhóm. Chưa đủ **40 bài đã
+   đăng trong 30 ngày** thì Lan thử đều các góc, Tuấn chưa có “giờ vàng”. Bài học thống kê ghi kèm số bài và độ chênh (z). Số liệu
+   không còn đủ chứng minh thì bài học tự bị bỏ. Hà cần từ 10 tin có kết quả mới rút tỉ lệ chốt; sếp sửa từ 5 lần mới rút thói
+   quen độ dài. Trang Đào tạo báo “Mới N/40 bài, chưa đủ dữ liệu” để sếp biết đội đang thử chứ chưa kết luận. Chỉnh ngưỡng bằng
+   các cài đặt `learn_min_each`, `learn_min_total`, `learn_z`.
 2. **Ví dụ mẫu:** bài nhiều khách nhất, bản sếp đã sửa và tin nhắn đã chốt đơn được đưa vào prompt để agent học cách viết.
-3. **Phản tỉnh mỗi đêm** (mặc định 23:15): mỗi agent đọc số liệu của mình, ghi tối đa 2 bài học mới có bằng chứng,
-   bỏ bài học không còn đúng và đặt mục tiêu cho ngày mai. Dùng Claude Haiku, khoảng 0,002 USD/đêm; không có API key
-   thì vẫn học bằng luật thống kê.
+3. **Phản tỉnh bằng Claude mỗi tuần** (mặc định 7 ngày, chạy cùng lượt tự học 23:15): mỗi agent đọc số liệu (có số bài mỗi mục),
+   ghi tối đa 2 bài học mới có bằng chứng, bỏ bài học không còn đúng. Claude được dặn không kết luận từ mục dưới 15 bài hay từ 1–2
+   khách. Các đêm khác chỉ chạy luật thống kê và đặt mục tiêu ngày mai (không tốn AI). Không có API key thì vẫn học bằng thống kê.
 
 Sổ tay giữ tối đa 10 bài học đang dùng mỗi agent (bài ghim không tính); 6 bài quan trọng nhất được đưa vào prompt.
 Sếp có thể **dạy trực tiếp** (bài học được ghim), **ghim** hoặc **bỏ** bất kỳ bài học nào.

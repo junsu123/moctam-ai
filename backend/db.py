@@ -434,6 +434,7 @@ DEFAULT_SETTINGS = {
     "app_tz": "",  # trống = giờ Việt Nam (hoặc APP_TZ trong .env)
     "idle_learning": "1", "idle_study_per_day": "6", "growth_state": "",
     "knowledge_enabled": "1", "self_study": "0", "group_fit": "1", "group_fit_min": "2",
+    "learn_min_each": "15", "learn_min_total": "40", "learn_prior": "10", "learn_z": "1.96", "learn_ai_every": "7", "learn_ai_last": "",
     "focus_enabled": "1", "focus_days": "14", "focus_min_phones": "8", "focus_min_called": "5", "focus_weekday": "1",
     "focus_paused": "", "focus_resumed": "", "focus_last": "", "prospect_pages": "1", "study_time": "07:00", "study_per_agent": "2", "knowledge_answer_threshold": "0.8",
     "study_last_date": "", "model_knowledge": "claude-haiku-5-5",

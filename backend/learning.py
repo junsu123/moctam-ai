@@ -30,6 +30,40 @@ BANNED = re.compile(r"(tăng|nâng).{0,20}(số bài|tần suất|giới hạn)|
 _running = {"on": False}
 
 
+def _cfg(k: str, d: float) -> float:
+    try:
+        return float(db.get_settings().get(k) or d)
+    except ValueError:
+        return d
+
+
+def min_each() -> int:
+    """Số bài tối thiểu của MỖI lựa chọn trước khi được coi là tốt / kém hơn (ít hơn là may rủi)."""
+    return int(_cfg("learn_min_each", 15))
+
+
+def min_total() -> int:
+    """Tổng số bài đã đăng (30 ngày) tối thiểu trước khi bắt đầu ưu tiên theo hiệu quả."""
+    return int(_cfg("learn_min_total", 40))
+
+
+def z_score(a: dict, b: dict) -> float:
+    """Chênh lệch điểm trung bình mỗi bài giữa 2 lựa chọn, tính bằng số lần sai số chuẩn (Welch).
+    |z| >= 1,96: khó là ngẫu nhiên (độ tin cậy ~95%)."""
+    import math
+    var = lambda x: max(0.0, (x.get("sq", 0) / x["n"]) - (x["score"] / x["n"]) ** 2) if x["n"] else 0
+    se = math.sqrt(var(a) / max(1, a["n"] - 1) + var(b) / max(1, b["n"] - 1)) if a["n"] and b["n"] else 0
+    diff = a["score"] / max(1, a["n"]) - b["score"] / max(1, b["n"])
+    if se == 0:
+        return 0.0
+    return round(diff / se, 2)
+
+
+def sure_diff(a: dict, b: dict) -> bool:
+    """Đủ mẫu và chênh lệch đủ lớn để rút bài học."""
+    return a["n"] >= min_each() and b["n"] >= min_each() and abs(z_score(a, b)) >= _cfg("learn_z", 1.96)
+
+
 def _ago(days: int) -> str:
     return (db.clock() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -42,15 +76,15 @@ def score_sql() -> str:
 def perf(dim: str, days: int = 30) -> dict:
     """Hiệu quả theo một chiều: angle | product_id | group_id | hour | target_type | sale_id."""
     key = {"hour": "substr(posted_at,12,2)"}.get(dim, dim)
-    rows = db.q(f"""SELECT {key} k, COUNT(*) n, SUM({score_sql()}) score, SUM(COALESCE(leads,0)) leads,
+    rows = db.q(f"""SELECT {key} k, COUNT(*) n, SUM({score_sql()}) score, SUM({score_sql()} * {score_sql()}) sq, SUM(COALESCE(leads,0)) leads,
                     SUM(COALESCE(comments,0)) comments FROM posts WHERE status='posted' AND posted_at >= ? AND {key} IS NOT NULL
                     GROUP BY k""", (_ago(days),))
     n_all = sum(r["n"] for r in rows)
     mean = (sum(r["score"] or 0 for r in rows) / n_all) if n_all else 0
-    k = 3  # làm mượt: coi như mỗi lựa chọn đã có 3 bài ở mức trung bình
+    k = _cfg("learn_prior", 10)  # làm mượt mạnh: coi như mỗi lựa chọn đã có 10 bài ở mức trung bình, vài bài may mắn không kéo lệch
     out = {}
     for r in rows:
-        out[str(r["k"])] = {"n": r["n"], "score": r["score"] or 0, "leads": r["leads"] or 0, "comments": r["comments"] or 0,
+        out[str(r["k"])] = {"n": r["n"], "score": r["score"] or 0, "sq": r["sq"] or 0, "leads": r["leads"] or 0, "comments": r["comments"] or 0,
                             "avg": round((r["score"] or 0) / r["n"], 2), "smoothed": round(((r["score"] or 0) + k * mean) / (r["n"] + k), 3)}
     return {"mean": round(mean, 3), "n": n_all, "items": out}
 
@@ -76,7 +110,7 @@ def weights(dim: str, options: list[str]) -> dict:
     w = {}
     for o in options:
         it = p["items"].get(str(o))
-        v = it["smoothed"] if it else base
+        v = it["smoothed"] if it and it["n"] >= min_each() else base  # chưa đủ mẫu: coi như mức trung bình
         v = max(v, 0.05 * (base or 1)) + 0.01
         if dim == "angle":
             v *= 0.5 + ap.get(o, {}).get("rate", 0.5)
@@ -92,7 +126,7 @@ def choose(dim: str, options: list) -> str:
         return None
     explore = float(db.get_settings().get("learn_explore") or 0.25)
     p = perf(dim)
-    if p["n"] < 6 or random.random() < explore:
+    if p["n"] < min_total() or random.random() < explore:  # chưa đủ dữ liệu: thử đều các lựa chọn
         tried = {o: p["items"].get(o, {}).get("n", 0) for o in opts}
         least = min(tried.values())
         return random.choice([o for o in opts if tried[o] <= least + 1])
@@ -118,11 +152,17 @@ def choose_product(products: list[dict]) -> dict:
 
 
 def golden_hours(top: int = 3) -> list[int]:
+    """Giờ đăng tốt hơn hẳn các giờ khác (đủ mẫu, chênh lệch có ý nghĩa), không phải giờ vài bài may mắn."""
     p = perf("hour")
-    if p["n"] < 8:
+    if p["n"] < min_total():
         return []
-    ranked = sorted(p["items"].items(), key=lambda kv: -kv[1]["smoothed"])
-    return [int(h) for h, v in ranked[:top] if v["n"] >= 2 and v["smoothed"] > p["mean"]]
+    out = []
+    for h, v in sorted(p["items"].items(), key=lambda kv: -kv[1]["smoothed"]):
+        rest = {"n": p["n"] - v["n"], "score": sum(x["score"] for k, x in p["items"].items() if k != h),
+                "sq": sum(x["sq"] for k, x in p["items"].items() if k != h)}
+        if v["n"] >= max(8, min_each() // 2) and rest["n"] >= min_each() and z_score(v, rest) >= _cfg("learn_z", 1.96):
+            out.append(int(h))
+    return out[:top]
 
 
 # ---------------------------------------------------------------- 2. tín hiệu từ sếp và khách
@@ -348,8 +388,9 @@ def _name(dim: str, k: str) -> str:
     return k
 
 
-def _best_worst(dim: str, min_n: int = 3):
+def _best_worst(dim: str, min_n: int | None = None):
     p = perf(dim)
+    min_n = min_n or min_each()
     items = [(k, v) for k, v in p["items"].items() if v["n"] >= min_n]
     if len(items) < 2:
         return None
@@ -416,17 +457,19 @@ def rule_lessons(agent_id: str) -> list[dict]:
         bw = _best_worst("angle")
         if bw:
             p, (bk, bv), (wk, wv) = bw
-            if bv["smoothed"] > wv["smoothed"] * 1.3:
+            if sure_diff(bv, wv):
                 add("angle", f"Ưu tiên góc '{_name('angle', bk)}' (điểm {bv['avg']}/bài); hạn chế góc '{_name('angle', wk)}' ({wv['avg']}/bài).",
-                    f"{bv['n']} và {wv['n']} bài trong 30 ngày", min(0.9, 0.5 + (bv["n"] + wv["n"]) / 40))
+                    f"{bv['n']} và {wv['n']} bài trong 30 ngày, chênh lệch z={z_score(bv, wv)}", min(0.9, 0.5 + (bv["n"] + wv["n"]) / 80))
         bw = _best_worst("product_id")
         if bw:
             p, (bk, bv), _ = bw
-            if bv["smoothed"] > p["mean"] * 1.2:
+            rest = {"n": p["n"] - bv["n"], "score": sum(x["score"] for k, x in p["items"].items() if k != bk),
+                    "sq": sum(x["sq"] for k, x in p["items"].items() if k != bk)}
+            if sure_diff(bv, rest) and z_score(bv, rest) > 0:
                 add("product", f"Sản phẩm '{_name('product_id', bk)}' đang hút khách sỉ nhất ({bv['leads']} khách / {bv['n']} bài), nên viết nhiều hơn.",
                     f"Điểm TB {bv['avg']} so với mức chung {p['mean']}", 0.7)
         ed = db.q("SELECT before, after FROM feedback WHERE kind='edit' AND created_at>=?", (_ago(30),))
-        if len(ed) >= 2:
+        if len(ed) >= 5:  # 1–2 lần sửa chưa nói lên thói quen của sếp
             ratio = sum(len((r["after"] or "").split()) for r in ed) / max(1, sum(len((r["before"] or "").split()) for r in ed))
             words = int(sum(len((r["after"] or "").split()) for r in ed) / len(ed))
             if ratio < 0.85:
@@ -434,11 +477,11 @@ def rule_lessons(agent_id: str) -> list[dict]:
             elif ratio > 1.15:
                 add("length", f"Sếp thường viết thêm chi tiết; bài nên dài khoảng {words} chữ.", f"{len(ed)} lần sửa", 0.7)
         rs = db.q("SELECT reason, COUNT(*) n FROM feedback WHERE kind='reject' AND reason!='' AND created_at>=? GROUP BY reason ORDER BY n DESC LIMIT 1", (_ago(30),))
-        if rs and rs[0]["n"] >= 2:
+        if rs and rs[0]["n"] >= 3:
             add("reject", f"Lý do sếp hay loại bài nhất: '{rs[0]['reason']}'. Kiểm tra kỹ điểm này trước khi nộp bài.", f"{rs[0]['n']} lần", 0.8)
     elif agent_id == "tuan":
-        bw = _best_worst("group_id", 2)
-        if bw:
+        bw = _best_worst("group_id", max(5, min_each() // 3))  # mỗi nhóm 1 bài/ngày: ngưỡng thấp hơn nhưng vẫn phải chênh rõ
+        if bw and bw[1][1]["n"] >= 5 and abs(z_score(bw[1][1], bw[2][1])) >= _cfg("learn_z", 1.96):
             p, (bk, bv), (wk, wv) = bw
             add("group", f"Nhóm '{_name('group_id', bk)}' hiệu quả nhất ({bv['leads']} khách / {bv['n']} bài); nhóm '{_name('group_id', wk)}' kém nhất.",
                 f"Điểm TB {bv['avg']} so với {wv['avg']}", 0.7)
@@ -452,12 +495,12 @@ def rule_lessons(agent_id: str) -> list[dict]:
             add("strict", f"Nhóm '{rm[0]['name']}' hay gỡ hoặc giữ bài chờ duyệt ({rm[0]['n']} bài); đọc kỹ luật nhóm và giãn cách lâu hơn.", "", 0.75)
     elif agent_id == "ha":
         r = db.one("SELECT SUM(outcome='won') w, SUM(outcome='lost') l FROM replies WHERE sent=1")
-        if (r["w"] or 0) + (r["l"] or 0) >= 4:
+        if (r["w"] or 0) + (r["l"] or 0) >= 10:
             add("close", f"Tỉ lệ chốt sau tin nhắn hiện là {_pct(r['w'] or 0, (r['w'] or 0) + (r['l'] or 0))}%. Giữ cách mở lời của các tin đã chốt.",
                 f"{r['w']} chốt / {r['l']} mất", 0.6)
         bt = db.q("""SELECT business_type t, SUM(status='ordered') o, COUNT(*) n FROM leads WHERE business_type!=''
-                     GROUP BY business_type HAVING n>=3 ORDER BY 1.0*o/n DESC LIMIT 1""")
-        if bt and bt[0]["o"]:
+                     GROUP BY business_type HAVING n>=10 ORDER BY 1.0*o/n DESC LIMIT 1""")
+        if bt and (bt[0]["o"] or 0) >= 3:
             add("segment", f"Nhóm khách '{bt[0]['t']}' dễ chốt nhất ({bt[0]['o']}/{bt[0]['n']}); ưu tiên trả lời họ trước.", "", 0.65)
     elif agent_id == "khoa":
         r = db.one("""SELECT COUNT(*) n, SUM(CASE WHEN COALESCE(comments,0)+COALESCE(leads,0)>0 THEN 1 ELSE 0 END) d
@@ -480,12 +523,15 @@ def _llm_reflect(agent_id: str) -> dict | None:
     if not llm.live:
         return None
     ev = evidence(agent_id)
+    ev["nguong"] = f"mỗi lựa chọn cần từ {min_each()} bài mới so sánh được; tổng từ {min_total()} bài"
     old = [{"id": l["id"], "bai_hoc": l["text"]} for l in active_lessons(agent_id) if not l["pinned"]][:10]
-    prompt = f"""Cuối ngày, hãy tự xem lại công việc của bạn để giỏi hơn.
+    prompt = f"""Cuối tuần, hãy tự xem lại công việc của bạn để giỏi hơn.
 Dữ liệu thật: {json.dumps(ev, ensure_ascii=False)}
 Bài học bạn đang có: {json.dumps(old, ensure_ascii=False)}
 Yêu cầu:
 - Rút ra tối đa 2 bài học MỚI, ngắn (dưới 35 chữ), cụ thể, làm được ngay, có bằng chứng từ dữ liệu. Không có bằng chứng thì không rút.
+- CẨN THẬN VỚI SỐ ÍT: mục nào có dưới {min_each()} bài (so_bai) thì chênh lệch chỉ là may rủi, KHÔNG rút bài học từ mục đó.
+  Không kết luận từ 1–2 khách, 1–2 lần sếp sửa. Ít dữ liệu thì trả "new": [] là đúng.
 - Chỉ ra id các bài học cũ đã sai hoặc không còn đúng với dữ liệu để bỏ.
 - Đặt 1 mục tiêu đo được cho ngày mai (dưới 25 chữ).
 - Tuyệt đối không đề xuất tăng số bài, rút ngắn giãn cách, lách luật nhóm hay hứa công dụng chữa bệnh.
@@ -493,17 +539,36 @@ Trả về JSON: {{"new": [{{"text": "...", "evidence": "...", "confidence": 0.5
     return llm.json(system_prompt(agent_id, db.get_settings(), with_learning=False), prompt, mock=None, max_tokens=450, task="learning")
 
 
-def reflect(agent_id: str) -> dict:
-    """Một agent tự học: luật thống kê + (nếu có API) phản tỉnh bằng AI."""
+def ai_due() -> bool:
+    """Claude phản tỉnh mỗi tuần (mặc định 7 ngày), không phải mỗi đêm: dữ liệu một ngày quá ít để rút bài học."""
+    last = db.get_settings().get("learn_ai_last") or ""
+    every = int(_cfg("learn_ai_every", 7))
+    return not last or last <= (db.clock() - timedelta(days=every)).strftime("%Y-%m-%d")
+
+
+def data_ready() -> dict:
+    p = perf("angle")
+    return {"posts": p["n"], "need": min_total(), "each": min_each(), "ready": p["n"] >= min_total()}
+
+
+def reflect(agent_id: str, ai: bool = True) -> dict:
+    """Một agent tự học: luật thống kê + (nếu có API, mỗi tuần) phản tỉnh bằng AI."""
     count = lambda: db.one("SELECT COUNT(*) n FROM lessons WHERE agent_id=?", (agent_id,))["n"]
     before = count()
-    for l in rule_lessons(agent_id):
+    rl = rule_lessons(agent_id)
+    for l in rl:
         add_lesson(agent_id, l["text"], l["evidence"], "auto", l["confidence"], l["rule_key"])
+    # bài học thống kê mà số liệu hiện tại không còn đủ chứng minh (ít mẫu, chênh lệch không rõ) thì bỏ, không giữ điều may rủi
+    keep = {l["rule_key"] for l in rl}
+    for old in db.q("""SELECT id, rule_key FROM lessons WHERE agent_id=? AND source='auto' AND status='active' AND pinned=0
+                       AND rule_key IS NOT NULL""", (agent_id,)):
+        if old["rule_key"] not in keep:
+            db.run("UPDATE lessons SET status='retired', updated_at=? WHERE id=?", (db.now(), old["id"]))
     goal = None
     if agent_id in CORE:
         r = None
         try:
-            r = _llm_reflect(agent_id)
+            r = _llm_reflect(agent_id) if ai else None
         except Exception as e:
             print("[learning]", e)
         if isinstance(r, dict):
@@ -563,9 +628,12 @@ def nightly(force: bool = False) -> list[dict]:
         import workflows
         res = []
         ids = CORE + [f"sale-{r['id']}" for r in db.q("SELECT id FROM sales")]
+        ai = force or ai_due()
         for a in ids:
             workflows.set_status(a, "working", "Đang tự xem lại và rút kinh nghiệm")
-            res.append(reflect(a))
+            res.append(reflect(a, ai))
+        if ai:
+            db.set_setting("learn_ai_last", db.today())
             workflows.set_status(a, "idle", "Vừa học xong bài học hôm nay")
         total = sum(r["added"] for r in res)
         try:  # Lan ôn lại kho bài: cập nhật bài nào được duyệt, có khách để chấm điểm câu chữ
@@ -603,7 +671,8 @@ def overview() -> dict:
     angles = weights("angle", list(ANGLE))
     prods = db.q("SELECT id, name FROM products ORDER BY id")
     pw = weights("product_id", [p["id"] for p in prods]) if prods else {}
-    return {"agents": out, "running": _running["on"], "last": db.get_settings().get("learn_last_date"),
+    return {"agents": out, "running": _running["on"], "last": db.get_settings().get("learn_last_date"), "data": data_ready(),
+            "ai_last": db.get_settings().get("learn_ai_last") or "",
             "choices": {"angles": [{"name": ANGLE[k], "weight": v, **perf("angle")["items"].get(k, {"n": 0, "avg": 0})} for k, v in angles.items()],
                         "products": [{"name": p["name"], "weight": pw.get(str(p["id"]), 0), **perf("product_id")["items"].get(str(p["id"]), {"n": 0, "avg": 0})} for p in prods],
                         "golden_hours": golden_hours(),
