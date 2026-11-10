@@ -1043,3 +1043,9 @@ Các cơ chế tiết kiệm có sẵn:
 
 Giá dùng để tính (USD / 1 triệu token, vào/ra): Haiku 5.5 0,10/0,50 · Sonnet 5.5 2/10 · Opus 5.5 4/20;
 theo lô giảm 50%. Khi Anthropic đổi giá, sửa bảng `PRICES` trong `backend/llm.py`.
+
+## Kiểm tra trên Facebook giả lập (cho người lập trình)
+
+Thư mục `dev/`: Facebook giả lập (`mockfb.py`, cổng 8098), TikTok/Shopee giả lập (`mockmkt.py`, 8096/8095) và các bài kiểm tra.
+`dev/run.sh` tự bật giả lập, chạy test rồi tắt; mỗi test in một dòng kết quả, log đầy đủ ở `dev/work/`.
+Chạy một vài test: `dev/run.sh reply_test care_test`. Chạy hết: `dev/run.sh`. File `CLAUDE.md` ghi bản đồ code và cách làm tiết kiệm token.
