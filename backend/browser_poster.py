@@ -1736,7 +1736,7 @@ JOB_NAME = {"open": "mở Chrome", "check": "kiểm tra phiên", "post": "đăng
             "discover": "tìm nhóm mới", "join": "xin vào nhóm", "session": "làm ca trên nick",
             "prospect": "mở trang tìm khách sỉ cho Mai", "mygroups": "rà soát nhóm của nick", "link": "lấy link bài đã đăng",
             "friends": "đọc nhóm tìm người kết bạn", "replyscan": "đọc nhóm tìm người hỏi mua",
-            "reply": "trả lời khách trong nhóm"}
+            "reply": "trả lời khách trong nhóm", "feedscan": "lướt bảng tin nhóm"}
 
 
 def _worker(sale_id: int, q: Queue):
@@ -1785,6 +1785,9 @@ def _worker(sale_id: int, q: Queue):
                 elif k == "replyscan":
                     import replies
                     replies.job(pw, aid, job.get("group_ids"), job.get("notify"))
+                elif k == "feedscan":
+                    import group_feed
+                    group_feed.job(pw, aid, job.get("scan_id"), job.get("notify"))
                 elif k == "reply":
                     import replies
                     ctx, page = _open(pw, aid)

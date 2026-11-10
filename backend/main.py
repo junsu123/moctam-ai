@@ -298,8 +298,9 @@ def product_folder_image(pid: int, name: str):
 @app.get("/api/image")
 def used_image(path: str):
     """Ảnh đã đăng (để xem lại trên thẻ bài): chỉ trả file đã ghi trong lịch sử đăng ảnh."""
-    if not db.one("SELECT id FROM image_usage WHERE path=? UNION SELECT id FROM posts WHERE images_used LIKE ?",
-                  (path, f'%{json.dumps(path, ensure_ascii=False)[1:-1]}%')):
+    if not db.one("""SELECT id FROM image_usage WHERE path=? UNION SELECT id FROM posts WHERE images_used LIKE ?
+                     UNION SELECT id FROM reply_tasks WHERE image=?""",
+                  (path, f'%{json.dumps(path, ensure_ascii=False)[1:-1]}%', path)):
         raise HTTPException(404)
     f = Path(path)
     if not f.is_file() or f.suffix.lower() not in media_folder.IMG_EXT:
@@ -2588,6 +2589,47 @@ def replies_approve_all():
         except ValueError:
             pass
     return {"approved": n, "later": later}
+
+
+FEED_KEYS = {"feed_enabled", "feed_min_posts", "feed_scans_day", "feed_min_score", "feed_buyer_image", "feed_seller_enabled",
+             "feed_seller_per_nick_day", "feed_seller_words"}
+
+
+@app.get("/api/feed")
+def feed_get():
+    import group_feed
+    return group_feed.overview()
+
+
+@app.post("/api/feed/run")
+def feed_run(p: ReplyScan):
+    import group_feed
+    try:
+        return group_feed.start(p.account_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.put("/api/feed-settings")
+def feed_settings(data: dict):
+    import group_feed
+    bad = [k for k in data if k not in FEED_KEYS]
+    if bad:
+        raise HTTPException(400, "Không sửa được: " + ", ".join(bad))
+    lim = {"feed_min_posts": (10, 60, "Mỗi lượt đọc 10–60 bài"), "feed_scans_day": (1, 4, "Mỗi nick lướt 1–4 lượt/ngày"),
+           "feed_min_score": (40, 95, "Điểm tối thiểu 40–95"),
+           "feed_seller_per_nick_day": (0, 3, "Chào người bán tối đa 3 câu/nick/ngày để không bị báo cáo spam")}
+    for k, v in data.items():
+        v = str(v).strip()
+        if k in lim:
+            lo, hi, msg = lim[k]
+            if not v.isdigit() or not lo <= int(v) <= hi:
+                raise HTTPException(400, msg)
+        elif k in ("feed_enabled", "feed_buyer_image", "feed_seller_enabled") and v not in ("0", "1"):
+            raise HTTPException(400, "Giá trị 0 hoặc 1")
+        db.set_setting(k, v[:300])
+    db.log("bao", "Sếp chỉnh lướt bảng tin nhóm", ", ".join(f"{k}={v}" for k, v in data.items())[:300])
+    return group_feed.overview()
 
 
 @app.post("/api/replies/relearn")

@@ -8,7 +8,7 @@ Trả lời sếp bằng tiếng Việt, ngắn. Sếp trả tiền theo lượt
   `due_work`/`_job_session` = ca làm việc, `_send_comment(page, text, img)` gửi bình luận.
 - Agent: `agents.py` (danh sách), CEO nhận lệnh `ceo_orders.py` (`_rule_plan` regex + `execute` theo `type`, mô tả việc ở `ACTIONS_DOC`, cài đặt CEO được đổi ở `SETTINGS_OK`),
   lịch `scheduler.py` (gọi `xxx.tick(now)`), luật FB `fb_policy.py` (RULES, limits, allow), gọi Claude `llm.py` (`llm.json(system, prompt, task=)`).
-- Tính năng: đăng bài `workflows.py`; up bài + Bảo học viết `post_care.py`; trả lời khách `replies.py`; kết bạn `friends.py`; nơi đăng `group_target.py`;
+- Tính năng: đăng bài `workflows.py`; up bài + Bảo học viết `post_care.py`; trả lời khách `replies.py`; lướt bảng tin nhóm `group_feed.py`; kết bạn `friends.py`; nơi đăng `group_target.py`;
   nhóm `group_finder.py`/`my_groups.py`/`group_review.py`; tìm khách `prospect.py`; website `website.py`; data rác `junk.py`.
 - `frontend/index.html` (4.5k dòng, 1 file): CSS đầu file, nav `data-v=`, mỗi trang `<section id="v-xxx">`, JS `loadXxx/renderXxx`,
   bản xem trước giả lập trong `handle()` + `demoXxx()`. Đổi giao diện = thêm CSS/section/JS theo khuôn trang Kết bạn (`fr-*`).

@@ -91,11 +91,13 @@ RULES = [
      "do": "Tuấn chỉ gợi ý người đang hoạt động trong nhóm chung, hợp tệp khách; sale tự bấm Thêm bạn bè, tối đa 10 lời mời/nick/ngày "
            "(nick mới một nửa), dừng khi tỷ lệ đồng ý thấp."},
     {"id": "comment_others", "cat": "rate", "how": "limit", "level": "high", "src": "spam",
-     "title": "Bình luận vào bài người khác: chỉ khi họ hỏi, sếp duyệt",
+     "title": "Bình luận vào bài người khác: đúng người, viết riêng, sếp duyệt",
      "rule": "Bình luận quảng cáo vào bài không liên quan, cùng một câu ở nhiều bài, bình luận liên tục cả ngày lẫn đêm là spam: "
              "nhóm xóa bình luận, chặn thành viên, Facebook giới hạn tính năng bình luận rồi khóa nick.",
-     "do": "Bảo chỉ trả lời bài đang hỏi mua / hỏi nguồn hàng hợp ngành, mỗi câu viết riêng cho bài đó, sếp duyệt trước khi gửi; "
-           "mỗi nick tối đa 5 câu/ngày (nick mới một nửa), cách nhau 45–90 phút, chỉ trong giờ làm của nick."},
+     "do": "Bảo chỉ bình luận bài đang hỏi mua / hỏi nguồn hàng hợp ngành (kèm 1 ảnh), và chào nhẹ người đang bán hàng online "
+           "(chỉ chữ, bám vào điều họ viết, mỗi người một lần, tối đa 2 câu/nick/ngày, không chào ở nhóm cấm bán hàng hay nhóm từng "
+           "xóa bình luận chào). Mỗi câu viết riêng, sếp duyệt trước khi gửi; mỗi nick tối đa 5 câu/ngày (nick mới một nửa), cách "
+           "nhau 45–90 phút, chỉ trong giờ làm; lướt bảng tin nhóm 2 lượt/ngày (nick mới 1), chỉ đọc."},
     {"id": "strikes", "cat": "account", "how": "learn", "level": "high", "src": "restricting",
      "title": "Vi phạm cộng dồn thành \u201cgậy\u201d",
      "rule": "Mỗi vi phạm cộng một gậy; gậy tăng dần dẫn tới chặn đăng 1, 3, 7, 30 ngày rồi khóa hẳn. Gậy hết hạn sau khoảng 90 ngày.",

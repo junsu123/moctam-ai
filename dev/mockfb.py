@@ -288,6 +288,41 @@ def hoimua_html():
     return out + "</div>"
 
 
+# Bảng tin nhóm (facebook.com/groups/feed/): 25 bài của nhiều nhóm, 12 bài đầu, cuộn thêm 6 bài mỗi lần
+G_ADS = ("chayads", "Hội Chạy Quảng Cáo Facebook")
+G_MUA = ("hoimua", "Hội Tìm Nguồn Hàng Sỉ")
+FEED = [
+    (G_MUA, "Ngọc Hân", 5001, "Mình đang tìm nguồn trà túi lọc gừng để bán online, ai có xưởng inbox em với", False),
+    (G_ADS, "Shop Mẹ Sóc", 5003, "Tài khoản quảng cáo của shop em bị hạn chế hoài, ai có kinh nghiệm cho em hỏi xử lý sao ạ? Shop bán đồ ăn healthy", False),
+    (G_ADS, "Dịch Vụ Ads Pro", 5006, "Nhận chạy quảng cáo, bán via BM giá rẻ, inbox em hỗ trợ ngay", False),
+    (G_MUA, "Kho Sỉ Trà", 5008, "Chuyên sỉ trà túi lọc tận xưởng, tuyển đại lý toàn quốc", False),
+    (("goiy", "Nhóm Gợi Ý Cho Bạn"), "Khách Lạ", 5009, "Cần nhập trà túi lọc số lượng lớn, xin giá sỉ", True),
+    (G_ADS, "Shop Thời Trang Vy", 5007, "Shop quần áo của mình chạy ads mãi không ra đơn, ai giúp với?", False),
+] + [(G_ADS if i % 2 else G_MUA, f"Thành viên {i}", 5100 + i, t, False) for i, t in enumerate([
+    "Hôm nay trời đẹp quá cả nhà ơi", "Chia sẻ công thức nấu chè ngon", "Ai đi Đà Lạt cuối tuần không", "Chúc cả nhóm buôn may bán đắt",
+    "Hôm qua mình bán được 30 đơn, vui quá", "Góc khoe con mèo nhà mình", "Mọi người ăn trưa chưa", "Cuối tuần này nghỉ lễ không mọi người",
+    "Review quán cà phê mới mở", "Mình mới vào nhóm, chào mọi người"])] + [
+    (G_ADS, "Tuấn Shop", 5004, "Mọi người chạy ads tiktok shop ngân sách bao nhiêu thì ra đơn đều vậy?", False),
+    (G_ADS, "Phạm Thu", 5002, "Cần nhập ngũ cốc dinh dưỡng số lượng lớn, xin giá sỉ ạ", False),
+    (G_ADS, "Lan Livestream", 5005, "Tối nào em cũng livestream bán hàng mà ít đơn quá, có ai chia sẻ kinh nghiệm không ạ?", False),
+] + [(G_MUA, f"Bạn đọc {i}", 5200 + i, t, False) for i, t in enumerate([
+    "Sáng nay kẹt xe quá", "Tuần này ai săn sale không", "Hội mình đông vui ghê", "Ai biết sửa máy giặt ở Hà Đông không",
+    "Chia sẻ ảnh hoàng hôn", "Mình mới mua cây cảnh"])]
+FEED_TXT = {1500 + i: r[3] for i, r in enumerate(FEED)}
+FEED_CMTS, FEED_HIDE = {}, set()
+
+
+def feed_page():
+    art = lambda i, r: (f'<div role="article"><a href="/groups/{r[0][0]}/">{html.escape(r[0][1])}</a> · '
+                        f'<a href="/groups/{r[0][0]}/user/{r[2]}/">{html.escape(r[1])}</a> · <a href="/groups/{r[0][0]}/posts/{1500 + i}/">3 giờ</a>'
+                        f'<div>{html.escape(r[3])}</div>' + ('<div role="button">Tham gia</div>' if r[4] else '') + '</div>')
+    rows = [art(i, r) for i, r in enumerate(FEED)]
+    more = "".join(f"<template>{x}</template>" for x in rows[12:])
+    return (f'<h1>Bảng feed</h1><div role="feed" id="feed">{"".join(rows[:12])}</div>{more}'
+            '<script>addEventListener("wheel",()=>{[...document.querySelectorAll("template")].slice(0,6).forEach(t=>{'
+            'document.getElementById("feed").appendChild(t.content.cloneNode(true)); t.remove();});});</script>')
+
+
 def group_feed_html(title, rows, slug):
     out = f'<h1>{title}</h1><div role="feed">'
     for i, (a, uid, txt, cmts) in enumerate(rows):
@@ -468,6 +503,14 @@ class H(BaseHTTPRequestHandler):
             pid = int(mh.group(1))
             return self._html(f'<div role="article"><div>{html.escape(HOIMUA_TXT[pid])}</div><span>24 bình luận</span></div>'
                               + (COMMENT26 if MODE.get("cmt") == "fb26" else COMMENT) % {"id": pid})
+        if path == "/groups/feed":
+            return self._html(feed_page())
+        mf = re.match(r"^/groups/\w+/posts/(\d+)$", path)
+        if mf and int(mf.group(1)) in FEED_TXT:
+            pid = int(mf.group(1))
+            cm = "" if pid in FEED_HIDE else "".join(f'<div role="article"><b>Linh Nguyễn</b><div>{html.escape(t)}</div></div>'
+                                                     for t in FEED_CMTS.get(pid, []))
+            return self._html(f'<div role="article"><div>{html.escape(FEED_TXT[pid])}</div></div>{cm}' + COMMENT26 % {"id": pid})
         if path == "/groups/shoponline":
             return self._html(group_feed_html("Hội Bán Hàng Online", GROUP_SHOP, "shoponline"))
         mu = re.match(r"^/profile\.php$", path)
@@ -579,6 +622,10 @@ class H(BaseHTTPRequestHandler):
             REMOVED.add(d["id"])
         if self.path == "/addcomment":
             EXTRA.append((d["author"], d["text"], d["post"]))
+        if self.path == "/comment" and isinstance(d.get("post"), int):
+            FEED_CMTS.setdefault(d["post"], []).append(d.get("text") or "")
+        if self.path == "/hidecmt":
+            FEED_HIDE.add(d["post"])
         if self.path == "/reply":
             REPLIES.append(d)
         with open(f"{SP}/mockfb_log.jsonl", "a", encoding="utf-8") as f:

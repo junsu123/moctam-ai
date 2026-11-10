@@ -28,7 +28,7 @@ Trang **Tìm khách sỉ** có dòng số SĐT tìm được theo từng kênh t
 | **Khoa** | Phân tích | Đo số bài, số khách, nhóm hiệu quả nhất; đưa số liệu vào cuộc họp |
 | **Mai** | Tìm khách sỉ | Tìm người đang bán hàng online (livestream, Facebook, TikTok Shop, Shopee, đa nền tảng), chấm điểm 100 có bằng chứng, đưa khách hạng A/B vào mục Khách hàng; không tự nhắn tin |
 | **Vy** | Website & SEO | Quản lý website công ty, lên kế hoạch từ khóa, viết bài chuẩn SEO (tự chấm theo bảng kiểm), dựng website và đăng lên hosting |
-| **Bảo** | Chăm sóc bài đã đăng | Mỗi ngày rà soát các bài đã đăng còn hiển thị, giao đúng nick đã đăng bình luận 1 ảnh sản phẩm kèm câu ngắn tự viết và dòng liên hệ Zalo của sếp |
+| **Bảo** | Chăm sóc bài đã đăng, bình luận khách | Mỗi ngày rà soát các bài đã đăng còn hiển thị, giao đúng nick đã đăng bình luận 1 ảnh sản phẩm kèm câu ngắn tự viết và dòng liên hệ Zalo của sếp; đọc bảng tin nhóm của mọi nick, viết sẵn bình luận cho người hỏi mua và người bán online (sếp duyệt) |
 | **Sale 1…8** | Nhân viên sale | Mỗi sale giữ **3–5 tài khoản Facebook**, mỗi nick một hồ sơ Chrome riêng; làm theo ca từng nick: đăng bài vào nhóm và trang cá nhân, up bài, quét bình luận, rồi chuyển nick kế tiếp |
 
 ## Một ngày làm việc
@@ -345,6 +345,39 @@ các nhóm sôi nổi để nick vào trả lời đúng lúc họ cần hàng.
 - **Vì sao không chạy 24/24, không bình luận dạo**: bình luận quảng cáo vào bài không hỏi mua, cùng một câu ở nhiều bài, bình luận
   liên tục cả ngày lẫn đêm là spam theo luật Facebook (mục Luật Facebook → “Bình luận vào bài người khác”): nhóm xóa bình luận, chặn
   thành viên, Facebook khóa tính năng bình luận rồi khóa nick. Phần mềm cũng không dùng mẹo né bộ lọc spam của Facebook.
+
+### Lướt bảng tin nhóm (facebook.com/groups/feed): mọi nick, sếp duyệt
+
+Nút **Lướt bảng tin ngay** ở trang Trả lời khách, hoặc nhắn CEO “cho các nick lướt bảng tin nhóm và comment”. Mỗi nick đang làm
+việc mở **bảng tin nhóm** (bài mới của mọi nhóm nick đang ở), cuộn đọc **ít nhất 20 bài** (sửa được, 10–60), chỉ đọc. Bài “gợi ý”
+của nhóm nick chưa vào (có nút Tham gia) bị bỏ; nhóm mới thấy trên feed được tự thêm vào Hội nhóm và ghi nick là thành viên.
+
+**Bảo lọc 3 lớp** để biết bài nào đáng bình luận, bài khác chỉ đọc qua:
+1. **Lọc bằng chữ** (không tốn tiền), chia hai loại:
+   - **Hỏi mua**: có ý định mua (“tìm nguồn”, “cần nhập”, “xin giá sỉ”…) và đúng ngành (trà, ngũ cốc, bột, đồ uống…).
+   - **Người bán online**: không nhắc tới hàng của xưởng nhưng đang kinh doanh online và đang hỏi (tài khoản quảng cáo, chạy ads,
+     BM, livestream, chốt đơn, ship COD, TikTok Shop, Shopee…; sếp thêm dấu hiệu riêng ở cài đặt).
+   - Bỏ: người chào bán sỉ / tuyển đại lý, người bán dịch vụ (bán via, BM, nhận chạy quảng cáo, khóa học), bài của chính các nick,
+     data rác sếp đã loại, chữ trong mục **Loại ngay nếu có** của điều kiện tìm khách sỉ, nhóm sếp cấm đăng.
+2. **Claude đọc hiểu bài** (khi có khóa): xác định lại loại (hỏi mua / người bán / không phù hợp), chấm điểm 0–100 kèm một câu lý do,
+   và viết câu chào riêng cho người bán. Chỉ bài từ **70 điểm** (sửa được) mới có bình luận. Chưa có khóa thì chỉ giữ bài khớp chắc ở lớp 1.
+3. **Học từ sếp**: bài sếp **Bỏ qua** làm bài giống vậy bị trừ 20 điểm; **Không hợp** thì Mai ghi data rác; bài sếp duyệt / bỏ gần đây
+   được đưa cho Claude làm ví dụ.
+
+Mỗi bình luận hiện loại, điểm, lý do và đúng câu người đăng viết.
+
+**Hai kiểu bình luận:**
+- **Hỏi mua**: câu trả lời đúng điều họ hỏi (Claude viết, Bảo học dần rồi tự viết như phần trên) + **1 ảnh ngẫu nhiên** trong thư mục
+  ảnh của sản phẩm họ cần (không có thì thư mục chung), ưu tiên ảnh chưa dùng ở nhóm đó + dòng Zalo.
+- **Người bán online**: **chỉ chữ**, chào nhẹ, bám vào điều họ viết, giới thiệu xưởng, mời nhắn nếu cần thêm mặt hàng + dòng Zalo.
+  Loại này bị báo cáo nhiều hơn nên giữ chặt hơn: **luôn chờ sếp duyệt**, tối đa **2 câu/nick/ngày** (sửa được 0–3, nick mới một
+  nửa, nằm trong trần chung 5 câu), **mỗi người chỉ một nick chào một lần**, không chào ở nhóm cấm bán hàng. Sau 6 giờ nick mở lại
+  bài xem bình luận chào còn không; nhóm đã xóa thì **ngừng chào người bán ở nhóm đó 30 ngày** (hiện ở trang Trả lời khách).
+
+**Nhịp do luật của nick quyết định**, không đặt tay: mỗi nick tự lướt tối đa 2 lượt/ngày (nick mới hoặc vừa bị chặn 1 lượt), lượt đầu
+lệch nhau giữa các nick trong giờ làm, lượt sau cách khoảng 3 giờ; nick đang nghỉ sau sự cố không lướt; nick đã có đủ câu chờ duyệt /
+chờ gửi cho trần ngày thì không lướt thêm. Gửi bình luận vẫn theo nhịp chung: trong giờ làm, cách nhau 45–90 phút, tối đa 5 câu/nick/ngày.
+Thẻ nick ở trang Trả lời khách cho biết hôm nay nick đã lướt mấy lượt, đọc bao nhiêu bài, tìm được bao nhiêu người và vì sao chưa lướt tiếp.
 
 ## Nhóm có sẵn trong nick: đăng ở đâu, thoát nhóm nào, chăm sóc nhóm mình quản lý
 
@@ -990,6 +1023,8 @@ backend/
   website.py     Website công ty + Vy: từ khóa, viết bài, bảng kiểm SEO, dựng trang tĩnh, sitemap, schema, zip, FTP
   group_target.py Sếp chỉ đạo nơi đăng: chế độ all/prefer/only, từ khóa nên đăng / tránh, nhóm tập trung, xem trước
   post_care.py   Bảo chăm bài đã đăng: câu bình luận up bài tự viết (Claude hoặc mẫu), dòng liên hệ Zalo, xem thử
+  group_feed.py  Lướt bảng tin nhóm: mọi nick đọc >=20 bài, lọc 3 lớp (chữ, Claude, học từ sếp), bình luận người hỏi mua (kèm ảnh)
+                 và chào người bán online (chỉ chữ, trần riêng), nhịp lướt theo luật nick, ngừng chào ở nhóm xóa bình luận
   friends.py     Kết bạn trong nhóm: điểm sôi nổi của nhóm, đọc bảng tin tìm người hợp tệp khách, trần lời mời, mở hồ sơ cho sale
   prospect.py    Mai tìm khách sỉ: tìm, đọc trang công khai, phân loại người bán, chấm điểm 100 có bằng chứng, lưu CRM
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm

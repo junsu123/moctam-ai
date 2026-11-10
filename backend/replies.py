@@ -225,22 +225,27 @@ def quota(aid: int) -> dict:
     f = fb_policy.factor(acc) if acc else 1.0
     lim = max(0, int(int(s().get("replies_per_nick_day") or 5) * f))
     d = db.today()
-    used = db.one("""SELECT COUNT(*) n FROM reply_tasks WHERE account_id=? AND (substr(COALESCE(sent_at,''),1,10)=?
-                     OR (status='approved' AND substr(COALESCE(scheduled_for,''),1,10)=?))""", (aid, d, d))["n"]
-    return {"limit": lim, "used": used, "left": max(0, lim - used)}
+    day = """account_id=? AND (substr(COALESCE(sent_at,''),1,10)=? OR (status='approved' AND substr(COALESCE(scheduled_for,''),1,10)=?))"""
+    used = db.one(f"SELECT COUNT(*) n FROM reply_tasks WHERE {day}", (aid, d, d))["n"]
+    # chào người bán online (bài không hỏi mua): trần riêng thấp hơn, nằm trong trần chung
+    slim = min(lim, max(0, int(int(s().get("feed_seller_per_nick_day") or 2) * f)))
+    sused = db.one(f"SELECT COUNT(*) n FROM reply_tasks WHERE kind='seller' AND {day}", (aid, d, d))["n"]
+    return {"limit": lim, "used": used, "left": max(0, lim - used), "seller_limit": slim, "seller_used": sused,
+            "seller_left": max(0, min(slim - sused, lim - used))}
 
 
-def _slot(aid: int) -> str | None:
+def _slot(aid: int, kind: str = "buyer") -> str | None:
     """Giờ gửi kế tiếp của nick: trong giờ làm của nick, cách lượt trước 45–90 phút, không ban đêm."""
     a = db.one("SELECT * FROM fb_accounts WHERE id=?", (aid,))
-    if not a or quota(aid)["left"] <= 0:
+    q = quota(aid)
+    if not a or q["left"] <= 0 or (kind == "seller" and q["seller_left"] <= 0):
         return None
     now = db.clock()
     day = now.strftime("%Y-%m-%d")
     af = datetime.strptime(f"{day} {a.get('active_from') or '08:00'}", "%Y-%m-%d %H:%M")
     at = datetime.strptime(f"{day} {a.get('active_to') or '22:00'}", "%Y-%m-%d %H:%M")
     last = db.one("""SELECT MAX(COALESCE(sent_at, scheduled_for)) t FROM reply_tasks WHERE account_id=? AND status IN ('approved','sent')
-                     AND COALESCE(sent_at, scheduled_for) >= ?""", (aid, day))["t"]
+                     AND substr(COALESCE(sent_at, scheduled_for),1,10) = ?""", (aid, day))["t"]
     t = max(now + timedelta(minutes=2), af)
     if last:
         t = max(t, datetime.strptime(last[:16], "%Y-%m-%d %H:%M") + timedelta(minutes=random.randint(45, 90)))
@@ -268,7 +273,7 @@ def approve(rid: int, reply: str | None = None) -> dict:
         raise ValueError("Câu trả lời phạm luật Facebook: " + bad[0]["msg"])
     if reply is not None and plain(reply) != plain(r["reply"] or ""):  # sếp sửa câu: lưu làm mẫu cho Bảo học
         post_care.learn([re.sub(r"\s*👉.*$", "", text)], [product_guess(r["post_text"])], "claude_reply")
-    t = _slot(r["account_id"])
+    t = _slot(r["account_id"], r.get("kind") or "buyer")
     db.run("UPDATE reply_tasks SET reply=?, status='approved', decided_at=?, scheduled_for=? WHERE id=?",
            (text, db.now(), t or _next_day(r["account_id"]), rid))
     return {"id": rid, "status": "approved", "scheduled_for": t, "later": not t}
@@ -291,7 +296,7 @@ def due(aid: int) -> list[int]:
 
 
 def send(page, aid: int, rid: int):
-    """Sale mở bài, gửi câu trả lời đã duyệt (chỉ chữ), kiểm tra đã gửi."""
+    """Sale mở bài, gửi câu đã duyệt (người hỏi mua: kèm ảnh nếu Bảo chọn ảnh; người bán online: chỉ chữ), kiểm tra đã gửi."""
     import browser_poster as B
     import workflows
     r = db.one("SELECT * FROM reply_tasks WHERE id=?", (rid,))
@@ -306,7 +311,10 @@ def send(page, aid: int, rid: int):
     # kiểm lại lúc gửi: đủ trần hôm nay thì dời sang mai; câu trước của nick chưa đủ 45 phút thì lùi lại
     sent = db.one("SELECT COUNT(*) n, MAX(sent_at) last FROM reply_tasks WHERE account_id=? AND status='sent' AND substr(sent_at,1,10)=?",
                   (aid, db.today()))
-    if sent["n"] >= quota(aid)["limit"]:
+    q = quota(aid)
+    if sent["n"] >= q["limit"] or (r.get("kind") == "seller" and db.one(
+            "SELECT COUNT(*) n FROM reply_tasks WHERE account_id=? AND kind='seller' AND status='sent' AND substr(sent_at,1,10)=?",
+            (aid, db.today()))["n"] >= q["seller_limit"]):
         db.run("UPDATE reply_tasks SET scheduled_for=? WHERE id=?", (_next_day(aid), rid))
         return
     if sent["last"]:
@@ -330,9 +338,14 @@ def send(page, aid: int, rid: int):
         if any(t.lower() in body for t in B.selectors()["removed_texts"]):
             db.run("UPDATE reply_tasks SET status='skipped', error=? WHERE id=?", ("Bài đã bị xóa hoặc ẩn", rid))
             return
-        B._send_comment(page, r["reply"], None)
+        from pathlib import Path
+        img = Path(r["image"]) if r.get("image") and r.get("kind") != "seller" and Path(r["image"]).is_file() else None
+        B._send_comment(page, r["reply"], img)
         page.wait_for_timeout(3000)
         page.screenshot(path=str(shot))
+        if img:
+            import media_folder
+            media_folder.record([img], "reply", {"group_id": r["group_id"]}, sale_id=acc.get("sale_id"))
         db.run("UPDATE reply_tasks SET status='sent', sent_at=?, error=NULL, shot=? WHERE id=?", (db.now(), f"/shots/{shot.name}", rid))
         db.log(agent, "Trả lời khách", f"Trả lời {r['author']} (nick {acc.get('name')}): {r['reply'][:120]}")
         import learning
@@ -383,6 +396,6 @@ def overview(status: str = "") -> dict:
                     SUM(status='sent' AND sent_at >= ?) today FROM reply_tasks""", (db.today(),))
     nicks = [{"id": a["id"], "name": accounts.label(a), **quota(a["id"])} for a in accounts.working()]
     return {"items": rows, "status_txt": STATUS, "nicks": nicks, "stats": {k: tot[k] or 0 for k in ("draft", "approved", "sent", "today")},
-            "skill": post_care.skill("reply"), "samples": post_care.samples(8, "reply"), "contact": contact(),
+            "skill": post_care.skill("reply"), "kind_txt": {"buyer": "Hỏi mua", "seller": "Người bán online"}, "samples": post_care.samples(8, "reply"), "contact": contact(),
             "settings": {k: s().get(k) for k in ("replies_enabled", "replies_time", "replies_per_nick_day", "replies_groups_per_run",
                                                  "replies_per_group", "reply_contact")}}

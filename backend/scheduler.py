@@ -81,6 +81,8 @@ def _tick():
     friends.tick(now)  # Tuấn tìm người đáng kết bạn trong nhóm sôi nổi (sale tự bấm gửi)
     import replies
     replies.tick(now)  # Bảo tìm bài đang hỏi mua, viết sẵn câu trả lời chờ sếp duyệt
+    import group_feed
+    group_feed.tick(now)  # mọi nick lướt bảng tin nhóm theo nhịp luật Facebook, Bảo viết sẵn bình luận chờ duyệt
     import website
     website.tick(now)  # Vy viết bài website theo lịch
     # KPI: chuyển khách cần sếp, nhắc lại; báo cáo Telegram

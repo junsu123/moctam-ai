@@ -277,6 +277,10 @@ CREATE TABLE IF NOT EXISTS reply_tasks (
   created_at TEXT, decided_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_reply_status ON reply_tasks(account_id, status, scheduled_for);
+CREATE TABLE IF NOT EXISTS feed_scans (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, status TEXT DEFAULT 'queued', created_at TEXT, done_at TEXT,
+  read INTEGER DEFAULT 0, buyers INTEGER DEFAULT 0, sellers INTEGER DEFAULT 0, note TEXT
+);
 CREATE TABLE IF NOT EXISTS friend_suggestions (
   id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, group_id INTEGER, name TEXT, profile_url TEXT, reason TEXT,
   score INTEGER DEFAULT 0, snippet TEXT, status TEXT DEFAULT 'suggested', created_at TEXT, opened_at TEXT, sent_at TEXT,
@@ -372,6 +376,9 @@ MIGRATIONS = [
     ("account_groups", "seen_at", "TEXT"), ("groups", "managed", "INTEGER DEFAULT 0"), ("groups", "pinned", "INTEGER DEFAULT 0"),
     ("groups", "focus", "INTEGER DEFAULT 0"), ("groups", "friends_scanned_at", "TEXT"),
     ("groups", "slug", "TEXT"), ("posts", "managed", "INTEGER DEFAULT 0"), ("fb_accounts", "groups_synced_at", "TEXT"),
+    ("reply_tasks", "kind", "TEXT DEFAULT 'buyer'"), ("reply_tasks", "origin", "TEXT DEFAULT 'group'"), ("reply_tasks", "image", "TEXT"),
+    ("reply_tasks", "score", "INTEGER"), ("reply_tasks", "reason", "TEXT"), ("reply_tasks", "checked_at", "TEXT"),
+    ("reply_tasks", "removed", "INTEGER DEFAULT 0"), ("groups", "no_pitch_until", "TEXT"),
 ]
 
 DEFAULT_SETTINGS = {
@@ -480,6 +487,8 @@ DEFAULT_SETTINGS = {
     # Bảo trả lời khách: tìm bài hỏi mua trong nhóm sôi nổi, sếp duyệt, nick gửi trong giờ làm (có trần, giãn cách)
     "replies_enabled": "1", "replies_time": "09:20", "replies_per_nick_day": "5", "replies_groups_per_run": "3",
     "replies_per_group": "4", "replies_last": "", "reply_contact": "",
+    "feed_enabled": "1", "feed_min_posts": "20", "feed_scans_day": "2", "feed_gap_hours": "3", "feed_min_score": "70",
+    "feed_buyer_image": "1", "feed_seller_enabled": "1", "feed_seller_per_nick_day": "2", "feed_seller_words": "",
     "fbp_enabled": "1", "fbp_posts_day": "6", "fbp_gap_minutes": "30", "fbp_bumps_day": "6", "fbp_joins_day": "2",
     "fbp_same_group_hours": "24", "fbp_new_nick_days": "14", "fbp_new_nick_factor": "0.5", "fbp_rest_days": "3",
     "fbp_after_days": "7", "fbp_after_factor": "0.5", "fbp_hashtags_max": "5", "fbp_caption_max": "2500",

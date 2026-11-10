@@ -453,6 +453,17 @@ def execute(act: dict) -> str:
         for g in rows[:5]:
             group_target.set_focus(g["id"], on)
         return f"{'Tập trung đăng' if on else 'Thôi tập trung đăng'} nhóm " + "; ".join(g["name"] for g in rows[:5])
+    if t == "feed_scan":
+        import group_feed
+        try:
+            r = group_feed.start(notify=act.get("_via", "web"))
+        except ValueError as e:
+            return str(e)
+        return (f"{len(r['queued'])} nick đi lướt bảng tin nhóm ({', '.join(r['queued'])}), mỗi nick đọc ít nhất "
+                f"{db.get_settings().get('feed_min_posts') or 20} bài. Bảo chỉ chọn người đang hỏi mua (bình luận kèm ảnh) và người đang "
+                "bán hàng online (chào nhẹ kèm Zalo), không comment mọi bài vì Facebook coi là spam và khóa nick. Sếp duyệt ở trang "
+                "Trả lời khách, duyệt xong nick gửi trong giờ làm, cách nhau 45–90 phút"
+                + (". Chưa lướt: " + "; ".join(r["skipped"]) if r["skipped"] else ""))
     if t == "reply_customers":
         import replies
         try:
@@ -606,6 +617,10 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - care_posts {}: giao Bảo rà soát các bài đã đăng ngay bây giờ: nick đã đăng bình luận 1 ảnh + câu ngắn Bảo tự viết + dòng liên hệ
   (bump_contact). Đổi dòng liên hệ thì dùng setting bump_contact
 - focus_group {group, on}: sếp bảo tập trung đăng (on=true) / thôi tập trung (on=false) vào một nhóm theo tên
+- feed_scan {}: sếp bảo các nick lướt bảng tin nhóm (facebook.com/groups/feed) và comment: mọi nick đọc ít nhất 20 bài, Bảo
+  chọn người HỎI MUA hợp ngành (bình luận kèm 1 ảnh) và người ĐANG BÁN HÀNG ONLINE đang hỏi chuyện khác như tài khoản quảng cáo
+  (chào nhẹ chỉ chữ kèm Zalo, tối đa 2/nick/ngày, mỗi người một lần). SẾP DUYỆT, nick gửi trong giờ làm, giãn cách 45–90 phút.
+  Số lượt lướt/ngày theo luật của nick. Không comment mọi bài trên feed (spam, khóa nick): nói rõ nếu sếp đòi
 - reply_customers {}: sếp bảo nhân viên đi comment / trả lời khách trong nhóm: Bảo đọc nhóm sôi nổi, chọn bài người ta đang hỏi mua
   / hỏi nguồn hàng hợp ngành, viết câu trả lời (Claude viết, Bảo học dần rồi tự viết), SẾP DUYỆT, nick gửi trong giờ làm, có trần mỗi
   ngày. Không bình luận dạo vào bài không hỏi mua, không chạy 24/24 (spam, khóa nick): nói rõ điều này nếu sếp đòi
@@ -707,6 +722,7 @@ def _rule_plan(text: str) -> dict:
                           r"|\bup (lại )?(các |những )?bài\b", low)
     want_reply = (not want_care) and re.search(r"(comment|bình luận|cmt|trả lời|rep)\b.{0,60}(nhóm|group|hội|người hỏi|bài hỏi|hỏi mua)"
                                                r"|tìm (bài|người) hỏi (mua|nguồn|hàng)", low)
+    want_feed = re.search(r"(lướt|đọc|quét)\s*(feed|bảng tin)|groups/feed|bảng tin (các )?nhóm|feed (các )?nhóm", low)
     zalo = re.search(r"(?:dòng liên hệ|liên hệ|zalo)[^0-9]{0,30}(0\d{9})", low)
     if zalo and re.search(r"đổi|thay|sửa|dùng|từ nay", low):
         acts.append({"type": "setting", "key": "bump_contact", "value": f"Cần hàng liên hệ Zalo {zalo.group(1)}"})
@@ -743,6 +759,8 @@ def _rule_plan(text: str) -> dict:
             acts.append({"type": "post_keyword", "keyword": ", ".join(kws), "count": int(n.group(1)) if n else None})
     if acts and all(a["type"] in ("setting", "focus_group", "post_keyword") for a in acts):
         pass
+    elif want_feed and not want_friends:
+        acts.append({"type": "feed_scan"})
     elif want_care and not want_friends:
         acts.append({"type": "care_posts"})
     elif want_reply and not want_friends:
