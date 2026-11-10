@@ -283,6 +283,10 @@ def execute(act: dict) -> str:
         import knowledge
         import threading
         threading.Thread(target=knowledge.study_all, daemon=True).start()
+        if not knowledge.self_study_on():
+            return ("Đội chỉ học từ dữ liệu thật: điều sếp dạy, luật Facebook, câu sếp và khách hỏi thật. Em cho đội trả lời ngay các câu "
+                    "còn chờ. Tự học kiến thức chung với Claude đang tắt vì không có dữ liệu mới, dễ đưa lời khuyên chung chung vào bài "
+                    "(bật ở Đào tạo → Sổ kiến thức → Cài đặt). Sếp muốn đội biết điều gì thì dạy ở Đào tạo → Sổ kiến thức → Dạy kiến thức")
         return "Cho cả đội tự học kiến thức mới ngay bây giờ, học xong em báo lại"
     if t == "set_hot":
         p = _find_product(act.get("product_id"), act.get("product"))

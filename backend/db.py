@@ -431,7 +431,7 @@ DEFAULT_SETTINGS = {
     "join_enabled": "1", "join_per_nick_day": "2", "browse_minutes": "2",
     "app_tz": "",  # trống = giờ Việt Nam (hoặc APP_TZ trong .env)
     "idle_learning": "1", "idle_study_per_day": "6", "growth_state": "",
-    "knowledge_enabled": "1", "study_time": "07:00", "study_per_agent": "2", "knowledge_answer_threshold": "0.8",
+    "knowledge_enabled": "1", "self_study": "0", "study_time": "07:00", "study_per_agent": "2", "knowledge_answer_threshold": "0.8",
     "study_last_date": "", "model_knowledge": "claude-haiku-5-5",
     "self_write_mode": "auto", "self_write_min": "12", "lan_style": "", "content_library_migrated": "",
     "hot_share": "0.7",  # tỉ lệ bài Lan viết về sản phẩm đang bán chạy (khi sếp có tích sản phẩm bán chạy)
@@ -567,6 +567,8 @@ def init():
     # bài đang đăng dở khi tắt máy -> đưa về hàng đợi
     run("UPDATE posts SET status='scheduled' WHERE status='posting'")
     run("UPDATE bumps SET status='scheduled' WHERE status='running'")
+    # luật Facebook là luật thật (không phải kiến thức chung tự học) -> nguồn riêng, luôn được dùng
+    run("UPDATE knowledge SET source='rule' WHERE source='library' AND topic LIKE 'Luật Facebook:%'")
     for k, v in DEFAULT_SETTINGS.items():
         run("INSERT OR IGNORE INTO settings(key, value) VALUES (?, ?)", (k, v))
     if not one("SELECT id FROM products LIMIT 1"):

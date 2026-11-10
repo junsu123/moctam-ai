@@ -772,20 +772,27 @@ bệnh bị tự động loại.
   Claude viết và bài Lan tự viết, câu mở đầu và câu kêu gọi hay dùng, kho bài, nút **Lan viết thử 1 bài** (xem trước, không lưu).
   Thẻ bài ở mục Bài đăng ghi "Lan tự viết" / "Claude viết" / "Sếp sửa".
 
-## Sổ kiến thức: tự học mỗi ngày, ít phụ thuộc Claude
+## Sổ kiến thức: chỉ học từ dữ liệu thật, ít phụ thuộc Claude
 
-Ngoài bài học rút từ kết quả (phần trên), mỗi agent có **sổ kiến thức** (trang **Đào tạo → Sổ kiến thức của đội**):
+Ngoài bài học rút từ kết quả (phần trên), mỗi agent có **sổ kiến thức** (trang **Đào tạo → Sổ kiến thức của đội**).
 
-1. **Tự học mỗi ngày** (mặc định 07:00, trước họp sáng): mỗi agent học 2 kiến thức mới hợp với việc đang làm, theo thứ tự:
-   câu hỏi còn bỏ ngỏ (câu sếp hỏi mà đội chưa biết) → việc thực tế hôm nay (sản phẩm đang bán chạy, chủ đề tìm nhóm, câu
-   khách hay hỏi) → giáo trình theo vai trò (Lan: viết bài bán sỉ; Tuấn: nhóm Facebook; Hà: tư vấn, xử lý từ chối; Khoa: chỉ số;
-   Minh: điều hành; CEO: chiến lược; sale: nuôi nick an toàn). Có khóa Claude: mỗi agent 1 lần gọi Haiku/ngày (khoảng 0,001 USD).
-   Chưa có khóa: học từ thư viện kiến thức có sẵn trong phần mềm.
+**Chỉ dùng kiến thức có dữ liệu thật.** Lời dặn khi agent làm việc và câu Hà tự trả lời khách chỉ lấy từ: **điều sếp dạy**
+(kể cả bài mẫu, điều kiện tìm khách, data rác, bài học duyệt bài), **luật Facebook**, **câu sếp và khách hỏi thật** (Claude trả lời
+rồi lưu lại) và kinh nghiệm thật. Kiến thức chung do Claude tự viết từ hiểu biết chung (“Tự học”) và thư viện viết sẵn (“Thư viện có
+sẵn”) **không được đưa vào lời dặn**: chúng không có thông tin mới của xưởng, dễ đưa lời khuyên chung chung vào bài. Trang Đào tạo vẫn
+hiện các mục này với nhãn **Không dùng khi làm việc** để sếp xóa hoặc xem lại.
+
+1. **Mỗi ngày trả lời câu còn chờ** (mặc định 07:00): câu sếp hỏi mà đội chưa biết và câu khách hỏi thật trong 7 ngày (Hà).
+   Có khóa Claude: mỗi agent có câu chờ thì 1 lần gọi Haiku. Không có câu chờ thì không gọi.
 2. **Tra sổ trước khi làm**: khi viết bài, soạn tin, tư vấn, họp, kiến thức liên quan được đưa vào lời dặn của agent.
 3. **Biết rồi thì tự trả lời, không gọi Claude**: Hà gặp câu khách đã từng hỏi (VD "nhập nhiều có chiết khấu không?") thì tự
    soạn tin từ sổ; sếp hỏi CEO điều đội đã biết thì CEO trả lời ngay từ sổ.
 4. **Chưa biết mới hỏi Claude, và luôn lưu lại**: mỗi lần hỏi Claude, câu trả lời dùng lại được được ghi vào sổ (Hà soạn tin
    thì rút ra câu hỏi chung của khách và cách trả lời). Chưa có khóa thì câu hỏi được ghi vào "Câu chờ học" để học sau.
+
+**Tự học kiến thức chung với Claude** (giáo trình theo vai trò, học lúc rảnh): **mặc định tắt**, bật ở Đào tạo → Sổ kiến thức →
+Cài đặt nếu muốn. Bật thì các mục “Tự học”, “Thư viện có sẵn” lại được đưa vào lời dặn. Nhắn CEO “cho cả đội học thêm kiến
+thức” khi đang tắt: CEO cho đội trả lời các câu còn chờ và nhắc sếp dạy trực tiếp.
 
 Trang Đào tạo cho biết: số kiến thức, số học hôm nay, số lần tự trả lời bằng sổ và số lần phải hỏi Claude trong 30 ngày,
 **tỉ lệ tự lực**. Sếp hỏi đội ngay ở ô **Hỏi**, tìm, lọc theo agent, xóa kiến thức sai, **dạy kiến thức** mới (tích "trả lời
@@ -800,15 +807,15 @@ Trang **Văn phòng** chỉ có văn phòng 3D và cột **Đội đang làm gì
 
 Agent không bao giờ ngồi không. Mỗi 30 giây, agent nào không có việc thật (và không đang họp) tự vào một buổi 6–12 phút:
 
-1. **Học với Claude** (Haiku): tối đa 6 buổi/agent/ngày (chỉnh ở Đào tạo → Sổ kiến thức → Cài đặt), cách nhau ít nhất
-   45 phút; mỗi kiến thức mới lưu vào sổ, **+5 kinh nghiệm**. Chưa có khóa: học từ thư viện có sẵn đến khi hết.
+1. **Học với Claude** (Haiku): **chỉ khi bật “Tự học kiến thức chung”** (mặc định tắt, xem Sổ kiến thức). Tối đa 6 buổi/agent/ngày,
+   cách nhau ít nhất 45 phút; mỗi kiến thức mới lưu vào sổ, **+5 kinh nghiệm**.
 2. **Luyện tập** không tốn tiền: Lan luyện viết bài theo phong cách đã học, Hà luyện trả lời câu khách hay hỏi, Tuấn xem lại
    nhóm cần cân nhắc, Khoa xem số liệu, sale ôn cách giữ nick: **+2 kinh nghiệm**, tối đa 10/ngày.
 3. **Ôn lại** kiến thức trong sổ: **+1 kinh nghiệm**, tối đa 10/ngày.
 
 Việc thật luôn được ưu tiên: có việc là agent chuyển sang làm ngay. Kinh nghiệm từ học có giới hạn mỗi ngày, nên muốn lên cấp
 nhanh vẫn phải làm ra kết quả (bài được duyệt, khách, đơn). Báo cáo tối trên Telegram có số kiến thức cả đội học trong ngày và
-ai lên cấp. Chi phí: khoảng 0,02 USD/ngày cho 7 agent với 6 buổi học mỗi agent.
+ai lên cấp. Luyện tập và ôn lại không tốn tiền; bật học với Claude thì khoảng 0,02 USD/ngày cho 7 agent × 6 buổi.
 
 ## Công ty: vốn, sa thải, giải thể
 

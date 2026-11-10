@@ -1492,7 +1492,9 @@ label.f{font-weight:600;color:var(--muted)}
               <div><button class="btn sm primary" type="submit">Dạy</button></div></form></details>
           <details><summary class="small">Cài đặt tự học kiến thức</summary>
             <form class="stack" id="kbSet" style="margin-top:8px">
-              <label class="row small"><input type="checkbox" id="kbOn"> Mỗi ngày tự học kiến thức mới</label>
+              <label class="row small"><input type="checkbox" id="kbOn"> Dùng sổ kiến thức khi làm việc, mỗi ngày trả lời các câu sếp và khách hỏi còn chờ</label>
+              <label class="row small"><input type="checkbox" id="kbStudyOn"> Tự học kiến thức chung với Claude (không khuyên dùng)</label>
+              <p class="small muted" id="kbStudyNote">Mặc định tắt: Claude tự viết kiến thức từ hiểu biết chung, không có dữ liệu mới của xưởng, dễ đưa lời khuyên chung chung vào bài. Khi tắt, agent chỉ dùng: điều sếp dạy, luật Facebook, câu sếp và khách hỏi thật, kinh nghiệm thật.</p>
               <label class="row small"><input type="checkbox" id="kbIdle"> Lúc rảnh, agent tự học, luyện tập, ôn bài để lên cấp (không bao giờ ngồi không)</label>
               <label class="f" for="kbIdleN">Số buổi học với Claude mỗi agent/ngày lúc rảnh<input type="number" id="kbIdleN" min="0" max="24"></label>
               <div class="grid2"><label class="f" for="kbTime">Giờ tự học<input type="time" id="kbTime"></label>
@@ -1791,7 +1793,7 @@ const Demo = (() => {
     top:{hook:[{text:"Nhập {wp}, bán {rp} — lãi rõ ràng từng hộp 💰",score:6.5,uses:3},{text:"📦 Nguồn {cat} tận xưởng, không qua trung gian, giá gốc cho người bán online",score:5,uses:2},{text:"Chị em chủ live ơi, món này lên hình là ra đơn 🎥",score:4.2,uses:1}],
       cta:[{text:"👉 Bình luận \"quan tâm\" mình inbox tư vấn ngay nhé!",score:7.1,uses:4},{text:"Để lại SĐT/Zalo dưới bình luận, xưởng gọi tư vấn trong 15 phút 📞",score:5.4,uses:2}],point:[]},
     recent:S.posts.slice(0,6).map((p,i)=>({id:p.id,source:i%3===0?"self":"claude",product_name:p.product_name,title:p.title,content:p.content.slice(0,400),status:p.status==="posted"?"approved":"draft",leads:p.leads||0,created_at:p.created_at}))});
-  S.kbLog={memory:31,claude:12,study:18}; S.kbSet={knowledge_enabled:"1",study_time:"07:00",study_per_agent:"2",idle_learning:"1",idle_study_per_day:"6"};
+  S.kbLog={memory:31,claude:12,study:18}; S.kbSet={knowledge_enabled:"1",self_study:"0",study_time:"07:00",study_per_agent:"2",idle_learning:"1",idle_study_per_day:"6"};
   const KB_ROLES={ceo:"CEO Đức",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",vy:"Vy",bao:"Bảo",sale:"Nhân viên sale",all:"Cả đội"};
   const kbPlain=t=>(t||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d");
   const kbHit=q=>{ const w=kbPlain(q).split(/\W+/).filter(x=>x.length>2); let best=null,bs=0; S.kb.filter(k=>k.status==="active").forEach(k=>{ const h=kbPlain(k.topic+" "+k.question); const sc=w.filter(x=>h.includes(x)).length/(w.length||1); if(sc>bs){bs=sc;best=k;} }); return bs>=0.6?best:null; };
@@ -2476,7 +2478,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       const hook=["💰 Nhập tận xưởng, biên lãi tốt cho shop online","📦 Nguồn {cat} tận xưởng, không qua trung gian, giá gốc cho người bán online","Chị em chủ live ơi, món này lên hình là ra đơn 🎥"][Math.floor(Math.random()*3)].replace("{wp}",p.wholesale_price).replace("{rp}",p.retail_price).replace("{cat}",p.category.toLowerCase());
       const content=[hook,"",`🌿 ${p.name}: ${p.description}`,...p.selling_points.split(/[,;]/).slice(0,3).map(x=>`✅ ${x.trim()}`),`📦 Nhập tối thiểu: ${p.moq}`,"","🎁 Tặng bộ ảnh, video quay tại xưởng để đăng bán","",'👉 Bình luận "quan tâm" mình inbox tư vấn nhé!',"",`💬 Giá vui lòng liên hệ trực tiếp Zalo ${ZALO()}`].join("\n");
       return {title:hook,content,hashtags:"#nguonhangsi #taxuong #banhangonline",product:p.name,angle:"Biên lợi nhuận cho người bán"}; }
-    if(method==="PUT"&&P==="/knowledge/settings"){ if(body.study_time&&!/^\d{2}:\d{2}$/.test(body.study_time)) throw new Error("Giờ phải có dạng HH:MM"); Object.assign(S.kbSet,{idle_learning:body.idle_learning?"1":"0",idle_study_per_day:String(body.idle_study_per_day??6),knowledge_enabled:body.knowledge_enabled?"1":"0",study_time:body.study_time||S.kbSet.study_time,study_per_agent:String(body.study_per_agent||2)}); return demoKB(); }
+    if(method==="PUT"&&P==="/knowledge/settings"){ if(body.study_time&&!/^\d{2}:\d{2}$/.test(body.study_time)) throw new Error("Giờ phải có dạng HH:MM"); Object.assign(S.kbSet,{self_study:body.self_study?"1":"0",idle_learning:body.idle_learning?"1":"0",idle_study_per_day:String(body.idle_study_per_day??6),knowledge_enabled:body.knowledge_enabled?"1":"0",study_time:body.study_time||S.kbSet.study_time,study_per_agent:String(body.study_per_agent||2)}); return demoKB(); }
     if(method==="DELETE"&&(m=P.match(/^\/knowledge\/(\d+)$/))){ S.kb=S.kb.filter(k=>k.id!=m[1]); return {ok:true}; }
     if(method==="PUT"&&P==="/telegram/report"){ S.settings.tg_report_done=body.report_done?"1":"0"; return demoTg(); }
     if(method==="DELETE"&&P==="/telegram/token"){ S.settings.tg_token=""; S.tgChats=0; S.pairCode=""; return demoTg(); }
@@ -4421,7 +4423,7 @@ ${esc(r.hashtags)}</div>`; }
   catch(err){ toast(err.message); } b.disabled=false; };
 
 /* --------------------------------------------- sổ kiến thức */
-const KB_SRC={study:["ok","Tự học"],claude:["warn","Hỏi Claude"],boss:["talking","Sếp dạy"],library:["","Thư viện có sẵn"],experience:["ok","Kinh nghiệm"]};
+const KB_SRC={rule:["ok","Luật Facebook"],study:["ok","Tự học"],claude:["warn","Hỏi Claude"],boss:["talking","Sếp dạy"],library:["","Thư viện có sẵn"],experience:["ok","Kinh nghiệm"]};
 let kbTimer=null;
 async function loadKB(){
   let d; try{ d=await api(`/knowledge?agent=${encodeURIComponent($("#kbAgent").value||"")}&q=${encodeURIComponent($("#kbSearch").value||"")}`); }catch(e){ return; }
@@ -4431,10 +4433,10 @@ async function loadKB(){
   $("#kbStats").innerHTML=[[d.total,"Kiến thức trong sổ"],[d.today,"Học hôm nay"],[m.memory||0,"Tự trả lời bằng sổ (30 ngày)"],[m.claude||0,"Phải hỏi Claude (30 ngày)"],[d.pending,"Câu chờ học"]].map(([v,l])=>`<div><b>${num(v)}</b><span>${l}</span></div>`).join("");
   const roles=d.roles||{}; const sel=$("#kbAgent"); if(sel.options.length<2){ sel.innerHTML='<option value="">Cả đội</option>'+Object.entries(roles).map(([k,v])=>`<option value="${k}">${esc(v)}${d.counts[k]?` (${d.counts[k]})`:""}</option>`).join(""); $("#kbTAgent").innerHTML=Object.entries(roles).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join(""); }
   $("#kbList").innerHTML=d.items.length?d.items.map(k=>{ const [sc,st]=k.status==="pending"?["warn","Chờ học"]:KB_SRC[k.source]||["",k.source];
-    return `<li><div><b>${esc(k.topic||k.question)}</b><div class="meta"><span class="chip">${esc(roles[k.agent_id]||k.agent_id)}</span><span class="chip ${sc}">${st}</span>${k.kind==="faq"?'<span class="chip ok">Trả lời khách</span>':""}${k.uses?`<span class="small muted">dùng ${k.uses} lần</span>`:""}<span class="small muted">${fmtDate(k.created_at)}</span></div>
+    return `<li><div><b>${esc(k.topic||k.question)}</b><div class="meta"><span class="chip">${esc(roles[k.agent_id]||k.agent_id)}</span><span class="chip ${sc}">${st}</span>${k.kind==="faq"?'<span class="chip ok">Trả lời khách</span>':""}${(k.source==="study"||k.source==="library")&&(d.settings||{}).self_study!=="1"?'<span class="chip warn" title="Kiến thức chung, không đưa vào lời dặn khi tự học kiến thức chung đang tắt">Không dùng khi làm việc</span>':""}${k.uses?`<span class="small muted">dùng ${k.uses} lần</span>`:""}<span class="small muted">${fmtDate(k.created_at)}</span></div>
       ${k.question&&k.question!==k.topic?`<div class="small muted">Hỏi: ${esc(k.question)}</div>`:""}<div class="small">${k.status==="pending"?"Đội chưa biết, sẽ học trong buổi tự học tới.":esc(k.content)}</div></div>
       <button type="button" class="btn sm ghost danger" data-kbdel="${k.id}">Xóa</button></li>`; }).join(""):'<li class="muted small">Chưa có kiến thức nào. Bấm “Học ngay” hoặc chờ buổi tự học hằng ngày.</li>';
-  const st=d.settings||{}; if(!$("#kbSet").contains(document.activeElement)){ $("#kbOn").checked=st.knowledge_enabled!=="0"; $("#kbIdle").checked=st.idle_learning!=="0"; $("#kbIdleN").value=st.idle_study_per_day||6; $("#kbTime").value=st.study_time||"07:00"; $("#kbN").value=st.study_per_agent||2; }
+  const st=d.settings||{}; if(!$("#kbSet").contains(document.activeElement)){ $("#kbOn").checked=st.knowledge_enabled!=="0"; $("#kbStudyOn").checked=st.self_study==="1"; $("#kbIdle").checked=st.idle_learning!=="0"; $("#kbIdleN").value=st.idle_study_per_day||6; $("#kbTime").value=st.study_time||"07:00"; $("#kbN").value=st.study_per_agent||2; }
 }
 $("#kbAgent").onchange=loadKB;
 $("#kbSearch").oninput=()=>{ clearTimeout(kbTimer); kbTimer=setTimeout(loadKB,300); };
@@ -4445,11 +4447,11 @@ $("#kbAsk").addEventListener("submit",async e=>{ e.preventDefault(); const q=$("
       :r.source==="none"?`<div class="kb-ans"><span class="chip">Đội chưa biết</span><p>Câu này đã được ghi vào danh sách “Câu chờ học”. Có khóa Claude, đội sẽ học trong buổi tự học tới.</p></div>`
       :`<div class="kb-ans">Chưa tra cứu được, thử lại sau.</div>`; }
   catch(err){ toast(err.message); } b.disabled=false; b.textContent="Hỏi"; loadKB(); });
-$("#kbStudy").onclick=async()=>{ await api("/knowledge/study","POST"); toast("Cả đội đang tự học kiến thức mới…"); setTimeout(loadKB,3000); setTimeout(loadKB,10000); };
+$("#kbStudy").onclick=async()=>{ await api("/knowledge/study","POST"); toast((ST.kb?.settings||{}).self_study==="1"?"Cả đội đang tự học kiến thức mới…":"Cả đội đang trả lời các câu sếp và khách hỏi còn chờ…"); setTimeout(loadKB,3000); setTimeout(loadKB,10000); };
 $("#kbList").addEventListener("click",async e=>{ const b=e.target.closest("[data-kbdel]"); if(!b) return; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa"; return; } await api(`/knowledge/${b.dataset.kbdel}`,"DELETE"); loadKB(); });
 $("#kbTeach").addEventListener("submit",async e=>{ e.preventDefault();
   try{ await api("/knowledge","POST",{agent_id:$("#kbTAgent").value,topic:$("#kbTTopic").value,question:$("#kbTQ").value,content:$("#kbTC").value,kind:$("#kbTFaq").checked?"faq":"guide"}); e.target.reset(); toast("Đã dạy. Agent dùng kiến thức này từ việc tiếp theo."); }catch(err){ toast(err.message); } loadKB(); });
-$("#kbSet").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/knowledge/settings","PUT",{knowledge_enabled:$("#kbOn").checked,study_time:$("#kbTime").value,study_per_agent:+$("#kbN").value,idle_learning:$("#kbIdle").checked,idle_study_per_day:+$("#kbIdleN").value}); toast("Đã lưu cài đặt tự học"); document.activeElement.blur(); }catch(err){ toast(err.message); } loadKB(); });
+$("#kbSet").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/knowledge/settings","PUT",{knowledge_enabled:$("#kbOn").checked,self_study:$("#kbStudyOn").checked,study_time:$("#kbTime").value,study_per_agent:+$("#kbN").value,idle_learning:$("#kbIdle").checked,idle_study_per_day:+$("#kbIdleN").value}); toast("Đã lưu cài đặt tự học"); document.activeElement.blur(); }catch(err){ toast(err.message); } loadKB(); });
 
 /* --------------------------------------------- cài đặt */
 const MODEL_NAME={"claude-haiku-5-5":"Haiku 5.5 (rẻ nhất)","claude-sonnet-5-5":"Sonnet 5.5 (cân bằng)","claude-opus-5-5":"Opus 5.5 (cao cấp)"};

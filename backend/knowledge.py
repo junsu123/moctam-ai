@@ -23,7 +23,15 @@ nha nhi ah u uh ok vang da cai chiec bao nhieu may""".split())
 ROLE_NAME = {"ceo": "CEO Đức", "minh": "Minh", "lan": "Lan", "tuan": "Tuấn", "ha": "Hà", "khoa": "Khoa", "mai": "Mai", "vy": "Vy", "bao": "Bảo",
              "sale": "Nhân viên sale",
              "all": "Cả đội"}
-SOURCE_TXT = {"study": "Tự học", "claude": "Hỏi Claude", "boss": "Sếp dạy", "library": "Thư viện có sẵn", "experience": "Kinh nghiệm thực tế"}
+SOURCE_TXT = {"study": "Tự học", "claude": "Hỏi Claude", "boss": "Sếp dạy", "library": "Thư viện có sẵn", "experience": "Kinh nghiệm thực tế",
+              "rule": "Luật Facebook"}
+# Kiến thức chung không có dữ liệu thật: Claude tự viết từ hiểu biết chung (study) và thư viện viết sẵn (library).
+# Mặc định KHÔNG đưa vào lời dặn khi làm việc; chỉ dùng điều sếp dạy, luật, câu hỏi thật của khách/sếp và kinh nghiệm thật.
+GENERIC = ("study", "library")
+
+
+def self_study_on() -> bool:
+    return db.get_settings().get("self_study", "0") == "1"
 
 # Giáo trình theo vai trò: chủ đề agent tự học dần mỗi ngày
 CURRICULUM = {
@@ -192,11 +200,16 @@ def scope_of(agent_id: str) -> list[str]:
     return [agent_id, "all"]
 
 
-def _items(agent_id: str) -> list[dict]:
+def _items(agent_id: str, trusted: bool | None = None) -> list[dict]:
+    """trusted=True: bỏ kiến thức chung tự học; None: theo cài đặt self_study."""
+    if trusted is None:
+        trusted = not self_study_on()
     sc = scope_of(agent_id)
+    where = "status='active'" + (f" AND COALESCE(source,'') NOT IN ({','.join('?' * len(GENERIC))})" if trusted else "")
+    args = GENERIC if trusted else ()
     if not sc:
-        return db.q("SELECT * FROM knowledge WHERE status='active'")
-    return db.q(f"SELECT * FROM knowledge WHERE status='active' AND agent_id IN ({','.join('?' * len(sc))})", tuple(sc))
+        return db.q(f"SELECT * FROM knowledge WHERE {where}", args)
+    return db.q(f"SELECT * FROM knowledge WHERE {where} AND agent_id IN ({','.join('?' * len(sc))})", (*args, *sc))
 
 
 def _score(q: list[str], qbig: set, it: dict, detail: bool = False):
@@ -211,12 +224,12 @@ def _score(q: list[str], qbig: set, it: dict, detail: bool = False):
     return (round(s, 3), round(hc, 3)) if detail else round(s, 3)
 
 
-def search(agent_id: str, query: str, k: int = 5, min_score: float = 0.3) -> list[dict]:
+def search(agent_id: str, query: str, k: int = 5, min_score: float = 0.3, trusted: bool | None = None) -> list[dict]:
     q = list(dict.fromkeys(tokens(query)))
     words = plain(query).split()
     qbig = {f"{a} {b}" for a, b in zip(words, words[1:]) if a not in STOP or b not in STOP}
     out = []
-    for it in _items(agent_id):
+    for it in _items(agent_id, trusted):
         sc, hc = _score(q, qbig, it, detail=True)
         if sc >= min_score:
             out.append({**it, "score": sc, "head": hc})
@@ -251,7 +264,7 @@ def save(agent_id: str, topic: str, content: str, question: str = "", keywords: 
     if len(content) < 15:
         return None
     topic = (topic or question or content[:60]).strip()[:150]
-    dup = search(agent_id if agent_id not in ("all",) else "*", f"{topic} {question}", k=1, min_score=0.92)
+    dup = search(agent_id if agent_id not in ("all",) else "*", f"{topic} {question}", k=1, min_score=0.92, trusted=False)
     if dup and plain(dup[0]["topic"] or "") == plain(topic):
         db.run("UPDATE knowledge SET content=?, question=COALESCE(NULLIF(?,''),question), keywords=?, updated_at=? WHERE id=?",
                (content[:1500], question[:300], keywords[:300], db.now(), dup[0]["id"]))
@@ -333,7 +346,7 @@ def _today_topics(agent_id: str) -> list[str]:
             out += [f"cách viết bài bán sỉ thu hút cho sản phẩm {n}" for n in hot[:1]]
         if agent_id == "ha":
             out += [f"cách tư vấn và chốt khách sỉ cho sản phẩm {n}" for n in hot[:1]]
-            out += [f"trả lời câu khách hỏi: “{r['need'][:80]}”" for r in db.q(
+            out += [f"{REAL_Q}{r['need'][:80]}”" for r in db.q(
                 """SELECT need FROM leads WHERE COALESCE(need,'')!='' AND created_at >= ? ORDER BY id DESC LIMIT 20""",
                 ((db.clock() - timedelta(days=7)).strftime("%Y-%m-%d"),)) if "?" in (r["need"] or "")][:2]
         if agent_id == "tuan":
@@ -345,14 +358,21 @@ def _today_topics(agent_id: str) -> list[str]:
     return out
 
 
+REAL_Q = "trả lời câu khách hỏi: “"
+
+
 def plan_topics(agent_id: str, n: int) -> list[dict]:
-    """Câu hỏi còn bỏ ngỏ trước, rồi chủ đề theo việc thực tế, rồi giáo trình."""
+    """Câu hỏi còn bỏ ngỏ trước, rồi chủ đề theo việc thực tế, rồi giáo trình.
+    Tắt tự học kiến thức chung (mặc định): chỉ câu sếp hỏi còn chờ và câu khách hỏi thật."""
     done = _studied_topics(agent_id)
     owners = [agent_id] + (["all"] if agent_id == "ceo" else [])  # câu sếp hỏi chung do CEO học thay cả đội
     pend = db.q(f"SELECT * FROM knowledge WHERE agent_id IN ({','.join('?' * len(owners))}) AND status='pending' ORDER BY id LIMIT ?",
                 (*owners, n))
     out = [{"topic": p["question"], "pending_id": p["id"], "owner": p["agent_id"]} for p in pend]
-    for t in _today_topics(agent_id) + CURRICULUM.get(agent_id, []):
+    pool = _today_topics(agent_id) + CURRICULUM.get(agent_id, [])
+    if not self_study_on():
+        pool = [t for t in pool if t.startswith(REAL_Q)]
+    for t in pool:
         if len(out) >= n:
             break
         if plain(t) not in done and all(plain(t) != plain(o["topic"]) for o in out):
@@ -385,13 +405,14 @@ def study_agent(agent_id: str, n: int = 2) -> list[int]:
                 continue
             iid = save(t.get("owner") or agent_id, it.get("topic") or t["topic"], it.get("content") or "",
                        question=(t["topic"] if t.get("pending_id") else it.get("question")) or "",
-                       keywords=it.get("keywords") or "", source="study")
+                       keywords=it.get("keywords") or "",
+                       source="claude" if t.get("pending_id") or t["topic"].startswith(REAL_Q) else "study")
             if iid:
                 saved.append(iid)
                 if t.get("pending_id"):
                     db.run("DELETE FROM knowledge WHERE id=?", (t["pending_id"],))
                 _log(agent_id, "study", it.get("topic") or t["topic"], iid)
-    else:  # chưa có khóa Claude: học từ thư viện có sẵn
+    elif self_study_on():  # chưa có khóa Claude: học từ thư viện có sẵn
         lib = {plain(x[0]): x for x in LIBRARY.get(agent_id, [])}
         done = _studied_topics(agent_id)
         for topic, q, content, kw in [x for k, x in lib.items() if k not in done][:n]:
@@ -463,4 +484,5 @@ def overview(agent: str = "", query: str = "", limit: int = 60) -> dict:
             "roles": ROLE_NAME, "sources": SOURCE_TXT,
             "settings": {k: st for k, st in db.get_settings().items() if k in ("knowledge_enabled", "study_time", "study_per_agent",
                                                                                 "knowledge_answer_threshold", "study_last_date",
-                                                                                "idle_learning", "idle_study_per_day")}}
+                                                                                "idle_learning", "idle_study_per_day", "self_study")},
+            "generic_count": db.one(f"SELECT COUNT(*) n FROM knowledge WHERE status='active' AND source IN ({','.join('?' * len(GENERIC))})", GENERIC)["n"]}

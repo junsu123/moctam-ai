@@ -164,6 +164,9 @@ def _review(aid: str) -> str | None:
 
 
 def _can_study(a: dict) -> bool:
+    import knowledge
+    if not knowledge.self_study_on():  # tự học kiến thức chung với Claude: mặc định tắt (không có dữ liệu thật)
+        return False
     cap = int(s().get("idle_study_per_day") or 6)
     if a["study"] >= cap:
         return False

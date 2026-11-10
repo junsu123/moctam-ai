@@ -609,7 +609,7 @@ def teach() -> int:
             src = next((x for x in SOURCES if x["key"] == r.get("src")), None)
             body = f"{r['rule']} Cách làm: {r['do']}" + (f" Nguồn: {src['name']} ({src['url']})." if src else "")
             if knowledge.save(aid, f"Luật Facebook: {r['title']}", body, question=f"Luật Facebook về {r['title'].lower()}?",
-                              keywords=f"luat facebook {CATS.get(r['cat'], '')} {r['id']}", source="library", confidence=0.95):
+                              keywords=f"luat facebook {CATS.get(r['cat'], '')} {r['id']}", source="rule", confidence=0.95):
                 n += 1
     db.set_setting("fbp_taught", db.now())
     return n

@@ -2281,11 +2281,14 @@ class KnowSettings(BaseModel):
     knowledge_enabled: bool | None = None
     study_time: str | None = None
     study_per_agent: int | None = None
+    self_study: bool | None = None
 
 
 @app.put("/api/knowledge/settings")
 def knowledge_settings(k: KnowSettings):
     import knowledge
+    if k.self_study is not None:
+        db.set_setting("self_study", "1" if k.self_study else "0")
     if k.knowledge_enabled is not None:
         db.set_setting("knowledge_enabled", "1" if k.knowledge_enabled else "0")
     if k.idle_learning is not None:
