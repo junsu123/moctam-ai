@@ -156,6 +156,9 @@ CREATE TABLE IF NOT EXISTS usage (
   task TEXT, model TEXT, input_tokens INTEGER, output_tokens INTEGER, cost_usd REAL,
   batch INTEGER DEFAULT 0, created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS ai_fallback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, task TEXT, reason TEXT, detail TEXT, created_at TEXT
+);
 CREATE TABLE IF NOT EXISTS ai_batches (
   id TEXT PRIMARY KEY, task TEXT, meta TEXT, status TEXT DEFAULT 'in_progress', created_at TEXT, ended_at TEXT
 );

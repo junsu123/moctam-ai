@@ -1545,6 +1545,7 @@ label.f{font-weight:600;color:var(--muted)}
               <p class="small muted" style="margin-top:6px" id="costProj"></p></div>
             <div><span class="small muted">14 ngày gần nhất</span><div class="spark" id="costSpark"></div></div>
             <div class="tbl-wrap"><table style="min-width:0"><thead><tr><th>Việc</th><th class="num">Lượt</th><th class="num">Token vào / ra</th><th class="num">Chi phí</th></tr></thead><tbody id="costRows"></tbody></table></div>
+            <div id="costFallback" class="small"></div>
           </div>
           <div class="sidecol">
             <div><span class="small muted">Chọn nhanh một gói (ước tính cho 3 nick sale)</span>
@@ -2390,7 +2391,8 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if((m=P.match(/^\/replies\/(\d+)\/sent$/))) return {ok:true};
       if(P==="/costs"){ const d=new Date(); const daily=[...Array(14)].map((_,i)=>{ const x=new Date(d-(13-i)*864e5); return {day:x.toISOString().slice(0,10),cost:0.09+((i*37)%11)/100}; });
         return {spent:0.38,budget:+S.settings.monthly_budget_usd||0,projected:3.9,state:"ok",batch_saved:0.27,live:false,pending_batches:0,daily,
-          by_task:[{task:"posts",label:"Viết bài đăng",calls:96,tin:91200,tout:67300,cost:0.27,batched:84},{task:"replies",label:"Tin nhắn khách",calls:41,tin:45100,tout:8200,cost:0.0086},{task:"meeting",label:"Cuộc họp",calls:28,tin:39800,tout:5600,cost:0.0068}]}; }
+          by_task:[{task:"posts",label:"Viết bài đăng",calls:96,tin:91200,tout:67300,cost:0.27,batched:84},{task:"replies",label:"Tin nhắn khách",calls:41,tin:45100,tout:8200,cost:0.0086},{task:"meeting",label:"Cuộc họp",calls:28,tin:39800,tout:5600,cost:0.0068}],
+          fallback:{days:30,total:2,calls:165,by_task:[{task:"posts",label:"Viết bài đăng",n:2,calls:96,reasons:{"Claude viết quá dài nên bị cắt giữa chừng":2}}]}}; }
       if(P==="/meetings") return S.meetings; if(P==="/meetings/topics") return TOPICS;
       if((m=P.match(/^\/meetings\/(\d+)$/))){ const after=+(new URLSearchParams(qs).get("after")||0); const mt=S.meetings.find(x=>x.id==m[1]); return {...mt,messages:S.msgs.filter(x=>x.meeting_id==m[1]&&x.id>after)}; }
     }
@@ -4468,6 +4470,11 @@ async function loadCosts(){
   const st={ok:["ok","Trong ngân sách"],economy:["warn","Đã chuyển sang Haiku"],stop:["bad","Tạm ngừng AI"]}[c.state]||["",""]; $("#costState").className="chip "+st[0]; $("#costState").textContent=st[1];
   const mx=Math.max(0.0001,...c.daily.map(d=>d.cost));
   $("#costSpark").innerHTML=c.daily.length?c.daily.map(d=>`<div style="height:${Math.max(4,d.cost/mx*100)}%" title="${fmtDate(d.day)}: ${usd(d.cost)}"></div>`).join(""):'<span class="small muted">Chưa có dữ liệu</span>';
+  const fb=c.fallback||{total:0,by_task:[]};
+  $("#costFallback").innerHTML=!fb.total?(c.live?'<p class="muted" style="margin-top:8px">30 ngày qua mọi kết quả đều do Claude làm, không phải dùng nội dung mẫu.</p>':'')
+    :`<div class="note warn" style="margin-top:8px"><b>${fb.total} lần phải dùng nội dung mẫu thay Claude</b> trong ${fb.days} ngày (trên ${fb.calls} lượt gọi). Bài, tin nhắn ở các lần này là mẫu có sẵn, không phải Claude viết.
+      <ul style="margin:6px 0 0 18px">${fb.by_task.map(t=>`<li>${esc(t.label)}: ${t.n} lần — ${Object.entries(t.reasons).map(([r,n])=>`${esc(r)} (${n})`).join(", ")}</li>`).join("")}</ul>
+      <span class="muted">Chi tiết ở màn Lỗi. Lỗi gọi Claude: kiểm tra khóa và tín dụng; bị cắt hoặc sai khuôn lặp lại nhiều: báo người lập trình.</span></div>`;
   $("#costRows").innerHTML=c.by_task.length?c.by_task.map(r=>`<tr><td>${esc(r.label)}${r.batched?` <span class="chip ok">${r.batched} theo lô</span>`:""}</td><td class="num">${r.calls}</td><td class="num">${(r.tin/1000).toFixed(1)}k / ${(r.tout/1000).toFixed(1)}k</td><td class="num"><b>${usd(r.cost)}</b></td></tr>`).join(""):'<tr><td colspan="4" class="muted">Chưa có lượt gọi AI nào trong tháng.</td></tr>';
 }
 $("#presets").addEventListener("click",async e=>{ const b=e.target.closest("[data-preset]"); if(!b) return; await api("/costs/preset","POST",{name:b.dataset.preset}); toast(`Đã chuyển sang gói ${b.querySelector("b").textContent}`); loadCosts(); });

@@ -174,14 +174,43 @@ class LLM:
             import errors
             errors.report("ai", f"Gọi AI Claude bị lỗi ({TASKS.get(task, task)})",
                           str(e)[:500] + " — tạm dùng nội dung mô phỏng", screen="setup")
+            note_fallback(task, "error", str(e)[:300], report=False)
             return self._mock(mock) if mock is not None else f"(Lỗi gọi AI: {e})"
 
     def json(self, system: str, prompt: str, mock=None, max_tokens: int = 1200, task: str = "other"):
+        """Claude trả kết quả qua công cụ tra_ket_qua (khuôn cố định) nên không còn lỗi đọc JSON.
+        Bị cắt vì hết độ dài thì thử lại 1 lần với gấp đôi độ dài. Vẫn hỏng thì ghi lại (ai_fallback + màn Lỗi)
+        rồi mới dùng nội dung mẫu, để sếp biết bài nào không phải Claude viết."""
         if not self.client or budget_state() == "stop":
             return self._mock(mock)
-        text = self.chat(system, prompt + JSON_HINT, mock=None, max_tokens=max_tokens, task=task)
-        data = parse_json(text)
-        return data if data is not None else self._mock(mock)
+        model = model_for(task)
+        reason, tokens = "", max_tokens
+        for attempt in range(2):
+            try:
+                resp = self.client.messages.create(
+                    model=model, max_tokens=tokens, system=system, tools=[RESULT_TOOL],
+                    tool_choice={"type": "tool", "name": RESULT_TOOL["name"]},
+                    messages=[{"role": "user", "content": prompt + JSON_HINT}])
+            except Exception as e:
+                print(f"[LLM] lỗi: {e}")
+                import errors
+                errors.report("ai", f"Gọi AI Claude bị lỗi ({TASKS.get(task, task)})",
+                              str(e)[:500] + " — tạm dùng nội dung mô phỏng", screen="setup")
+                note_fallback(task, "error", str(e)[:300], report=False)
+                return self._mock(mock)
+            record(task, model, resp.usage)
+            data = result_of(resp)
+            if data is not None and getattr(resp, "stop_reason", "") != "max_tokens":
+                return data
+            reason = "cut" if getattr(resp, "stop_reason", "") == "max_tokens" else "bad_json"
+            if reason == "cut" and attempt == 0:
+                tokens = min(tokens * 2, MAX_RETRY_TOKENS)
+                continue
+            if data is not None:  # bị cắt nhưng vẫn đọc được: dùng, không bỏ phí lượt gọi
+                return data
+            break
+        note_fallback(task, reason, f"max_tokens={tokens}")
+        return self._mock(mock)
 
     # ------------------------------------------------ Batch API (giảm 50%, trả kết quả trong vòng vài phút đến 24 giờ)
     def batch_create(self, task: str, items: list[dict], max_tokens: int = 1200) -> str | None:
@@ -192,7 +221,8 @@ class LLM:
         try:
             b = self.client.messages.batches.create(requests=[{
                 "custom_id": it["custom_id"],
-                "params": {"model": model, "max_tokens": max_tokens, "system": it["system"],
+                "params": {"model": model, "max_tokens": max_tokens, "system": it["system"], "tools": [RESULT_TOOL],
+                           "tool_choice": {"type": "tool", "name": RESULT_TOOL["name"]},
                            "messages": [{"role": "user", "content": it["prompt"] + JSON_HINT}]},
             } for it in items])
             return b.id
@@ -211,24 +241,95 @@ class LLM:
             if r.result.type == "succeeded":
                 msg = r.result.message
                 record(task, msg.model, msg.usage, batch=True)
-                out[r.custom_id] = "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
+                data = result_of(msg)
+                if data is None:
+                    note_fallback(task, "cut" if getattr(msg, "stop_reason", "") == "max_tokens" else "bad_json", "lô")
+                out[r.custom_id] = json.dumps(data, ensure_ascii=False) if data is not None else None
             else:
+                note_fallback(task, "error", f"lô: {r.result.type}")
                 out[r.custom_id] = None
         return out
 
 
-JSON_HINT = "\n\nChỉ trả về JSON hợp lệ, không giải thích, không markdown."
+JSON_HINT = ("\n\nTrả kết quả bằng công cụ tra_ket_qua: đặt đúng JSON theo khuôn yêu cầu ở trên (object hoặc mảng) "
+             "vào trường ket_qua, không giải thích thêm.")
+RESULT_TOOL = {
+    "name": "tra_ket_qua",
+    "description": "Trả kết quả công việc dưới dạng JSON đúng khuôn mà yêu cầu đã nêu.",
+    "input_schema": {"type": "object", "properties": {"ket_qua": {
+        "description": "Kết quả JSON (object hoặc mảng) đúng khuôn yêu cầu"}}, "required": ["ket_qua"]},
+}
+MAX_RETRY_TOKENS = 8000
+FALLBACK_REASONS = {"cut": "Claude viết quá dài nên bị cắt giữa chừng", "bad_json": "Claude trả kết quả sai khuôn",
+                    "error": "Gọi Claude bị lỗi (mạng, khóa, tín dụng)"}
+
+
+def result_of(resp):
+    """Lấy kết quả từ công cụ tra_ket_qua; phòng khi Claude trả chữ thường thì đọc JSON trong chữ."""
+    text = ""
+    for b in getattr(resp, "content", None) or []:
+        t = getattr(b, "type", "")
+        if t == "tool_use":
+            inp = getattr(b, "input", None) or {}
+            v = inp.get("ket_qua") if isinstance(inp, dict) and "ket_qua" in inp else inp
+            if isinstance(v, str):
+                v = parse_json(v)
+            if isinstance(v, (dict, list)) and v != {}:
+                return v
+        elif t == "text":
+            text += getattr(b, "text", "") or ""
+    return parse_json(text) if text.strip() else None
+
+
+def note_fallback(task: str, reason: str, detail: str = "", report: bool = True):
+    """Ghi một lần phải dùng nội dung mẫu thay cho Claude (đếm ở Cài đặt → Chi phí AI)."""
+    try:
+        db.run("INSERT INTO ai_fallback(task, reason, detail, created_at) VALUES (?,?,?,?)",
+               (task, reason, (detail or "")[:300], db.now()))
+    except Exception as e:
+        print("[llm] fallback", e)
+    print(f"[LLM] dùng nội dung mẫu ({task}): {reason}")
+    if report:
+        import errors
+        errors.report("ai", f"Claude trả kết quả hỏng, đã dùng nội dung mẫu ({TASKS.get(task, task)})",
+                      FALLBACK_REASONS.get(reason, reason), detail, screen="setup")
+
+
+def fallback_stats(days: int = 30) -> dict:
+    """Số lần phải dùng nội dung mẫu / tổng lượt gọi Claude trong N ngày, chia theo việc."""
+    from datetime import timedelta
+    since = (db.clock() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
+    rows = db.q("SELECT task, reason, COUNT(*) n FROM ai_fallback WHERE created_at>=? GROUP BY task, reason", (since,))
+    calls = {r["task"]: r["n"] for r in db.q("SELECT task, COUNT(*) n FROM usage WHERE created_at>=? GROUP BY task", (since,))}
+    by = {}
+    for r in rows:
+        t = by.setdefault(r["task"], {"task": r["task"], "label": TASKS.get(r["task"], r["task"]), "n": 0, "reasons": {}})
+        t["n"] += r["n"]
+        t["reasons"][FALLBACK_REASONS.get(r["reason"], r["reason"])] = r["n"]
+    for t in by.values():
+        t["calls"] = calls.get(t["task"], 0)
+    total = sum(t["n"] for t in by.values())
+    return {"days": days, "total": total, "calls": sum(calls.values()),
+            "by_task": sorted(by.values(), key=lambda t: -t["n"])}
 
 
 def parse_json(text: str):
     if not text:
         return None
-    m = re.search(r"(\[.*\]|\{.*\})", text, re.S)
+    text = re.sub(r"^\s*```(?:json)?\s*|\s*```\s*$", "", text.strip())
     try:
-        return json.loads(m.group(1) if m else text)
+        return json.loads(text)
     except Exception:
-        print("[LLM] không đọc được JSON")
-        return None
+        pass
+    dec = json.JSONDecoder()  # bỏ chữ thừa trước / sau: đọc khối JSON đầu tiên hợp lệ
+    for i, ch in enumerate(text):
+        if ch in "[{":
+            try:
+                return dec.raw_decode(text[i:])[0]
+            except Exception:
+                continue
+    print("[LLM] không đọc được JSON")
+    return None
 
 
 llm = LLM()

@@ -1365,7 +1365,8 @@ def costs():
             "projected": round(spent / max(now.day, 1) * days_in, 3), "state": llm_mod.budget_state(),
             "batch_saved": round(saved, 4), "by_task": by_task, "by_model": by_model, "daily": last,
             "prices": llm_mod.PRICES, "presets": llm_mod.PRESETS, "live": llm.live,
-            "pending_batches": db.one("SELECT COUNT(*) n FROM ai_batches WHERE status='in_progress'")["n"]}
+            "pending_batches": db.one("SELECT COUNT(*) n FROM ai_batches WHERE status='in_progress'")["n"],
+            "fallback": llm_mod.fallback_stats(30)}
 
 
 class Preset(BaseModel):

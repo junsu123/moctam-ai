@@ -1075,6 +1075,10 @@ Các cơ chế tiết kiệm có sẵn:
   tranh luận và các ngày họp trong tuần. Báo cáo của nhân viên sale lấy thẳng từ số liệu, không tốn AI.
 - **Ngân sách tháng:** chạm 100% thì mọi việc tự chuyển sang Haiku; chạm 120% thì tạm ngừng gọi AI và dùng
   nội dung mẫu đến tháng sau. Nên đặt thêm giới hạn chi tiêu trong Anthropic Console để chắc chắn.
+- **Không âm thầm dùng nội dung mẫu:** Claude trả kết quả qua một công cụ có khuôn cố định (không còn lỗi đọc JSON). Bài viết
+  quá dài bị cắt giữa chừng thì tự thử lại 1 lần với gấp đôi độ dài. Vẫn hỏng (hoặc lỗi mạng, khóa, tín dụng) thì mới dùng nội
+  dung mẫu, và mỗi lần như vậy được đếm ở **Cài đặt → Chi phí AI** (“N lần phải dùng nội dung mẫu thay Claude”, chia theo việc
+  và lý do) và ghi vào màn **Lỗi**. Chưa có khóa Claude (chế độ mô phỏng) thì không tính.
 
 Giá dùng để tính (USD / 1 triệu token, vào/ra): Haiku 5.5 0,10/0,50 · Sonnet 5.5 2/10 · Opus 5.5 4/20;
 theo lô giảm 50%. Khi Anthropic đổi giá, sửa bảng `PRICES` trong `backend/llm.py`.
