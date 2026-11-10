@@ -453,6 +453,16 @@ def execute(act: dict) -> str:
         for g in rows[:5]:
             group_target.set_focus(g["id"], on)
         return f"{'Tập trung đăng' if on else 'Thôi tập trung đăng'} nhóm " + "; ".join(g["name"] for g in rows[:5])
+    if t == "reply_customers":
+        import replies
+        try:
+            r = replies.start(notify=act.get("_via", "web"))
+        except ValueError as e:
+            return str(e)
+        q = replies.quota(r["account_id"])
+        return (f"Nick {r['account']} đi đọc các nhóm sôi nổi nhất, Bảo chọn bài đang HỎI MUA / hỏi nguồn hàng hợp ngành và viết sẵn "
+                f"câu trả lời. Sếp duyệt ở trang Trả lời khách, duyệt xong nick gửi trong giờ làm, mỗi nick tối đa {q['limit']} câu/ngày, "
+                "cách nhau 45–90 phút. Không bình luận dạo, không chạy ban đêm (Facebook coi là spam, khóa nick)")
     if t == "find_friends":
         import friends
         try:
@@ -596,6 +606,9 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - care_posts {}: giao Bảo rà soát các bài đã đăng ngay bây giờ: nick đã đăng bình luận 1 ảnh + câu ngắn Bảo tự viết + dòng liên hệ
   (bump_contact). Đổi dòng liên hệ thì dùng setting bump_contact
 - focus_group {group, on}: sếp bảo tập trung đăng (on=true) / thôi tập trung (on=false) vào một nhóm theo tên
+- reply_customers {}: sếp bảo nhân viên đi comment / trả lời khách trong nhóm: Bảo đọc nhóm sôi nổi, chọn bài người ta đang hỏi mua
+  / hỏi nguồn hàng hợp ngành, viết câu trả lời (Claude viết, Bảo học dần rồi tự viết), SẾP DUYỆT, nick gửi trong giờ làm, có trần mỗi
+  ngày. Không bình luận dạo vào bài không hỏi mua, không chạy 24/24 (spam, khóa nick): nói rõ điều này nếu sếp đòi
 - find_friends {}: Tuấn đọc nhóm sôi nổi nhất của các nick, chuẩn bị danh sách người nên kết bạn (sale tự bấm gửi, không tự gửi)
 - hire {reason}: tuyển thêm sale; fire {sale_id, reason}: cho sale nghỉ (chỉ khi sếp nói rõ)
 - task {agent, title}: việc khác ghi vào danh sách việc của agent
@@ -692,6 +705,8 @@ def _rule_plan(text: str) -> dict:
     want_friends = re.search(r"kết bạn|add (bạn|friend)|thêm bạn", low)
     want_care = re.search(r"(rà soát|comment|bình luận|cmt|up)\s*(lại\s*)?(vào\s*|cho\s*)?(các\s*|những\s*|mấy\s*)?(bài|post)\s*(viết\s*)?(đã|vừa)\s*đăng"
                           r"|\bup (lại )?(các |những )?bài\b", low)
+    want_reply = (not want_care) and re.search(r"(comment|bình luận|cmt|trả lời|rep)\b.{0,60}(nhóm|group|hội|người hỏi|bài hỏi|hỏi mua)"
+                                               r"|tìm (bài|người) hỏi (mua|nguồn|hàng)", low)
     zalo = re.search(r"(?:dòng liên hệ|liên hệ|zalo)[^0-9]{0,30}(0\d{9})", low)
     if zalo and re.search(r"đổi|thay|sửa|dùng|từ nay", low):
         acts.append({"type": "setting", "key": "bump_contact", "value": f"Cần hàng liên hệ Zalo {zalo.group(1)}"})
@@ -730,6 +745,8 @@ def _rule_plan(text: str) -> dict:
         pass
     elif want_care and not want_friends:
         acts.append({"type": "care_posts"})
+    elif want_reply and not want_friends:
+        acts.append({"type": "reply_customers"})
     elif want_friends:
         acts.append({"type": "find_friends"})
     elif teach_mai:

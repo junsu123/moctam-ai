@@ -106,10 +106,14 @@ SKILL_LEVELS = [  # (tên, số mẫu Claude tối thiểu, tỷ lệ câu tự 
 PASS = 8
 
 
-def skill() -> dict:
-    """Tay nghề viết câu bình luận của Bảo."""
-    n = db.one("SELECT COUNT(*) n FROM comment_samples WHERE source='claude'")["n"]
-    graded = db.q("SELECT score FROM comment_samples WHERE source='bao' AND score IS NOT NULL ORDER BY id DESC LIMIT 40")
+SRC = {"bump": ("claude", "bao"), "reply": ("claude_reply", "bao_reply")}  # câu up bài / câu trả lời khách học riêng
+
+
+def skill(kind: str = "bump") -> dict:
+    """Tay nghề viết câu bình luận của Bảo (kind="bump": câu up bài; "reply": câu trả lời khách)."""
+    cs, bs = SRC[kind]
+    n = db.one("SELECT COUNT(*) n FROM comment_samples WHERE source=?", (cs,))["n"]
+    graded = db.q("SELECT score FROM comment_samples WHERE source=? AND score IS NOT NULL ORDER BY id DESC LIMIT 40", (bs,))
     rate = round(sum(1 for g in graded if g["score"] >= PASS) * 100 / len(graded)) if graded else 0
     avg = round(sum(g["score"] for g in graded) / len(graded), 1) if graded else None
     lv = 0
@@ -121,7 +125,8 @@ def skill() -> dict:
     return {"level": lv, "name": SKILL_LEVELS[lv][0], "master": lv == len(SKILL_LEVELS) - 1, "samples": n,
             "graded": len(graded), "pass_rate": rate, "avg": avg,
             "next": {"name": nxt[0], "samples": nxt[1], "pass_rate": nxt[2], "graded": nxt[3]} if nxt else None,
-            "calls": int(st.get("bao_claude_calls") or 0), "saved": int(st.get("bao_calls_saved") or 0)}
+            "calls": int(st.get("bao_claude_calls" + ("" if kind == "bump" else "_" + kind)) or 0),
+            "saved": int(st.get("bao_calls_saved" + ("" if kind == "bump" else "_" + kind)) or 0)}
 
 
 def _template(text: str, pname: str) -> str:
@@ -147,7 +152,7 @@ def learn(texts: list[str], names: list[str], source: str = "claude", scores: li
                 sc = max(0, min(10, int(round(float(scores[i])))))
             except (TypeError, ValueError):
                 sc = None
-        if source == "claude" and db.one("SELECT id FROM comment_samples WHERE source='claude' AND text=?", (t,)):
+        if source.startswith("claude") and db.one("SELECT id FROM comment_samples WHERE source=? AND text=?", (source, t)):
             continue
         db.run("""INSERT INTO comment_samples(text, template, product, source, score, created_at) VALUES (?,?,?,?,?,?)""",
                (t, _template(t, pname), pname, source, sc, db.now()))
@@ -155,10 +160,11 @@ def learn(texts: list[str], names: list[str], source: str = "claude", scores: li
     return n
 
 
-def _learned() -> tuple[list[str], list[str], list[str]]:
+def _learned(kind: str = "bump") -> tuple[list[str], list[str], list[str]]:
     """Khuôn câu, vế đầu, vế sau học từ mẫu Claude và câu tự viết đạt điểm cao."""
-    rows = db.q("""SELECT template FROM comment_samples WHERE source='claude' OR (source='bao' AND score >= ?)
-                   ORDER BY id DESC LIMIT 400""", (PASS,))
+    cs, bs = SRC[kind]
+    rows = db.q("""SELECT template FROM comment_samples WHERE source=? OR (source=? AND score >= ?)
+                   ORDER BY id DESC LIMIT 400""", (cs, bs, PASS))
     tpls, heads, tails = [], [], []
     for r in rows:
         t = (r["template"] or "").strip()
@@ -178,11 +184,12 @@ def _fill(tpl: str, p: str) -> str:
     return line[0].upper() + line[1:] if line else line
 
 
-def self_write(names: list[str], n: int, avoid: set[str]) -> list[str]:
+def self_write(names: list[str], n: int, avoid: set[str], kind: str = "bump") -> list[str]:
     """Bảo tự viết từ những gì đã học (không gọi Claude). Chưa học được gì thì dùng mẫu gốc."""
-    tpls, heads, tails = _learned()
+    base = _offline if kind == "bump" else _offline_reply
+    tpls, heads, tails = _learned(kind)
     if len(tpls) < 5:
-        return _offline(names, n, avoid)
+        return base(names, n, avoid)
     out, used, tries = [], set(), 0
     while len(out) < n and tries < n * 80:
         tries += 1
@@ -195,12 +202,34 @@ def self_write(names: list[str], n: int, avoid: set[str]) -> list[str]:
             continue
         line = _fill(tpl, p)
         k = plain(line)
-        if k in avoid or k in used or not (5 <= len(line.split()) <= 20) or not _ok(line):
+        if k in avoid or k in used or not (5 <= len(line.split()) <= (20 if kind == "bump" else 40)) or not _ok(line):
             continue
         used.add(k)
         out.append(line)
     if len(out) < n:
-        out += _offline(names[len(out):], n - len(out), avoid | used)
+        out += base(names[len(out):], n - len(out), avoid | used)
+    return out
+
+
+REPLY_OPEN = ["Bên mình là xưởng sản xuất {p}, có giá sỉ cho shop mới", "Nhà máy mình đang làm {p}, nhận sỉ cả số lượng nhỏ",
+              "Mình bên xưởng {p} nè, có sẵn hàng và giá gốc", "Bạn tham khảo {p} bên mình nhé, hàng sản xuất trực tiếp tại nhà máy",
+              "Xưởng mình có {p}, nhận in nhãn riêng nếu bạn muốn làm thương hiệu",
+              "Bên mình sản xuất {p} tại nhà máy đạt chuẩn, giá sỉ tốt cho người bán online"]
+REPLY_TAIL = ["bạn cần mẫu thử thì nhắn mình nhé", "mình gửi bạn catalog và bảng giá nha", "có hỗ trợ ảnh, video bán hàng cho shop",
+              "giao toàn quốc, bạn cần số lượng bao nhiêu để mình báo giá", "bạn nhắn mình để được tư vấn chọn mẫu dễ bán"]
+
+
+def _offline_reply(names: list[str], n: int, avoid: set[str]) -> list[str]:
+    out, tries = [], 0
+    while len(out) < n and tries < n * 50:
+        tries += 1
+        p = names[len(out)] if len(out) < len(names) else GENERIC
+        line = random.choice(REPLY_OPEN).format(p=p) + ", " + random.choice(REPLY_TAIL)
+        if plain(line) in avoid or any(plain(line) == plain(x) for x in out):
+            continue
+        out.append(line)
+    while len(out) < n:
+        out.append(random.choice(REPLY_OPEN).format(p=GENERIC) + ", " + random.choice(REPLY_TAIL))
     return out
 
 
@@ -282,15 +311,19 @@ def _lines(posts: list[dict], aid: int | None = None) -> list[str]:
     return out[:len(posts)]
 
 
-def relearn() -> dict:
+def relearn(kind: str = "bump") -> dict:
     """Sếp thấy câu Bảo tự viết chưa ổn: quay lại gọi Claude, chấm lại từ đầu (mẫu đã học vẫn giữ)."""
-    db.run("UPDATE comment_samples SET score=NULL WHERE source='bao'")
+    db.run("UPDATE comment_samples SET score=NULL WHERE source=?", (SRC[kind][1],))
     db.log("bao", "Học lại", "Sếp cho Bảo học lại cách viết câu bình luận: gọi Claude và chấm điểm lại từ đầu")
-    return skill()
+    return skill(kind)
 
 
-def samples(limit: int = 30) -> list[dict]:
-    return db.q("SELECT id, text, product, source, score, created_at FROM comment_samples ORDER BY id DESC LIMIT ?", (limit,))
+def samples(limit: int = 30, kind: str = "bump") -> list[dict]:
+    rows = db.q("SELECT id, text, product, source, score, created_at FROM comment_samples WHERE source IN (?, ?) ORDER BY id DESC LIMIT ?",
+                (*SRC[kind], limit))
+    for r in rows:
+        r["source"] = "claude" if r["source"].startswith("claude") else "bao"
+    return rows
 
 
 def compose(line: str) -> str:

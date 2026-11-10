@@ -2525,6 +2525,98 @@ def friends_settings(data: dict):
     return friends.overview()
 
 
+# ------------------------------------------------------------------ Bảo trả lời khách hỏi mua trong nhóm (sếp duyệt, nick gửi)
+REPLY_KEYS = {"replies_enabled", "replies_time", "replies_per_nick_day", "replies_groups_per_run", "replies_per_group", "reply_contact"}
+
+
+@app.get("/api/replies")
+def replies_get(status: str = ""):
+    import replies
+    return replies.overview(status)
+
+
+class ReplyScan(BaseModel):
+    account_id: int | None = None
+    group_ids: list[int] | None = None
+
+
+@app.post("/api/replies/scan")
+def replies_scan(p: ReplyScan):
+    import replies
+    try:
+        return replies.start(p.account_id, p.group_ids)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class ReplyAct(BaseModel):
+    action: str  # approve | skip | junk | edit | retry
+    reply: str | None = None
+
+
+@app.put("/api/replies/{rid}")
+def replies_act(rid: int, p: ReplyAct):
+    import replies
+    try:
+        if p.action == "approve":
+            return replies.approve(rid, p.reply)
+        if p.action in ("skip", "junk"):
+            return replies.skip(rid, p.action == "junk")
+        if p.action == "retry":
+            return replies.retry(rid)
+        if p.action == "edit":
+            if not (p.reply or "").strip():
+                raise ValueError("Câu trả lời đang trống")
+            db.run("UPDATE reply_tasks SET reply=? WHERE id=? AND status IN ('draft','failed')", (p.reply.strip()[:600], rid))
+            return {"id": rid}
+        raise ValueError("Thao tác không hợp lệ")
+    except KeyError:
+        raise HTTPException(404, "Không tìm thấy câu trả lời")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/replies/approve-all")
+def replies_approve_all():
+    import replies
+    n, later = 0, 0
+    for r in db.q("SELECT id FROM reply_tasks WHERE status='draft' AND COALESCE(reply,'')<>'' ORDER BY id"):
+        try:
+            x = replies.approve(r["id"])
+            n += 1
+            later += 1 if x.get("later") else 0
+        except ValueError:
+            pass
+    return {"approved": n, "later": later}
+
+
+@app.post("/api/replies/relearn")
+def replies_relearn():
+    import post_care
+    return post_care.relearn("reply")
+
+
+@app.put("/api/replies-settings")
+def replies_settings(data: dict):
+    import replies
+    bad = [k for k in data if k not in REPLY_KEYS]
+    if bad:
+        raise HTTPException(400, "Không sửa được: " + ", ".join(bad))
+    for k, v in data.items():
+        v = str(v).strip()
+        if k == "replies_time" and not re.fullmatch(r"\d{1,2}:\d{2}", v):
+            raise HTTPException(400, "Giờ có dạng HH:MM")
+        if k == "replies_per_nick_day" and (not v.isdigit() or int(v) > 10):
+            raise HTTPException(400, "Mỗi nick tối đa 10 câu/ngày để không bị coi là spam")
+        if k in ("replies_groups_per_run", "replies_per_group") and not re.fullmatch(r"\d{1,2}", v):
+            raise HTTPException(400, "Giá trị phải là số")
+        if k == "replies_enabled" and v not in ("0", "1"):
+            raise HTTPException(400, "Giá trị 0 hoặc 1")
+        db.set_setting(k, v.zfill(5) if k == "replies_time" else v[:120])
+    db.log("bao", "Sếp chỉnh trả lời khách", ", ".join(f"{k}={v}" for k, v in data.items())[:300])
+    return replies.overview()
+
+
 # ------------------------------------------------------------------ luật Facebook
 FBP_KEYS = {"fbp_enabled", "fbp_posts_day", "fbp_gap_minutes", "fbp_bumps_day", "fbp_joins_day", "fbp_friends_day", "fbp_same_group_hours",
             "fbp_new_nick_days", "fbp_new_nick_factor", "fbp_rest_days", "fbp_after_days", "fbp_after_factor", "fbp_hashtags_max",

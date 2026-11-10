@@ -1383,6 +1383,131 @@ def _cmt_choose(page, btn, img) -> bool:
         return False
 
 
+def _send_comment(page, text: str, img=None):
+    """Gõ bình luận vào bài đang mở (kèm 1 ảnh nếu có), chờ ảnh tải xong, bấm gửi, kiểm tra ô soạn đã trống.
+    Dùng cho up bài (ảnh + câu) và trả lời khách (chỉ chữ). Lỗi thì raise RuntimeError có lý do."""
+    s = selectors()
+    box = None
+    end = time.time() + 15
+    while not box and time.time() < end:
+        # ô soạn thật (role=textbox) trước, rồi mới tới chữ mờ "Viết bình luận..." (chữ mờ biến mất khi gõ)
+        for lb in s["comment_box"]:
+            loc = page.get_by_role("textbox", name=re.compile(re.escape(lb), re.I))
+            try:
+                for i in range(min(loc.count(), 6)):
+                    if loc.nth(i).is_visible():
+                        box = loc.nth(i)
+                        break
+            except Exception:
+                pass
+            if box:
+                break
+        if not box:
+            box = _visible_first(page, s["comment_box"], role=None)
+        if not box:
+            page.mouse.wheel(0, 600)
+            page.wait_for_timeout(800)
+    if not box:
+        raise RuntimeError("Không tìm thấy ô bình luận. Thêm chữ hiển thị mới vào comment_box trong fb_selectors.json")
+    # ghim ô soạn thật và khung bình luận (form chứa ô tệp) để mọi thao tác sau chỉ làm trong đúng khung này:
+    # trên trang bài còn hộp đăng bài "Ảnh/video" và ô tệp khác, chọn nhầm là ảnh không vào bình luận
+    try:
+        scoped = box.evaluate(CMT_PIN_JS)
+    except Exception:
+        scoped = False
+    pin = page.locator("[data-mt-box]")
+    if pin.count():
+        box = pin.first
+    box.scroll_into_view_if_needed()
+    box.click()
+    _pause(page)
+    comp = page.locator("[data-mt-cmt]")
+    if text:
+        page.keyboard.insert_text(text)
+    base = _cmt_previews(page)
+    tried = []
+    ok = not img  # bình luận chỉ có chữ (trả lời khách): không cần ảnh
+    for how in (("form", "button", "page") if img else ()):
+        if how == "form":  # ô tệp ngay trong khung bình luận: đặt tệp thẳng vào, không cần bấm nút
+            inp = comp.locator('input[type="file"]') if scoped else None
+            if not inp or not inp.count():
+                continue
+            try:
+                inp.first.set_input_files(str(img))
+            except Exception as e:
+                tried.append(f"ô tệp trong khung: {str(e)[:60]}")
+                continue
+        elif how == "button":  # nút Đính kèm trong khung bình luận
+            btn = _visible_first(comp, s["comment_attach"]) if scoped and comp.count() else None
+            if not btn:
+                continue
+            if not _cmt_choose(page, btn, img):
+                tried.append("nút đính kèm không mở hộp chọn tệp")
+                continue
+        else:  # dự phòng: nút có chữ dành riêng cho bình luận trên cả trang (không dùng "Ảnh/video" của hộp đăng bài)
+            labels = [x for x in s["comment_attach"] if "đính kèm" in x.lower() or "attach" in x.lower()]
+            btn = _visible_first(page, labels)
+            if not btn or not _cmt_choose(page, btn, img):
+                tried.append("không thấy nút đính kèm của bình luận")
+                continue
+        end = time.time() + 30  # chờ ảnh hiện trong ô bình luận; không hiện thì không gửi (tránh up bài không ảnh)
+        while _cmt_previews(page) <= base and time.time() < end:
+            page.wait_for_timeout(700)
+        if _cmt_previews(page) > base:
+            ok = True
+            break
+        tried.append({"form": "đặt tệp vào ô trong khung", "button": "nút đính kèm trong khung",
+                      "page": "nút đính kèm trên trang"}[how] + ": không hiện ảnh")
+    if img and not ok:
+        raise RuntimeError("Đã chọn ảnh nhưng Facebook không hiện ảnh trong ô bình luận nên chưa gửi ("
+                           + ("; ".join(tried) or "không tìm thấy nút hoặc ô đính kèm ảnh") + "). Xem ảnh chụp lượt up này")
+    # ảnh thường mất 10–20 giây mới tải lên xong: chờ nút gửi (mũi tên) sáng lên, hết thanh tiến trình
+    labels = s.get("comment_send") or ["Bình luận", "Comment"]
+    t0, end = time.time(), time.time() + 90
+    st = _cmt_state(page, labels)
+    while time.time() < end:
+        st = _cmt_state(page, labels)
+        if st["send"] and st["enabled"] and not st["busy"] and time.time() - t0 > 2:
+            break
+        if not st["send"] and not st["busy"] and time.time() - t0 > 20:  # không thấy nút gửi: chờ đủ 20 giây
+            break
+        page.wait_for_timeout(1000)
+    if st["send"] and not st["enabled"]:
+        raise RuntimeError("Ảnh tải lên quá 90 giây chưa xong (nút gửi bình luận vẫn mờ) nên chưa gửi. Xem ảnh chụp lượt up này")
+    page.wait_for_timeout(1500)
+    sent_by = "Enter"
+    if st["send"]:
+        btn = None
+        zone = page.locator("[data-mt-cmt]").locator("xpath=ancestor::*[3]") if comp.count() else page
+        for lb in labels:
+            loc = zone.get_by_role("button", name=re.compile(r"^\s*" + re.escape(lb) + r"\s*$", re.I))
+            try:
+                if loc.count() and loc.first.is_visible():
+                    btn = loc.first
+                    break
+            except Exception:
+                pass
+        if btn:
+            btn.click()
+            sent_by = "nút gửi"
+    if sent_by == "Enter":
+        pin = page.locator("[data-mt-box]")
+        (pin.first if pin.count() else box).click()
+        page.keyboard.press("Enter")
+    # kiểm tra đã gửi: ô soạn trống lại (Facebook xóa chữ và ảnh sau khi gửi)
+    end = time.time() + 20
+    while time.time() < end and _cmt_state(page, labels)["text"] > 0:
+        page.wait_for_timeout(800)
+    if _cmt_state(page, labels)["text"] > 0:
+        pin = page.locator("[data-mt-box]")
+        if pin.count():
+            pin.first.click()
+            page.keyboard.press("Enter")
+            page.wait_for_timeout(6000)
+        if _cmt_state(page, labels)["text"] > 0:
+            raise RuntimeError(f"Đã bấm gửi ({sent_by}) nhưng bình luận chưa đi (chữ vẫn nằm trong ô). Xem ảnh chụp")
+
+
 def _do_bump(ctx, page, aid: int, bump_id: int):
     b = db.one("SELECT * FROM bumps WHERE id=?", (bump_id,))
     post = db.one("""SELECT p.*, g.url group_url, g.name group_name FROM posts p
@@ -1442,126 +1567,7 @@ def _do_bump(ctx, page, aid: int, bump_id: int):
             _bump_done(bump_id, "skipped", "Bài đã bị xóa hoặc ẩn, đã ngừng up bài này")
             db.log(agent, "Bài bị gỡ", f"Bài #{post['id']} ở {where} không còn hiển thị, ngừng up")
             return
-        box = None
-        end = time.time() + 15
-        while not box and time.time() < end:
-            # ô soạn thật (role=textbox) trước, rồi mới tới chữ mờ "Viết bình luận..." (chữ mờ biến mất khi gõ)
-            for lb in s["comment_box"]:
-                loc = page.get_by_role("textbox", name=re.compile(re.escape(lb), re.I))
-                try:
-                    for i in range(min(loc.count(), 6)):
-                        if loc.nth(i).is_visible():
-                            box = loc.nth(i)
-                            break
-                except Exception:
-                    pass
-                if box:
-                    break
-            if not box:
-                box = _visible_first(page, s["comment_box"], role=None)
-            if not box:
-                page.mouse.wheel(0, 600)
-                page.wait_for_timeout(800)
-        if not box:
-            raise RuntimeError("Không tìm thấy ô bình luận. Thêm chữ hiển thị mới vào comment_box trong fb_selectors.json")
-        # ghim ô soạn thật và khung bình luận (form chứa ô tệp) để mọi thao tác sau chỉ làm trong đúng khung này:
-        # trên trang bài còn hộp đăng bài "Ảnh/video" và ô tệp khác, chọn nhầm là ảnh không vào bình luận
-        try:
-            scoped = box.evaluate(CMT_PIN_JS)
-        except Exception:
-            scoped = False
-        pin = page.locator("[data-mt-box]")
-        if pin.count():
-            box = pin.first
-        box.scroll_into_view_if_needed()
-        box.click()
-        _pause(page)
-        comp = page.locator("[data-mt-cmt]")
-        text = (b.get("text") or "").strip()
-        if text:
-            page.keyboard.insert_text(text)
-        base = _cmt_previews(page)
-        tried = []
-        ok = False
-        for how in ("form", "button", "page"):
-            if how == "form":  # ô tệp ngay trong khung bình luận: đặt tệp thẳng vào, không cần bấm nút
-                inp = comp.locator('input[type="file"]') if scoped else None
-                if not inp or not inp.count():
-                    continue
-                try:
-                    inp.first.set_input_files(str(img))
-                except Exception as e:
-                    tried.append(f"ô tệp trong khung: {str(e)[:60]}")
-                    continue
-            elif how == "button":  # nút Đính kèm trong khung bình luận
-                btn = _visible_first(comp, s["comment_attach"]) if scoped and comp.count() else None
-                if not btn:
-                    continue
-                if not _cmt_choose(page, btn, img):
-                    tried.append("nút đính kèm không mở hộp chọn tệp")
-                    continue
-            else:  # dự phòng: nút có chữ dành riêng cho bình luận trên cả trang (không dùng "Ảnh/video" của hộp đăng bài)
-                labels = [x for x in s["comment_attach"] if "đính kèm" in x.lower() or "attach" in x.lower()]
-                btn = _visible_first(page, labels)
-                if not btn or not _cmt_choose(page, btn, img):
-                    tried.append("không thấy nút đính kèm của bình luận")
-                    continue
-            end = time.time() + 30  # chờ ảnh hiện trong ô bình luận; không hiện thì không gửi (tránh up bài không ảnh)
-            while _cmt_previews(page) <= base and time.time() < end:
-                page.wait_for_timeout(700)
-            if _cmt_previews(page) > base:
-                ok = True
-                break
-            tried.append({"form": "đặt tệp vào ô trong khung", "button": "nút đính kèm trong khung",
-                          "page": "nút đính kèm trên trang"}[how] + ": không hiện ảnh")
-        if not ok:
-            raise RuntimeError("Đã chọn ảnh nhưng Facebook không hiện ảnh trong ô bình luận nên chưa gửi ("
-                               + ("; ".join(tried) or "không tìm thấy nút hoặc ô đính kèm ảnh") + "). Xem ảnh chụp lượt up này")
-        # ảnh thường mất 10–20 giây mới tải lên xong: chờ nút gửi (mũi tên) sáng lên, hết thanh tiến trình
-        labels = s.get("comment_send") or ["Bình luận", "Comment"]
-        t0, end = time.time(), time.time() + 90
-        st = _cmt_state(page, labels)
-        while time.time() < end:
-            st = _cmt_state(page, labels)
-            if st["send"] and st["enabled"] and not st["busy"] and time.time() - t0 > 2:
-                break
-            if not st["send"] and not st["busy"] and time.time() - t0 > 20:  # không thấy nút gửi: chờ đủ 20 giây
-                break
-            page.wait_for_timeout(1000)
-        if st["send"] and not st["enabled"]:
-            raise RuntimeError("Ảnh tải lên quá 90 giây chưa xong (nút gửi bình luận vẫn mờ) nên chưa gửi. Xem ảnh chụp lượt up này")
-        page.wait_for_timeout(1500)
-        sent_by = "Enter"
-        if st["send"]:
-            btn = None
-            zone = page.locator("[data-mt-cmt]").locator("xpath=ancestor::*[3]") if comp.count() else page
-            for lb in labels:
-                loc = zone.get_by_role("button", name=re.compile(r"^\s*" + re.escape(lb) + r"\s*$", re.I))
-                try:
-                    if loc.count() and loc.first.is_visible():
-                        btn = loc.first
-                        break
-                except Exception:
-                    pass
-            if btn:
-                btn.click()
-                sent_by = "nút gửi"
-        if sent_by == "Enter":
-            pin = page.locator("[data-mt-box]")
-            (pin.first if pin.count() else box).click()
-            page.keyboard.press("Enter")
-        # kiểm tra đã gửi: ô soạn trống lại (Facebook xóa chữ và ảnh sau khi gửi)
-        end = time.time() + 20
-        while time.time() < end and _cmt_state(page, labels)["text"] > 0:
-            page.wait_for_timeout(800)
-        if _cmt_state(page, labels)["text"] > 0:
-            pin = page.locator("[data-mt-box]")
-            if pin.count():
-                pin.first.click()
-                page.keyboard.press("Enter")
-                page.wait_for_timeout(6000)
-            if _cmt_state(page, labels)["text"] > 0:
-                raise RuntimeError(f"Đã bấm gửi ({sent_by}) nhưng bình luận chưa đi (chữ vẫn nằm trong ô). Xem ảnh chụp lượt up này")
+        _send_comment(page, (b.get("text") or "").strip(), img)
         page.wait_for_timeout(5000)
         _check_blocked(page)
         page.screenshot(path=str(shot))
@@ -1618,7 +1624,12 @@ def due_work(aid: int, stamp: str | None = None) -> dict:
     links = [r["id"] for r in db.q("""SELECT id FROM posts WHERE account_id=? AND status='posted'
                                       AND COALESCE(permalink_status,'') IN ('not_found','pending','')
                                       AND link_next_at IS NOT NULL AND link_next_at <= ? ORDER BY link_next_at LIMIT 6""", (aid, stamp))]
-    return {"posts": posts, "bumps": bumps, "scan": list(_scan_pending.get(aid, [])), "links": links}
+    try:
+        import replies
+        rep = replies.due(aid)
+    except Exception:
+        rep = []
+    return {"posts": posts, "bumps": bumps, "scan": list(_scan_pending.get(aid, [])), "links": links, "replies": rep}
 
 
 def _job_session(pw, aid: int):
@@ -1632,7 +1643,7 @@ def _job_session(pw, aid: int):
     db.run("UPDATE sales SET last_account_id=? WHERE id=?", (aid, acc["sale_id"]))
     workflows.set_status(agent, "working", f"Chuyển sang nick {accounts.label(acc)}")
     ctx, page = _open(pw, aid)
-    done = {"posts": 0, "bumps": 0, "scan": 0, "links": 0}
+    done = {"posts": 0, "bumps": 0, "scan": 0, "links": 0, "replies": 0}
     try:
         for pid in work["posts"]:
             _do_post(ctx, page, aid, pid, False)
@@ -1651,11 +1662,17 @@ def _job_session(pw, aid: int):
             _do_bump(ctx, page, aid, bid)
             done["bumps"] += 1
             _pause(page, 15, 40)
+        for rid in work.get("replies", []):  # câu trả lời khách sếp đã duyệt, tới giờ gửi
+            import replies
+            replies.send(page, aid, rid)
+            done["replies"] += 1
+            _pause(page, 15, 40)
         if work["scan"]:
             _do_scan(ctx, page, aid, work["scan"])
             done["scan"] = len(work["scan"])
         db.log(agent, "Xong ca trên nick", f"Nick {accounts.label(acc)}: đăng {done['posts']} bài, up {done['bumps']} lượt, "
-               f"quét {done['scan']} bài" + (f", lấy link {done['links']} bài" if done["links"] else ""))
+               f"quét {done['scan']} bài" + (f", lấy link {done['links']} bài" if done["links"] else "")
+               + (f", trả lời {done['replies']} khách" if done["replies"] else ""))
     except Blocked:
         pass  # _block đã dừng riêng nick này; việc còn lại của nick đã trả về hàng đợi
     finally:
@@ -1718,7 +1735,8 @@ def _fail(page, post_id: int, msg: str, dry_run: bool):
 JOB_NAME = {"open": "mở Chrome", "check": "kiểm tra phiên", "post": "đăng bài", "bump": "up bài", "scan": "quét bình luận",
             "discover": "tìm nhóm mới", "join": "xin vào nhóm", "session": "làm ca trên nick",
             "prospect": "mở trang tìm khách sỉ cho Mai", "mygroups": "rà soát nhóm của nick", "link": "lấy link bài đã đăng",
-            "friends": "đọc nhóm tìm người kết bạn"}
+            "friends": "đọc nhóm tìm người kết bạn", "replyscan": "đọc nhóm tìm người hỏi mua",
+            "reply": "trả lời khách trong nhóm"}
 
 
 def _worker(sale_id: int, q: Queue):
@@ -1764,6 +1782,16 @@ def _worker(sale_id: int, q: Queue):
                 elif k == "friends":
                     import friends
                     friends.job(pw, aid, job.get("group_ids"), job.get("notify"))
+                elif k == "replyscan":
+                    import replies
+                    replies.job(pw, aid, job.get("group_ids"), job.get("notify"))
+                elif k == "reply":
+                    import replies
+                    ctx, page = _open(pw, aid)
+                    try:
+                        replies.send(page, aid, job["reply_id"])
+                    finally:
+                        ctx.close()
                 elif k == "prospect":
                     import prospect
                     prospect.job(pw, aid, job.get("plan"), job.get("urls"), job.get("notify"))

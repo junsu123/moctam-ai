@@ -79,6 +79,8 @@ def _tick():
         threading.Thread(target=fb_policy.check_sources, daemon=True).start()
     import friends
     friends.tick(now)  # Tuấn tìm người đáng kết bạn trong nhóm sôi nổi (sale tự bấm gửi)
+    import replies
+    replies.tick(now)  # Bảo tìm bài đang hỏi mua, viết sẵn câu trả lời chờ sếp duyệt
     import website
     website.tick(now)  # Vy viết bài website theo lịch
     # KPI: chuyển khách cần sếp, nhắc lại; báo cáo Telegram

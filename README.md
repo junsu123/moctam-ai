@@ -321,6 +321,31 @@ Mục **Kết bạn** (nhóm Facebook ở thanh bên).
   Hết trần thì nút Mở hồ sơ khóa tới hôm sau. Tỷ lệ đồng ý dưới 30% là dấu hiệu mời nhầm người: giảm lời mời, chọn kỹ hơn.
 - Đọc bảng tin xong, Tuấn cập nhật luôn chỉ số tương tác của nhóm (khi đọc được đủ bài).
 
+## Bảo trả lời khách hỏi mua trong nhóm (sếp duyệt, nick gửi)
+
+Mục **Trả lời khách** (nhóm Facebook ở thanh bên). Ngoài đăng bài, Bảo tìm những người **đang hỏi mua / hỏi nguồn hàng** trong
+các nhóm sôi nổi để nick vào trả lời đúng lúc họ cần hàng.
+
+- **Giao việc**: nhắn CEO, ví dụ “điều nhân viên đi comment vào các bài ở hội nhóm tương tác cao”, “trả lời khách trong nhóm”,
+  hoặc bấm **Bảo tìm bài ngay**. Mỗi ngày Bảo tự làm một lượt (mặc định 09:20, sửa trong cài đặt).
+- **Tìm bài**: nick ít việc nhất mở bảng tin 3 nhóm sôi nổi nhất mà nick đang ở (xếp theo điểm sôi nổi như mục Kết bạn), cuộn đọc,
+  chỉ đọc. Bảo chỉ giữ bài gốc (không phải bình luận) mà người đăng đang hỏi mua / tìm nguồn / tìm xưởng **hợp ngành** (trà,
+  ngũ cốc, cà phê, bột…). Bỏ bài người bán khác, bài không hỏi mua, bài ngoài ngành, bài của chính các nick, người sếp đã loại.
+  Tối đa 4 bài mỗi nhóm, một bài chỉ trả lời một lần.
+- **Viết câu trả lời**: Claude đọc nội dung bài và viết một câu 15–35 chữ trả lời đúng điều người đó hỏi (gợi ý gửi mẫu, báo giá),
+  không ghi số điện thoại, không hứa chữa bệnh; Bảo tự gắn dòng liên hệ (mặc định dòng của Up bài, đổi riêng được). Cùng lượt gọi,
+  Claude chấm điểm câu Bảo tự viết. Bảo lưu mẫu và lên tay nghề riêng cho việc trả lời khách (Học việc → Thạo việc → Giỏi → Master),
+  tới **Master thì tự viết, không gọi Claude nữa**. Câu sếp sửa khi duyệt cũng được lưu làm mẫu. Không có khóa Claude thì Bảo tự viết.
+- **Sếp duyệt**: mỗi bài hiện câu khách hỏi và câu trả lời (sửa được). **Duyệt và gửi**, **Bỏ qua**, **Không hợp** (người bán khác,
+  Mai ghi nhớ là data rác), hoặc **Duyệt tất cả**. Câu phạm luật Facebook (hứa chữa bệnh, giảm cân, link rút gọn…) không duyệt được.
+- **Nick gửi**: câu đã duyệt được xếp giờ trong **giờ làm của nick**, cách câu trước **45–90 phút**, tối đa **5 câu/nick/ngày** (sửa
+  được, trần 10; nick mới hoặc vừa bị chặn còn một nửa). Hết lượt thì dời sang sáng mai. Tới giờ, ca làm việc của sale mở bài, gõ câu
+  vào ô bình luận (chỉ chữ, không ảnh), bấm gửi, kiểm tra đã gửi và chụp ảnh. Lúc gửi kiểm lại giờ làm, trần và giãn cách; nick đang
+  nghỉ sau sự cố thì không gửi; bài đã bị xóa thì bỏ qua.
+- **Vì sao không chạy 24/24, không bình luận dạo**: bình luận quảng cáo vào bài không hỏi mua, cùng một câu ở nhiều bài, bình luận
+  liên tục cả ngày lẫn đêm là spam theo luật Facebook (mục Luật Facebook → “Bình luận vào bài người khác”): nhóm xóa bình luận, chặn
+  thành viên, Facebook khóa tính năng bình luận rồi khóa nick. Phần mềm cũng không dùng mẹo né bộ lọc spam của Facebook.
+
 ## Nhóm có sẵn trong nick: đăng ở đâu, thoát nhóm nào, chăm sóc nhóm mình quản lý
 
 Mục **Hội nhóm → Nhóm trong các nick**.

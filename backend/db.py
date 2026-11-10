@@ -271,6 +271,12 @@ CREATE TABLE IF NOT EXISTS site_keywords (
 CREATE TABLE IF NOT EXISTS comment_samples (
   id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, template TEXT, product TEXT, source TEXT, score INTEGER, created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS reply_tasks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, group_id INTEGER, post_url TEXT UNIQUE, author TEXT, author_url TEXT,
+  post_text TEXT, reply TEXT, source TEXT, status TEXT DEFAULT 'draft', scheduled_for TEXT, sent_at TEXT, error TEXT, shot TEXT,
+  created_at TEXT, decided_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_reply_status ON reply_tasks(account_id, status, scheduled_for);
 CREATE TABLE IF NOT EXISTS friend_suggestions (
   id INTEGER PRIMARY KEY AUTOINCREMENT, account_id INTEGER, group_id INTEGER, name TEXT, profile_url TEXT, reason TEXT,
   score INTEGER DEFAULT 0, snippet TEXT, status TEXT DEFAULT 'suggested', created_at TEXT, opened_at TEXT, sent_at TEXT,
@@ -471,6 +477,9 @@ DEFAULT_SETTINGS = {
     # Gợi ý kết bạn: Tuấn tìm người trong nhóm sôi nổi, sale tự bấm Thêm bạn bè
     "friends_enabled": "1", "friends_time": "10:40", "friends_groups_per_run": "2", "friends_per_group": "12",
     "friends_last": "", "fbp_friends_day": "10",
+    # Bảo trả lời khách: tìm bài hỏi mua trong nhóm sôi nổi, sếp duyệt, nick gửi trong giờ làm (có trần, giãn cách)
+    "replies_enabled": "1", "replies_time": "09:20", "replies_per_nick_day": "5", "replies_groups_per_run": "3",
+    "replies_per_group": "4", "replies_last": "", "reply_contact": "",
     "fbp_enabled": "1", "fbp_posts_day": "6", "fbp_gap_minutes": "30", "fbp_bumps_day": "6", "fbp_joins_day": "2",
     "fbp_same_group_hours": "24", "fbp_new_nick_days": "14", "fbp_new_nick_factor": "0.5", "fbp_rest_days": "3",
     "fbp_after_days": "7", "fbp_after_factor": "0.5", "fbp_hashtags_max": "5", "fbp_caption_max": "2500",

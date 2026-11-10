@@ -470,6 +470,23 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:
 .fr-set{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:10px;margin-top:10px}
 @media (max-width:980px){.fr-grid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:760px){.pr-stats.fr-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.fr-item{grid-template-columns:32px minmax(0,1fr)}.fr-ava{width:32px;height:32px;font-size:13px;grid-row:1/3}.fr-item .snip,.fr-item .acts{grid-column:1/-1}.fr-item .why{grid-column:2/3}}
+.rp-item{display:grid;grid-template-columns:38px minmax(0,1fr);gap:6px 12px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel)}
+.rp-item.draft{box-shadow:inset 3px 0 0 var(--honey)}.rp-item.failed{box-shadow:inset 3px 0 0 var(--danger)}
+.rp-item .who{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;min-width:0}.rp-item .who a{font-weight:700}
+.rp-q{grid-column:2/3;margin:0;font-size:13px;background:var(--bg);border-radius:8px;padding:7px 10px;overflow-wrap:anywhere}
+.rp-q b{display:block;font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:2px}
+.rp-a{grid-column:2/3;display:flex;flex-direction:column;gap:4px}
+.rp-a textarea{width:100%;min-height:88px;resize:vertical;font:inherit;font-size:13.5px}
+.rp-a .said{margin:0;font-size:13.5px;border-left:3px solid var(--accent);padding:4px 10px;overflow-wrap:anywhere}
+.rp-item .acts{grid-column:2/3;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.rp-item .meta{font-size:12px;color:var(--muted)}
+.rp-skill{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.rp-skill .rp-lv{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rp-skill .rp-lv b{font:800 18px var(--f-display)}
+.rp-samples{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.rp-samples li{border:1px solid var(--line);border-radius:8px;padding:6px 9px;display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.rp-samples li span{overflow-wrap:anywhere;min-width:0}
+@media (max-width:760px){.rp-item{grid-template-columns:32px minmax(0,1fr)}.rp-q,.rp-a,.rp-item .acts{grid-column:1/-1}}
 @media (max-width:760px){
   .ws-table{min-width:0}.ws-table thead{display:none}
   .ws-table tbody tr.ws-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 8px;padding:10px 12px;border-bottom:1px solid var(--line)}
@@ -939,6 +956,7 @@ label.f{font-weight:600;color:var(--muted)}
       <button data-v="sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M8 9.5l2.5 2.5L16 7"/></svg>Nhân viên sale<span class="badge" id="saleBadge" hidden>!</span></button>
       <button data-v="groups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 2 6 5.5"/></svg>Hội nhóm</button>
       <button data-v="friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5M18.5 8v6M15.5 11h6"/></svg>Kết bạn<span class="badge" id="frBadge" hidden></span></button>
+      <button data-v="replies"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v10H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>Trả lời khách<span class="badge" id="rpBadge" hidden></span></button>
       <button data-v="fbrules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Luật Facebook<span class="badge" id="fbpBadge" hidden></span></button>
       <span class="nav-g">Kho tri thức</span>
       <button data-v="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8l8-4 8 4v9l-8 4-8-4zM4 8l8 4 8-4M12 12v9"/></svg>Sản phẩm</button>
@@ -1164,6 +1182,25 @@ label.f{font-weight:600;color:var(--muted)}
         <div class="fr-list" id="frList"><p class="muted small">Đang tải…</p></div>
       </section>
       <details class="card" id="frSet" style="margin-top:12px"><summary><b>Cài đặt gợi ý kết bạn</b></summary><form id="frSetF"></form></details>
+    </section>
+
+    <section class="view" id="v-replies" hidden>
+      <div class="vh"><div><h1>Trả lời khách hỏi mua</h1><p>Bảo đọc bảng tin các nhóm sôi nổi nhất mà nick đang ở, chọn bài người đăng đang <b>hỏi mua, hỏi nguồn hàng</b> trà, ngũ cốc, cà phê, bột và viết sẵn câu trả lời đúng điều họ hỏi. Sếp duyệt (sửa được), nick ở nhóm đó gửi trong giờ làm.</p></div>
+        <div class="row wrap"><button class="btn" type="button" id="rpAll">Duyệt tất cả</button><button class="btn primary" type="button" id="rpRun">Bảo tìm bài ngay</button></div></div>
+      <p class="fr-note"><b>Không bình luận dạo, không chạy 24/24.</b> Bình luận quảng cáo vào bài không hỏi mua, cùng một câu ở nhiều bài, hoặc bình luận suốt đêm là spam theo luật Facebook: nhóm xóa bình luận, chặn thành viên, Facebook khóa tính năng bình luận rồi khóa nick. Bảo chỉ trả lời người đang cần hàng, mỗi nick vài câu mỗi ngày, cách nhau 45–90 phút, trong giờ làm của nick. Câu sếp sửa được lưu làm mẫu cho Bảo học.</p>
+      <div class="pr-stats fr-stats" id="rpStats"></div>
+      <div class="fr-grid">
+        <section class="card"><div class="card-h"><div><h3>Câu trả lời hôm nay</h3><p class="small muted" style="margin:2px 0 0">Trần mỗi nick một ngày; nick mới hoặc vừa bị chặn còn một nửa. Hết lượt thì câu đã duyệt dời sang sáng mai.</p></div></div>
+          <ul class="fr-nicks" id="rpNicks"><li class="muted small">Đang tải…</li></ul></section>
+        <section class="card"><div class="card-h"><div><h3>Tay nghề Bảo: trả lời khách</h3><p class="small muted" style="margin:2px 0 0">Claude viết mẫu và chấm câu Bảo tự viết. Lên Master thì Bảo tự viết, không gọi Claude nữa.</p></div></div>
+          <div class="rp-skill" id="rpSkill"><p class="muted small">Đang tải…</p></div></section>
+      </div>
+      <section class="card">
+        <div class="card-h"><h3>Bài đang hỏi mua</h3>
+          <div class="fr-filters"><select id="rpSt" aria-label="Trạng thái"><option value="">Cần xử lý</option><option value="approved">Đã duyệt, chờ gửi</option><option value="sent">Đã gửi</option><option value="failed">Gửi lỗi</option><option value="skipped">Bỏ qua</option></select></div></div>
+        <div class="fr-list" id="rpList"><p class="muted small">Đang tải…</p></div>
+      </section>
+      <details class="card" style="margin-top:12px"><summary><b>Cài đặt trả lời khách</b></summary><form id="rpSetF"></form></details>
     </section>
 
     <!-- KHÁCH HÀNG -->
@@ -1803,6 +1840,7 @@ const Demo = (() => {
     S.tg={mode:"prefer",include:["nguồn hàng"],exclude:["quần áo"]};
     [[900,8,30,300],[240,3,12,60],[1200,10,40,500],[420,6,22,120],[600,4,18,200]].forEach(([pm,ac,ar,nw],i)=>{ const g=S.groups[i]; if(g) Object.assign(g,{posts_month:pm,avg_comments:ac,avg_reactions:ar,new_members_week:nw,focus:i===2?1:0}); });
     S.fr={settings:{friends_enabled:"1",friends_time:"10:40",friends_groups_per_run:"2",friends_per_group:"12",fbp_friends_day:"10"},items:[]};
+    S.rp={settings:{replies_enabled:"1",replies_time:"09:20",replies_per_nick_day:"5",replies_groups_per_run:"3",replies_per_group:"4",reply_contact:""},items:[],samples:[]};
   }
   function demoArticle(kw){ const K=kw[0].toUpperCase()+kw.slice(1), P=S.products.slice(0,3);
     const body=`${K} là lựa chọn của nhiều người bán hàng online và chủ thương hiệu muốn có sản phẩm riêng mà không phải tự đầu tư nhà xưởng. Bài viết chia sẻ kinh nghiệm thực tế của nhà máy MỘC TÂM.\n\n## ${K} là gì và phù hợp với ai?\n\nBạn đặt nhà máy sản xuất theo công thức, quy cách và bao bì mang thương hiệu của bạn.\n\n- Người bán hàng online muốn có sản phẩm riêng\n- Chủ shop, đại lý, nhà phân phối\n- Người mới bắt đầu kinh doanh\n\n## Quy trình làm việc với nhà máy\n\n1. Trao đổi nhu cầu\n2. Chọn công thức, làm mẫu thử\n3. Thiết kế bao bì\n4. Hồ sơ công bố\n5. Sản xuất và giao hàng\n\n## Tiêu chuẩn nhà máy cần có\n\nNhà máy MỘC TÂM sản xuất theo tiêu chuẩn GMP – ISO – FDA – VSATTP, hơn 100 mã sản phẩm.\n\n## Gợi ý sản phẩm để bắt đầu\n\nBạn có thể bắt đầu từ ${P.map(p=>`[${p.name}](/san-pham/)`).join(", ")}. Xem thêm [gia công trọn gói](/gia-cong/).\n\n## Vì sao chọn MỘC TÂM\n\nNhận sỉ toàn quốc, gia công thương hiệu riêng, thiết kế bao bì. Liên hệ [trang liên hệ](/lien-he/) hoặc Zalo 0386992326.`;
@@ -2060,6 +2098,8 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       return ["Dạ em nhận việc.",`Có ${found.length} nhóm có từ khóa ${kw}, hôm nay đăng được ${rd.length} nhóm. Em giao đăng ${want} nhóm. ${ap<want?`Lan viết thêm ${want-ap} bài, em đã duyệt. `:""}Tuấn xếp ${pl.length} bài: ${pl.map(x=>`${x.time.slice(11)} ${x.sale?x.sale+" → ":""}${x.group}`).join("; ")}.`]; }
     if(/(rà soát|comment|bình luận|cmt|up)\s*(lại\s*)?(vào\s*|cho\s*)?(các\s*|những\s*|mấy\s*)?(bài|post)\s*(viết\s*)?(đã|vừa)\s*đăng|\bup (lại )?(các |những )?bài\b/.test(low)){ const n=demoBumpPlan(); const ex=demoBumpLines(1)[0];
       return ["Dạ em nhận việc.",`Bảo rà soát bài đã đăng và xếp ${n} lượt bình luận ảnh, mỗi bài một câu riêng kèm “${S.settings.bump_contact}”. Sale bắt đầu trong vài phút. VD: “${ex}”`]; }
+    if(/(comment|bình luận|cmt|trả lời|rep)\b.{0,60}(nhóm|group|hội|người hỏi|bài hỏi|hỏi mua)|tìm (bài|người) hỏi (mua|nguồn|hàng)/.test(low)){ const r=demoRp("POST","/replies/scan","",{}); const q=rpQuota(r.account_id);
+      return ["Dạ em nhận việc.",`Nick ${r.account} đi đọc các nhóm sôi nổi nhất, Bảo chọn bài đang HỎI MUA / hỏi nguồn hàng hợp ngành và viết sẵn câu trả lời. Sếp duyệt ở trang Trả lời khách, duyệt xong nick gửi trong giờ làm, mỗi nick tối đa ${q.limit} câu/ngày, cách nhau 45–90 phút.${/24\/24|24\/7|cả đêm|liên tục/.test(low)?" Em không cho chạy 24/24 và không bình luận dạo: Facebook coi là spam, nhóm xóa bình luận và khóa nick.":""}`]; }
     if((m=low.match(/viết\s*(\d+)?\s*bài/))){ const n=+(m[1]||3); S.status.lan={state:"working",text:`Đang viết ${n} bài`}; setTimeout(()=>{ genPosts(n,null,"group"); S.status.lan={state:"idle",text:`Vừa viết xong ${n} bài`}; },5000); return ["Dạ em nhận việc.",`Giao Lan viết ${n} bài đăng nhóm (CEO sẽ duyệt rồi cho Tuấn xếp lịch)`]; }
     if(/xếp lịch|lên lịch/.test(low)){ const pl=plan(); return ["Dạ em nhận việc.",`Giao Tuấn xếp lịch: ${pl.length} bài đã có giờ đăng`]; }
     if(/(tìm|kiếm|săn)\b.{0,30}?(nhóm|group|cộng đồng)/.test(low)){ setTimeout(()=>S.chat.push({id:id(),role:"ceo",text:`Linh tìm xong theo “${S.gf.today.join("”, “")}”: 2 nhóm mới, em đã thêm 1 nhóm tốt vào danh sách Hội nhóm: Kinh Doanh Online Tại Nhà. Đã vào 1 nhóm, đang chờ duyệt 0 nhóm.`,via:"web",created_at:now()}),10000); const kws=(t.match(/[“"']([^”"']{3,60})[”"']/g)||[]).map(x=>x.slice(1,-1)); if(kws.length){ S.gf.today=kws; S.gf.by="boss"; } return ["Dạ em nhận việc.",`Giao sale Linh lướt Facebook rồi tìm nhóm: ${S.gf.today.join(", ")}`]; }
@@ -2191,6 +2231,48 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     else { const used=new Set(), op=[...BUMP_OPEN].sort(()=>Math.random()-.5); while(out.length<n&&used.size<60){ const pr=S.products[Math.floor(Math.random()*S.products.length)]; let wd=(pr?pr.name:"trà, ngũ cốc").replace(/\s*[\(\[].*?[\)\]]/g,"").split(/\s[-–|/]\s|[,;:]/)[0].trim().split(/\s+/).slice(0,7); while(wd.length>2&&/^(\d+\S*|loại|vị|gói|túi)$/i.test(wd[wd.length-1])) wd.pop(); const p=wd.join(" ").toLowerCase();
       let l=op[(out.length+used.size)%op.length].replace("{p}",p); l=l[0].toUpperCase()+l.slice(1)+BUMP_TAIL[Math.floor(Math.random()*BUMP_TAIL.length)]; if(used.has(l)) continue; used.add(l); out.push(l); } }
     return out.map(l=>{ if(!l||!c) return l||c; l=l.replace(/[ .]+$/,""); return `${l}${/[\p{L}\p{N}]$/u.test(l)?".":""} 👉 ${c}`; }); }
+  const RP_DEMO=[["Ngọc Ánh","Mình đang tìm nguồn trà gừng mật ong túi lọc giá sỉ để bán online, ai có xưởng giới thiệu mình với ạ","trà gừng mật ong túi lọc"],
+    ["Lê Minh Tâm","Cần tìm xưởng gia công ngũ cốc dinh dưỡng làm thương hiệu riêng, số lượng 500 hộp, ai nhận báo giá giúp mình","ngũ cốc dinh dưỡng"],
+    ["Shop Mẹ Sóc","Có ai biết chỗ lấy sỉ trà hoa đậu biếc với cà phê rang xay không ạ, mình mới mở shop online","trà hoa đậu biếc"],
+    ["Hoàng Yến","Xin nguồn bột cacao, bột matcha giá sỉ cho quán nhỏ, ship về Đà Nẵng","bột matcha"],
+    ["Trần Bảo Ngọc","Mọi người ơi tìm nhà cung cấp trà túi lọc thảo mộc để làm quà tặng doanh nghiệp, cần hóa đơn đỏ","trà túi lọc thảo mộc"]];
+  const RP_OPEN=["Chào bạn, bên mình là xưởng sản xuất {p}, có giá sỉ cho shop mới","Bạn tham khảo {p} bên mình nhé, hàng làm trực tiếp tại nhà máy","Xưởng mình có {p}, nhận in nhãn riêng nếu bạn muốn làm thương hiệu"],
+        RP_TAIL=["gửi mẫu thử được nha","mình gửi bạn catalog và bảng giá nhé","bạn cần số lượng bao nhiêu để mình báo giá"];
+  const rpContact=()=>S.rp.settings.reply_contact||S.settings.bump_contact||"";
+  const rpQuota=aid=>{ const lim=Math.floor(+S.rp.settings.replies_per_nick_day*(aid===12?0.5:1)); const d=today(); const used=S.rp.items.filter(x=>x.account_id===aid&&((x.sent_at||"").slice(0,10)===d||(x.status==="approved"&&(x.scheduled_for||"").slice(0,10)===d))).length; return {limit:lim,used,left:Math.max(0,lim-used)}; };
+  const rpAdd=(aid,gid,n)=>{ const g=S.groups.find(x=>x.id===gid)||S.groups[0], nick=S.accounts.find(a=>a.id===aid); let k=0;
+    for(const [who,txt,pr] of RP_DEMO){ if(k>=n) break; const url=`https://facebook.com/groups/${g.id}/posts/${(who.length*977+g.id)%100000}`; if(S.rp.items.some(x=>x.post_url===url)) continue;
+      const line=RP_OPEN[(k+g.id)%3].replace("{p}",pr)+", "+RP_TAIL[(k+aid)%3]; S.rp.items.push({id:id(),account_id:aid,group_id:g.id,group_name:g.name,nick:nick.name,author:who,author_url:"",post_url:url,post_text:txt,reply:line+". 👉 "+rpContact(),source:k%2?"claude":"bao",status:"draft",created_at:now()}); k++; } return k; };
+  const rpSlot=aid=>{ if(!rpQuota(aid).left) return null; const last=S.rp.items.filter(x=>x.account_id===aid&&["approved","sent"].includes(x.status)).map(x=>x.sent_at||x.scheduled_for).filter(t=>t&&t.slice(0,10)===today()).sort().pop();
+    let t=new Date(Date.now()+120000); if(last){ const l=new Date(last.replace(" ","T")); l.setMinutes(l.getMinutes()+45+Math.floor(Math.random()*45)); if(l>t) t=l; } if(t.getHours()>=22) return null; const p=n=>String(n).padStart(2,"0"); return `${t.getFullYear()}-${p(t.getMonth()+1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`; };
+  function demoRp(method,P,qs,body){ let m; const q=new URLSearchParams(qs||"");
+    if(!S.rp.seeded){ S.rp.seeded=1; const nk=S.accounts.filter(a=>a.enabled&&a.login_status==="ok"); if(nk[0]&&S.groups[0]) rpAdd(nk[0].id,S.groups[0].id,3);
+      const x=S.rp.items[2]; if(x){ x.status="sent"; x.sent_at=now(); }
+      S.rp.samples=[["Chào bạn, bên mình là xưởng trà gừng túi lọc, có giá sỉ cho shop mới, gửi mẫu thử được nha","claude",null],["Bạn cần bao nhiêu hộp ngũ cốc để mình báo giá gia công nhãn riêng nhé","claude",null],["Xưởng mình có trà hoa đậu biếc, giao toàn quốc, mình gửi catalog nhé","bao",8]].map((s,i)=>({id:i+1,text:s[0],source:s[1],score:s[2],created_at:now()})); }
+    if(P==="/replies"&&method==="GET"){ const st=q.get("status")||""; const ord={draft:0,failed:1};
+      const items=S.rp.items.filter(x=>st?x.status===st:["draft","approved","failed"].includes(x.status)).sort((a,b)=>(ord[a.status]??2)-(ord[b.status]??2)||b.id-a.id);
+      const all=S.rp.items, nicks=S.accounts.filter(a=>a.enabled&&a.login_status==="ok").map(a=>({id:a.id,name:a.name,...rpQuota(a.id)}));
+      const n=S.rp.samples.filter(x=>x.source==="claude").length, gr=S.rp.samples.filter(x=>x.source==="bao");
+      return {items,nicks,contact:rpContact(),samples:S.rp.samples.slice().reverse(),settings:{...S.rp.settings},
+        stats:{draft:all.filter(x=>x.status==="draft").length,approved:all.filter(x=>x.status==="approved").length,sent:all.filter(x=>x.status==="sent").length,today:all.filter(x=>(x.sent_at||"").slice(0,10)===today()).length},
+        skill:{level:0,name:"Học việc",master:false,samples:n,graded:gr.length,pass_rate:gr.length?Math.round(gr.filter(x=>x.score>=8).length*100/gr.length):0,avg:null,next:{name:"Thạo việc",samples:20,pass_rate:60,graded:10},calls:S.rp.calls||1,saved:0}}; }
+    if(P==="/replies/scan"){ const nk=S.accounts.filter(a=>a.enabled&&a.login_status==="ok"&&(!body.account_id||a.id===body.account_id)); if(!nk.length) throw new Error("Chưa có nick nào đăng nhập và đang làm việc để mở nhóm");
+      const a=nk[0], gs=S.groups.slice(0,+S.rp.settings.replies_groups_per_run); S.status.bao={state:"working",text:"Tìm người đang hỏi mua trong nhóm sôi nổi"};
+      setTimeout(()=>{ const n=gs.reduce((s,g)=>s+rpAdd(a.id,g.id,2),0); S.rp.calls=(S.rp.calls||1)+1; S.status.bao={state:"idle",text:"Chờ sếp duyệt câu trả lời khách"};
+        log("bao","Tìm bài hỏi mua",`Bảo đọc ${gs.length} nhóm sôi nổi trên nick ${a.name}: ${n} bài đang hỏi mua hợp ngành, đã viết sẵn câu trả lời. Sếp duyệt ở trang Trả lời khách, duyệt xong nick gửi trong giờ làm.`); },3000);
+      return {account:a.name,account_id:a.id}; }
+    const approve=(r,txt)=>{ const t=(txt!=null?txt:r.reply||"").trim(); if(!t) throw new Error("Câu trả lời đang trống");
+      if(/chữa|trị bệnh|giảm cân|tiểu đường|thay thuốc/i.test(t)) throw new Error("Câu trả lời phạm luật Facebook: hứa công dụng chữa bệnh, giảm cân (thực phẩm không được quảng cáo như thuốc)");
+      if(txt!=null&&txt.trim()!==r.reply) S.rp.samples.push({id:id(),text:t.replace(/\s*👉.*$/,""),source:"claude",score:null,created_at:now()});
+      const sl=rpSlot(r.account_id); const tm=new Date(Date.now()+86400000); const p=n=>String(n).padStart(2,"0");
+      r.reply=t; r.status="approved"; r.error=null; r.scheduled_for=sl||`${tm.getFullYear()}-${p(tm.getMonth()+1)}-${p(tm.getDate())} 09:${p(10+Math.floor(Math.random()*40))}`; return {id:r.id,status:"approved",scheduled_for:sl,later:!sl}; };
+    if((m=P.match(/^\/replies\/(\d+)$/))){ const r=S.rp.items.find(x=>x.id==m[1]); if(!r) throw new Error("Không tìm thấy câu trả lời");
+      if(body.action==="approve") return approve(r,body.reply);
+      if(body.action==="skip"||body.action==="junk"){ r.status="skipped"; if(body.action==="junk") log("mai","Ghi nhớ data rác",`Sếp loại ${r.author}: không hợp tệp khách`); return {id:r.id,status:"skipped"}; } }
+    if(P==="/replies/approve-all"){ let n=0,later=0; S.rp.items.filter(x=>x.status==="draft").forEach(r=>{ try{ const x=approve(r,null); n++; if(x.later) later++; }catch(e){} }); return {approved:n,later}; }
+    if(P==="/replies/relearn"){ log("bao","Học lại","Sếp cho Bảo học lại cách viết câu trả lời khách: gọi Claude và chấm điểm lại từ đầu"); return {}; }
+    if(P==="/replies-settings"){ if(body.replies_per_nick_day&&+body.replies_per_nick_day>10) throw new Error("Mỗi nick tối đa 10 câu/ngày để không bị coi là spam"); Object.assign(S.rp.settings,body); return demoRp("GET","/replies","",{}); }
+    throw new Error("Không hỗ trợ trong bản xem trước"); }
   function demoFr(method,P,qs,body){ let m; const q=new URLSearchParams(qs||"");
     if(!S.fr.seeded){ S.fr.seeded=1; frAdd(11,3,5); frAdd(11,1,3); frAdd(12,4,3); S.fr.items.slice(0,2).forEach((x,i)=>{ x.status=i?"opened":"sent"; if(!i) x.sent_at=now(); }); }
     if(P==="/post-target"){ if(method==="PUT"){ if(body.mode) S.tg.mode=body.mode; if(body.include!=null) S.tg.include=tgWords(body.include); if(body.exclude!=null) S.tg.exclude=tgWords(body.exclude); log("tuan","Nhận chỉ đạo nơi đăng",`${({all:"Mọi nhóm đủ điều kiện",prefer:"Ưu tiên nhóm chỉ định",only:"Chỉ nhóm chỉ định"})[S.tg.mode]} · từ khóa: ${S.tg.include.join(", ")||"—"} · tránh: ${S.tg.exclude.join(", ")||"—"}`); } return tgOverview(); }
@@ -2223,6 +2305,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     if(P==="/post-care/relearn"){ S.baoLevel=0; log("bao","Học lại","Sếp cho Bảo học lại cách viết câu bình luận: gọi Claude và chấm điểm lại từ đầu"); return {}; }
     if(P==="/bump/preview-text") return {texts:demoBumpLines(+(new URLSearchParams(qs||"").get("n"))||3),mode:S.settings.bump_text_mode||"ai",contact:S.settings.bump_contact||"",ai:false};
     if(P.startsWith("/post-target")||P.startsWith("/friends")||/^\/groups\/\d+\/focus$/.test(P)) return demoFr(method,P,qs,body||{});
+    if(P.startsWith("/replies")) return demoRp(method,P,qs,body||{});
     if(method==="GET"){
       if(P==="/health"){ const z=S.settings.app_tz||"Asia/Ho_Chi_Minh"; return {ok:true,ai_live:false,model:"bản xem trước",time:{tz:z,label:(TZ_LIST.find(x=>x.id===z)||TZ_LIST[0]).label,now:tzNow(z),pc_now:now(),choices:TZ_LIST}}; }
       if(P==="/agents"){ const prog=id=>{ const x=S.xp[id]||0, l=lvl(x); return {xp:x,level:l,level_xp:lxp(l),next_xp:lxp(l+1)}; };
@@ -2822,7 +2905,7 @@ function show(v){
   if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
   if(v==="ceo") loadCeoChat(true);
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
-  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="samples"){ loadPostSamples(); loadCeoReview(); } if(v==="fbrules") loadFbp(); if(v==="friends") loadFr(); if(v==="website") loadWs(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="samples"){ loadPostSamples(); loadCeoReview(); } if(v==="fbrules") loadFbp(); if(v==="friends") loadFr(); if(v==="replies") loadRp(); if(v==="website") loadWs(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
 $("#nav").addEventListener("click",e=>{ if(e.target.closest("#navMore")){ const o=!document.body.classList.contains("nav-open"); document.body.classList.toggle("nav-open",o); $("#navMore").setAttribute("aria-expanded",o); return; }
@@ -3779,6 +3862,51 @@ $("#v-friends").addEventListener("click",async e=>{
   const mk=e.target.closest("[data-frmark]"); if(mk){ try{ const r=await api(`/friends/${mk.dataset.id}`,"PUT",{status:mk.dataset.frmark}); if(r.over) toast(`Nick đã gửi ${r.quota.used}/${r.quota.limit} lời mời hôm nay, quá trần an toàn. Dừng gửi tới mai`); else if(mk.dataset.frmark==="junk") toast("Đã bỏ. Mai ghi nhớ đây là data rác, lần sau không gợi ý lại"); loadFr(true); }catch(err){ toast(err.message); } } });
 $("#frSetF").addEventListener("submit",async e=>{ e.preventDefault(); try{ ST.fr=await api("/friends-settings","PUT",{friends_enabled:$("#frsOn").checked?"1":"0",friends_time:$("#frsTime").value,fbp_friends_day:$("#frsDay").value,friends_groups_per_run:$("#frsG").value,friends_per_group:$("#frsP").value}); loadFr(true); toast("Đã lưu cài đặt kết bạn"); }catch(err){ toast(err.message); } });
 setInterval(()=>{ if(ST.view==="friends"&&!document.querySelector("#v-friends :focus")) loadFr(true); },15000);
+/* --------------------------------------------- Bảo trả lời khách hỏi mua trong nhóm */
+const RP_ST={draft:"Chờ sếp duyệt",approved:"Đã duyệt, chờ gửi",sent:"Đã gửi",failed:"Gửi lỗi",skipped:"Bỏ qua"};
+const rpTime=t=>t?`${t.slice(11,16)} ${t.slice(8,10)}/${t.slice(5,7)}`:"";
+async function loadRp(quiet){ const st=$("#rpSt").value;
+  try{ ST.rp=await api("/replies"+(st?"?status="+st:"")); }catch(e){ if(!quiet) toast(e.message); return; } renderRp(); }
+function renderRp(){ const d=ST.rp, st=d.stats;
+  const b=$("#rpBadge"); b.hidden=!st.draft; b.textContent=st.draft||""; b.title=st.draft?`${st.draft} câu trả lời chờ sếp duyệt`:"";
+  $("#rpStats").innerHTML=[[st.draft,"Chờ sếp duyệt"],[st.approved,"Đã duyệt, chờ gửi"],[st.today,"Đã gửi hôm nay"],[st.sent,"Đã gửi tất cả"]].map(([v,l])=>`<div class="pr-stat"><b>${v}</b><span>${l}</span></div>`).join("");
+  $("#rpNicks").innerHTML=d.nicks.length?d.nicks.map(n=>`<li><span><b>${esc(n.name)}</b></span><span class="act small muted">${n.left?`còn ${n.left} lượt`:"hết lượt hôm nay"}</span>
+      <span class="meter" role="img" aria-label="Đã dùng ${n.used}/${n.limit} lượt trả lời hôm nay"><i style="width:${n.limit?Math.min(100,n.used/n.limit*100):100}%"></i></span>
+      <span class="small muted">Hôm nay ${n.used}/${n.limit} câu (đã gửi và đã xếp giờ)</span></li>`).join("")
+    :`<li class="muted small">Chưa có nick nào đăng nhập và đang làm việc.</li>`;
+  const k=d.skill; $("#rpSkill").innerHTML=`<div class="rp-lv"><b>${esc(k.name)}</b><span class="small muted">${k.samples} mẫu đã học · chấm ${k.graded} câu tự viết${k.graded?`, đạt ${k.pass_rate}%`:""} · gọi Claude ${k.calls} lần${k.master?` · tiết kiệm ${k.saved} lần`:""}</span>
+      <button type="button" class="btn sm ghost" id="rpRelearn" title="Bảo gọi Claude và chấm lại câu tự viết từ đầu">Cho học lại</button></div>
+    ${k.next?`<p class="small muted" style="margin:0">Lên ${esc(k.next.name)} cần ${k.next.samples} mẫu, ${k.next.graded} câu được chấm, đạt từ ${k.next.pass_rate}%.</p>`:`<p class="small" style="margin:0">Bảo tự viết câu trả lời, không gọi Claude nữa.</p>`}
+    ${d.samples.length?`<ul class="rp-samples">${d.samples.slice(0,5).map(x=>`<li><span>${esc(x.text)}</span><span class="chip${x.source==="claude"?"":x.score>=8?" ok":" warn"}">${x.source==="claude"?"Mẫu":"Bảo · "+(x.score??"?")+"/10"}</span></li>`).join("")}</ul>`:`<p class="muted small" style="margin:0">Chưa có mẫu. Câu Claude viết và câu sếp sửa khi duyệt sẽ được lưu ở đây.</p>`}`;
+  $("#rpList").innerHTML=d.items.length?d.items.map(it=>{ const edit=["draft","failed"].includes(it.status);
+    return `<article class="rp-item ${it.status}"><span class="fr-ava" aria-hidden="true">${esc((it.author||"?").trim().charAt(0).toUpperCase())}</span>
+      <div class="who">${it.author_url?`<a href="${esc(it.author_url)}" target="_blank" rel="noopener">${esc(it.author)}</a>`:`<b>${esc(it.author)}</b>`}<span class="small muted">${esc(it.group_name||"")} · nick ${esc(it.nick||"")}</span><span class="chip ${it.status==="sent"?"ok":it.status==="failed"?"bad":it.status==="draft"?"warn":""}">${RP_ST[it.status]||it.status}</span></div>
+      <p class="rp-q"><b>Khách hỏi${it.post_url?` · <a href="${esc(it.post_url)}" target="_blank" rel="noopener">mở bài</a>`:""}</b>${esc((it.post_text||"").slice(0,400))}</p>
+      <div class="rp-a">${edit?`<label class="small muted" for="rpT${it.id}">Câu trả lời ${it.source==="claude"?"(Claude viết)":"(Bảo tự viết)"}</label><textarea id="rpT${it.id}" data-rptext="${it.id}" maxlength="600">${esc(it.reply||"")}</textarea>`
+        :`<p class="said">${esc(it.reply||"")}</p>`}</div>
+      <div class="acts">${edit?`<button type="button" class="btn sm primary" data-rp="approve" data-id="${it.id}">${it.status==="failed"?"Duyệt gửi lại":"Duyệt và gửi"}</button><button type="button" class="btn sm ghost" data-rp="skip" data-id="${it.id}">Bỏ qua</button><button type="button" class="btn sm ghost danger" data-rp="junk" data-id="${it.id}" title="Người bán khác / không hợp: ghi nhớ data rác">Không hợp</button>`:""}
+        ${it.status==="approved"?`<span class="meta">Nick gửi lúc ${rpTime(it.scheduled_for)}</span><button type="button" class="btn sm ghost" data-rp="skip" data-id="${it.id}">Hủy gửi</button>`:""}
+        ${it.status==="sent"?`<span class="meta">Đã gửi ${rpTime(it.sent_at)}</span>${it.shot?`<a class="btn sm ghost" href="${esc(it.shot)}" target="_blank" rel="noopener">Ảnh chụp</a>`:""}`:""}
+        ${it.status==="failed"&&it.error?`<span class="meta" style="color:var(--danger)">${esc(it.error)}</span>`:""}</div></article>`; }).join("")
+    :`<p class="muted small">${$("#rpSt").value?"Không có câu nào ở trạng thái này.":"Chưa có bài hỏi mua nào chờ trả lời. Bấm “Bảo tìm bài ngay”, hoặc nhắn CEO: “đi comment trả lời khách trong các nhóm”."}</p>`;
+  const S2=d.settings; $("#rpSetF").innerHTML=`<div class="fr-set"><label class="row small"><input type="checkbox" id="rpsOn"${S2.replies_enabled!=="0"?" checked":""}> Bảo tự tìm bài hỏi mua mỗi ngày</label>
+    <label class="f" for="rpsTime">Giờ tìm<input type="time" id="rpsTime" value="${esc(S2.replies_time||"09:20")}"></label>
+    <label class="f" for="rpsDay">Câu trả lời tối đa / nick / ngày<input type="number" id="rpsDay" min="0" max="10" value="${esc(S2.replies_per_nick_day||"5")}"></label>
+    <label class="f" for="rpsG">Số nhóm đọc mỗi lượt<input type="number" id="rpsG" min="1" max="6" value="${esc(S2.replies_groups_per_run||"3")}"></label>
+    <label class="f" for="rpsP">Bài tối đa / nhóm<input type="number" id="rpsP" min="1" max="10" value="${esc(S2.replies_per_group||"4")}"></label>
+    <label class="f" for="rpsC" style="grid-column:1/-1">Dòng liên hệ cuối câu (trống thì dùng dòng của Up bài)<input type="text" id="rpsC" maxlength="120" value="${esc(S2.reply_contact||"")}" placeholder="${esc(d.contact||"")}"></label></div>
+    <p class="small muted" style="margin:8px 0">Tối đa 10 câu mỗi nick mỗi ngày. Câu chỉ được gửi trong giờ làm của nick (Nhân viên sale → giờ làm việc), cách nhau 45–90 phút.</p>
+    <button class="btn sm primary" type="submit">Lưu cài đặt</button>`; }
+$("#rpSt").onchange=()=>loadRp();
+$("#rpRun").onclick=async()=>{ try{ const r=await api("/replies/scan","POST",{}); toast(`Nick ${r.account} đang mở các nhóm sôi nổi cho Bảo đọc. Xong Bảo báo ở Văn phòng`); setTimeout(()=>loadRp(true),4000); }catch(e){ toast(e.message); } };
+$("#rpAll").onclick=async()=>{ try{ const r=await api("/replies/approve-all","POST",{}); toast(r.approved?`Đã duyệt ${r.approved} câu${r.later?`, ${r.later} câu dời sang mai vì nick hết lượt hôm nay`:""}`:"Không có câu nào chờ duyệt"); loadRp(true); }catch(e){ toast(e.message); } };
+$("#v-replies").addEventListener("click",async e=>{
+  if(e.target.id==="rpRelearn"){ try{ await api("/replies/relearn","POST",{}); toast("Bảo sẽ gọi Claude và chấm lại câu tự viết từ đầu"); loadRp(true); }catch(err){ toast(err.message); } return; }
+  const bt=e.target.closest("[data-rp]"); if(!bt) return; const rid=bt.dataset.id, a=bt.dataset.rp; const ta=$(`[data-rptext="${rid}"]`);
+  try{ const r=await api(`/replies/${rid}`,"PUT",{action:a,reply:ta?ta.value:null});
+    toast(a==="approve"?(r.later?"Đã duyệt. Nick hết lượt hôm nay nên gửi sáng mai":`Đã duyệt. Nick gửi lúc ${rpTime(r.scheduled_for)}`):a==="junk"?"Đã bỏ và ghi nhớ đây là data rác":"Đã bỏ qua"); loadRp(true); }catch(err){ toast(err.message); } });
+$("#rpSetF").addEventListener("submit",async e=>{ e.preventDefault(); try{ ST.rp=await api("/replies-settings","PUT",{replies_enabled:$("#rpsOn").checked?"1":"0",replies_time:$("#rpsTime").value,replies_per_nick_day:$("#rpsDay").value,replies_groups_per_run:$("#rpsG").value,replies_per_group:$("#rpsP").value,reply_contact:$("#rpsC").value}); loadRp(true); toast("Đã lưu cài đặt trả lời khách"); }catch(err){ toast(err.message); } });
+setInterval(()=>{ if(ST.view==="replies"&&!document.querySelector("#v-replies :focus")) loadRp(true); },15000);
 
 /* --------------------------------------------- sếp giao việc cho CEO */
 async function renderOrders(){ const box=$("#ceoOrders"); if(!box) return; let d; try{ d=await api("/ceo/chat"); }catch(e){ return; }
