@@ -61,6 +61,24 @@ check(f"đếm dùng mẫu: {st['total']} lần / {st['calls']} lượt",
 err = db.q("SELECT title, count FROM errors WHERE source='ai'")
 check("màn Lỗi có ghi", any("nội dung mẫu" in e["title"] for e in err))
 
+# mô hình không cho ép dùng công cụ (lỗi 400 thật của Anthropic): tự chuyển sang "auto" và nhớ
+class NoForce(Fake):
+    def create(self, **kw):
+        self.calls.append(kw)
+        if kw.get("tool_choice", {}).get("type") in ("tool", "any"):
+            raise RuntimeError("Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': "
+                               "'tool_choice: type \"tool\" and \"any\" are not supported for this model.'}}")
+        return NS(content=[text('{"content": "auto ok"}')], stop_reason="end_turn", usage=U)
+nf = NoForce(); L.llm.client = NS(messages=nf)
+e0 = db.one("SELECT COALESCE(SUM(count),0) n FROM errors WHERE source='ai'")["n"]
+r1 = L.llm.json("s", "p", mock=mock, task="ceo")
+r2 = L.llm.json("s", "p", mock=mock, task="ceo")
+check("mô hình không cho ép công cụ: tự chuyển sang auto",
+      r1 == {"content": "auto ok"} and r2 == r1 and len(nf.calls) == 3 and nf.calls[-1]["tool_choice"] == {"type": "auto"})
+check("nhớ mô hình, không báo lỗi", L.model_for("ceo") in L.no_force_models()
+      and db.one("SELECT COALESCE(SUM(count),0) n FROM errors WHERE source='ai'")["n"] == e0)
+db.set_setting("llm_no_force", "[]")
+
 # không có khóa: chạy mô phỏng, không tính là lỗi
 L.llm.client = None
 check("không khóa: mô phỏng, không đếm", L.llm.json("s", "p", mock=mock) == mock and L.fallback_stats()["total"] == 3)

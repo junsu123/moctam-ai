@@ -1174,7 +1174,9 @@ Các cơ chế tiết kiệm có sẵn:
 - **Không âm thầm dùng nội dung mẫu:** Claude trả kết quả qua một công cụ có khuôn cố định (không còn lỗi đọc JSON). Bài viết
   quá dài bị cắt giữa chừng thì tự thử lại 1 lần với gấp đôi độ dài. Vẫn hỏng (hoặc lỗi mạng, khóa, tín dụng) thì mới dùng nội
   dung mẫu, và mỗi lần như vậy được đếm ở **Cài đặt → Chi phí AI** (“N lần phải dùng nội dung mẫu thay Claude”, chia theo việc
-  và lý do) và ghi vào màn **Lỗi**. Chưa có khóa Claude (chế độ mô phỏng) thì không tính.
+  và lý do) và ghi vào màn **Lỗi**. Chưa có khóa Claude (chế độ mô phỏng) thì không tính. Mô hình nào không cho ép dùng công cụ (Anthropic báo lỗi 400
+  “tool_choice … not supported for this model”) thì phần mềm tự chuyển sang để Claude tự chọn trả qua công cụ và nhớ mô hình đó,
+  không báo lỗi, không dùng nội dung mẫu.
 
 Giá dùng để tính (USD / 1 triệu token, vào/ra): Haiku 5.5 0,10/0,50 · Sonnet 5.5 2/10 · Opus 5.5 4/20;
 theo lô giảm 50%. Khi Anthropic đổi giá, sửa bảng `PRICES` trong `backend/llm.py`.

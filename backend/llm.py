@@ -188,10 +188,17 @@ class LLM:
         reason, tokens = "", max_tokens
         for attempt in range(2):
             try:
-                resp = self.client.messages.create(
-                    model=model, max_tokens=tokens, system=system, tools=[RESULT_TOOL],
-                    tool_choice={"type": "tool", "name": RESULT_TOOL["name"]},
-                    messages=[{"role": "user", "content": prompt + JSON_HINT}])
+                try:
+                    resp = self.client.messages.create(
+                        model=model, max_tokens=tokens, system=system, tools=[RESULT_TOOL], tool_choice=tool_choice(model),
+                        messages=[{"role": "user", "content": prompt + JSON_HINT}])
+                except Exception as e:
+                    if not no_force_error(e) or model in no_force_models():
+                        raise
+                    mark_no_force(model)  # mô hình không cho ép dùng công cụ: để Claude tự chọn, nhớ cho các lần sau
+                    resp = self.client.messages.create(
+                        model=model, max_tokens=tokens, system=system, tools=[RESULT_TOOL], tool_choice=tool_choice(model),
+                        messages=[{"role": "user", "content": prompt + JSON_HINT}])
             except Exception as e:
                 print(f"[LLM] lỗi: {e}")
                 import errors
@@ -223,7 +230,7 @@ class LLM:
             b = self.client.messages.batches.create(requests=[{
                 "custom_id": it["custom_id"],
                 "params": {"model": model, "max_tokens": max_tokens, "system": it["system"], "tools": [RESULT_TOOL],
-                           "tool_choice": {"type": "tool", "name": RESULT_TOOL["name"]},
+                           "tool_choice": tool_choice(model),
                            "messages": [{"role": "user", "content": it["prompt"] + JSON_HINT}]},
             } for it in items])
             return b.id
@@ -247,7 +254,9 @@ class LLM:
                     note_fallback(task, "cut" if getattr(msg, "stop_reason", "") == "max_tokens" else "bad_json", "lô")
                 out[r.custom_id] = json.dumps(data, ensure_ascii=False) if data is not None else None
             else:
-                note_fallback(task, "error", f"lô: {r.result.type}")
+                if no_force_error(r.result):
+                    mark_no_force(task_model(task))
+                note_fallback(task, "error", f"lô: {r.result.type} {str(getattr(r.result, 'error', ''))[:200]}")
                 out[r.custom_id] = None
         return out
 
@@ -261,6 +270,33 @@ RESULT_TOOL = {
         "description": "Kết quả JSON (object hoặc mảng) đúng khuôn yêu cầu"}}, "required": ["ket_qua"]},
 }
 MAX_RETRY_TOKENS = 8000
+
+
+def no_force_models() -> set:
+    """Mô hình không cho ép dùng công cụ (tool_choice "tool"/"any"): phần mềm tự phát hiện khi Anthropic báo lỗi 400."""
+    try:
+        return set(json.loads(db.get_settings().get("llm_no_force") or "[]"))
+    except Exception:
+        return set()
+
+
+def mark_no_force(model: str):
+    m = no_force_models() | {model}
+    db.set_setting("llm_no_force", json.dumps(sorted(m)))
+    print(f"[LLM] {model} không cho ép dùng công cụ: chuyển sang để Claude tự chọn")
+
+
+def no_force_error(e) -> bool:
+    t = str(e)
+    return "tool_choice" in t and ("not supported" in t or "không hỗ trợ" in t)
+
+
+def tool_choice(model: str) -> dict:
+    return {"type": "auto"} if model in no_force_models() else {"type": "tool", "name": RESULT_TOOL["name"]}
+
+
+def task_model(task: str) -> str:
+    return model_for(task)
 FALLBACK_REASONS = {"cut": "Claude viết quá dài nên bị cắt giữa chừng", "bad_json": "Claude trả kết quả sai khuôn",
                     "error": "Gọi Claude bị lỗi (mạng, khóa, tín dụng)"}
 
