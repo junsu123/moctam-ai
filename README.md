@@ -1114,11 +1114,16 @@ Muốn thêm agent mới: thêm hồ sơ vào `agents.py` (`AGENTS`, `ORDER`), t
 Vào **Cài đặt → Chi phí AI** để xem số tiền thật đã dùng trong tháng (đo từ số token của từng lượt gọi),
 dự báo cuối tháng và chi phí theo từng việc.
 
-| Gói | Viết bài | Tin nhắn khách | Cuộc họp | Ước tính / tháng (3 nick sale) |
-|---|---|---|---|---|
-| Tiết kiệm | Haiku 5.5, theo lô | Haiku 5.5 | Haiku 5.5 | dưới 1 USD |
-| **Cân bằng** (mặc định) | Sonnet 5.5, theo lô | Haiku 5.5 | Haiku 5.5 | khoảng 3–6 USD |
-| Chất lượng | Sonnet 5.5, theo lô | Sonnet 5.5 | Sonnet 5.5 | khoảng 8–15 USD |
+| Gói | Viết bài | Hà tư vấn khách | CEO hiểu lệnh sếp | Cuộc họp, CEO chấm bài | Ước tính / tháng (3 nick sale) |
+|---|---|---|---|---|---|
+| Tiết kiệm | Haiku 5.5, theo lô | Haiku 5.5 | Haiku 5.5 | Haiku 5.5 | dưới 1 USD |
+| **Cân bằng** (mặc định) | Sonnet 5.5, theo lô | **Sonnet 5.5** | **Sonnet 5.5** | Haiku 5.5 | khoảng 5–9 USD |
+| Chất lượng | Sonnet 5.5, theo lô | Sonnet 5.5 | Sonnet 5.5 | Sonnet 5.5 | khoảng 8–15 USD |
+
+**Đặt mô hình tốt ở chỗ ra tiền:** gói Cân bằng dùng Sonnet cho kịch bản tư vấn và tin nhắn khách của Hà (phiếu khách gửi sếp,
+kịch bản tiếp cận khách Mai tìm) và cho CEO hiểu lệnh sếp: ít lượt nhưng ảnh hưởng thẳng tới đơn hàng. Việc nhiều lượt (họp, CEO chấm
+từng bài, tự học) vẫn dùng Haiku. Máy đang dùng gói Cân bằng được tự nâng lên một lần khi cập nhật; cấu hình sếp tự chỉnh giữ nguyên.
+Chỉnh riêng từng việc ở Cài đặt → Chi phí AI (Viết bài, Hà tư vấn khách, Cuộc họp, CEO hiểu lệnh sếp, CEO chấm bài).
 
 Các cơ chế tiết kiệm có sẵn:
 

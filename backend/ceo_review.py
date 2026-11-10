@@ -172,7 +172,7 @@ def _ai_review(t: str, pf: dict, sample: str | None) -> dict | None:
                      f"Bạn là CEO duyệt bài đăng nhóm Facebook tìm khách sỉ. Bài mẫu sếp thích:\n{lib}\n\nBài học từ những lần sếp sửa: "
                      f"{'; '.join(pf['lessons']) or 'chưa có'}\n" + (f"Bài này viết lại từ mẫu:\n{sample[:900]}\n" if sample else "")
                      + f"\nBÀI CẦN DUYỆT:\n{t[:2000]}\n\nChấm 0-100 (hay, đúng mục tiêu tìm khách sỉ, đúng thông tin mẫu, tự nhiên, không spam). "
-                     "Trả JSON {\"score\": số, \"tips\": [\"góp ý cụ thể, tối đa 3\"]}.", mock=None, max_tokens=300, task="replies")
+                     "Trả JSON {\"score\": số, \"tips\": [\"góp ý cụ thể, tối đa 3\"]}.", mock=None, max_tokens=300, task="review")
         if isinstance(d, dict) and isinstance(d.get("score"), (int, float)):
             return {"score": max(0, min(100, int(d["score"]))), "tips": [str(x)[:160] for x in d.get("tips", [])][:3]}
     except Exception as e:

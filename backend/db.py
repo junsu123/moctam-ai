@@ -401,7 +401,7 @@ DEFAULT_SETTINGS = {
     "browser_mode": "background",  # background: chạy ngầm ngoài màn hình; show: hiện cửa sổ; headless: ẩn hoàn toàn
     "cost_preset": "can_bang",
     "model_posts": "claude-sonnet-5-5",
-    "model_replies": "claude-haiku-5-5",
+    "model_replies": "claude-sonnet-5-5", "model_ceo": "claude-sonnet-5-5", "model_review": "claude-haiku-5-5",
     "model_meeting": "claude-haiku-5-5",
     "use_batch": "1",
     "monthly_budget_usd": "10",
@@ -571,6 +571,13 @@ def init():
     # bài đang đăng dở khi tắt máy -> đưa về hàng đợi
     run("UPDATE posts SET status='scheduled' WHERE status='posting'")
     run("UPDATE bumps SET status='scheduled' WHERE status='running'")
+    # gói Cân bằng mới: Hà tư vấn khách + CEO hiểu lệnh dùng Sonnet (chỉ đổi khi sếp đang dùng đúng gói Cân bằng, chưa tùy chỉnh)
+    if get_settings().get("preset_v2") != "1":
+        if get_settings().get("cost_preset", "can_bang") == "can_bang":
+            for k in ("model_replies", "model_ceo"):
+                set_setting(k, "claude-sonnet-5-5")
+            set_setting("model_review", "claude-haiku-5-5")
+        set_setting("preset_v2", "1")
     # luật Facebook là luật thật (không phải kiến thức chung tự học) -> nguồn riêng, luôn được dùng
     run("UPDATE knowledge SET source='rule' WHERE source='library' AND topic LIKE 'Luật Facebook:%'")
     for k, v in DEFAULT_SETTINGS.items():

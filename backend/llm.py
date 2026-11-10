@@ -34,12 +34,13 @@ PRICES = {
     OPUS: (4.00, 20.00),
 }
 BATCH_DISCOUNT = 0.5
-TASKS = {"posts": "Viết bài đăng", "replies": "Tin nhắn khách", "meeting": "Cuộc họp", "learning": "Tự học mỗi đêm", "images": "Tạo ảnh", "ceo": "CEO hiểu lệnh sếp", "knowledge": "Học kiến thức, hỏi khi chưa biết", "other": "Khác"}
+TASKS = {"posts": "Viết bài đăng", "replies": "Tư vấn khách (Hà)", "review": "CEO chấm bài", "meeting": "Cuộc họp", "learning": "Tự học mỗi đêm", "images": "Tạo ảnh", "ceo": "CEO hiểu lệnh sếp", "knowledge": "Học kiến thức, hỏi khi chưa biết", "other": "Khác"}
 
 PRESETS = {  # gói cấu hình sẵn trong Cài đặt
-    "tiet_kiem": {"model_posts": HAIKU, "model_replies": HAIKU, "model_meeting": HAIKU, "model_learning": HAIKU, "model_ceo": HAIKU, "model_knowledge": HAIKU, "use_batch": "1"},
-    "can_bang": {"model_posts": SONNET, "model_replies": HAIKU, "model_meeting": HAIKU, "model_learning": HAIKU, "model_ceo": HAIKU, "model_knowledge": HAIKU, "use_batch": "1"},
-    "chat_luong": {"model_posts": SONNET, "model_replies": SONNET, "model_meeting": SONNET, "model_learning": HAIKU, "model_ceo": SONNET, "model_knowledge": HAIKU, "use_batch": "1"},
+    "tiet_kiem": {"model_posts": HAIKU, "model_replies": HAIKU, "model_meeting": HAIKU, "model_learning": HAIKU, "model_ceo": HAIKU, "model_knowledge": HAIKU, "model_review": HAIKU, "use_batch": "1"},
+    # Cân bằng: Sonnet ở chỗ ít lượt mà ra tiền (viết bài, Hà tư vấn khách, CEO hiểu lệnh sếp); Haiku cho việc nhiều lượt (họp, chấm bài, tự học)
+    "can_bang": {"model_posts": SONNET, "model_replies": SONNET, "model_meeting": HAIKU, "model_learning": HAIKU, "model_ceo": SONNET, "model_knowledge": HAIKU, "model_review": HAIKU, "use_batch": "1"},
+    "chat_luong": {"model_posts": SONNET, "model_replies": SONNET, "model_meeting": SONNET, "model_learning": HAIKU, "model_ceo": SONNET, "model_knowledge": HAIKU, "model_review": SONNET, "use_batch": "1"},
 }
 
 
