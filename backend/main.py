@@ -1229,6 +1229,36 @@ def lead_lost(lid: int, p: LostIn):
     return r
 
 
+@app.get("/api/focus")
+def focus_overview():
+    import channel_focus
+    return channel_focus.overview()
+
+
+@app.post("/api/focus/run")
+def focus_run():
+    import channel_focus
+    r = channel_focus.run(force=True)
+    return {"done": r["done"], "proposed": r["proposed"], **channel_focus.overview()}
+
+
+@app.post("/api/focus/resume/{key}")
+def focus_resume(key: str):
+    import channel_focus
+    if key not in channel_focus.CONTROL:
+        raise HTTPException(400, "Kênh này không tạm dừng được")
+    channel_focus.resume(key)
+    return channel_focus.overview()
+
+
+@app.put("/api/focus/settings")
+def focus_settings(data: dict):
+    import channel_focus
+    if "enabled" in data:
+        db.set_setting("focus_enabled", "1" if data["enabled"] else "0")
+    return channel_focus.overview()
+
+
 @app.get("/api/funnel")
 def funnel_report(days: int = 30):
     import funnel

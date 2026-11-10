@@ -589,7 +589,8 @@ def handle_callback(cb: dict):
         try:
             _, did, act = cb["data"].split(":")
             res = ceo.resolve(int(did), act == "ok")
-            note = (f"✅ Sếp đã duyệt: {res.get('sale', '')} vào làm" if res["status"] == "done" else "✖️ Sếp không duyệt")
+            note = (("✅ Sếp đã duyệt. " + "; ".join(res["done"])) if res.get("done") else
+                    f"✅ Sếp đã duyệt: {res.get('sale', '')} vào làm" if res["status"] == "done" else "✖️ Sếp không duyệt")
         except Exception as ex:
             note = str(ex)
         call("answerCallbackQuery", callback_query_id=cb["id"], text=note[:190])

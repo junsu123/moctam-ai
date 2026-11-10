@@ -279,6 +279,15 @@ def execute(act: dict) -> str:
             return ("Câu này đội chưa học tới. Em đã ghi vào danh sách câu hỏi cần học, đội sẽ tìm hiểu trong buổi tự học tới "
                     "(cần có khóa Claude ở Cài đặt để tra cứu)")
         return "Em chưa tra cứu được câu này, sếp thử lại sau giúp em"
+    if t == "focus_review":
+        import channel_focus
+        r = channel_focus.run(force=True, notify=False)
+        rv = r["review"]
+        lines = [f"{c['label']}: {c['text']}" for c in rv["channels"]] or ["Chưa có khách nào trong " + str(rv["days"]) + " ngày qua"]
+        tail = (f" Em đã làm: {'; '.join(r['done'])}." if r["done"] else "") + \
+               (" Em đã gửi đề xuất, sếp bấm Duyệt ở trang Công ty hoặc Telegram." if r["proposed"] else "") + \
+               ("" if r["done"] or r["proposed"] else " Chưa có kênh nào đủ dữ liệu để dừng hay dồn sức.")
+        return f"Kênh tìm khách {rv['days']} ngày qua: " + " | ".join(lines) + "." + tail
     if t == "study_now":
         import knowledge
         import threading
@@ -597,6 +606,7 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - plan {}: giao Tuấn xếp lịch đăng các bài đã duyệt
 - ask {question}: sếp HỎI kiến thức/cách làm (không phải giao việc). CEO tra sổ kiến thức của đội trước, chưa có mới tra cứu
 - study_now {}: cho cả đội tự học kiến thức mới ngay
+- focus_review {}: xem kênh tìm khách nào ra đơn, dồn sức cho kênh ra đơn, tạm dừng kênh chỉ ra số không ra đơn
 - set_hot {product_id, hot: true|false, note?}: đánh dấu / bỏ đánh dấu sản phẩm đang bán chạy (cả đội tập trung chào mời)
 - daily_work {}: cả đội làm việc hằng ngày
 - meeting {topic}: triệu tập họp
@@ -822,6 +832,8 @@ def _rule_plan(text: str) -> dict:
                 acts.append({"type": "hire", "reason": t})
         if not acts and re.search(r"\b(từ nay|từ giờ|từ bây giờ|luôn luôn|bắt buộc|cấm|không được|đừng bao giờ|mỗi bài|bài nào cũng|mọi bài)\b", low):
             acts.append({"type": "order", "agent": agent or "all", "text": t})
+        if not acts and re.search(r"kênh nào (ra|có) (đơn|khách)|dồn sức|tập trung (vào )?kênh|xem lại (các )?kênh|kênh (nào )?hiệu quả", low):
+            acts.append({"type": "focus_review"})
         if re.search(r"(học|tìm hiểu)\s*(thêm\s*)?(kiến thức|cái mới|điều mới)", low) and not acts:
             acts.append({"type": "study_now"})
         if not acts and (t.rstrip().endswith("?") or re.match(r"(làm sao|làm thế nào|làm cách nào|cách nào|tại sao|vì sao|có nên|"

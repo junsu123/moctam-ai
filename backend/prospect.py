@@ -1070,7 +1070,8 @@ def plan_for_run(directions: list[int] | None = None, kw: list[str] | None = Non
             out.append({"platform": "facebook", "direction": 5, "keyword": pool[(day * per + i) % len(pool)], "kind": "ads"})
     if directions and 6 in directions and s().get("prospect_groups", "1") == "1":
         out.insert(0, {"kind": "groups"})
-    for d in [x for x in (directions or [1, 2, 3, 4]) if x in (1, 2, 3, 4)]:
+    pages_on = s().get("prospect_pages", "1") == "1"  # CEO tạm dừng kênh trang / shop khi không ra đơn
+    for d in [x for x in (directions or ([1, 2, 3, 4] if pages_on else [])) if x in (1, 2, 3, 4)]:
         pool = kws.get(d) or DEFAULT_KEYWORDS[d]
         for i in range(min(per, len(pool))):
             out.append({"platform": "facebook", "direction": d, "keyword": pool[(day * per + i) % len(pool)]})

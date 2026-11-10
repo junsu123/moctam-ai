@@ -160,6 +160,9 @@ details.limits .grid2{margin-top:8px}
 .fn-tbl td,.fn-tbl th{white-space:nowrap}.fn-tbl td:first-child{white-space:normal;min-width:150px}
 .fn-rate{font-size:11px;color:var(--muted);display:block}
 .fn-rs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.fc-list{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.fc-list li{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px}
+.fc-list li>div{min-width:0}.fc-list .small{display:block}
 .lostbox{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:4px;background:var(--panel-2)}
 .junkbox{border:1px dashed var(--line);border-radius:10px;padding:8px 10px;margin-top:4px}
 .junkbox summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--danger)}
@@ -1409,6 +1412,11 @@ label.f{font-weight:600;color:var(--muted)}
             <select id="fnDays" aria-label="Khoảng thời gian"><option value="30">30 ngày</option><option value="7">7 ngày</option><option value="90">90 ngày</option></select></div>
             <p class="small muted">Kênh nào ra khách mua thật, không chỉ ra số điện thoại. “Sếp đã gọi” tính khách sếp bấm Đã gọi / Chốt đơn / Không mua hoặc đã liên hệ.</p>
             <div id="fnBody"></div></div>
+          <div class="card" id="fcCard"><div class="card-h"><h3>Dồn sức vào kênh ra đơn</h3><span class="chip" id="fcMode">—</span></div>
+            <p class="small muted" id="fcIntro"></p>
+            <ul class="fc-list" id="fcList"></ul><div id="fcProp"></div>
+            <div class="actions" style="margin-top:8px"><button class="btn sm" id="fcRun" type="button">CEO xem lại ngay</button>
+              <label class="row small"><input type="checkbox" id="fcOn"> Mỗi tuần CEO tự xem lại</label></div></div>
           <form class="card" id="kpiForm">
             <h3>Đặt KPI</h3>
             <div class="grid3">
@@ -2353,6 +2361,13 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     if(P==="/bump/preview-text") return {texts:demoBumpLines(+(new URLSearchParams(qs||"").get("n"))||3),mode:S.settings.bump_text_mode||"ai",contact:S.settings.bump_contact||"",ai:false};
     if(P.startsWith("/post-target")||P.startsWith("/friends")||/^\/groups\/\d+\/focus$/.test(P)) return demoFr(method,P,qs,body||{});
     if(P.startsWith("/replies")||P.startsWith("/feed")) return demoRp(method,P,qs,body||{});
+      if(P==="/focus"||P==="/focus/run"||P==="/focus/settings"||P.startsWith("/focus/resume/")){ S.fc=S.fc||{enabled:true,paused:{}};
+        if(P==="/focus/settings") S.fc.enabled=!!body.enabled; if(P.startsWith("/focus/resume/")) delete S.fc.paused[P.split("/").pop()];
+        if(P==="/focus/run") S.fc.paused.pages=new Date(Date.now()+30*864e5).toISOString().slice(0,10);
+        const ch=[{key:"comment",label:"Bình luận dưới bài mình đăng",verdict:"good",text:"Ra 3 đơn từ 21 SĐT: dồn thêm sức"},{key:"demand",label:"Người hỏi nguồn trong nhóm (Mai đọc)",verdict:"good",text:"Ra 2 đơn từ 9 SĐT: dồn thêm sức"},{key:"pages",label:"Trang, shop livestream (Mai tìm)",verdict:"weak",text:"18 SĐT, sếp đã gọi 11, chưa có đơn nào"},{key:"ads",label:"Trang chạy quảng cáo (Mai quét)",verdict:"call",text:"Có 8 SĐT nhưng sếp mới gọi 2/5: cần gọi thêm mới biết kênh này ra đơn không"}].map(c=>({...c,paused_until:S.fc.paused[c.key]||null}));
+        return {days:14,min_phones:8,min_called:5,channels:ch,enabled:S.fc.enabled,mode:"auto",last:P==="/focus/run"?new Date().toISOString().slice(0,10):"",proposed:[],
+          plan:S.fc.paused.pages?[{op:"boost",key:"demand",label:"Người hỏi nguồn trong nhóm (Mai đọc)"}]:[{op:"pause",key:"pages",label:"Trang, shop livestream (Mai tìm)"},{op:"boost",key:"demand",label:"Người hỏi nguồn trong nhóm (Mai đọc)"}],
+          done:P==="/focus/run"?["Tạm dừng “Trang, shop livestream (Mai tìm)” 30 ngày (18 SĐT, sếp đã gọi 11, chưa có đơn nào)","Dồn sức cho “Người hỏi nguồn trong nhóm (Mai đọc)”"]:[]}; }
     if(method==="GET"){
       if(P==="/health"){ const z=S.settings.app_tz||"Asia/Ho_Chi_Minh"; return {ok:true,ai_live:false,model:"bản xem trước",time:{tz:z,label:(TZ_LIST.find(x=>x.id===z)||TZ_LIST[0]).label,now:tzNow(z),pc_now:now(),choices:TZ_LIST}}; }
       if(P==="/agents"){ const prog=id=>{ const x=S.xp[id]||0, l=lvl(x); return {xp:x,level:l,level_xp:lxp(l),next_xp:lxp(l+1)}; };
@@ -3750,8 +3765,25 @@ async function loadFunnel(){
     ${T.lost_noreason?`<p class="small" style="color:var(--honey)">${T.lost_noreason} khách không mua chưa ghi lý do: mở khách ở trang Khách hàng để chọn.</p>`:""}`;
 }
 $("#fnDays").onchange=loadFunnel;
+const FC_V={good:["ok","Ra đơn"],weak:["bad","Chưa ra đơn"],call:["warn","Cần gọi thêm"],wait:["","Chưa đủ dữ liệu"]};
+async function loadFocus(d){
+  if(!d){ try{ d=await api("/focus"); }catch(e){ return; } }
+  $("#fcMode").textContent=d.mode==="approve"?"Chờ sếp duyệt":"CEO tự quyết"; $("#fcOn").checked=d.enabled;
+  $("#fcIntro").textContent=`CEO xem ${d.days} ngày gần nhất: kênh có từ ${d.min_phones} SĐT và sếp đã gọi từ ${d.min_called} khách mà chưa ra đơn thì tạm dừng 30 ngày rồi tự thử lại; kênh ra đơn thì được dồn thêm sức (đọc thêm nhóm, xem thêm trang mỗi lượt, trong giới hạn an toàn). Đăng bài nhóm không bao giờ tự dừng.${d.last?` Lần xem gần nhất: ${fmtDate(d.last)}.`:""}`;
+  $("#fcList").innerHTML=d.channels.length?d.channels.map(c=>{ const [cl,tx]=FC_V[c.verdict]||["",""];
+    return `<li><div><b>${esc(c.label)}</b><span class="small muted">${esc(c.text)}</span>${c.paused_until?`<span class="small" style="color:var(--honey)">Đang tạm dừng tới ${fmtDate(c.paused_until)}</span>`:""}</div>
+      ${c.paused_until?`<button class="btn sm" type="button" data-fcres="${c.key}">Chạy lại</button>`:`<span class="chip ${cl}">${tx}</span>`}</li>`; }).join(""):'<li class="muted small">Chưa có khách trong khoảng này.</li>';
+  const pr=(d.proposed||[])[0];
+  $("#fcProp").innerHTML=pr?`<div class="note warn" style="margin-top:8px"><b>${esc(pr.title)}</b><br>${esc(pr.reason)}<div class="actions" style="margin-top:6px"><button class="btn sm primary" type="button" data-fcok="${pr.id}">Duyệt</button><button class="btn sm" type="button" data-fcno="${pr.id}">Không</button></div></div>`
+    :(d.plan||[]).length?`<p class="small" style="margin-top:8px">Lần xem tới CEO sẽ: ${d.plan.map(a=>`${a.op==="pause"?"tạm dừng":"dồn sức cho"} “${esc(a.label)}”`).join("; ")}.</p>`:"";
+}
+$("#fcRun").onclick=async e=>{ e.target.disabled=true; try{ const r=await api("/focus/run","POST"); toast(r.proposed?"CEO đã gửi đề xuất, sếp duyệt ngay bên dưới":r.done.length?r.done.join(". "):"Chưa có kênh nào đủ dữ liệu để dừng hay dồn sức"); loadFocus(r); }catch(err){ toast(err.message); } e.target.disabled=false; };
+$("#fcOn").onchange=async e=>{ loadFocus(await api("/focus/settings","PUT",{enabled:e.target.checked})); };
+$("#fcCard").addEventListener("click",async e=>{ let b;
+  if((b=e.target.closest("[data-fcres]"))){ loadFocus(await api(`/focus/resume/${b.dataset.fcres}`,"POST")); toast("Đã cho kênh chạy lại"); }
+  else if((b=e.target.closest("[data-fcok],[data-fcno]"))){ const ok=!!b.dataset.fcok; try{ await api(`/ceo/decisions/${b.dataset.fcok||b.dataset.fcno}`,"POST",{approve:ok}); toast(ok?"Đã duyệt, CEO làm ngay":"Đã bỏ đề xuất"); }catch(err){ toast(err.message); } loadFocus(); } });
 async function loadKpi(){
-  loadFunnel();
+  loadFunnel(); loadFocus();
   const [d,s,tg]=await Promise.all([api("/kpi"),api("/settings"),api("/telegram")]);
   $("#kpiHero").innerHTML=kpiHero(d.today,d.pace);
   $("#kStreak").textContent=d.streak?`Đạt KPI liên tiếp ${d.streak} ngày`:"";

@@ -717,6 +717,22 @@ cáo, trang / shop livestream, link sếp dán, sếp nhập tay): số khách �
 - Báo cáo tối trên Telegram có dòng **Từ SĐT tới đơn hàng** 7 ngày: SĐT → sếp gọi → chốt, chi phí AI mỗi đơn, kênh ra đơn nhiều
   nhất, 3 lý do không mua hay gặp.
 
+**Dồn sức vào kênh ra đơn** (thẻ ngay dưới phễu, trang KPI & Báo cáo): mỗi tuần (thứ Hai, sau 08:00) CEO xem 14 ngày gần nhất
+của từng kênh tìm khách và chỉ kết luận khi **đủ dữ liệu thật**: kênh có từ 8 SĐT và sếp đã gọi từ 5 khách.
+
+| Kết quả | CEO làm |
+|---|---|
+| ✅ Ra đơn (từ 1 đơn) | Dồn thêm sức trong giới hạn an toàn: Mai đọc thêm 1 nhóm mỗi lượt (tối đa 6), xem thêm 3 trang mỗi lượt (tối đa 20), thêm từ khóa quét quảng cáo (tối đa 4) |
+| ⛔ Đủ cuộc gọi mà 0 đơn | **Tạm dừng kênh 30 ngày** rồi tự chạy lại để thử lại; vừa chạy lại thì chờ đủ dữ liệu mới, không dừng ngay vì số liệu cũ |
+| 📞 Có SĐT nhưng sếp gọi chưa đủ | Nhắc sếp gọi thêm và bấm Đã gọi / Chốt đơn / Không mua, chưa kết luận |
+| ⏳ Chưa đủ SĐT | Chờ thêm |
+
+- Kênh dừng / dồn sức được: người hỏi nguồn trong nhóm (Mai đọc bình luận), trang chạy quảng cáo, trang / shop livestream (Mai tìm theo
+  4 hướng). **Đăng bài nhóm không bao giờ tự dừng**: kênh này chưa ra đơn thì CEO chỉ báo để sếp xem lại nội dung bài và nhóm đăng.
+- Theo quyền của CEO: *CEO tự quyết* thì làm luôn và báo Telegram; *Chờ sếp duyệt* thì thành đề xuất có nút **Duyệt / Không**
+  (trên thẻ, trang Công ty và Telegram). Kênh đang dừng có nút **Chạy lại**. Bấm **CEO xem lại ngay** hoặc nhắn CEO “kênh nào ra đơn”,
+  “dồn sức vào kênh ra đơn”. Tắt việc xem hằng tuần bằng ô **Mỗi tuần CEO tự xem lại**.
+
 **Kết nối Telegram (5 phút):**
 
 1. Trên Telegram, nhắn **@BotFather** → `/newbot` → đặt tên → nhận token.

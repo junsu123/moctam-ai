@@ -315,6 +315,11 @@ def resolve(did: int, approve: bool, by: str = "boss") -> dict:
                (db.now(), f"{new['name']} tiếp quản nick {new['fb_name'] or ''}".strip(), did))
         return {"ok": True, "status": "done", "sale": new["name"]}
     data = json.loads(d.get("data") or "{}")
+    if d["kind"] == "channel":  # dồn sức vào kênh ra đơn
+        import channel_focus
+        done = channel_focus.apply(data.get("actions") or [], by=by)
+        db.run("UPDATE ceo_decisions SET status='done', decided_at=? WHERE id=?", (db.now(), did))
+        return {"ok": True, "status": "done", "sale": "", "done": done}
     db.run("UPDATE ceo_decisions SET status='approved', decided_at=? WHERE id=?", (db.now(), did))
     new = hire(d["reason"], data.get("source", "boss"))
     if not new:
