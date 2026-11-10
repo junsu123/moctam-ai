@@ -353,21 +353,33 @@ def rename(agent_id: str, name: str) -> dict:
 def set_face(agent_id: str, data_url: str) -> str:
     """Ảnh mặt sếp tải lên: cắt vuông giữa ảnh, thu nhỏ 320px, lưu data/faces/<id>.jpg."""
     import base64
+    import binascii
     import io
     import time
-    from PIL import Image, ImageOps
     if agent_id not in AGENTS and not agent_id.startswith("sale-"):
         raise ValueError("Không có agent này")
     raw = (data_url or "").split(",", 1)[-1]
     try:
-        img = Image.open(io.BytesIO(base64.b64decode(raw)))
-        img = ImageOps.exif_transpose(img).convert("RGB")
-    except Exception:
+        data = base64.b64decode(raw, validate=False)
+    except (binascii.Error, ValueError):
         raise ValueError("Không đọc được ảnh. Chọn ảnh JPG, PNG hoặc WEBP")
-    if min(img.size) < 48:
-        raise ValueError("Ảnh quá nhỏ, chọn ảnh từ 48×48 điểm ảnh trở lên")
-    img = ImageOps.fit(img, (320, 320), Image.LANCZOS, centering=(0.5, 0.4))  # lệch lên trên một chút: giữ mặt, bỏ bớt cằm
-    img.save(faces_dir() / f"{agent_id}.jpg", "JPEG", quality=85)
+    if len(data) > 5_000_000:
+        raise ValueError("Ảnh quá lớn (tối đa 5MB)")
+    try:
+        from PIL import Image, ImageOps
+    except ImportError:  # máy chưa cài Pillow: trình duyệt đã cắt vuông, thu nhỏ sẵn thành JPEG -> lưu luôn
+        if not data.startswith(b"\xff\xd8\xff") or len(data) < 1500:
+            raise ValueError("Không đọc được ảnh. Chọn ảnh JPG, PNG hoặc WEBP")
+        (faces_dir() / f"{agent_id}.jpg").write_bytes(data)
+    else:
+        try:
+            img = ImageOps.exif_transpose(Image.open(io.BytesIO(data))).convert("RGB")
+        except Exception:
+            raise ValueError("Không đọc được ảnh. Chọn ảnh JPG, PNG hoặc WEBP")
+        if min(img.size) < 48:
+            raise ValueError("Ảnh quá nhỏ, chọn ảnh từ 48×48 điểm ảnh trở lên")
+        img = ImageOps.fit(img, (320, 320), Image.LANCZOS, centering=(0.5, 0.4))  # lệch lên trên một chút: giữ mặt, bỏ bớt cằm
+        img.save(faces_dir() / f"{agent_id}.jpg", "JPEG", quality=85)
     url = f"/faces/{agent_id}.jpg?v={int(time.time())}"
     p = _profiles()
     p.setdefault(agent_id, {})["face"] = url

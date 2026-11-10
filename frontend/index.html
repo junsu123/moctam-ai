@@ -3800,13 +3800,15 @@ async function loadTeam(){
 }
 function shrinkImage(file,max=640){ return new Promise((ok,bad)=>{ const r=new FileReader(); r.onerror=()=>bad(new Error("Không đọc được ảnh"));
   r.onload=()=>{ const im=new Image(); im.onerror=()=>bad(new Error("Không đọc được ảnh. Chọn ảnh JPG, PNG hoặc WEBP"));
-    im.onload=()=>{ const k=Math.min(1,max/Math.max(im.width,im.height)); const cv=document.createElement("canvas"); cv.width=Math.round(im.width*k); cv.height=Math.round(im.height*k);
-      cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height); ok(cv.toDataURL("image/jpeg",0.88)); }; im.src=r.result; }; r.readAsDataURL(file); }); }
+    im.onload=()=>{ if(Math.min(im.width,im.height)<48){ bad(new Error("Ảnh quá nhỏ, chọn ảnh từ 48×48 điểm ảnh trở lên")); return; }
+      const side=Math.min(im.width,im.height), sx=(im.width-side)/2, sy=Math.max(0,(im.height-side)*0.4), out=Math.min(max,side);
+      const cv=document.createElement("canvas"); cv.width=cv.height=out;  // cắt vuông giữa ảnh, lệch lên để giữ mặt
+      cv.getContext("2d").drawImage(im,sx,sy,side,side,0,0,out,out); ok(cv.toDataURL("image/jpeg",0.88)); }; im.src=r.result; }; r.readAsDataURL(file); }); }
 $("#teamList").addEventListener("click",async e=>{ const li=e.target.closest("[data-tm]"); if(!li) return; const id=li.dataset.tm;
   if(e.target.closest("[data-tmsave]")){ try{ const r=await api(`/agents/${id}`,"PUT",{name:li.querySelector("[data-tmname]").value}); toast(`Đã đổi tên thành ${r.name}`); }catch(err){ toast(err.message); } loadTeam(); refresh(); }
   if(e.target.closest("[data-tmreset]")){ await api(`/agents/${id}/profile`,"DELETE"); toast("Đã trả về tên và mặt mặc định"); loadTeam(); refresh(); } });
 $("#teamList").addEventListener("change",async e=>{ const inp=e.target.closest("[data-tmface]"); if(!inp||!inp.files[0]) return; const id=inp.closest("[data-tm]").dataset.tm;
-  try{ const url=await shrinkImage(inp.files[0]); await api(`/agents/${id}`,"PUT",{face:url}); toast("Đã đổi ảnh mặt"); }catch(err){ toast(err.message); } loadTeam(); refresh(); });
+  try{ const url=await shrinkImage(inp.files[0],400); await api(`/agents/${id}`,"PUT",{face:url}); toast("Đã đổi ảnh mặt"); }catch(err){ toast(err.message); } loadTeam(); refresh(); });
 async function loadFunnel(){
   let d; try{ d=await api(`/funnel?days=${$("#fnDays").value||30}`); }catch(e){ return; }
   const T=d.total, pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";

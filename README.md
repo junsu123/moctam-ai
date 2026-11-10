@@ -859,7 +859,8 @@ hoặc nhắn "Cho cả đội học thêm kiến thức". Kiến thức học m
   “Lan viết dài quá” đều là nói Lan). Dòng nhỏ ghi tên gốc. Đổi tên nhân viên sale là đổi tên người giữ nick, không đổi nick Facebook.
 - **Ảnh mặt**: chọn ảnh JPG / PNG / WEBP, phần mềm thu nhỏ trên trình duyệt rồi cắt vuông lấy phần giữa (hơi lệch lên để giữ mặt),
   lưu `data/faces/<agent>.jpg` 320×320. Ảnh hiện ở ảnh đại diện mọi nơi và **dán lên mặt nhân vật 3D** (thay mắt, miệng vẽ sẵn).
-  Ảnh hỏng hoặc nhỏ hơn 48×48 bị từ chối. Chỉ dùng ảnh anh có quyền dùng.
+  Ảnh hỏng hoặc nhỏ hơn 48×48 bị từ chối. Chỉ dùng ảnh anh có quyền dùng. Cần thư viện Pillow (run.bat tự cài); máy chưa
+  có Pillow vẫn lưu được vì trình duyệt đã cắt vuông và thu nhỏ ảnh trước khi gửi.
 - **Về mặc định**: trả lại tên gốc và nhân vật 3D vẽ sẵn, xóa ảnh.
 
 ## Văn phòng: agent luôn làm việc hoặc học để lên cấp

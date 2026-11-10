@@ -43,6 +43,24 @@ check("ảnh hỏng / quá nhỏ bị từ chối", c.put("/api/agents/ha", json
       and c.put("/api/agents/ha", json={"face": data_url(20, 20)}).status_code == 400)
 check("không cho agent lạ", c.put("/api/agents/hacker", json={"name": "X"}).status_code == 400)
 
+# máy chưa cài Pillow (lỗi #27): vẫn lưu được ảnh JPEG trình duyệt đã cắt sẵn
+import builtins
+jb = io.BytesIO(); Image.new("RGB", (400, 400), (90, 160, 200)).save(jb, "JPEG", quality=88)
+jpeg = "data:image/jpeg;base64," + base64.b64encode(jb.getvalue()).decode()
+_imp = builtins.__import__
+def no_pil(name, *a, **k):
+    if name == "PIL" or name.startswith("PIL."):
+        raise ImportError("No module named 'PIL'")
+    return _imp(name, *a, **k)
+builtins.__import__ = no_pil
+try:
+    r1 = c.put("/api/agents/ceo", json={"face": jpeg})
+    r2 = c.put("/api/agents/ceo", json={"face": data_url(300, 300)})  # PNG: không đọc được khi thiếu Pillow
+finally:
+    builtins.__import__ = _imp
+check(f"thiếu Pillow: vẫn lưu ảnh JPEG ({r1.status_code})", r1.status_code == 200 and (agents.faces_dir() / "ceo.jpg").read_bytes() == jb.getvalue())
+check("thiếu Pillow: ảnh không phải JPEG bị từ chối rõ ràng, không lỗi 500", r2.status_code == 400)
+
 r = c.delete("/api/agents/lan/profile").json()
 check("về mặc định: tên Lan, xóa ảnh", r["name"] == "Lan" and not r["face"] and not f.exists()
       and "Bạn tên là Lan" in agents.system_prompt("lan", db.get_settings()))
