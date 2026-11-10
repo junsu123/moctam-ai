@@ -935,6 +935,38 @@ Có khóa API Claude thì CEO dùng AI để hiểu lệnh (Haiku, rất rẻ); 
 ("Viết 3 bài về…", "Xếp lịch", "Họp về…", "Tìm nhóm theo chủ đề “…”", "Tạm dừng Linh", "<Tên agent> … sai/dài quá/đừng…",
 "Từ nay …", "Tình hình hôm nay thế nào?").
 
+## CEO Đức: hiểu việc, trả lời như giám đốc, tìm khách linh hoạt
+
+**Nhớ hội thoại và hỏi lại khi chưa rõ.** CEO đọc 10 tin gần nhất (3 ngày) giữa sếp và CEO, nên hiểu “làm tiếp”, “cái đó”,
+“như hôm qua”. Lệnh rõ thì làm ngay; lệnh mơ hồ mà làm sai sẽ tốn công (chưa rõ sản phẩm, số lượng, nhóm, ai làm) thì CEO
+**hỏi lại 1 câu kèm 2–4 lựa chọn**: trên phần mềm là nút bấm dưới tin của CEO, trên Telegram là nút trong tin. Sếp bấm (hoặc gõ)
+câu trả lời, CEO hiểu đó là trả lời cho câu vừa hỏi và làm tiếp. Cần khóa Claude; chưa có khóa thì CEO hiểu theo mẫu câu như trước.
+
+**Trả lời như giám đốc, bằng số liệu thật.** Trước khi trả lời, CEO đọc: KPI hôm nay, phễu 14 ngày theo kênh (SĐT → sếp gọi →
+chốt, doanh thu), lý do khách không mua, kết luận dồn sức / tạm dừng kênh, chi phí AI mỗi đơn, số khách chờ sếp gọi, bài chờ duyệt,
+nick lỗi, từ khóa đang thử. Câu trả lời theo khuôn: số liệu → nút thắt → việc em đã giao / đề xuất, 2–5 câu, không bịa số.
+Hỏi thử: “Vì sao tuần này ít khách mua?”, “Kênh nào ra đơn?”.
+
+**Báo cáo tuần** (thứ Hai 08:20, Telegram và khung chat; hoặc nhắn “báo cáo tuần”): tuần qua bằng số liệu, nút thắt lớn nhất,
+đúng 3 việc tuần này (ai làm, đo bằng gì), kết quả từ khóa thử, gợi ý quảng cáo.
+
+**Tìm khách linh hoạt: học từ khách đã mua.** CEO đọc chân dung khách mua thật 90 ngày (kiểu người bán, ngành hàng, câu họ tự
+viết, từ khóa / nhóm đã ra họ; chưa có khách mua thì dùng khách sếp đã liên hệ) cùng kết quả từng từ khóa Mai đang tìm (số tài khoản,
+SĐT, đơn), rồi nhờ Claude đề xuất **tối đa 6 từ khóa mới cho Mai** (theo 5 hướng) và **3 chủ đề nhóm mới cho Tuấn**, giống cách khách
+thật tự mô tả mình. Từ khóa đã có hoặc Mai đã từng tìm không thử lại. Từ khóa mới được đặt đầu danh sách để thử sớm, **chạy thử
+14 ngày**: ra SĐT thì giữ hẳn, không ra thì tự bỏ; chủ đề nhóm không tìm được nhóm đạt chuẩn thì bỏ. Chạy mỗi tuần cùng báo cáo
+tuần (tắt bằng cài đặt `ceo_kw_auto`), hoặc nhắn CEO “tìm khách theo hướng mới”, “từ khóa mới”.
+
+**Kênh hợp lệ thêm: Fanpage qua Graph API.** Bài Fanpage đã đăng tự động (Graph API, kênh Facebook cho phép tự động hóa). Nay
+CEO đọc thêm **bình luận dưới bài Fanpage 7 ngày qua** (cùng giờ quét bình luận của sale, hoặc nhắn “đọc bình luận fanpage”):
+ai để SĐT hoặc hỏi giá thì thành khách, kênh **Bình luận Fanpage** trong phễu. Chỉ đọc, trả lời khách vẫn do sếp / Hà. Token Trang
+cần quyền đọc bình luận (`pages_read_engagement`). Báo cáo tuần có **gợi ý quảng cáo**: bài đang hút khách nhất và cách chạy thử
+(mục tiêu Tin nhắn / Khách tiềm năng, ngân sách nhỏ 3–5 ngày) để sếp tự chạy trong Trình quản lý quảng cáo, đo bằng phễu.
+
+**Không lách luật Facebook.** CEO không né phát hiện tự động, không mẹo né lọc spam, không vượt trần bài / lời mời / bình luận,
+không tự nhắn tin hay kết bạn hàng loạt. Sếp yêu cầu “lách luật” thì CEO nói thẳng lý do (cả cụm nick có thể bị khóa cùng lúc, mất
+kênh bán chính) và đưa cách hợp lệ: Fanpage, quảng cáo, nội dung có giá trị, nhóm đúng tệp.
+
 ## CEO: tuyển dụng và sa thải
 
 CEO **Đức** điều hành nhân sự phòng kinh doanh (khung **CEO** trên trang Công ty, lệnh `/ceo` trên Telegram). Mọi quyết

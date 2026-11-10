@@ -40,13 +40,14 @@ WHO = {"mai": "Mai", "lan": "Lan", "ha": "Hà"}
 
 CHANNELS = {
     "comment": "Bình luận dưới bài mình đăng",
+    "fanpage": "Bình luận Fanpage",
     "demand": "Người hỏi nguồn trong nhóm (Mai đọc)",
     "ads": "Trang chạy quảng cáo (Mai quét)",
     "pages": "Trang, shop livestream (Mai tìm)",
     "link": "Link sếp dán cho Mai",
     "manual": "Sếp nhập tay",
 }
-_CH_SQL = """CASE WHEN l.origin='comment' THEN 'comment'
+_CH_SQL = """CASE WHEN l.origin='comment' THEN 'comment' WHEN l.origin='fanpage' THEN 'fanpage'
   WHEN l.origin='prospect' THEN CASE WHEN pr.direction=6 THEN 'demand' WHEN pr.direction=5 THEN 'ads'
        WHEN pr.direction BETWEEN 1 AND 4 THEN 'pages' ELSE 'link' END
   ELSE 'manual' END"""

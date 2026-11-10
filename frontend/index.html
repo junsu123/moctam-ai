@@ -2117,7 +2117,11 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     S.status.nam={state:"working",text:"Rà soát bài đã đăng, viết câu bình luận kèm ảnh"}; setTimeout(()=>{ S.status.nam={state:"idle",text:`Hôm nay xếp ${ps.length} lượt up bài`}; },3000);
     log("bao","Lịch up bài",`Rà soát bài đã đăng: xếp ${ps.length} lượt bình luận ảnh kèm câu mới và dòng liên hệ`);
     ps.forEach((p,i)=>setTimeout(()=>{ p.bump_count=(p.bump_count||0)+1; p.last_bump_at=now(); p.last_bump="done|||"; log(`sale-${p.sale_id}`,"Up bài",`Bình luận ảnh vào bài #${p.id}: “${tx[i]}”`); },4000+i*3000)); return ps.length; }
-  function demoCeoDo(t){ const low=t.toLowerCase(); const ag=[["lan","Lan"],["tuấn","Tuấn"],["hà","Hà"],["khoa","Khoa"],["minh","Minh"]].find(([k])=>new RegExp(`(^|\\s)${k}(\\s|$|,)`).test(low));
+  function demoCeoDo(t){ const low=t.toLowerCase();
+    if(/^viết bài đi$|^viết bài$|^đăng bài đi$/.test(low.trim())) return ["Dạ sếp muốn em viết bài về sản phẩm nào ạ?",null,{type:"clarify",question:"Dạ sếp muốn em viết bài về sản phẩm nào ạ?",options:["Trà gừng mật ong","Bột ngũ cốc","Sản phẩm đang bán chạy"]}];
+    if(["trà gừng mật ong","bột ngũ cốc","sản phẩm đang bán chạy"].includes(low.trim())) return [`Dạ, em giao Lan viết 3 bài về ${t.trim().toLowerCase()} (theo bài mẫu của sếp), CEO chấm xong em cho Tuấn xếp lịch.`];
+    if(/vì sao.*ít khách|báo cáo tuần/.test(low)) return ["Dạ sếp, 14 ngày qua có 48 SĐT, sếp đã gọi 36, chốt 5 đơn (12,6 triệu).","Nút thắt: kênh trang / shop livestream ra 18 SĐT nhưng 0 đơn, đa số “sai tệp”. Em đã cho Mai đòi bằng chứng đang bán online và dồn sức đọc nhóm hỏi nguồn (ra 2 đơn / 9 SĐT)."];
+    if(/hướng mới|từ khóa mới|giống khách đã mua/.test(low)) return ["Dạ em đã xem 5 khách mua gần nhất: đa số bán livestream đồ uống healthy, hay viết “cần nguồn ổn định”.","Đã cho thử 14 ngày: Mai (hướng 1): livestream trà healthy; Mai (hướng 4): cần nguồn trà ổn định; Tìm nhóm: hội bán đồ uống healthy online. Không ra SĐT thì em bỏ."]; const ag=[["lan","Lan"],["tuấn","Tuấn"],["hà","Hà"],["khoa","Khoa"],["minh","Minh"]].find(([k])=>new RegExp(`(^|\\s)${k}(\\s|$|,)`).test(low));
     const crit=/(sai|không đúng|dài quá|quá dài|ngắn quá|kém|đừng|không được|phải|nên|cấm|nhầm|chán|nhạt|sửa)/.test(low); let m;
     if(/tình hình|thế nào|báo cáo/.test(low)&&!crit){ const st=stats(); return ["Dạ sếp, tình hình hôm nay:",`Hôm nay ${S.kpiPhone||3}/5 khách có SĐT; ${st.drafts} bài nháp; ${st.approved} bài đã duyệt/lên lịch; ${st.posted_total} bài đã đăng.`]; }
     if(ag&&crit){ const aid=ag[0]==="tuấn"?"tuan":ag[0]==="hà"?"ha":ag[0]; S.lessons.push({id:id(),agent_id:aid,text:t,evidence:"Sếp nhắc qua CEO",source:"boss",confidence:1,pinned:1}); log(aid,"CEO yêu cầu sửa",t); return ["Dạ em nhận việc.",`Yêu cầu ${ag[1]} sửa: “${t}” (đã ghim vào sổ tay, áp dụng từ việc tiếp theo)`]; }
@@ -2570,8 +2574,8 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
       if(body.groups_per_run!=null) S.prSet.prospect_groups_per_run=String(body.groups_per_run); for(const k of ["ads","groups"]) if(body[k]!=null) S.prSet["prospect_"+k]=body[k]?"1":"0"; if(body.time) S.prSet.prospect_time=body.time; if(body.fb_keywords) S.prSet.prospect_fb_keywords=String(body.fb_keywords); if(body.inspect_per_run) S.prSet.prospect_inspect_per_run=String(body.inspect_per_run); if(body.keywords) S.prKw={...S.prKw,...body.keywords}; return demoPR(""); }
     if(method==="PATCH"&&(m=P.match(/^\/errors\/(\d+)$/))){ const e=S.errors.find(x=>x.id==m[1]); if(e) e.status=body.status; return {ok:true}; }
     if(method==="DELETE"&&P==="/errors/resolved"){ S.errors=S.errors.filter(e=>e.status!=="resolved"); return {ok:true}; }
-    if(method==="POST"&&P==="/ceo/chat"){ S.chat.push({id:id(),role:"boss",text:body.text,via:"web",created_at:now()}); await wait(700); const [r,x]=demoCeoDo(body.text);
-      S.chat.push({id:id(),role:"ceo",text:x?`${r}\n• ${x}`:r,via:"web",created_at:now()}); log("ceo","Nhận việc từ sếp",body.text); return demoChat(); }
+    if(method==="POST"&&P==="/ceo/chat"){ S.chat.push({id:id(),role:"boss",text:body.text,via:"web",created_at:now()}); await wait(700); const [r,x,q]=demoCeoDo(body.text);
+      S.chat.push({id:id(),role:"ceo",text:x?`${r}\n• ${x}`:r,via:"web",created_at:now(),actions:q?[q]:[]}); log("ceo","Nhận việc từ sếp",body.text); return demoChat(); }
     if(method==="PUT"&&P==="/ceo/autopilot"){ S.settings.ceo_autopilot=body.on?"1":"0"; return demoChat(); }
     if(method==="DELETE"&&(m=P.match(/^\/ceo\/orders\/(\d+)$/))){ const o=S.orders.find(x=>x.id==m[1]); if(o) o.active=0; return demoChat(); }
     if(P==="/group-finder"&&method==="PUT"){ const st=S.gf; if(body.pool) st.pool=body.pool.map(x=>x.trim()).filter(Boolean);
@@ -4047,8 +4051,10 @@ async function loadCeoChat(force){
   const run=$("#ceoRun"); run.hidden=!(d.running||[]).length; run.innerHTML=(d.running||[]).length?`<span class="dot live"></span><b>Đang làm:</b> ${d.running.map(esc).join(" · ")}`:"";
   $("#ceoChatMode").textContent=d.autopilot?"Luật: sếp chỉ giao việc cho CEO, CEO tự vận hành":"Sếp đang giao việc trực tiếp cho từng agent";
   if(changed){ const log=$("#ceoLog");
-    log.innerHTML=n?d.history.slice(-12).map(m=>`<div class="${m.role==="boss"?"b":"c"}">${esc(m.text)}<time>${m.role==="boss"?"Sếp":"CEO Đức"}${m.via==="telegram"?" · Telegram":""} · ${fmtTime(m.created_at)}</time></div>`).join("")
+    const lastQ=(()=>{ const m=d.history[n-1]; return m&&m.role!=="boss"?(m.actions||[]).find(a=>a&&a.type==="clarify"):null; })();
+    log.innerHTML=n?d.history.slice(-12).map(m=>`<div class="${m.role==="boss"?"b":"c"}" style="white-space:pre-line">${esc(m.text)}<time>${m.role==="boss"?"Sếp":"CEO Đức"}${m.via==="telegram"?" · Telegram":""} · ${fmtTime(m.created_at)}</time></div>`).join("")
       :'<div class="c">Dạ, sếp cứ giao việc cho em. Em sẽ tự chia việc cho Lan, Tuấn, Hà, Khoa và các bạn sale, rồi báo lại sếp. Agent nào làm chưa đúng, sếp nói em sửa.</div>';
+    if(lastQ&&(lastQ.options||[]).length) log.insertAdjacentHTML("beforeend",`<div class="chips ceo-q">${lastQ.options.map(o=>`<button type="button" data-ceoq="${esc(o)}">${esc(o)}</button>`).join("")}</div>`);
     log.scrollTop=log.scrollHeight; }
   if(!$("#ceoSugg").children.length) $("#ceoSugg").innerHTML=(d.suggestions||[]).map(t=>`<button type="button" data-sugg="${esc(t)}">${esc(t)}</button>`).join("");
 }
@@ -4057,6 +4063,7 @@ $("#ceoForm").addEventListener("submit",async e=>{ e.preventDefault(); const v=$
   $("#ceoLog").insertAdjacentHTML("beforeend",`<div class="b">${esc(v)}<time>Sếp · vừa xong</time></div>`); $("#ceoLog").scrollTop=1e6;
   try{ await api("/ceo/chat","POST",{text:v}); $("#ceoIn").value=""; }catch(err){ toast(err.message); }
   btn.disabled=false; btn.textContent="Giao việc"; ST.ceoChat=null; loadCeoChat(true); refresh(); });
+$("#ceoLog").addEventListener("click",async e=>{ const b=e.target.closest("[data-ceoq]"); if(!b) return; $("#ceoIn").value=b.dataset.ceoq; $("#ceoForm").requestSubmit(); });
 $("#ceoSugg").addEventListener("click",e=>{ const b=e.target.closest("[data-sugg]"); if(!b) return; $("#ceoIn").value=b.dataset.sugg; $("#ceoIn").focus(); });
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-askceo]"); if(!b) return; $("#drawer").hidden=true; location.hash="ceo";
   setTimeout(()=>{ $("#ceoIn").value=`${b.dataset.askceo} `; $("#ceoIn").focus(); },300); });

@@ -74,7 +74,9 @@ def _tick():
     import group_fit
     group_fit.tick(now)
     import channel_focus
-    channel_focus.tick(now)  # mỗi tuần CEO xem kênh nào ra đơn, dồn sức / tạm dừng  # bài đã có nhóm: Lan chỉnh theo câu hỏi thật của người trong nhóm đó
+    channel_focus.tick(now)
+    import ceo_brain
+    ceo_brain.tick(now)  # báo cáo tuần của CEO, thử / bỏ từ khóa tìm khách, đọc bình luận Fanpage  # mỗi tuần CEO xem kênh nào ra đơn, dồn sức / tạm dừng  # bài đã có nhóm: Lan chỉnh theo câu hỏi thật của người trong nhóm đó
     import growth
     growth.tick(now)  # agent rảnh thì tự học / luyện tập để lên cấp
     import fb_policy

@@ -574,7 +574,8 @@ def _ceo_reply(chat_id: str, text: str):
         return
     try:
         r = ceo_orders.handle(text, via="telegram")
-        _reply(chat_id, "👔 <b>CEO Đức:</b> " + e(r["reply"]))
+        if not r.get("sent"):  # CEO hỏi lại kèm nút đã tự gửi
+            _reply(chat_id, "👔 <b>CEO Đức:</b> " + e(r["reply"]))
     except Exception as ex:
         _reply(chat_id, f"CEO chưa nhận được việc: {e(str(ex)[:200])}")
 
@@ -583,6 +584,21 @@ def handle_callback(cb: dict):
     import learning
     chat_id = str(cb["message"]["chat"]["id"])
     if chat_id not in chats():
+        return
+    if cb.get("data", "").startswith("q:"):  # sếp chọn 1 lựa chọn khi CEO hỏi lại
+        import ceo_orders
+        try:
+            _, mid, i = cb["data"].split(":")
+            m = db.one("SELECT actions FROM ceo_messages WHERE id=?", (int(mid),))
+            q = next(a for a in json.loads(m["actions"] or "[]") if a.get("type") == "clarify")
+            pick = q["options"][int(i)]
+        except Exception:
+            call("answerCallbackQuery", callback_query_id=cb["id"], text="Câu hỏi này đã cũ")
+            return
+        call("answerCallbackQuery", callback_query_id=cb["id"], text=f"Sếp chọn: {pick[:150]}")
+        r = ceo_orders.handle(pick, via="telegram")
+        if not r.get("sent"):
+            _reply(chat_id, "👔 <b>CEO Đức:</b> " + e(r["reply"]))
         return
     if cb.get("data", "").startswith("c:"):  # duyệt đề xuất của CEO
         import ceo

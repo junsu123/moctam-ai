@@ -57,6 +57,17 @@ def publish_page(message: str, images: list | None = None) -> dict:
     return {"ok": False, "error": err}
 
 
+def comments(post_id: str, limit: int = 100) -> list[dict]:
+    """Bình luận dưới một bài của Fanpage (Graph API, quyền pages_read_engagement). Chỉ đọc."""
+    s = db.get_settings()
+    r = httpx.get(f"{GRAPH}/{post_id}/comments", params={"fields": "from,message,created_time", "limit": limit,
+                                                          "filter": "stream", "access_token": s["fb_page_token"]}, timeout=30)
+    d = r.json()
+    if "error" in d:
+        raise RuntimeError(d["error"].get("message", "Graph API lỗi"))
+    return d.get("data") or []
+
+
 def publish_post(post: dict) -> dict:
     """Chọn ảnh cho bài rồi đăng lên Fanpage; ghi lại ảnh đã dùng để lần sau không trùng."""
     import media_folder

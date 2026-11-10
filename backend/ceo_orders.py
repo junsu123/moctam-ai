@@ -279,6 +279,21 @@ def execute(act: dict) -> str:
             return ("Câu này đội chưa học tới. Em đã ghi vào danh sách câu hỏi cần học, đội sẽ tìm hiểu trong buổi tự học tới "
                     "(cần có khóa Claude ở Cài đặt để tra cứu)")
         return "Em chưa tra cứu được câu này, sếp thử lại sau giúp em"
+    if t == "suggest_keywords":
+        import ceo_brain
+        r = ceo_brain.suggest_keywords()
+        if not r["ok"]:
+            return "Chưa thử từ khóa mới được: " + r["why"]
+        return ("Em đã cho thử: " + "; ".join(r["added"]) + (f". Vì {r['why']}" if r.get("why") else "")
+                + ". Chạy thử 14 ngày, không ra SĐT thì em bỏ") if r["added"] else "Claude chưa tìm được từ khóa nào mới hơn từ khóa đang có"
+    if t == "weekly_report":
+        import ceo_brain
+        return ceo_brain.weekly(send=act.get("_via") != "web")[:900]
+    if t == "scan_fanpage":
+        import ceo_brain
+        r = ceo_brain.scan_fanpage()
+        return (f"Đã đọc bình luận {r['posts']} bài Fanpage 7 ngày qua: {r['new']} khách mới, {r['phones']} SĐT mới"
+                if r["ok"] else "Chưa đọc được Fanpage: " + r["why"])
     if t == "focus_review":
         import channel_focus
         r = channel_focus.run(force=True, notify=False)
@@ -607,6 +622,9 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - ask {question}: sếp HỎI kiến thức/cách làm (không phải giao việc). CEO tra sổ kiến thức của đội trước, chưa có mới tra cứu
 - study_now {}: cho cả đội tự học kiến thức mới ngay
 - focus_review {}: xem kênh tìm khách nào ra đơn, dồn sức cho kênh ra đơn, tạm dừng kênh chỉ ra số không ra đơn
+- suggest_keywords {}: CEO học chân dung khách đã mua, cho Mai thử từ khóa tìm khách mới và Tuấn thử chủ đề nhóm mới (14 ngày, không ra SĐT thì bỏ)
+- weekly_report {}: viết báo cáo tuần ngay (tuần qua, nút thắt, 3 việc tuần này)
+- scan_fanpage {}: đọc bình luận dưới bài Fanpage (Graph API) để lấy khách để SĐT / hỏi giá
 - set_hot {product_id, hot: true|false, note?}: đánh dấu / bỏ đánh dấu sản phẩm đang bán chạy (cả đội tập trung chào mời)
 - daily_work {}: cả đội làm việc hằng ngày
 - meeting {topic}: triệu tập họp
@@ -650,13 +668,34 @@ def _llm_plan(text: str) -> dict | None:
     from llm import llm
     if not llm.live:
         return None
-    sysmsg = system_prompt("ceo", s()) + "\n\nBạn là CEO, sếp (chủ xưởng) chỉ giao việc cho bạn. Bạn tự chia việc cho các agent.\n" + ACTIONS_DOC
-    prompt = (f"Bối cảnh công ty (JSON): {_context()}\n\nSếp nhắn: \"{text}\"\n\n"
-              'Trả về JSON: {"reply": "1-3 câu trả lời sếp, xưng em gọi sếp", "actions": [{"type": "...", ...}]}')
-    data = llm.json(sysmsg, prompt, mock=None, max_tokens=700, task="ceo")
+    import ceo_brain
+    sysmsg = system_prompt("ceo", s()) + "\n\n" + CEO_STYLE + "\n" + ACTIONS_DOC
+    pq = ceo_brain.pending_question()
+    prompt = (f"Bối cảnh công ty (JSON): {_context()}\n\n"
+              f"SỐ LIỆU THẬT (đọc trước khi trả lời, chỉ dùng số có ở đây): {json.dumps(ceo_brain.data_brief(), ensure_ascii=False)}\n\n"
+              f"Hội thoại gần đây giữa sếp và em (cũ → mới): {json.dumps(ceo_brain.recent_chat(), ensure_ascii=False)}\n"
+              + (f"Em vừa hỏi lại sếp: “{pq.get('question')}”, các lựa chọn {pq.get('options')}. Tin sếp nhắn dưới đây có thể là câu trả lời.\n"
+                 if pq else "")
+              + f"\nSếp nhắn: \"{text}\"\n\n"
+              'Trả về JSON: {"reply": "câu trả lời sếp", "actions": [{"type": "...", ...}], '
+              '"clarify": null hoặc {"question": "1 câu hỏi lại", "options": ["2-4 lựa chọn ngắn"]}}')
+    data = llm.json(sysmsg, prompt, mock=None, max_tokens=1200, task="ceo")
     if isinstance(data, dict) and isinstance(data.get("actions"), list):
         return data
     return None
+
+
+CEO_STYLE = """BẠN LÀ CEO ĐỨC — làm việc như một giám đốc kinh doanh chuyên nghiệp. Sếp (chủ xưởng) chỉ giao việc cho bạn.
+- Hiểu đúng ý sếp: đọc cả hội thoại gần đây. “làm tiếp”, “cái đó”, “như hôm qua” là nói về việc vừa trao đổi.
+- Lệnh rõ thì làm ngay (chia việc cho agent bằng actions), không hỏi lại. Lệnh mơ hồ mà làm sai sẽ tốn công hoặc khó sửa
+  (không rõ sản phẩm, số lượng, nhóm nào, ai) thì KHÔNG đoán: đặt "clarify" với 1 câu hỏi và 2–4 lựa chọn, actions để [].
+- Trả lời như giám đốc: số liệu thật → nhận định (nút thắt ở đâu) → việc em đã giao / đề xuất. Không chung chung, không bịa số,
+  không hứa điều agent không làm được. Ngắn: 2–5 câu, xưng em gọi sếp.
+- Sếp hỏi tình hình / vì sao ít khách / nên làm gì: trả lời bằng phễu SĐT → sếp gọi → chốt, lý do không mua, kênh nào ra đơn.
+- Tìm khách linh hoạt: dùng suggest_keywords khi sếp muốn tìm khách theo hướng mới hoặc khách đang ít; dùng focus_review để dồn sức kênh ra đơn.
+- Luật Facebook: KHÔNG né phát hiện, không mẹo né lọc spam, không tăng số bài / lời mời / bình luận quá trần, không tự nhắn tin hay
+  kết bạn hàng loạt. Sếp đòi “lách luật” thì nói thẳng lý do (nick bị khóa cả cụm) và đưa cách hợp lệ: Fanpage qua Graph API,
+  chạy quảng cáo, nội dung có giá trị, nhóm đúng tệp."""
 
 
 def _num(t: str, default: int) -> int:
@@ -705,6 +744,10 @@ def _rule_plan(text: str) -> dict:
             if re.search(rf"(?<!\w){re.escape(r['name'].lower())}(?!\w)", low):
                 agent = f"sale-{r['id']}"
                 break
+    for rx, typ in ((r"báo cáo tuần|tổng kết tuần", "weekly_report"),
+                    (r"(bình luận|comment).{0,20}fanpage|fanpage.{0,20}(bình luận|comment|khách)", "scan_fanpage")):
+        if re.search(rx, low):  # việc riêng của CEO: khớp trước các mẫu chung “báo cáo”, “bình luận”
+            return {"reply": "Dạ em làm ngay.", "actions": [{"type": typ}]}
     critique = re.search(r"\b(sai|không đúng|chưa đúng|dài quá|quá dài|ngắn quá|quá ngắn|kém|tệ|đừng|không được|phải|nên|"
                          r"cấm|nhầm|lỗi|chán|nhạt|sửa|làm ẩu|lặp lại|trùng)\b", low)
     want_find = re.search(r"\b(tìm|kiếm|săn|lùng|search|khám phá)\b.{0,30}?" + GROUP_NOUN, low) or \
@@ -832,6 +875,12 @@ def _rule_plan(text: str) -> dict:
                 acts.append({"type": "hire", "reason": t})
         if not acts and re.search(r"\b(từ nay|từ giờ|từ bây giờ|luôn luôn|bắt buộc|cấm|không được|đừng bao giờ|mỗi bài|bài nào cũng|mọi bài)\b", low):
             acts.append({"type": "order", "agent": agent or "all", "text": t})
+        if not acts and re.search(r"báo cáo tuần|tổng kết tuần", low):
+            acts.append({"type": "weekly_report"})
+        if not acts and re.search(r"từ khóa (mới|khác)|tìm khách (theo )?(hướng|cách) (mới|khác)|tìm khách linh hoạt|đổi cách tìm khách", low):
+            acts.append({"type": "suggest_keywords"})
+        if not acts and re.search(r"(bình luận|comment).{0,20}fanpage|fanpage.{0,20}(bình luận|comment|khách)", low):
+            acts.append({"type": "scan_fanpage"})
         if not acts and re.search(r"kênh nào (ra|có) (đơn|khách)|dồn sức|tập trung (vào )?kênh|xem lại (các )?kênh|kênh (nào )?hiệu quả", low):
             acts.append({"type": "focus_review"})
         if re.search(r"(học|tìm hiểu)\s*(thêm\s*)?(kiến thức|cái mới|điều mới)", low) and not acts:
@@ -866,7 +915,7 @@ def handle(text: str, via: str = "web") -> dict:
         plan = _llm_plan(text)
     except Exception as e:
         print("[ceo_orders]", e)
-    if not plan or not plan.get("actions"):
+    if not plan or (not plan.get("actions") and not plan.get("clarify")):  # CEO hỏi lại thì không đoán bằng mẫu câu
         rp = _rule_plan(text)
         if rp["actions"] or not plan:
             plan = rp
@@ -882,6 +931,21 @@ def handle(text: str, via: str = "web") -> dict:
             errors.report_exc("api", f"CEO làm việc “{a.get('type')}” bị lỗi", e)
             res = f"Lỗi khi làm “{a.get('type')}”: {str(e)[:120]}"
         done.append({"type": a["type"], "result": res})
+    cl = plan.get("clarify") if isinstance(plan.get("clarify"), dict) else None
+    if cl and cl.get("question") and not done:
+        opts = [str(o)[:80] for o in (cl.get("options") or []) if str(o).strip()][:4]
+        q = str(cl["question"])[:300]
+        reply = ((plan.get("reply") or "").strip() + "\n" if plan.get("reply") else "") + q
+        mid = _say("ceo", reply, [{"type": "clarify", "question": q, "options": opts}], via=via)
+        if via == "telegram" and opts:
+            try:
+                import telegram_bot
+                telegram_bot.send("👔 <b>CEO Đức:</b> " + telegram_bot.e(reply),
+                                  buttons=[[{"text": o[:40], "callback_data": f"q:{mid}:{i}"}] for i, o in enumerate(opts)])
+                return {"reply": reply, "actions": [], "clarify": {"question": q, "options": opts}, "sent": True}
+            except Exception as ex:
+                print("[ceo_orders]", ex)
+        return {"reply": reply, "actions": [], "clarify": {"question": q, "options": opts}}
     reply = (plan.get("reply") or "Dạ em nhận việc.").strip()
     if done and all(d["result"].startswith(("Chưa", "Không")) for d in done) and reply.startswith("Dạ em nhận việc"):
         reply = "Dạ, việc này em chưa làm được ngay:"
@@ -979,6 +1043,7 @@ def overview() -> dict:
             running.append(f"{r['name']}: {JOB_TXT.get(b, b)}" + (f" (+{browser_poster.queued(r['id']) - 1} việc chờ)"
                                                                      if browser_poster.queued(r["id"]) > 1 else ""))
     return {"autopilot": autopilot(), "history": history(), "orders": orders(), "running": running,
-            "suggestions": ["Tình hình hôm nay thế nào?", "Đăng bài lên các nhóm có từ khóa nguồn hàng, bán hàng online", "Viết 3 bài về trà gừng mật ong", "Xếp lịch đăng nhóm",
+            "suggestions": ["Tình hình hôm nay thế nào?", "Vì sao tuần này ít khách mua?", "Báo cáo tuần",
+                            "Tìm khách theo hướng mới giống khách đã mua", "Kênh nào ra đơn?", "Đăng bài lên các nhóm có từ khóa nguồn hàng, bán hàng online", "Viết 3 bài về trà gừng mật ong", "Xếp lịch đăng nhóm",
                             "Tìm nhóm theo chủ đề “hội chạy quảng cáo facebook”", "Lan viết bài dài quá, viết dưới 150 chữ",
                             "Từ nay bài nào cũng nhắc giao hàng toàn quốc"]}
