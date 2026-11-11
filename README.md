@@ -354,7 +354,7 @@ các nhóm sôi nổi để nick vào trả lời đúng lúc họ cần hàng.
   tới **Master thì tự viết, không gọi Claude nữa**. Câu sếp sửa khi duyệt cũng được lưu làm mẫu. Không có khóa Claude thì Bảo tự viết.
 - **Sếp duyệt**: mỗi bài hiện câu khách hỏi và câu trả lời (sửa được). **Duyệt và gửi**, **Bỏ qua**, **Không hợp** (người bán khác,
   Mai ghi nhớ là data rác), hoặc **Duyệt tất cả**. Câu phạm luật Facebook (hứa chữa bệnh, giảm cân, link rút gọn…) không duyệt được.
-- **Nick gửi**: câu đã duyệt được xếp giờ trong **giờ làm của nick**, cách câu trước **45–90 phút**, tối đa **5 câu/nick/ngày** (sửa
+- **Nick gửi**: câu đã duyệt được xếp giờ trong **giờ làm của nick**, dàn đều cả ngày (ít nhất 60 phút giữa 2 câu), tối đa **5 câu/nick/ngày** (sửa
   được, trần 10; nick mới hoặc vừa bị chặn còn một nửa). Hết lượt thì dời sang sáng mai. Tới giờ, ca làm việc của sale mở bài, gõ câu
   vào ô bình luận (chỉ chữ, không ảnh), bấm gửi, kiểm tra đã gửi và chụp ảnh. Lúc gửi kiểm lại giờ làm, trần và giãn cách; nick đang
   nghỉ sau sự cố thì không gửi; bài đã bị xóa thì bỏ qua.
@@ -382,17 +382,24 @@ của nhóm nick chưa vào (có nút Tham gia) bị bỏ; nhóm mới thấy tr
 
 Mỗi bình luận hiện loại, điểm, lý do và đúng câu người đăng viết.
 
-**Hai kiểu bình luận:**
+**Ba kiểu bình luận:**
 - **Hỏi mua**: câu trả lời đúng điều họ hỏi (Claude viết, Bảo học dần rồi tự viết như phần trên) + **1 ảnh ngẫu nhiên** trong thư mục
   ảnh của sản phẩm họ cần (không có thì thư mục chung), ưu tiên ảnh chưa dùng ở nhóm đó + dòng Zalo.
 - **Người bán online**: **chỉ chữ**, chào nhẹ, bám vào điều họ viết, giới thiệu xưởng, mời nhắn nếu cần thêm mặt hàng + dòng Zalo.
   Loại này bị báo cáo nhiều hơn nên giữ chặt hơn: **luôn chờ sếp duyệt**, tối đa **2 câu/nick/ngày** (sửa được 0–3, nick mới một
   nửa, nằm trong trần chung 5 câu), **mỗi người chỉ một nick chào một lần**, không chào ở nhóm cấm bán hàng. Sau 6 giờ nick mở lại
   bài xem bình luận chào còn không; nhóm đã xóa thì **ngừng chào người bán ở nhóm đó 30 ngày** (hiện ở trang Trả lời khách).
+- **Bình luận theo nhóm** (mặc định bật, ô “Bình luận cả bài không có từ khóa liên quan”): bỏ luật chỉ bình luận bài có từ khóa liên
+  quan, để **nhóm nào cũng có bình luận**. Bài bình thường của thành viên (chia sẻ, hỏi đáp, khoe hàng, khai trương...) được Claude
+  viết câu 12–30 chữ đúng nội dung bài, giới thiệu nhẹ là xưởng + dòng Zalo; nhóm cấm bán hàng hoặc từng xóa bình luận thì **không kèm
+  Zalo**. **Chia đều**: nhóm ít được bình luận nhất được ưu tiên, mỗi nhóm tối đa **2 câu/ngày** (sửa 1–3) cho loại này; người hỏi mua
+  vẫn luôn được trả lời. Vẫn bỏ: bài nhà cung cấp khác / bán dịch vụ / lừa đảo, bài tang, tai nạn, chính trị, người trong data rác,
+  nhóm sếp đã loại. Cần khóa Claude (không có khóa thì không viết loại này). Vẫn **chờ sếp duyệt** và nằm trong trần chung của nick.
 
 **Nhịp do luật của nick quyết định**, không đặt tay: mỗi nick tự lướt tối đa 2 lượt/ngày (nick mới hoặc vừa bị chặn 1 lượt), lượt đầu
 lệch nhau giữa các nick trong giờ làm, lượt sau cách khoảng 3 giờ; nick đang nghỉ sau sự cố không lướt; nick đã có đủ câu chờ duyệt /
-chờ gửi cho trần ngày thì không lướt thêm. Gửi bình luận vẫn theo nhịp chung: trong giờ làm, cách nhau 45–90 phút, tối đa 5 câu/nick/ngày.
+chờ gửi cho trần ngày thì không lướt thêm. **Giãn cách gửi**: bình luận của một nick được **dàn đều cả giờ làm** (giờ làm chia cho số câu
+tối đa / ngày, VD 08:00–22:00 với 5 câu ≈ 168 phút/câu), không dưới mức sếp đặt (mặc định **60 phút**, sửa 30–240), lệch ±15%.
 Thẻ nick ở trang Trả lời khách cho biết hôm nay nick đã lướt mấy lượt, đọc bao nhiêu bài, tìm được bao nhiêu người và vì sao chưa lướt tiếp.
 
 ## Nhóm có sẵn trong nick: đăng ở đâu, thoát nhóm nào, chăm sóc nhóm mình quản lý

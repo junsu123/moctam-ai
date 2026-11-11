@@ -2679,7 +2679,7 @@ def replies_approve_all():
 
 
 FEED_KEYS = {"feed_enabled", "feed_min_posts", "feed_scans_day", "feed_min_score", "feed_buyer_image", "feed_seller_enabled",
-             "feed_seller_per_nick_day", "feed_seller_words"}
+             "feed_seller_per_nick_day", "feed_seller_words", "feed_comment_all", "feed_per_group_day", "reply_gap_min"}
 
 
 @app.get("/api/feed")
@@ -2705,14 +2705,16 @@ def feed_settings(data: dict):
         raise HTTPException(400, "Không sửa được: " + ", ".join(bad))
     lim = {"feed_min_posts": (10, 60, "Mỗi lượt đọc 10–60 bài"), "feed_scans_day": (1, 4, "Mỗi nick lướt 1–4 lượt/ngày"),
            "feed_min_score": (40, 95, "Điểm tối thiểu 40–95"),
-           "feed_seller_per_nick_day": (0, 3, "Chào người bán tối đa 3 câu/nick/ngày để không bị báo cáo spam")}
+           "feed_seller_per_nick_day": (0, 3, "Chào người bán tối đa 3 câu/nick/ngày để không bị báo cáo spam"),
+           "feed_per_group_day": (1, 3, "Mỗi nhóm 1–3 bình luận/ngày để nhóm không coi là spam"),
+           "reply_gap_min": (30, 240, "Giãn cách 30–240 phút giữa 2 bình luận của một nick")}
     for k, v in data.items():
         v = str(v).strip()
         if k in lim:
             lo, hi, msg = lim[k]
             if not v.isdigit() or not lo <= int(v) <= hi:
                 raise HTTPException(400, msg)
-        elif k in ("feed_enabled", "feed_buyer_image", "feed_seller_enabled") and v not in ("0", "1"):
+        elif k in ("feed_enabled", "feed_buyer_image", "feed_seller_enabled", "feed_comment_all") and v not in ("0", "1"):
             raise HTTPException(400, "Giá trị 0 hoặc 1")
         db.set_setting(k, v[:300])
     db.log("bao", "Sếp chỉnh lướt bảng tin nhóm", ", ".join(f"{k}={v}" for k, v in data.items())[:300])

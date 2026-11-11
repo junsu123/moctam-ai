@@ -6,7 +6,12 @@ Hai loại bài được bình luận:
 - seller: người đang BÁN HÀNG ONLINE hỏi chuyện khác (tài khoản quảng cáo, chạy ads, livestream...) -> chỉ chữ, chào nhẹ
   bám vào điều họ viết + dòng Zalo. Bị báo cáo nhiều hơn nên: luôn chờ duyệt, trần riêng thấp (mặc định 2/nick/ngày),
   mỗi người chỉ một nick chào một lần, không chào ở nhóm cấm bán hàng, nhóm từng xóa bình luận chào thì ngừng 30 ngày.
-Bài khác chỉ đọc qua. Số lượt lướt mỗi ngày do luật Facebook của nick quyết định (plan), không chạy ban đêm.
+- general (bật “Bình luận mọi bài”, mặc định bật): mọi bài còn lại trong nhóm, không cần từ khóa liên quan -> Claude viết
+  bình luận đúng nội dung bài, giới thiệu nhẹ là xưởng + dòng Zalo (nhóm cấm bán hàng / từng xóa bình luận: không kèm Zalo).
+  Chia đều theo nhóm: nhóm ít được bình luận nhất được ưu tiên; bình luận theo nhóm chỉ thêm khi nhóm chưa đủ
+  feed_per_group_day câu/ngày (người hỏi mua, người bán online vẫn theo trần riêng của chúng).
+Không bình luận: bài của nhà cung cấp khác / bán dịch vụ, người trong danh sách data rác, nhóm sếp đã loại.
+Số lượt lướt mỗi ngày do luật Facebook của nick quyết định (plan), không chạy ban đêm.
 """
 import random
 import re
@@ -174,25 +179,31 @@ def _sim(a: str, b: str) -> float:
     return len(x & y) / max(1, len(x | y))
 
 
+def comment_all() -> bool:
+    return s().get("feed_comment_all", "1") == "1"
+
+
 def rule(text: str, name: str = "") -> dict | None:
     """{'kind','score','reason'} hoặc None nếu bài chỉ đọc qua."""
     import prospect
     import prospect_rules
     p = plain(text)
-    if not p or prospect.SUPPLY_RX.search(p):
-        return None  # người chào bán / tuyển đại lý: nhà cung cấp khác
+    if not p or len(p) < 8 or prospect.SUPPLY_RX.search(p) or VENDOR_RX.search(p):
+        return None  # người chào bán / tuyển đại lý / bán dịch vụ: nhà cung cấp khác
+    r = None
     if prospect.DEMAND_RX.search(p) and prospect.fit_text(text):
         r = {"kind": "buyer", "score": 78, "reason": "Đang hỏi nguồn hàng hợp ngành"}
     else:
         extra = [w for w in re.split(r"[,;\n]+", s().get("feed_seller_words") or "") if w.strip()]
         sig = SELLER_RX.search(p) or (extra and prospect_rules.hits(p, extra))
-        if s().get("feed_seller_enabled", "1") != "1" or not sig or VENDOR_RX.search(p) or not (ASK_RX.search(p) or "?" in text):
+        if s().get("feed_seller_enabled", "1") == "1" and sig and (ASK_RX.search(p) or "?" in text) and not prospect_rules.excluded(text):
+            word = sig.group(0) if hasattr(sig, "group") else sig[0]
+            r = {"kind": "seller", "score": 72 + (10 if prospect.fit_text(text) else 0),
+                 "reason": f"Người bán online đang hỏi (“{word.strip()}”)"}
+    if r is None:
+        if not comment_all():
             return None
-        if prospect_rules.excluded(text):
-            return None
-        word = sig.group(0) if hasattr(sig, "group") else sig[0]
-        r = {"kind": "seller", "score": 72 + (10 if prospect.fit_text(text) else 0),
-             "reason": f"Người bán online đang hỏi (“{word.strip()}”)"}
+        r = {"kind": "general", "score": 60, "reason": "Bình luận đều mọi nhóm (không cần từ khóa liên quan)"}
     pen, why, ban = junk.check(text, name)
     if ban:
         return None
@@ -235,6 +246,11 @@ def judge(items: list[dict]) -> list[dict]:
            "Riêng bài 'seller': viết reply 15–35 chữ, chào nhẹ, bám vào đúng điều họ viết (không trả lời thay chuyên môn quảng cáo), "
            "giới thiệu mình là xưởng, mời nhắn nếu cần thêm mặt hàng; KHÔNG ghi số điện thoại / Zalo / giá / chiết khấu, không hứa "
            "công dụng, không viết hoa cả câu, không hashtag, mỗi câu khác nhau. Bài 'buyer' để reply rỗng."
+           + (" Bài KHÔNG phải buyer / seller nhưng là bài bình thường của thành viên nhóm (chia sẻ, hỏi đáp, khoe hàng, tâm sự...): "
+              "type = 'general', viết reply 12–30 chữ bình luận tự nhiên, đúng nội dung bài (đồng cảm, góp ý, chúc mừng, hỏi thêm), "
+              "câu cuối giới thiệu nhẹ mình bên xưởng trà, ngũ cốc nếu hợp; KHÔNG ghi số điện thoại / Zalo / giá, không chào bán ép, "
+              "không lặp câu. Chỉ để 'none' với bài lừa đảo, bán dịch vụ, nhà cung cấp khác, bài tang, tai nạn, chính trị."
+              if comment_all() else "")
            + _examples() + " " + prospect_rules.prompt_block()[:600] + " Các bài: "
            + " | ".join(f"{i + 1}. {' '.join(it['post_text'].split())[:320]}" for i, it in enumerate(items))
            + '. Trả về JSON {"items": [{"i": 1, "type": "...", "score": 0, "reason": "...", "reply": "..."}]}.')
@@ -249,7 +265,7 @@ def judge(items: list[dict]) -> list[dict]:
         except (TypeError, ValueError, IndexError):
             continue
         kind = str(x.get("type") or "").lower()
-        it["kind"] = kind if kind in ("buyer", "seller") else "none"
+        it["kind"] = kind if kind in ("buyer", "seller") or (kind == "general" and comment_all()) else "none"
         try:
             it["score"] = max(0, min(100, int(x.get("score"))))
         except (TypeError, ValueError):
@@ -343,8 +359,11 @@ def pick(rows: list[dict], aid: int) -> list[dict]:
         g = _group(aid, r)
         if not g or group_target.classify(g)[0] == "exclude":
             continue
+        quiet = int(g.get("no_selling") or 0) or (g.get("no_pitch_until") or "") > db.now()
+        if k["kind"] == "general" and quiet:
+            k = {**k, "no_contact": True, "reason": k["reason"] + "; nhóm cấm bán hàng: bình luận không kèm Zalo"}
         if k["kind"] == "seller":
-            if int(g.get("no_selling") or 0) or (g.get("no_pitch_until") or "") > db.now():
+            if quiet:
                 continue  # nhóm cấm bán hàng / từng xóa bình luận chào: không chào người bán ở đây
             if (url or plain(name)) in greeted:
                 continue  # mỗi người chỉ một nick chào một lần
@@ -360,13 +379,28 @@ def save(items: list[dict], aid: int) -> dict:
     q = replies.quota(aid)
     room = max(0, q["limit"] * 2 - db.one("SELECT COUNT(*) n FROM reply_tasks WHERE account_id=? AND status IN ('draft','approved')",
                                          (aid,))["n"])
-    items = sorted(items, key=lambda x: -x["score"])[:max(room, 0) + 4]
-    items = judge(items)
+    per_g = _i("feed_per_group_day", 2)
+    since = (db.clock() - timedelta(hours=24)).strftime("%Y-%m-%d %H:%M:%S")
+    used_g = {r["group_id"]: (r["n"], r["last"] or "") for r in db.q(
+        """SELECT group_id, SUM(created_at>=? OR status IN ('draft','approved')) n, MAX(COALESCE(sent_at, created_at)) last
+           FROM reply_tasks WHERE status!='skipped' GROUP BY group_id""", (since,))}
+    # nhóm ít được bình luận nhất lên trước; bài hỏi mua / người bán vẫn ưu tiên trong cùng nhóm
+    rank = {"buyer": 0, "seller": 1, "general": 2}
+    items = sorted(items, key=lambda x: (used_g.get(x["group_id"], (0, ""))[0], used_g.get(x["group_id"], (0, ""))[1],
+                                         rank.get(x["kind"], 3), -x["score"]))
+    take, cnt = [], {}
+    for x in items:  # bình luận theo nhóm: mỗi nhóm tối đa per_g câu (tính cả câu chờ duyệt / chờ gửi); người hỏi mua luôn được trả lời
+        n = used_g.get(x["group_id"], (0, ""))[0] + cnt.get(x["group_id"], 0)
+        if x["kind"] == "general" and n >= per_g:
+            continue
+        cnt[x["group_id"]] = cnt.get(x["group_id"], 0) + 1
+        take.append(x)
+    items = judge(take[:max(room, 0) + 4])
     lo = _i("feed_min_score", 70)
-    items = [x for x in items if x["kind"] in ("buyer", "seller") and x["score"] >= lo]
+    items = [x for x in items if (x["kind"] in ("buyer", "seller") and x["score"] >= lo) or (x["kind"] == "general" and x.get("draft"))]
     sellers = [x for x in items if x["kind"] == "seller"][:q["seller_limit"] * 2]
-    items = sorted([x for x in items if x["kind"] == "buyer"] + sellers, key=lambda x: -x["score"])[:room]
-    res = {"buyer": 0, "seller": 0}
+    items = [x for x in items if x["kind"] != "seller" or x in sellers][:room]
+    res = {"buyer": 0, "seller": 0, "general": 0}
     buyers = [x for x in items if x["kind"] == "buyer"]
     for it, (reply, src) in zip(buyers, replies.write(buyers)):
         it["reply"], it["source"] = reply, src
@@ -380,6 +414,12 @@ def save(items: list[dict], aid: int) -> dict:
             x = it.get("draft") or seller_text(it, avoid)
             avoid.add(plain(x))
             it["reply"], it["source"] = x.rstrip(" .") + (". 👉 " + c if c else ""), it.get("by") or "bao"
+        elif it["kind"] == "general":
+            x = it.get("draft") or ""
+            if not x or plain(x) in avoid:
+                continue
+            avoid.add(plain(x))
+            it["reply"], it["source"] = x.rstrip(" .") + (". 👉 " + c if c and not it.get("no_contact") else ""), it.get("by") or "claude"
         if not it.get("reply"):
             continue
         try:
@@ -397,7 +437,7 @@ def save(items: list[dict], aid: int) -> dict:
 def check_removed(page, aid: int, n: int = 2) -> int:
     """Mở lại vài bình luận chào người bán đã gửi trên 6 giờ: không còn thấy thì coi như nhóm xóa, ngừng chào ở nhóm đó 30 ngày."""
     import browser_poster as B
-    rows = db.q("""SELECT * FROM reply_tasks WHERE account_id=? AND kind='seller' AND status='sent' AND COALESCE(removed,0)=0
+    rows = db.q("""SELECT * FROM reply_tasks WHERE account_id=? AND kind IN ('seller','general') AND status='sent' AND COALESCE(removed,0)=0
                    AND checked_at IS NULL AND sent_at <= ? ORDER BY sent_at LIMIT ?""",
                 (aid, (db.clock() - timedelta(hours=6)).strftime("%Y-%m-%d %H:%M:%S"), n))
     gone = 0
@@ -491,4 +531,5 @@ def overview() -> dict:
     return {"nicks": nicks, "recent": recent, "no_pitch": stop,
             "settings": {k: s().get(k) for k in ("feed_enabled", "feed_min_posts", "feed_scans_day", "feed_min_score",
                                                  "feed_buyer_image", "feed_seller_enabled", "feed_seller_per_nick_day",
-                                                 "feed_seller_words")}}
+                                                 "feed_seller_words", "feed_comment_all", "feed_per_group_day",
+                                                 "reply_gap_min")}}

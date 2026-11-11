@@ -63,7 +63,7 @@ print("duyệt:", a1, a2)
 from datetime import datetime
 t1, t2 = (datetime.strptime(x["scheduled_for"], "%Y-%m-%d %H:%M") for x in (a1, a2))
 print("cách nhau (phút):", (t2 - t1).seconds // 60)
-assert 45 <= (t2 - t1).seconds // 60 <= 90
+assert 51 <= (t2 - t1).seconds // 60 <= replies.gap_minutes(accounts.get(aid), replies.quota(aid)["limit"]) * 1.2 + 1  # dàn đều giờ làm
 print("mẫu Bảo học từ câu sếp sửa:", post_care_s := [s["text"] for s in __import__("post_care").samples(5, "reply")])
 
 # 4) tới giờ: ca làm việc của sale gửi câu đã duyệt (chỉ chữ, không ảnh)

@@ -235,7 +235,8 @@ def quota(aid: int) -> dict:
 
 
 def _slot(aid: int, kind: str = "buyer") -> str | None:
-    """Giờ gửi kế tiếp của nick: trong giờ làm của nick, cách lượt trước 45–90 phút, không ban đêm."""
+    """Giờ gửi kế tiếp của nick: trong giờ làm của nick, dàn đều cả ngày (giờ làm / số câu tối đa, ít nhất reply_gap_min phút,
+    mặc định 60), lệch ±15%, không ban đêm."""
     a = db.one("SELECT * FROM fb_accounts WHERE id=?", (aid,))
     q = quota(aid)
     if not a or q["left"] <= 0 or (kind == "seller" and q["seller_left"] <= 0):
@@ -248,8 +249,20 @@ def _slot(aid: int, kind: str = "buyer") -> str | None:
                      AND substr(COALESCE(sent_at, scheduled_for),1,10) = ?""", (aid, day))["t"]
     t = max(now + timedelta(minutes=2), af)
     if last:
-        t = max(t, datetime.strptime(last[:16], "%Y-%m-%d %H:%M") + timedelta(minutes=random.randint(45, 90)))
+        t = max(t, datetime.strptime(last[:16], "%Y-%m-%d %H:%M") + timedelta(minutes=gap_minutes(a, q["limit"])))
     return t.strftime("%Y-%m-%d %H:%M") if t <= at else None
+
+
+def gap_minutes(a: dict, limit: int) -> int:
+    """Khoảng cách giữa 2 bình luận của một nick: chia đều giờ làm cho số câu tối đa, không dưới reply_gap_min phút."""
+    try:
+        lo = max(20, int(s().get("reply_gap_min") or 60))
+    except ValueError:
+        lo = 60
+    h = lambda x: int(x[:2]) * 60 + int(x[3:5])
+    win = max(60, h(a.get("active_to") or "22:00") - h(a.get("active_from") or "08:00"))
+    base = max(lo, win // max(1, limit))
+    return int(base * random.uniform(0.85, 1.15))
 
 
 def _next_day(aid: int) -> str:
