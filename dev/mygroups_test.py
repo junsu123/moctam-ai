@@ -1,7 +1,7 @@
 """Nhóm có sẵn trong nick: đọc danh sách, Tuấn đánh giá, tự thoát nhóm kém, nhóm mới vào nghỉ, nhóm quản lý 5–10 bài/ngày."""
 import os, sys, time, json, shutil, types, urllib.request
 os.environ["FB_BASE_URL"] = "http://localhost:8098"
-sys.path.insert(0, "/home/claude/ai-sales-company/backend")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend"))
 from pathlib import Path
 SP = Path(__import__("os").environ.get("MT_WORK") or Path(__file__).resolve().parent / "work")
 urllib.request.urlopen(urllib.request.Request("http://localhost:8098/mygroups", data=b'{"on": true}', method="POST"))

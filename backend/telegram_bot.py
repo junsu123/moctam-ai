@@ -26,7 +26,7 @@ HELP = ("Nhắn tin bình thường là giao việc cho CEO Đức, ví dụ: Vi
         "/doanhthu [số tiền] [tên khách] — nhập doanh thu, VD: /doanhthu 2tr5 Shop Mộc An\n"
         "/ceo — CEO đánh giá nhân sự, mốc doanh thu, tiềm năng tuyển thêm\n"
         "/khach — khách đang chờ sếp tư vấn\n"
-        "/hop [chủ đề] — triệu tập họp\n/tamdung — tạm dừng mọi nick tự đăng\n/tieptuc — bật lại tự đăng\n/help — xem lệnh")
+        "/hop [chủ đề] — triệu tập họp\n/capnhat — tải bản mới và tự khởi động lại phần mềm\n/tamdung — tạm dừng mọi nick tự đăng\n/tieptuc — bật lại tự đăng\n/help — xem lệnh")
 
 
 def token() -> str:
@@ -541,6 +541,8 @@ def handle_message(msg: dict):
         mid = meeting.start(arg)
         _reply(chat_id, f"🗣 Đã triệu tập họp #{mid}{(': ' + e(arg)) if arg else ''}. Kết luận sẽ gửi khi họp xong.")
         threading.Thread(target=_send_meeting_when_done, args=(mid, chat_id), daemon=True).start()
+    elif cmd == "/capnhat":
+        _ceo_reply(chat_id, "cập nhật phần mềm")
     elif cmd in ("/tamdung", "tạm dừng"):
         db.run("UPDATE sales SET auto_post=0")
         db.run("UPDATE posts SET status='approved', sale_id=NULL, scheduled_for=NULL WHERE status='scheduled' AND sale_id IS NOT NULL")

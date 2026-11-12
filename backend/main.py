@@ -57,6 +57,10 @@ def startup():
     scheduler.start()
     telegram_bot.start()
     threading.Thread(target=_update_watcher, daemon=True).start()
+    import updater
+    updater.idle_hook = _idle
+    updater.restart_hook = lambda reason: restart_self(reason) or _restart["tried"] == _code_stamp()
+    updater.after_start()
 
 
 # ------------------------------------------------------------------ chung

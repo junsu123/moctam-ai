@@ -1,7 +1,7 @@
 """Lưu link bài sau khi đăng: phản hồi Facebook, bảng tin kiểu mới (rê chuột mới có link), chờ duyệt, thử lại, dán tay."""
 import os, sys, json, shutil, types, urllib.request
 os.environ["FB_BASE_URL"] = "http://localhost:8098"
-sys.path.insert(0, "/home/claude/ai-sales-company/backend")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend"))
 from pathlib import Path
 SP = Path(__import__("os").environ.get("MT_WORK") or Path(__file__).resolve().parent / "work")
 import db

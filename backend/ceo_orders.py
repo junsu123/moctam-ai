@@ -272,6 +272,9 @@ def execute(act: dict) -> str:
     """Thực hiện một việc trong danh sách được phép. Trả về một câu mô tả kết quả."""
     import workflows
     t = act.get("type")
+    if t == "update_app":
+        import updater
+        return updater.run(act.get("_via", "web"))
     if t == "write_posts":
         n = max(1, min(10, int(act.get("count") or 3)))
         tt = act.get("target") if act.get("target") in ("group", "profile", "page") else "group"
@@ -634,6 +637,7 @@ def _context() -> str:
 ACTIONS_DOC = """Các việc được phép (type và tham số):
 - write_posts {count 1-10, product_id?, target: group|profile|page, angle?, note?}: giao Lan viết bài
 - plan {}: giao Tuấn xếp lịch đăng các bài đã duyệt
+- update_app {}: sếp bảo cập nhật / nâng cấp phần mềm, tải bản mới (git pull) rồi tự khởi động lại khi sale rảnh
 - ask {question}: sếp HỎI kiến thức/cách làm (không phải giao việc). CEO tra sổ kiến thức của đội trước, chưa có mới tra cứu
 - study_now {}: cho cả đội tự học kiến thức mới ngay
 - focus_review {}: xem kênh tìm khách nào ra đơn, dồn sức cho kênh ra đơn, tạm dừng kênh chỉ ra số không ra đơn
@@ -744,6 +748,10 @@ def _keywords(t: str) -> list[str]:
     return [k for k in out if len(k) >= 4][:6]
 
 
+UPDATE_RX = (r"(cập nhật|cập nhập|update|nâng cấp|tải|kéo|pull)\s*(lại\s*)?(phần mềm|bản mới|code|mã nguồn|ứng dụng|app|hệ thống)"
+            r"|git pull|pull code|lên bản mới|cập nhật bản mới")
+
+
 def _rule_plan(text: str) -> dict:
     """Hiểu lệnh bằng mẫu câu (khi chưa có khóa AI). Một câu có thể chứa nhiều việc."""
     t = text.strip()
@@ -759,6 +767,8 @@ def _rule_plan(text: str) -> dict:
             if re.search(rf"(?<!\w){re.escape(r['name'].lower())}(?!\w)", low):
                 agent = f"sale-{r['id']}"
                 break
+    if re.search(UPDATE_RX, low):
+        return {"reply": "Dạ em cập nhật phần mềm ngay.", "actions": [{"type": "update_app"}]}
     for rx, typ in ((r"báo cáo tuần|tổng kết tuần", "weekly_report"),
                     (r"(bình luận|comment).{0,20}fanpage|fanpage.{0,20}(bình luận|comment|khách)", "scan_fanpage")):
         if re.search(rx, low):  # việc riêng của CEO: khớp trước các mẫu chung “báo cáo”, “bình luận”
@@ -926,8 +936,10 @@ def handle(text: str, via: str = "web") -> dict:
         raise ValueError("Sếp chưa nhập việc")
     _say("boss", text, via=via)
     plan = None
+    if re.search(UPDATE_RX, text.lower()) and len(text) < 120:
+        plan = _rule_plan(text)
     try:
-        plan = _llm_plan(text)
+        plan = plan or _llm_plan(text)
     except Exception as e:
         print("[ceo_orders]", e)
     if not plan or (not plan.get("actions") and not plan.get("clarify")):  # CEO hỏi lại thì không đoán bằng mẫu câu

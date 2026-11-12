@@ -2,7 +2,7 @@
 import sys, types
 from datetime import date, timedelta
 from pathlib import Path
-sys.path.insert(0, "/home/claude/ai-sales-company/backend")
+import os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend"))
 SP = Path(__import__("os").environ.get("MT_WORK") or Path(__file__).resolve().parent / "work")
 import db
 db.DB_PATH = SP / "company.db"; db.DB_PATH.unlink(missing_ok=True); db.init()

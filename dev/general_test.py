@@ -1,7 +1,7 @@
 """Ảnh tổng hợp nhà máy: tích thì mọi bài chỉ lấy ảnh ở đó."""
 import os, sys, json, shutil
 os.environ["FB_BASE_URL"] = "http://localhost:8098"
-sys.path.insert(0, "/home/claude/ai-sales-company/backend")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend"))
 from pathlib import Path
 SP = Path(__import__("os").environ.get("MT_WORK") or Path(__file__).resolve().parent / "work")
 import db

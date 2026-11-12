@@ -3,7 +3,7 @@ import os, sys, time, json
 os.environ["FB_BASE_URL"] = "http://localhost:8098"
 os.environ["TIKTOK_BASE_URL"] = "http://localhost:8096"
 os.environ["SHOPEE_BASE_URL"] = "http://localhost:8095"
-sys.path.insert(0, "/home/claude/ai-sales-company/backend")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend"))
 from pathlib import Path
 import shutil
 SP = Path(__import__("os").environ.get("MT_WORK") or Path(__file__).resolve().parent / "work")

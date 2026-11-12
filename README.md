@@ -766,7 +766,7 @@ Tắt báo việc xong ở **Cài đặt → Bot Telegram** nếu thấy nhiều
 Việc chính sếp vừa bấm trên phần mềm (duyệt bài, tự đánh dấu đã đăng) không báo lại.
 
 **Lệnh Telegram:** `/baocao` báo cáo nhanh · `/kpi` tiến độ · `/khach` khách đang chờ sếp · `/congty` vốn, chi phí nuôi agent, doanh thu, tình trạng sale · `/doanhthu 2tr5 Tên khách` nhập doanh thu · `/ceo` nhân sự, mốc doanh thu, tiềm năng · nhắn tin thường = giao việc cho CEO · `/hop [chủ đề]` triệu tập họp
-(gửi kết luận khi họp xong) · `/tamdung` tạm dừng mọi nick · `/tieptuc` bật lại.
+(gửi kết luận khi họp xong) · `/tamdung` tạm dừng mọi nick · `/tieptuc` bật lại · `/capnhat` tải bản mới và tự khởi động lại.
 
 Hôm trước chưa đạt KPI thì cuộc họp sáng tự lấy chủ đề "làm gì để đạt KPI hôm nay".
 
@@ -1087,6 +1087,16 @@ Muốn mở từ máy khác trong mạng nội bộ, đặt `HOST=0.0.0.0` trong
 lúc các sale không có việc dở, rồi tự chạy lại `run.bat` (cài thêm thư viện nếu cần) và trang tự tải lại. Chạy `run.bat`
 khi đang có bản khác chạy cũng không sao: bản mới tự tắt bản cũ. Phần mềm luôn chỉ chạy một bản.
 
+**Cập nhật từ xa qua Telegram:** nhắn CEO “cập nhật phần mềm” (hoặc gửi `/capnhat`, nhắn trên phần mềm cũng được). CEO chạy
+`git pull` trên máy chạy phần mềm và báo ngay bản mới có gì:
+- Đang là bản mới nhất: báo luôn, không khởi động lại. Bản mới chỉ đổi tài liệu: tải về, không cần khởi động lại.
+- Có đổi mã: chờ các sale làm xong việc đang dở (không đứt bài đang đăng; chờ quá 5 phút thì CEO báo đang chờ), rồi tự chạy lại
+  `run.bat` (cài thêm thư viện nếu cần). Bản mới chạy lên thì CEO nhắn **“✅ Đã cập nhật xong, phần mềm đang chạy bản mới …”**.
+  Bản mới lỗi không chạy được thì phần mềm vẫn chạy bản cũ và CEO báo để sếp xem cửa sổ run.bat.
+- Không ghi đè chỗ sếp sửa tay: file sửa trên máy trùng với bản mới (VD `backend/fb_selectors.json`) thì CEO dừng, nói rõ tên file.
+  CEO cũng nói rõ khi máy chưa cài Git, thư mục giải nén từ file zip (cần tải bằng `git clone`), mất mạng hoặc GitHub đòi đăng nhập
+  (chạy `git pull` tay một lần để lưu đăng nhập).
+
 ### Múi giờ
 
 Phần mềm chạy theo **giờ Việt Nam (GMT+7)** dù máy tính đặt múi giờ nào (Windows hay bị đặt sai múi giờ): giờ họp, giờ đăng bài,
@@ -1139,6 +1149,7 @@ backend/
   prospect.py    Mai tìm khách sỉ: tìm, đọc trang công khai, phân loại người bán, chấm điểm 100 có bằng chứng, lưu CRM
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm
   group_review.py  Tuấn đánh giá nhóm theo chuẩn nhóm tương tác cao: chấm điểm, Nên vào / Cân nhắc / Bỏ qua, lý do
+  updater.py     Cập nhật từ xa: CEO git pull bản mới, chờ sale rảnh, tự khởi động lại, chạy xong báo sếp
   ceo_orders.py  Sếp giao việc cho CEO: hiểu lệnh, chia việc cho agent, sửa agent, chỉ đạo lâu dài, CEO tự duyệt bài
   products.py    Sản phẩm đang bán chạy: đánh dấu, danh sách để các agent ưu tiên chào mời
   ceo.py         CEO: sa thải theo luật, tuyển người thay, tăng người theo mốc doanh thu và tiềm năng Facebook

@@ -1,5 +1,5 @@
 import sys, shutil, random
-sys.path.insert(0, "/home/claude/ai-sales-company/backend")
+import os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend"))
 from pathlib import Path
 from datetime import timedelta
 SP = Path(__import__("os").environ.get("MT_WORK") or Path(__file__).resolve().parent / "work")

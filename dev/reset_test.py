@@ -1,6 +1,6 @@
 """Làm lại bài đăng: xóa bài chưa đăng, giữ bài đã đăng/đang đăng, Lan viết lại."""
 import os, sys, time, shutil
-sys.path.insert(0, "/home/claude/ai-sales-company/backend")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend"))
 from pathlib import Path
 SP = Path(__import__("os").environ.get("MT_WORK") or Path(__file__).resolve().parent / "work")
 import db
