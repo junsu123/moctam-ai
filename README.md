@@ -800,6 +800,28 @@ Mỗi agent có **sổ tay kinh nghiệm**, **cấp độ** và **mục tiêu h�
 3. **Phản tỉnh bằng Claude mỗi tuần** (mặc định 7 ngày, chạy cùng lượt tự học 23:15): mỗi agent đọc số liệu (có số bài mỗi mục),
    ghi tối đa 2 bài học mới có bằng chứng, bỏ bài học không còn đúng. Claude được dặn không kết luận từ mục dưới 15 bài hay từ 1–2
    khách. Các đêm khác chỉ chạy luật thống kê và đặt mục tiêu ngày mai (không tốn AI). Không có API key thì vẫn học bằng thống kê.
+   Agent đã được **Claude kèm cặp** riêng (dưới đây) thì lượt này bỏ phần gọi Claude, không trả tiền hai lần.
+4. **Claude kèm cặp từng agent từ việc thật** (thẻ đầu trang **Đào tạo**). Mỗi agent tự ghi lại kết quả thật của việc mình làm,
+   ngay lúc kết quả xảy ra:
+
+   | Agent | Kết quả thật được ghi |
+   |---|---|
+   | Lan | Sếp / CEO duyệt ngay, sếp sửa (kèm bản sửa), loại (kèm lý do); bài có khách |
+   | CEO Đức | Sếp sửa / hủy bài CEO đã duyệt; bài CEO duyệt có khách |
+   | Tuấn | Bài xếp vào nhóm nào có khách |
+   | Hà | Khách chốt đơn / không mua (kèm lý do) với tin nhắn Hà đã soạn |
+   | Mai | Khách Mai tìm chốt đơn / không mua; sếp loại data rác |
+   | Bảo | Sếp duyệt câu trả lời, sửa (kèm bản sửa), bỏ qua |
+
+   Agent nào có **từ 5 kết quả mới** và đã **7 ngày** chưa được kèm thì tự gửi việc của mình cho Claude chấm, **không qua CEO**.
+   Mọi agent đến lượt được gom chung **một lô** lúc 22:30 (Batch API, giảm 50%). Claude chỉ nhận xét dựa trên chính các kết quả
+   đó (so việc được khen với việc bị sửa / bị chê), ghi tối đa 3 bài học vào sổ tay của agent, bỏ bài học mà kết quả mới chứng
+   minh là sai (không đụng bài học sếp dạy, bài ghim), kèm một câu tự kiểm trước khi làm việc tiếp theo. Bài học đòi tăng số bài,
+   lách luật, hứa chữa bệnh bị tự loại. Chưa đủ 5 kết quả mới thì không gọi Claude; Claude lỗi thì kết quả trả về hàng chờ.
+   Mô hình theo gói chi phí (Tiết kiệm: Haiku; Cân bằng, Chất lượng: Sonnet), khoảng 0,25 USD/tháng với Sonnet. Thẻ cho biết từng
+   agent đã gom được mấy kết quả, đã kèm mấy lần, nhận xét và bài học mới, chi phí tháng này. Nút **Kèm cặp ngay** (bỏ qua thời gian
+   chờ, vẫn cần đủ 5 kết quả) hoặc nhắn CEO “cho các agent kèm cặp với Claude”. Cài đặt: `coach_min`, `coach_days`, `coach_time`,
+   `model_coach`, tắt bằng `coach_on=0`.
 
 Sổ tay giữ tối đa 10 bài học đang dùng mỗi agent (bài ghim không tính); 6 bài quan trọng nhất được đưa vào prompt.
 Sếp có thể **dạy trực tiếp** (bài học được ghim), **ghim** hoặc **bỏ** bất kỳ bài học nào.
@@ -1177,6 +1199,7 @@ backend/
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm
   group_review.py  Tuấn đánh giá nhóm theo chuẩn nhóm tương tác cao: chấm điểm, Nên vào / Cân nhắc / Bỏ qua, lý do
   housekeeping.py  Dọn dữ liệu mỗi đêm: nhật ký cũ, ảnh chụp cũ, sao lưu thừa, bộ nhớ Chrome; nén lại; báo dung lượng
+  coach.py       Claude kèm cặp từng agent: ghi kết quả thật, đủ 5 kết quả mới thì gửi một lô, ghi / bỏ bài học
   updater.py     Cập nhật từ xa: CEO git pull bản mới, chờ sale rảnh, tự khởi động lại, chạy xong báo sếp
   ceo_orders.py  Sếp giao việc cho CEO: hiểu lệnh, chia việc cho agent, sửa agent, chỉ đạo lâu dài, CEO tự duyệt bài
   products.py    Sản phẩm đang bán chạy: đánh dấu, danh sách để các agent ưu tiên chào mời

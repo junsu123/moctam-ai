@@ -245,7 +245,7 @@ def poll_batches():
     """Gọi định kỳ: lô nào xong thì nhập bài nháp."""
     if not llm.live:
         return
-    for b in db.q("SELECT * FROM ai_batches WHERE status='in_progress'"):
+    for b in db.q("SELECT * FROM ai_batches WHERE status='in_progress' AND task!='coach'"):  # lô kèm cặp: coach.poll
         try:
             if llm.batch_status(b["id"]) != "ended":
                 continue

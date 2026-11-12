@@ -272,6 +272,9 @@ def execute(act: dict) -> str:
     """Thực hiện một việc trong danh sách được phép. Trả về một câu mô tả kết quả."""
     import workflows
     t = act.get("type")
+    if t == "coach_now":
+        import coach
+        return coach.run(force=True)["msg"]
     if t == "cleanup_data":
         import housekeeping
         if not act.get("run"):
@@ -643,6 +646,7 @@ def _context() -> str:
 ACTIONS_DOC = """Các việc được phép (type và tham số):
 - write_posts {count 1-10, product_id?, target: group|profile|page, angle?, note?}: giao Lan viết bài
 - plan {}: giao Tuấn xếp lịch đăng các bài đã duyệt
+- coach_now {}: cho các agent đủ kết quả thật mới gửi việc cho Claude kèm cặp ngay (theo lô, giảm 50%)
 - cleanup_data {run: true|false}: sếp hỏi dung lượng dữ liệu (run false) hoặc bảo dọn dẹp / dọn dữ liệu / dữ liệu phình to (run true)
 - update_app {}: sếp bảo cập nhật / nâng cấp phần mềm, tải bản mới (git pull) rồi tự khởi động lại khi sale rảnh
 - ask {question}: sếp HỎI kiến thức/cách làm (không phải giao việc). CEO tra sổ kiến thức của đội trước, chưa có mới tra cứu
@@ -774,6 +778,8 @@ def _rule_plan(text: str) -> dict:
             if re.search(rf"(?<!\w){re.escape(r['name'].lower())}(?!\w)", low):
                 agent = f"sale-{r['id']}"
                 break
+    if re.search(r"kèm cặp|(học|chấm).{0,15}(với|bởi) claude|claude (chấm|kèm|dạy)", low):
+        return {"reply": "Dạ.", "actions": [{"type": "coach_now"}]}
     if re.search(r"dọn\s*(dẹp\s*)?(lại\s*)?(dữ liệu|database|cơ sở dữ liệu|csdl|bộ nhớ|ổ đĩa|ổ cứng|máy)|nén (lại )?(dữ liệu|database)", low):
         return {"reply": "Dạ em dọn ngay.", "actions": [{"type": "cleanup_data", "run": True}]}
     if re.search(r"dung lượng|(dữ liệu|database|cơ sở dữ liệu).{0,20}(nặng|to|phình|lớn|bao nhiêu)", low):
@@ -1035,11 +1041,11 @@ def _apply_review(p: dict, good: bool, why: str):
     import learning
     if good:
         db.run("UPDATE posts SET status='approved' WHERE id=?", (p["id"],))
-        learning.record_feedback(p["id"], "approve")
+        learning.record_feedback(p["id"], "approve", p.get("content") or "", by="ceo")
         learning.award("lan", 8, "Bài được CEO duyệt")
     else:
         db.run("UPDATE posts SET status='rejected' WHERE id=?", (p["id"],))
-        learning.record_feedback(p["id"], "reject", p["content"], "", why)
+        learning.record_feedback(p["id"], "reject", p["content"], "", why, by="ceo")
 
 
 def review_drafts() -> dict:

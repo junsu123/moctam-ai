@@ -286,6 +286,10 @@ def approve(rid: int, reply: str | None = None) -> dict:
         raise ValueError("Câu trả lời phạm luật Facebook: " + bad[0]["msg"])
     if reply is not None and plain(reply) != plain(r["reply"] or ""):  # sếp sửa câu: lưu làm mẫu cho Bảo học
         post_care.learn([re.sub(r"\s*👉.*$", "", text)], [product_guess(r["post_text"])], "claude_reply")
+    import coach
+    edited = reply is not None and plain(reply) != plain(r["reply"] or "")
+    coach.note("bao", "edit" if edited else "good", f"Khách viết: “{(r.get('post_text') or '')[:250]}” → Bảo trả lời: {r['reply']}",
+               f"Sếp sửa thành: {text}" if edited else "Sếp duyệt gửi, không sửa", f"reply:{rid}")
     t = _slot(r["account_id"], r.get("kind") or "buyer")
     db.run("UPDATE reply_tasks SET reply=?, status='approved', decided_at=?, scheduled_for=? WHERE id=?",
            (text, db.now(), t or _next_day(r["account_id"]), rid))
@@ -297,6 +301,9 @@ def skip(rid: int, as_junk: bool = False) -> dict:
     if not r:
         raise KeyError(rid)
     db.run("UPDATE reply_tasks SET status='skipped', decided_at=? WHERE id=?", (db.now(), rid))
+    import coach
+    coach.note("bao", "bad", f"Khách viết: “{(r.get('post_text') or '')[:250]}” → Bảo trả lời: {r.get('reply') or ''}",
+               "Sếp bỏ qua" + (": người này không hợp (người bán khác / data rác)" if as_junk else ", không gửi"), f"reply:{rid}")
     if as_junk and r.get("author_url"):
         junk.mark_url(r["author"], r["author_url"], "other", "Sếp bỏ khi duyệt trả lời khách", r.get("post_text") or "")
     return {"id": rid, "status": "skipped"}

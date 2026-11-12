@@ -959,6 +959,11 @@ label.f{font-weight:600;color:var(--muted)}
 .hk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
 .hk-i{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--panel)}
 .hk-i b{font-size:1.05rem}.hk-t{grid-column:1/-1}
+.co-card{margin-bottom:16px}.co-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin:10px 0}
+.co-i{border:1px solid var(--line);border-radius:var(--r-s);padding:10px 12px;background:var(--panel);display:flex;flex-direction:column;gap:5px;min-width:0}
+.co-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.co-bar{height:6px;border-radius:6px;background:var(--panel-2);overflow:hidden}.co-bar i{display:block;height:100%;background:var(--accent)}
+.co-say{margin:2px 0;font-style:italic}.co-les{margin:0;padding-left:18px}.co-les li{margin:2px 0}
 </style>
 
 <div class="app">
@@ -1480,6 +1485,12 @@ label.f{font-weight:600;color:var(--muted)}
     <section class="view" id="v-learn" hidden>
       <div class="vh"><div><h1>Đào tạo</h1><p>Mỗi đêm, các agent tự xem lại kết quả thật (khách, bình luận, bài sếp sửa hoặc loại, tin nhắn chốt đơn) rồi ghi bài học vào sổ tay, đặt mục tiêu cho ngày mai và dùng những bài học đó khi làm việc. Sếp xem, sửa, ghim hoặc xóa bất kỳ bài học nào.</p></div>
         <div class="actions" data-direct><button class="btn primary" id="btnLearn">Cho cả đội học ngay</button></div></div>
+      <div class="card co-card" id="coCard">
+        <div class="card-h"><h3>Claude kèm cặp từng agent</h3><span class="chip" id="coChip">—</span></div>
+        <p class="small muted">Mỗi agent tự ghi lại kết quả thật của việc mình làm (sếp duyệt, sửa, loại; có khách; chốt đơn; khách không mua). Agent nào đủ <b id="coMin">5</b> kết quả mới và đã <span id="coDays">7</span> ngày chưa được kèm thì tự gửi việc cho Claude chấm, không qua CEO. Các agent đến lượt được gom chung một lô lúc <span id="coTime">22:30</span> (giảm 50% chi phí); Claude chỉ nhận xét từ chính các kết quả đó, ghi bài học vào sổ tay và bỏ bài học đã sai.</p>
+        <div class="co-list" id="coList"></div>
+        <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><span class="small muted" id="coCost"></span><button type="button" class="btn ghost" id="coRun">Kèm cặp ngay</button></div>
+      </div>
       <div class="learn-top">
         <div class="card"><div class="card-h"><h3>Lan đang chọn góc viết như thế nào</h3><span class="small muted" id="explTxt"></span></div>
           <p class="small" id="learnData"></p>
@@ -2681,6 +2692,12 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     if(method==="POST"&&P==="/reset"){ if(String(body.confirm).trim().toUpperCase()!=="CHAY THAT") throw new Error('Gõ đúng "CHAY THAT" để xác nhận');
       S.posts=[]; S.leads=[]; S.meetings=[]; S.msgs=[]; S.tasks=[]; S.activity=[]; S.lessons=[]; S.xp={}; S.goals={}; S.kpiPhone=0; S.sales=S.sales.filter(x=>!x.is_sample);
       if(body.products) S.products=[]; if(body.groups) S.groups=[]; log("minh","Bắt đầu chạy thật","Đã xóa dữ liệu thử nghiệm, giữ nhân viên sale và cài đặt"); return {deleted:[],backup:"data/backups/truoc-khi-chay-that.db"}; }
+    if(P==="/coach"){ const A=[["Lan","viết bài đăng nhóm / trang cá nhân",7,2,"Bài mở bằng câu hỏi của người bán được sếp duyệt ngay; bài mở bằng giới thiệu xưởng hay bị sửa.",["Mở bài bằng nhu cầu của người bán lại (nguồn hàng, lãi), giới thiệu xưởng để sau.","Giữ bài dưới 120 chữ: 4/5 bài sếp sửa đều bị rút ngắn."],"Câu đầu đã nói tới người bán lại chưa?"],
+        ["CEO Đức","chấm và duyệt bài trước khi đăng",3,1,"",[],""],["Tuấn","chọn nhóm và xếp lịch đăng",5,0,"",[],""],["Hà","soạn tin nhắn, kịch bản tư vấn khách",2,1,"Khách chê số lượng nhập tối thiểu ở 3/4 lần không mua.",["Hỏi khách bán được bao nhiêu hộp mỗi tuần trước khi báo mức nhập tối thiểu."],"Đã hỏi sức bán của khách chưa?"],
+        ["Mai","tìm khách sỉ, chấm điểm người bán",6,0,"",[],""],["Bảo","viết câu trả lời khách hỏi mua trong nhóm",4,1,"",[],""]];
+      const r={on:true,min:5,days:7,time:"22:30",model:"claude-sonnet-5-5",month_usd:0.042,month_calls:4,waiting:0,
+        agents:A.map(([name,job,pending,times,assessment,lessons,check])=>({name,job,pending,times,in_batch:0,at:times?tzNow().slice(0,10)+" 22:41:00":null,assessment,lessons,check}))};
+      return method==="POST"?{...r,msg:"Lan, Tuấn, Mai đã gửi việc thật cho Claude chấm, thường có kết quả sau vài phút (bản xem trước)"}:r; }
     if(P==="/housekeeping"){ const r={sizes:{db_mb:186.4,shots_mb:412.7,shots:2310,backups_mb:96.2,profiles_mb:3870.5,tables:[{name:"posts",mb:61.2},{name:"activity",mb:38.9},{name:"reply_tasks",mb:22.4}]},
       last:{at:tzNow().slice(0,10)+" 03:20:11",rows:{activity:18240,comment_seen:5120},shots:{files:640},freed_mb:1310.4},time:"03:20",on:true};
       return method==="POST"?{...r,text:"Em đã dọn: 23360 dòng nhật ký cũ, 640 ảnh chụp cũ, giải phóng 1310.4 MB. (bản xem trước)"}:r; }
@@ -3894,8 +3911,24 @@ const SRC={auto:"Số liệu",ai:"Tự rút ra",boss:"Sếp dạy",meeting:"Cu�
 const fmtSkill=(v,u)=>v===null||v===undefined?"—":`${v}${u}`;
 function trend(s){ if(s.now==null||s.prev==null||s.now===s.prev) return ""; const up=s.now>s.prev; return `<span class="${up?"trend-up":"trend-down"}">${up?"▲":"▼"} ${Math.abs(Math.round((s.now-s.prev)*100)/100)}${s.unit}</span>`; }
 function wbars(rows){ const mx=Math.max(0.0001,...rows.map(r=>r.weight)); return rows.sort((a,b)=>b.weight-a.weight).map(r=>`<div class="wb"><span title="${esc(r.name)}">${esc(r.name)}</span><div class="track"><i style="width:${Math.round(r.weight/mx*100)}%"></i></div><span class="num small">${Math.round(r.weight*100)}%</span></div>`).join(""); }
+function showCoach(c){
+  $("#coMin").textContent=c.min; $("#coDays").textContent=c.days; $("#coTime").textContent=c.time;
+  const ready=c.agents.filter(a=>a.pending>=c.min).length;
+  $("#coChip").className="chip "+(c.on?(c.waiting?"warn":"ok"):""); $("#coChip").textContent=!c.on?"Đang tắt":c.waiting?"Claude đang chấm":ready?`${ready} agent đủ kết quả`:"Đang gom kết quả";
+  $("#coList").innerHTML=c.agents.map(a=>{ const pct=Math.min(100,Math.round(a.pending/c.min*100));
+    return `<div class="co-i"><div class="co-h"><b>${esc(a.name)}</b><span class="small muted">${esc(a.job)}</span></div>
+      <div class="co-bar" title="${a.pending}/${c.min} kết quả mới"><i style="width:${pct}%"></i></div>
+      <div class="small muted">${a.pending}/${c.min} kết quả mới${a.in_batch?` · ${a.in_batch} đang chờ Claude chấm`:""}${a.times?` · đã kèm ${a.times} lần, lần gần nhất ${fmtDate(a.at)}`:" · chưa kèm lần nào"}</div>
+      ${a.assessment?`<p class="small co-say">“${esc(a.assessment)}”</p>`:""}
+      ${(a.lessons||[]).length?`<ul class="small co-les">${a.lessons.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`:""}
+      ${a.check?`<p class="small muted">Tự kiểm trước khi làm: ${esc(a.check)}</p>`:""}</div>`; }).join("");
+  $("#coCost").textContent=`Tháng này: ${c.month_calls} lượt chấm, ${c.month_usd.toFixed(3)} USD`+(c.model?` · mô hình ${c.model.replace("claude-","").replace(/-5-5$/," 5.5")}`:"");
+}
+async function loadCoach(){ try{ showCoach(await api("/coach")); }catch(e){} }
+$("#coRun").onclick=async e=>{ const b=e.target; b.disabled=true;
+  try{ const r=await api("/coach","POST"); showCoach(r); toast(r.msg); }catch(err){ toast(err.message); } b.disabled=false; };
 async function loadLearn(){
-  loadKB(); loadStyle();
+  loadKB(); loadStyle(); loadCoach();
   const d=await api("/learning"); ST.learn=d; const s=await api("/settings");
   $("#angleBars").innerHTML=wbars(d.choices.angles.map(a=>({...a,name:`${a.name} · ${a.n} bài`})));
   $("#prodBars").innerHTML=d.choices.products.length?wbars(d.choices.products):'<p class="small muted">Chưa có sản phẩm.</p>';

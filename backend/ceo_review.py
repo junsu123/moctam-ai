@@ -224,6 +224,10 @@ def on_boss_correction(post: dict, new_content: str | None = None, reason: str =
             learned.setdefault("bad_reasons", [])
             learned["bad_reasons"] = (learned["bad_reasons"] + [reason])[-20:]
     db.set_setting("ceo_review_learned", json.dumps(learned, ensure_ascii=False))
+    import coach
+    coach.note("ceo", "edit" if new_content is not None else "bad", old,
+               (f"Sếp sửa bài CEO đã duyệt thành: {new_content[:250]}" if new_content is not None
+                else "Sếp hủy bài CEO đã duyệt" + (f": {reason}" if reason else "")), f"post:{post['id']}")
     learning.add_lesson("ceo", lesson, f"Bài #{post['id']}", "boss", 0.9, f"review:{post['id']}")
     knowledge.save("ceo", "Bài học duyệt bài: " + lesson[:60], lesson, question="Duyệt bài đăng nhóm thế nào cho sếp hài lòng?",
                    keywords="duyet bai ceo sep sua", source="boss", kind="guide")

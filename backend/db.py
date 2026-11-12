@@ -332,6 +332,10 @@ CREATE TABLE IF NOT EXISTS group_joins (
   group_id INTEGER, sale_id INTEGER, status TEXT, note TEXT, requested_at TEXT, updated_at TEXT,
   PRIMARY KEY (group_id, sale_id)
 );
+CREATE TABLE IF NOT EXISTS coach_outcomes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id TEXT, verdict TEXT, work TEXT, result TEXT, ref TEXT,
+  batch_id TEXT, coached_at TEXT, created_at TEXT
+);
 CREATE TABLE IF NOT EXISTS errors (
   id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT, title TEXT, message TEXT, detail TEXT, hint TEXT, screen TEXT,
   action TEXT, ref_type TEXT, ref_id TEXT, screenshot TEXT, fingerprint TEXT, count INTEGER DEFAULT 1,
@@ -593,7 +597,7 @@ INDEXES = [
     ("idx_feedscan_at", "feed_scans(created_at)"), ("idx_mmsg_meeting", "meeting_messages(meeting_id)"),
     ("idx_lib_post", "content_library(post_id)"), ("idx_snip_lib", "content_snippets(library_id)"),
     ("idx_leads_at", "leads(created_at)"), ("idx_reply_at", "reply_tasks(status, created_at)"),
-    ("idx_friend_at", "friend_suggestions(status, created_at)"),
+    ("idx_friend_at", "friend_suggestions(status, created_at)"), ("idx_coach", "coach_outcomes(agent_id, coached_at, batch_id)"),
 ]
 
 

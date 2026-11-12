@@ -2073,6 +2073,18 @@ class ResetReq(BaseModel):
     found_capital: int = 0  # > 0: thành lập công ty ngay sau khi xóa
 
 
+@app.get("/api/coach")
+def coach_info():
+    import coach
+    return coach.overview()
+
+
+@app.post("/api/coach")
+def coach_now():
+    import coach
+    return {**coach.run(force=True), **coach.overview()}
+
+
 @app.get("/api/housekeeping")
 def housekeeping_info():
     import housekeeping

@@ -166,9 +166,11 @@ def golden_hours(top: int = 3) -> list[int]:
 
 
 # ---------------------------------------------------------------- 2. tín hiệu từ sếp và khách
-def record_feedback(post_id: int, kind: str, before: str = "", after: str = "", reason: str = ""):
+def record_feedback(post_id: int, kind: str, before: str = "", after: str = "", reason: str = "", by: str = "boss"):
     db.run("INSERT INTO feedback(post_id, kind, before, after, reason, created_at) VALUES (?,?,?,?,?,?)",
            (post_id, kind, before, after, reason, db.now()))
+    import coach
+    coach.on_post_feedback(post_id, kind, before, after, reason, by)
 
 
 def best_examples(agent_id: str, limit: int = 2) -> list[str]:
@@ -191,6 +193,8 @@ def on_lead_status(lead_id: int, status: str):
     if status not in ("ordered", "lost"):
         return
     outcome = "won" if status == "ordered" else "lost"
+    import coach
+    coach.on_lead_status(lead_id, status)
     db.run("UPDATE replies SET outcome=? WHERE lead_id=? AND sent=1 AND outcome IS NULL", (outcome, lead_id))
     if outcome == "won":
         award("ha", 50, "Khách chốt đơn")
@@ -205,6 +209,8 @@ def on_post_leads(post_id: int, delta: int):
     if delta <= 0:
         return
     post = db.one("SELECT sale_id FROM posts WHERE id=?", (post_id,))
+    import coach
+    coach.on_post_leads(post_id, delta)
     award("lan", 20 * delta, "Bài viết có khách mới")
     award("tuan", 10 * delta, "Nhóm chọn đúng, có khách mới")
     if post and post.get("sale_id"):
@@ -568,7 +574,8 @@ def reflect(agent_id: str, ai: bool = True) -> dict:
     if agent_id in CORE:
         r = None
         try:
-            r = _llm_reflect(agent_id) if ai else None
+            import coach  # agent được kèm cặp riêng từ việc thật: không gọi Claude lần nữa ở lượt chung
+            r = _llm_reflect(agent_id) if ai and not coach.covers(agent_id) else None
         except Exception as e:
             print("[learning]", e)
         if isinstance(r, dict):

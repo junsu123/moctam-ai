@@ -91,6 +91,8 @@ def _tick():
     group_feed.tick(now)  # mọi nick lướt bảng tin nhóm theo nhịp luật Facebook, Bảo viết sẵn bình luận chờ duyệt
     import website
     website.tick(now)  # Vy viết bài website theo lịch
+    import coach
+    coach.tick(now)  # agent đủ 5 kết quả thật mới: gửi việc cho Claude kèm cặp (một lô, giảm 50%)
     import housekeeping
     housekeeping.tick(now)  # mỗi đêm dọn nhật ký cũ, ảnh chụp cũ, sao lưu thừa, bộ nhớ Chrome; nén lại dữ liệu
     # KPI: chuyển khách cần sếp, nhắc lại; báo cáo Telegram

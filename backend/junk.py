@@ -94,6 +94,10 @@ def mark(lead_id: int, reason: str, note: str = "") -> dict:
                (f"Sếp đánh dấu data rác: {REASONS[reason]}", f"Sếp đánh dấu data rác ({REASONS[reason]}). Mai không tìm lại.",
                 db.now(), pr["id"]))
     learned = _learn_from(reason, note, pr)
+    if pr or (lead.get("origin") or "") == "prospect":
+        import coach
+        coach.note("mai", "bad", f"Tìm ra {lead['name']}, chấm {(pr or {}).get('score', '?')} điểm: {lead_text(lead, pr)[:400]}",
+                   f"Sếp loại data rác: {REASONS[reason]}" + (f" – {note}" if note else ""), f"lead:{lead_id}")
     db.log("mai", "Ghi nhớ data rác", f"Sếp loại {lead['name']}: {REASONS[reason]}{(' – ' + note) if note else ''}. " + learned)
     return {"id": jid, "learned": learned}
 
