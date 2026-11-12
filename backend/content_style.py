@@ -181,11 +181,13 @@ def on_boss_edit(post_id: int, new_content: str):
 
 def refresh_quality():
     """Cập nhật kết quả thật của bài vào kho và điểm của từng mảnh câu."""
-    for r in db.q("""SELECT l.id, p.status, p.leads, p.comments FROM content_library l JOIN posts p ON p.id=l.post_id
-                     WHERE l.post_id IS NOT NULL"""):
-        st = "approved" if r["status"] in ("approved", "scheduled", "posting", "posted", "failed") else r["status"]
-        db.run("UPDATE content_library SET status=?, leads=?, comments=? WHERE id=?",
-               (st, r["leads"] or 0, r["comments"] or 0, r["id"]))
+    st = "CASE WHEN p.status IN ('approved','scheduled','posting','posted','failed') THEN 'approved' ELSE p.status END"
+    rows = db.q(f"""SELECT l.id, {st} st, COALESCE(p.leads,0) leads, COALESCE(p.comments,0) comments
+                     FROM content_library l JOIN posts p ON p.id=l.post_id
+                     WHERE l.status IS NOT {st} OR COALESCE(l.leads,0)!=COALESCE(p.leads,0)
+                        OR COALESCE(l.comments,0)!=COALESCE(p.comments,0)""")  # chỉ ghi dòng có đổi, ghi một lần
+    db.many("UPDATE content_library SET status=?, leads=?, comments=? WHERE id=?",
+            [(r["st"], r["leads"], r["comments"], r["id"]) for r in rows])
     db.run("""UPDATE content_snippets SET score = MAX(0.1, (SELECT
                 CASE l.source WHEN 'boss' THEN 2.0 ELSE 1.0 END
                 + CASE WHEN l.status IN ('approved','posted') THEN 1.0 WHEN l.status='rejected' THEN -1.5 ELSE 0 END

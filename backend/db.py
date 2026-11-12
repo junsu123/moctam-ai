@@ -72,8 +72,16 @@ def today() -> str:
 
 def connect() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=15)
     conn.row_factory = sqlite3.Row
+    # WAL: mỗi lần ghi không phải chép lại cả trang và ép ổ đĩa ghi ngay (Windows rất chậm khoản này), bản mới khởi động
+    # lại đọc được trong lúc bản cũ còn chạy. NORMAL trong WAL vẫn an toàn khi phần mềm tắt đột ngột.
+    for pragma in ("journal_mode=WAL", "synchronous=NORMAL", "busy_timeout=15000", "temp_store=MEMORY",
+                   "cache_size=-32000", "journal_size_limit=67108864"):
+        try:
+            conn.execute("PRAGMA " + pragma)
+        except sqlite3.DatabaseError:
+            pass
     return conn
 
 
@@ -91,6 +99,17 @@ def q(sql: str, params=()) -> list[dict]:
     with _lock:
         cur = conn().execute(sql, params)
         return [dict(r) for r in cur.fetchall()]
+
+
+def many(sql: str, rows) -> int:
+    """Ghi nhiều dòng trong một lần lưu (nhanh hơn hàng trăm lần so với gọi run() từng dòng)."""
+    rows = list(rows)
+    if not rows:
+        return 0
+    with _lock:
+        conn().executemany(sql, rows)
+        conn().commit()
+    return len(rows)
 
 
 def one(sql: str, params=()):
@@ -561,6 +580,23 @@ SEED_LEADS = [
 ]
 
 
+# Chỉ mục cho các truy vấn chạy mỗi 30 giây / mỗi lần mở trang (đo trên dữ liệu giả lập 1 năm, 25 nick)
+INDEXES = [
+    ("idx_posts_status", "posts(status, posted_at)"), ("idx_posts_acc", "posts(account_id, status)"),
+    ("idx_posts_group", "posts(group_id, status)"), ("idx_posts_sample_cov", "posts(sample_id, status, comments, leads)"),
+    ("idx_posts_created", "posts(created_at)"),
+    ("idx_bumps_post", "bumps(post_id)"), ("idx_bumps_acc", "bumps(account_id, status, done_at)"),
+    ("idx_bumps_status", "bumps(status, done_at)"),
+    ("idx_activity_at", "activity(created_at)"), ("idx_usage_cov", "usage(created_at, task, cost_usd)"),
+    ("idx_cseen_at", "comment_seen(created_at)"), ("idx_fallback_at", "ai_fallback(created_at)"),
+    ("idx_ceomsg_at", "ceo_messages(created_at)"), ("idx_klog_at", "knowledge_log(created_at)"),
+    ("idx_feedscan_at", "feed_scans(created_at)"), ("idx_mmsg_meeting", "meeting_messages(meeting_id)"),
+    ("idx_lib_post", "content_library(post_id)"), ("idx_snip_lib", "content_snippets(library_id)"),
+    ("idx_leads_at", "leads(created_at)"), ("idx_reply_at", "reply_tasks(status, created_at)"),
+    ("idx_friend_at", "friend_suggestions(status, created_at)"),
+]
+
+
 def init():
     with _lock:
         conn().executescript(SCHEMA)
@@ -569,6 +605,12 @@ def init():
             cols = [r[1] for r in conn().execute(f"PRAGMA table_info({table})").fetchall()]
             if col not in cols:
                 conn().execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
+        conn().commit()
+        for name, on in INDEXES:  # sau migration: cột mới đã có
+            try:
+                conn().execute(f"CREATE INDEX IF NOT EXISTS {name} ON {on}")
+            except sqlite3.DatabaseError as e:
+                print("[db] chỉ mục", name, e)
         conn().commit()
     # bài đang đăng dở khi tắt máy -> đưa về hàng đợi
     run("UPDATE posts SET status='scheduled' WHERE status='posting'")

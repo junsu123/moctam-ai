@@ -1046,11 +1046,38 @@ Sau khi thử nghiệm xong: **Cài đặt → Bắt đầu chạy thật** → 
   Có thể chọn xóa cả sản phẩm và hội nhóm bạn đã nhập.
 - **Giữ nguyên:** nhân viên sale và phiên đăng nhập Facebook của họ, sản phẩm và hội nhóm bạn đã nhập, khóa API Claude,
   Telegram, KPI và mọi cài đặt, thư mục ảnh trên máy, chi phí AI đã tiêu (để ngân sách tháng vẫn đúng).
-- Trước khi xóa, phần mềm tự sao lưu toàn bộ dữ liệu vào `data/backups/`. Muốn khôi phục: tắt phần mềm, chép file sao lưu
-  đè lên `data/company.db`.
+- Trước khi xóa, phần mềm tự sao lưu toàn bộ dữ liệu vào `data/backups/`. Muốn khôi phục: tắt phần mềm, xóa `data/company.db-wal` và
+  `data/company.db-shm` (nếu có), rồi chép file sao lưu đè lên `data/company.db`.
 
 Từ bản này, phần mềm không còn tạo khách hàng giả khi cài mới. Khi trang mở từ phần mềm trên máy mà phần mềm bị tắt,
 giao diện báo "Mất kết nối" và tự kết nối lại, không bao giờ hiển thị dữ liệu mẫu thay cho dữ liệu thật.
+
+## Dung lượng dữ liệu: tự dọn mỗi đêm, không phình to
+
+Thẻ **Dung lượng dữ liệu** ở trang **Cài đặt** cho biết cơ sở dữ liệu, ảnh chụp màn hình, bản sao lưu và hồ sơ Chrome các nick đang
+chiếm bao nhiêu, các bảng lớn nhất, kết quả lần dọn gần nhất; nút **Dọn ngay**. Nhắn CEO cũng được: “dung lượng dữ liệu bao nhiêu”,
+“dọn dữ liệu”.
+
+**Mỗi đêm** (03:20; máy tắt đêm thì dọn lúc bật máy, mỗi ngày một lần) phần mềm tự dọn:
+
+| Dọn | Giữ |
+|---|---|
+| Nhật ký hoạt động trên 60 ngày, bình luận đã quét trên 120 ngày, lượt lướt bảng tin trên 90 ngày | Bài đăng, khách, đơn, doanh thu, chi phí AI |
+| Tin nhắn sếp ↔ CEO, lời thoại họp, nhật ký học trên 180 ngày (biên bản và kết luận họp vẫn giữ) | Kho bài, phong cách viết, sổ kiến thức, bài học, data rác |
+| Lượt up bài trên 180 ngày (bài vẫn giữ số lần up) | Câu bình luận đã gửi, lời mời đã gửi (chống trả lời trùng, một người một nick) |
+| Câu bình luận nháp / sếp bỏ qua, người gợi ý kết bạn chưa mời trên 90 ngày | Lịch sử dùng ảnh (chống trùng ảnh) |
+| Ảnh chụp màn hình trên 30 ngày (trừ ảnh của lỗi chưa xử lý) | Phiên đăng nhập, cookie của các nick |
+| Bản sao lưu cũ (giữ 5 bản mới nhất), bộ nhớ đệm Chrome của nick đang không mở (từ 150 MB) | |
+
+Xóa từng phần 5.000 dòng nên sale vẫn làm việc trong lúc dọn. Dọn bộ nhớ Chrome và **nén lại** file dữ liệu (khi chỗ trống từ
+25%) chỉ làm lúc sale rảnh, không thì để đêm sau. Muốn giữ nhật ký lâu hơn: cài đặt `keep_log_scale` = 2 (gấp đôi), 3...;
+`shots_keep_days`, `backups_keep`, `housekeeping_time`, tắt hẳn bằng `housekeeping_on=0`.
+
+**Chạy nhanh khi dữ liệu nhiều:** cơ sở dữ liệu ghi kiểu WAL (mỗi lần lưu không bắt ổ đĩa ghi lại cả trang, rất có lợi trên Windows),
+có chỉ mục cho các truy vấn chạy mỗi 30 giây và mỗi lần mở trang, ghi kho bài một lần thay vì từng dòng. Đo trên dữ liệu giả lập
+1 năm, 25 nick: 3 lượt lịch tự động từ 11,4 giây còn 3,7 giây, mở 52 trang từ 32 giây còn 7 giây (trang Phong cách viết 18,6 giây
+còn 0,7 giây); dọn một lượt bớt khoảng 780.000 dòng nhật ký và 660 MB. Thư mục `data/` có thêm 2 file `company.db-wal`,
+`company.db-shm`: là một phần của cơ sở dữ liệu, không xóa khi phần mềm đang chạy.
 
 ## Dữ liệu mẫu
 
@@ -1149,6 +1176,7 @@ backend/
   prospect.py    Mai tìm khách sỉ: tìm, đọc trang công khai, phân loại người bán, chấm điểm 100 có bằng chứng, lưu CRM
   group_finder.py  Tìm nhóm mới: CEO chọn chủ đề, sale lướt Facebook, tìm nhóm, khảo sát chỉ số tương tác, xin vào nhóm
   group_review.py  Tuấn đánh giá nhóm theo chuẩn nhóm tương tác cao: chấm điểm, Nên vào / Cân nhắc / Bỏ qua, lý do
+  housekeeping.py  Dọn dữ liệu mỗi đêm: nhật ký cũ, ảnh chụp cũ, sao lưu thừa, bộ nhớ Chrome; nén lại; báo dung lượng
   updater.py     Cập nhật từ xa: CEO git pull bản mới, chờ sale rảnh, tự khởi động lại, chạy xong báo sếp
   ceo_orders.py  Sếp giao việc cho CEO: hiểu lệnh, chia việc cho agent, sửa agent, chỉ đạo lâu dài, CEO tự duyệt bài
   products.py    Sản phẩm đang bán chạy: đánh dấu, danh sách để các agent ưu tiên chào mời

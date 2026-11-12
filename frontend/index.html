@@ -956,6 +956,9 @@ label.f{font-weight:600;color:var(--muted)}
 @media (max-width:560px){ .pr-stats{grid-template-columns:repeat(3,minmax(0,1fr))} .pr-stat b{font-size:18px} .pr-card{grid-template-columns:minmax(0,1fr);padding:12px}
   .pr-stat span{white-space:normal;line-height:1.25} .pr-grade{grid-row:auto;flex-direction:row;gap:8px} .pr-grade .g{width:34px;height:34px;font-size:17px} .pr-body,.pr-next{grid-column:1} .pr-dirs{grid-template-columns:minmax(0,1fr)} }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.hk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}
+.hk-i{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--panel)}
+.hk-i b{font-size:1.05rem}.hk-t{grid-column:1/-1}
 </style>
 
 <div class="app">
@@ -1647,6 +1650,13 @@ label.f{font-weight:600;color:var(--muted)}
             <label class="f" for="rsConfirm"><span>Gõ <b>CHAY THAT</b> để xác nhận</span><input type="text" id="rsConfirm" autocomplete="off" placeholder="CHAY THAT"></label>
             <div><button class="btn primary" type="submit" id="rsBtn" disabled>Xóa dữ liệu thử nghiệm</button></div>
           </form>
+          <div class="card" id="hkCard">
+            <div class="card-h"><h3>Dung lượng dữ liệu</h3><span class="chip" id="hkChip">—</span></div>
+            <p class="small muted">Mỗi đêm (03:20, máy tắt đêm thì lúc bật máy) phần mềm tự dọn: nhật ký hoạt động trên 60 ngày, ảnh chụp màn hình trên 30 ngày, sao lưu cũ (giữ 5 bản), bộ nhớ đệm Chrome của các nick, rồi nén lại dữ liệu. Bài đăng, khách, đơn, chi phí AI, kho bài và những gì agent đã học luôn được giữ.</p>
+            <div class="hk-grid" id="hkGrid"></div>
+            <p class="small muted" id="hkLast"></p>
+            <div><button type="button" class="btn ghost" id="hkRun">Dọn ngay</button></div>
+          </div>
           <div class="card" id="sampleCard" hidden>
             <div class="card-h"><h3>Dữ liệu mẫu</h3><span class="chip warn" id="sampleChip"></span></div>
             <p class="small muted" id="sampleTxt"></p>
@@ -2671,6 +2681,9 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     if(method==="POST"&&P==="/reset"){ if(String(body.confirm).trim().toUpperCase()!=="CHAY THAT") throw new Error('Gõ đúng "CHAY THAT" để xác nhận');
       S.posts=[]; S.leads=[]; S.meetings=[]; S.msgs=[]; S.tasks=[]; S.activity=[]; S.lessons=[]; S.xp={}; S.goals={}; S.kpiPhone=0; S.sales=S.sales.filter(x=>!x.is_sample);
       if(body.products) S.products=[]; if(body.groups) S.groups=[]; log("minh","Bắt đầu chạy thật","Đã xóa dữ liệu thử nghiệm, giữ nhân viên sale và cài đặt"); return {deleted:[],backup:"data/backups/truoc-khi-chay-that.db"}; }
+    if(P==="/housekeeping"){ const r={sizes:{db_mb:186.4,shots_mb:412.7,shots:2310,backups_mb:96.2,profiles_mb:3870.5,tables:[{name:"posts",mb:61.2},{name:"activity",mb:38.9},{name:"reply_tasks",mb:22.4}]},
+      last:{at:tzNow().slice(0,10)+" 03:20:11",rows:{activity:18240,comment_seen:5120},shots:{files:640},freed_mb:1310.4},time:"03:20",on:true};
+      return method==="POST"?{...r,text:"Em đã dọn: 23360 dòng nhật ký cũ, 640 ảnh chụp cũ, giải phóng 1310.4 MB. (bản xem trước)"}:r; }
     if(method==="DELETE"&&P==="/sample-data"){ S.sales=S.sales.filter(x=>!x.is_sample); S.accounts=S.accounts.filter(a=>S.sales.some(r=>r.id===a.sale_id)); S.leads=S.leads.filter(x=>!x.is_sample); S.groups=[]; S.products=[]; log("minh","Dọn dữ liệu mẫu","Đã xóa dữ liệu mẫu"); return {deleted:{}}; }
     if(method==="DELETE"&&(m=P.match(/^\/sales\/(\d+)$/))){ S.sales=S.sales.filter(x=>x.id!=m[1]); S.accounts=S.accounts.filter(a=>a.sale_id!=m[1]); return {ok:true}; }
     if(method==="DELETE"&&(m=P.match(/^\/accounts\/(\d+)$/))){ const a=S.accounts.find(x=>x.id==m[1]); if(!a) throw new Error("Không tìm thấy nick"); if(S.busyAcc[a.sale_id]===a.id) throw new Error("Nick đang làm việc, chờ xong ca rồi xóa");
@@ -4714,8 +4727,19 @@ $("#resetForm").addEventListener("submit",async e=>{ e.preventDefault(); const b
     if(r.backup) $("#resetPreview").insertAdjacentHTML("beforeend",`<br><span class="small">Bản sao lưu: ${esc(r.backup)}</span>`); }
   catch(err){ toast(err.message); }
   b.textContent="Xóa dữ liệu thử nghiệm"; ST.posts=[]; ST.leads=[]; ST.meetingId=null; ST.msgs=[]; setTimeout(loadReset,300); loadSamples(); refresh(); });
+function showHk(h){ const z=h.sizes||{}, tot=(z.db_mb||0)+(z.shots_mb||0)+(z.backups_mb||0)+(z.profiles_mb||0), L=h.last;
+  const mb=v=>v>=1024?(v/1024).toFixed(1)+" GB":(v||0)+" MB";
+  $("#hkChip").className="chip "+(tot>8192?"warn":"ok"); $("#hkChip").textContent="Tổng "+mb(Math.round(tot*10)/10);
+  $("#hkGrid").innerHTML=[["Cơ sở dữ liệu",z.db_mb],["Ảnh chụp màn hình",z.shots_mb,`${z.shots||0} ảnh`],["Bản sao lưu",z.backups_mb],["Hồ sơ Chrome các nick",z.profiles_mb]]
+    .map(([k,v,n])=>`<div class="hk-i"><span class="small muted">${k}</span><b>${mb(v)}</b>${n?`<span class="small muted">${n}</span>`:""}</div>`).join("")
+    +((z.tables||[]).length?`<div class="hk-t small muted">Bảng lớn nhất: ${z.tables.map(t=>`${esc(t.name)} ${mb(t.mb)}`).join(" · ")}</div>`:"");
+  $("#hkLast").textContent=L?`Lần dọn gần nhất ${fmtDate(L.at)} ${String(L.at).slice(11,16)}: xóa ${Object.values(L.rows||{}).reduce((a,b)=>a+b,0)} dòng nhật ký cũ, ${(L.shots||{}).files||0} ảnh chụp, giải phóng ${L.freed_mb??0} MB.${L.later?" "+L.later+".":""}`:"Chưa dọn lần nào.";
+}
+async function loadHk(){ try{ showHk(await api("/housekeeping")); }catch(e){} }
+$("#hkRun").onclick=async e=>{ const b=e.target; b.disabled=true; b.textContent="Đang dọn…";
+  try{ const r=await api("/housekeeping","POST"); showHk(r); toast(r.text); }catch(err){ toast(err.message); } b.disabled=false; b.textContent="Dọn ngay"; };
 async function loadSettings(){
-  loadReset();
+  loadReset(); loadHk();
   loadSamples();
   loadCosts(); loadTeam();
   const s=await api("/settings");

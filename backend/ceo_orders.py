@@ -272,6 +272,12 @@ def execute(act: dict) -> str:
     """Thực hiện một việc trong danh sách được phép. Trả về một câu mô tả kết quả."""
     import workflows
     t = act.get("type")
+    if t == "cleanup_data":
+        import housekeeping
+        if not act.get("run"):
+            return housekeeping.summary() + " Mỗi đêm em tự dọn nhật ký cũ, ảnh chụp cũ; sếp bảo “dọn dữ liệu” để dọn ngay."
+        _bg(lambda via: followup(housekeeping.summary(housekeeping.run(force=True)), via), act.get("_via", "web"))
+        return "Em đang dọn dữ liệu (nhật ký cũ, ảnh chụp cũ, sao lưu thừa, bộ nhớ Chrome) và nén lại, xong em báo sếp"
     if t == "update_app":
         import updater
         return updater.run(act.get("_via", "web"))
@@ -637,6 +643,7 @@ def _context() -> str:
 ACTIONS_DOC = """Các việc được phép (type và tham số):
 - write_posts {count 1-10, product_id?, target: group|profile|page, angle?, note?}: giao Lan viết bài
 - plan {}: giao Tuấn xếp lịch đăng các bài đã duyệt
+- cleanup_data {run: true|false}: sếp hỏi dung lượng dữ liệu (run false) hoặc bảo dọn dẹp / dọn dữ liệu / dữ liệu phình to (run true)
 - update_app {}: sếp bảo cập nhật / nâng cấp phần mềm, tải bản mới (git pull) rồi tự khởi động lại khi sale rảnh
 - ask {question}: sếp HỎI kiến thức/cách làm (không phải giao việc). CEO tra sổ kiến thức của đội trước, chưa có mới tra cứu
 - study_now {}: cho cả đội tự học kiến thức mới ngay
@@ -767,6 +774,10 @@ def _rule_plan(text: str) -> dict:
             if re.search(rf"(?<!\w){re.escape(r['name'].lower())}(?!\w)", low):
                 agent = f"sale-{r['id']}"
                 break
+    if re.search(r"dọn\s*(dẹp\s*)?(lại\s*)?(dữ liệu|database|cơ sở dữ liệu|csdl|bộ nhớ|ổ đĩa|ổ cứng|máy)|nén (lại )?(dữ liệu|database)", low):
+        return {"reply": "Dạ em dọn ngay.", "actions": [{"type": "cleanup_data", "run": True}]}
+    if re.search(r"dung lượng|(dữ liệu|database|cơ sở dữ liệu).{0,20}(nặng|to|phình|lớn|bao nhiêu)", low):
+        return {"reply": "Dạ.", "actions": [{"type": "cleanup_data", "run": False}]}
     if re.search(UPDATE_RX, low):
         return {"reply": "Dạ em cập nhật phần mềm ngay.", "actions": [{"type": "update_app"}]}
     for rx, typ in ((r"báo cáo tuần|tổng kết tuần", "weekly_report"),
