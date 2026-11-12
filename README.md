@@ -395,6 +395,16 @@ Mỗi bình luận hiện loại, điểm, lý do và đúng câu người đăn
   Zalo**. **Chia đều**: nhóm ít được bình luận nhất được ưu tiên, mỗi nhóm tối đa **2 câu/ngày** (sửa 1–3) cho loại này; người hỏi mua
   vẫn luôn được trả lời. Vẫn bỏ: bài nhà cung cấp khác / bán dịch vụ / lừa đảo, bài tang, tai nạn, chính trị, người trong data rác,
   nhóm sếp đã loại. Cần khóa Claude (không có khóa thì không viết loại này). Vẫn **chờ sếp duyệt** và nằm trong trần chung của nick.
+- **Kiểu bình luận ở bài không liên quan** (ô chọn trong Cài đặt lướt bảng tin, hoặc nhắn CEO):
+  - **Mời sỉ** (mặc định, nhắn CEO “bình luận mời sỉ vào cả các bài không liên quan”): Claude viết câu 18–35 chữ, mở bằng một câu đáp
+    đúng nội dung bài (chúc mừng, đồng cảm, góp ý) rồi mời rõ: xưởng trà túi lọc, ngũ cốc nhận sỉ, tuyển đại lý / CTV, gia công thương
+    hiệu riêng, ai cần nguồn hàng bán lại thì nhắn + dòng Zalo. Mỗi câu khác hẳn nhau; không ghi giá, không hứa công dụng, không mời
+    mua lẻ. **Bỏ qua nhóm cấm bán hàng và nhóm từng xóa bình luận** (mời sỉ ở đó bị xóa, chặn thành viên). Bỏ thêm bài bệnh tật,
+    quyên góp, tìm người thất lạc. Thẻ bình luận hiện chip **Mời sỉ**.
+  - **Tự nhiên** (nhắn CEO “bình luận tự nhiên”, “đừng mời sỉ”): góp chuyện đúng bài, chỉ giới thiệu nhẹ là xưởng như trước.
+  - Cả hai kiểu vẫn **chờ sếp duyệt**, giữ trần mỗi nhóm 2 câu/ngày, trần chung mỗi nick 5 câu/ngày và giãn cách dàn đều giờ làm.
+    Bình luận mời sỉ ở bài không hỏi mua dễ bị báo cáo hơn: nhóm nào xóa bình luận thì phần mềm ngừng bình luận ở nhóm đó 30 ngày;
+    nên giữ trần thấp và theo dõi trang Trả lời khách.
 
 **Nhịp do luật của nick quyết định**, không đặt tay: mỗi nick tự lướt tối đa 2 lượt/ngày (nick mới hoặc vừa bị chặn 1 lượt), lượt đầu
 lệch nhau giữa các nick trong giờ làm, lượt sau cách khoảng 3 giờ; nick đang nghỉ sau sự cố không lướt; nick đã có đủ câu chờ duyệt /

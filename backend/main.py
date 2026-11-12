@@ -2716,7 +2716,7 @@ def replies_approve_all():
 
 
 FEED_KEYS = {"feed_enabled", "feed_min_posts", "feed_scans_day", "feed_min_score", "feed_buyer_image", "feed_seller_enabled",
-             "feed_seller_per_nick_day", "feed_seller_words", "feed_comment_all", "feed_per_group_day", "reply_gap_min"}
+             "feed_seller_per_nick_day", "feed_seller_words", "feed_comment_all", "feed_general_style", "feed_per_group_day", "reply_gap_min"}
 
 
 @app.get("/api/feed")
@@ -2753,6 +2753,8 @@ def feed_settings(data: dict):
                 raise HTTPException(400, msg)
         elif k in ("feed_enabled", "feed_buyer_image", "feed_seller_enabled", "feed_comment_all") and v not in ("0", "1"):
             raise HTTPException(400, "Giá trị 0 hoặc 1")
+        elif k == "feed_general_style" and v not in ("invite", "natural"):
+            raise HTTPException(400, "Kiểu bình luận: invite hoặc natural")
         db.set_setting(k, v[:300])
     db.log("bao", "Sếp chỉnh lướt bảng tin nhóm", ", ".join(f"{k}={v}" for k, v in data.items())[:300])
     return group_feed.overview()

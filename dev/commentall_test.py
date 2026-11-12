@@ -12,7 +12,7 @@ import group_feed as F, replies, llm as L
 ok = []
 def check(name, cond): ok.append(bool(cond)); print(("OK  " if cond else "LỖI ") + name)
 aid = db.run("INSERT INTO fb_accounts(name, login_status, active_from, active_to, created_at) VALUES ('Nick A','ok','08:00','22:00','2025-01-01 00:00:00')")
-db.set_setting("replies_per_nick_day", "10"); db.set_setting("reply_contact", "Zalo 0386992326")
+db.set_setting("feed_general_style", "natural"); db.set_setting("replies_per_nick_day", "10"); db.set_setting("reply_contact", "Zalo 0386992326")
 g = [db.run("INSERT INTO groups(name, url, slug, created_at) VALUES (?,?,?,?)", (f"Nhóm {i}", f"https://fb.com/groups/g{i}", f"g{i}", db.now())) for i in range(3)]
 db.run("UPDATE groups SET no_selling=1 WHERE id=?", (g[2],))
 
@@ -63,4 +63,29 @@ import main
 c = TestClient(main.app)
 check("cài đặt: mỗi nhóm tối đa 3", c.put("/api/feed-settings", json={"feed_per_group_day": "5"}).status_code == 400
       and c.put("/api/feed-settings", json={"feed_per_group_day": "1", "reply_gap_min": "90", "feed_comment_all": "1"}).status_code == 200)
+# ---- kiểu mời sỉ (mặc định)
+import ceo_orders
+rep = ceo_orders.handle("Cho nhân viên bình luận mời sỉ vào cả các bài không liên quan")["reply"]
+check("nhắn CEO “bình luận mời sỉ”: bật kiểu mời sỉ", db.get_settings()["feed_general_style"] == "invite" and "mời sỉ" in rep)
+check("kiểu mời sỉ: Claude được dặn mời nhập sỉ / đại lý, đáp đúng bài, không ghi giá",
+      "MỜI SỈ" in F.GENERAL_INVITE and "đại lý" in F.GENERAL_INVITE and "giá" in F.GENERAL_INVITE)
+check("lý do hiện “Mời sỉ”", "Mời sỉ" in F.rule(normal)["reason"])
+it2 = F.pick(rows(0, 2, 300) + rows(2, 2, 400), aid)
+check("kiểu mời sỉ: bỏ qua nhóm cấm bán hàng (không mời sỉ ở đó)", it2 and all(x["group_id"] != g[2] for x in it2))
+sent_prompt = []
+class Fake2:
+    def create(self, **kw):
+        sent_prompt.append(kw["messages"][0]["content"]); n = kw["messages"][0]["content"].count(" lần ")
+        items = [{"i": i + 1, "type": "general", "score": 55, "reason": "khai trương", "reply": f"Chúc mừng shop khai trương nha, bên em là xưởng trà túi lọc nhận sỉ, chị cần nguồn hàng bán thêm cứ nhắn em {i}"} for i in range(n)]
+        return NS(stop_reason="tool_use", usage=NS(input_tokens=5, output_tokens=5), content=[NS(type="tool_use", input={"ket_qua": {"items": items}})])
+L.llm.client = NS(messages=Fake2())
+db.run("DELETE FROM reply_tasks")
+F.save(F.pick(rows(1, 2, 500), aid), aid)
+t3 = db.q("SELECT reply, status FROM reply_tasks")
+check("câu mời sỉ kèm Zalo, vẫn chờ sếp duyệt", t3 and all("Zalo" in x["reply"] and x["status"] == "draft" for x in t3)
+      and "MỜI SỈ" in sent_prompt[-1])
+ceo_orders.handle("thôi bình luận tự nhiên thôi, đừng mời sỉ")
+check("nhắn CEO “bình luận tự nhiên”: quay lại kiểu cũ", db.get_settings()["feed_general_style"] == "natural")
+check("cài đặt kiểu bình luận chỉ nhận invite / natural", c.put("/api/feed-settings", json={"feed_general_style": "spam"}).status_code == 400
+      and c.put("/api/feed-settings", json={"feed_general_style": "invite"}).status_code == 200)
 print(("XONG" if all(ok) else "CÓ LỖI") + f" {sum(ok)}/{len(ok)}")

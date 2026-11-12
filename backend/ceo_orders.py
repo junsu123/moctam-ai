@@ -272,6 +272,13 @@ def execute(act: dict) -> str:
     """Thực hiện một việc trong danh sách được phép. Trả về một câu mô tả kết quả."""
     import workflows
     t = act.get("type")
+    if t == "feed_style":
+        style = "natural" if act.get("style") == "natural" else "invite"
+        db.set_setting("feed_general_style", style)
+        db.set_setting("feed_comment_all", "1")
+        return ("Từ lượt lướt bảng tin tới, bài không liên quan Bảo viết câu mời sỉ (đáp một câu đúng bài rồi mời nhập sỉ, làm đại lý), "
+                "kèm Zalo, sếp duyệt rồi nick mới gửi; vẫn giữ trần mỗi nick / mỗi nhóm và bỏ qua nhóm cấm bán hàng"
+                if style == "invite" else "Từ lượt tới, bài không liên quan Bảo bình luận tự nhiên, chỉ giới thiệu nhẹ là xưởng")
     if t == "coach_now":
         import coach
         return coach.run(force=True)["msg"]
@@ -646,6 +653,7 @@ def _context() -> str:
 ACTIONS_DOC = """Các việc được phép (type và tham số):
 - write_posts {count 1-10, product_id?, target: group|profile|page, angle?, note?}: giao Lan viết bài
 - plan {}: giao Tuấn xếp lịch đăng các bài đã duyệt
+- feed_style {style: invite|natural}: sếp muốn bình luận MỜI SỈ vào cả bài không liên quan (invite) hoặc chỉ bình luận tự nhiên (natural)
 - coach_now {}: cho các agent đủ kết quả thật mới gửi việc cho Claude kèm cặp ngay (theo lô, giảm 50%)
 - cleanup_data {run: true|false}: sếp hỏi dung lượng dữ liệu (run false) hoặc bảo dọn dẹp / dọn dữ liệu / dữ liệu phình to (run true)
 - update_app {}: sếp bảo cập nhật / nâng cấp phần mềm, tải bản mới (git pull) rồi tự khởi động lại khi sale rảnh
@@ -778,6 +786,10 @@ def _rule_plan(text: str) -> dict:
             if re.search(rf"(?<!\w){re.escape(r['name'].lower())}(?!\w)", low):
                 agent = f"sale-{r['id']}"
                 break
+    if re.search(r"(bình luận|comment|cmt).{0,20}(tự nhiên|nhẹ nhàng)|(đừng|không|thôi|bỏ) mời sỉ", low):
+        return {"reply": "Dạ.", "actions": [{"type": "feed_style", "style": "natural"}]}
+    if re.search(r"(bình luận|comment|cmt).{0,40}mời (nhập )?sỉ|mời (nhập )?sỉ.{0,30}(bình luận|comment|cmt|bài không liên quan|mọi bài)", low):
+        return {"reply": "Dạ.", "actions": [{"type": "feed_style", "style": "invite"}]}
     if re.search(r"kèm cặp|(học|chấm).{0,15}(với|bởi) claude|claude (chấm|kèm|dạy)", low):
         return {"reply": "Dạ.", "actions": [{"type": "coach_now"}]}
     if re.search(r"dọn\s*(dẹp\s*)?(lại\s*)?(dữ liệu|database|cơ sở dữ liệu|csdl|bộ nhớ|ổ đĩa|ổ cứng|máy)|nén (lại )?(dữ liệu|database)", low):

@@ -183,6 +183,21 @@ def comment_all() -> bool:
     return s().get("feed_comment_all", "1") == "1"
 
 
+def invite() -> bool:
+    """Bài không liên quan: bình luận mời sỉ (mặc định) thay vì chỉ góp chuyện rồi giới thiệu nhẹ."""
+    return s().get("feed_general_style", "invite") == "invite"
+
+
+GENERAL_NATURAL = ("viết reply 12–30 chữ bình luận tự nhiên, đúng nội dung bài (đồng cảm, góp ý, chúc mừng, hỏi thêm), "
+                   "câu cuối giới thiệu nhẹ mình bên xưởng trà, ngũ cốc nếu hợp; KHÔNG ghi số điện thoại / Zalo / giá, không chào bán ép, "
+                   "không lặp câu.")
+GENERAL_INVITE = ("viết reply 18–35 chữ MỜI SỈ: mở bằng một câu ngắn đáp đúng nội dung bài (chúc mừng, đồng cảm, khen, góp ý) để người "
+                  "đăng thấy mình đọc bài thật, rồi mời rõ ràng: bên em là xưởng trà túi lọc, ngũ cốc, bột nhận sỉ tận xưởng, tuyển đại lý / "
+                  "CTV, nhận gia công thương hiệu riêng; ai cần nguồn hàng để bán lại thì nhắn em. Mỗi câu khác hẳn nhau (khác mở đầu, khác "
+                  "cách mời, khác mặt hàng nhắc tới); KHÔNG ghi số điện thoại / Zalo / giá / chiết khấu, không hứa công dụng, không viết hoa "
+                  "cả câu, không hashtag, không mời mua lẻ.")
+
+
 def rule(text: str, name: str = "") -> dict | None:
     """{'kind','score','reason'} hoặc None nếu bài chỉ đọc qua."""
     import prospect
@@ -203,7 +218,7 @@ def rule(text: str, name: str = "") -> dict | None:
     if r is None:
         if not comment_all():
             return None
-        r = {"kind": "general", "score": 60, "reason": "Bình luận đều mọi nhóm (không cần từ khóa liên quan)"}
+        r = {"kind": "general", "score": 60, "reason": "Mời sỉ ở bài không liên quan" if invite() else "Bình luận đều mọi nhóm (không cần từ khóa liên quan)"}
     pen, why, ban = junk.check(text, name)
     if ban:
         return None
@@ -247,9 +262,8 @@ def judge(items: list[dict]) -> list[dict]:
            "giới thiệu mình là xưởng, mời nhắn nếu cần thêm mặt hàng; KHÔNG ghi số điện thoại / Zalo / giá / chiết khấu, không hứa "
            "công dụng, không viết hoa cả câu, không hashtag, mỗi câu khác nhau. Bài 'buyer' để reply rỗng."
            + (" Bài KHÔNG phải buyer / seller nhưng là bài bình thường của thành viên nhóm (chia sẻ, hỏi đáp, khoe hàng, tâm sự...): "
-              "type = 'general', viết reply 12–30 chữ bình luận tự nhiên, đúng nội dung bài (đồng cảm, góp ý, chúc mừng, hỏi thêm), "
-              "câu cuối giới thiệu nhẹ mình bên xưởng trà, ngũ cốc nếu hợp; KHÔNG ghi số điện thoại / Zalo / giá, không chào bán ép, "
-              "không lặp câu. Chỉ để 'none' với bài lừa đảo, bán dịch vụ, nhà cung cấp khác, bài tang, tai nạn, chính trị."
+              "type = 'general', " + (GENERAL_INVITE if invite() else GENERAL_NATURAL) + " Chỉ để 'none' với bài lừa đảo, bán dịch "
+              "vụ, nhà cung cấp khác, bài tang, tai nạn, bệnh tật, chính trị, quyên góp, tìm người thất lạc."
               if comment_all() else "")
            + _examples() + " " + prospect_rules.prompt_block()[:600] + " Các bài: "
            + " | ".join(f"{i + 1}. {' '.join(it['post_text'].split())[:320]}" for i, it in enumerate(items))
@@ -360,6 +374,8 @@ def pick(rows: list[dict], aid: int) -> list[dict]:
         if not g or group_target.classify(g)[0] == "exclude":
             continue
         quiet = int(g.get("no_selling") or 0) or (g.get("no_pitch_until") or "") > db.now()
+        if k["kind"] == "general" and quiet and invite():
+            continue  # nhóm cấm bán hàng / từng xóa bình luận: không mời sỉ (bị xóa, chặn thành viên)
         if k["kind"] == "general" and quiet:
             k = {**k, "no_contact": True, "reason": k["reason"] + "; nhóm cấm bán hàng: bình luận không kèm Zalo"}
         if k["kind"] == "seller":
@@ -531,5 +547,5 @@ def overview() -> dict:
     return {"nicks": nicks, "recent": recent, "no_pitch": stop,
             "settings": {k: s().get(k) for k in ("feed_enabled", "feed_min_posts", "feed_scans_day", "feed_min_score",
                                                  "feed_buyer_image", "feed_seller_enabled", "feed_seller_per_nick_day",
-                                                 "feed_seller_words", "feed_comment_all", "feed_per_group_day",
+                                                 "feed_seller_words", "feed_comment_all", "feed_general_style", "feed_per_group_day",
                                                  "reply_gap_min")}}

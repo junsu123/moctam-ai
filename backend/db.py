@@ -520,7 +520,7 @@ DEFAULT_SETTINGS = {
     "replies_enabled": "1", "replies_time": "09:20", "replies_per_nick_day": "5", "replies_groups_per_run": "3",
     "replies_per_group": "4", "replies_last": "", "reply_contact": "",
     "feed_enabled": "1", "feed_min_posts": "20", "feed_scans_day": "2", "feed_gap_hours": "3", "feed_min_score": "70",
-    "feed_buyer_image": "1", "feed_seller_enabled": "1", "feed_comment_all": "1", "feed_per_group_day": "2", "reply_gap_min": "60", "feed_seller_per_nick_day": "2", "feed_seller_words": "",
+    "feed_buyer_image": "1", "feed_seller_enabled": "1", "feed_comment_all": "1", "feed_general_style": "invite", "feed_per_group_day": "2", "reply_gap_min": "60", "feed_seller_per_nick_day": "2", "feed_seller_words": "",
     "fbp_enabled": "1", "fbp_posts_day": "6", "fbp_gap_minutes": "30", "fbp_bumps_day": "6", "fbp_joins_day": "2",
     "fbp_same_group_hours": "24", "fbp_new_nick_days": "14", "fbp_new_nick_factor": "0.5", "fbp_rest_days": "3",
     "fbp_after_days": "7", "fbp_after_factor": "0.5", "fbp_hashtags_max": "5", "fbp_caption_max": "2500",
