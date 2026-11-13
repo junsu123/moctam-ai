@@ -1400,6 +1400,8 @@ label.f{font-weight:600;color:var(--muted)}
             <li>Vào cPanel → File Manager → thư mục <b>public_html</b> → Upload tệp vừa tải.</li>
             <li>Bấm <b>Kiểm tra kết nối</b>. Địa chỉ cổng: <code id="wsSyncUrlShow"></code></li></ol>
             <label class="f" for="wf-site_sync_url">Địa chỉ cổng nhận (để trống = tự theo tên miền)<input id="wf-site_sync_url" data-k="site_sync_url" autocomplete="off" placeholder="https://moctamvn.vn/mt-sync.php"></label></div>
+          <div class="grid3"><label class="f" for="wf-site_chmod_file">Quyền tệp trên hosting<input id="wf-site_chmod_file" data-k="site_chmod_file" inputmode="numeric" maxlength="3" placeholder="755"></label>
+            <label class="f" for="wf-site_chmod_dir">Quyền thư mục<input id="wf-site_chmod_dir" data-k="site_chmod_dir" inputmode="numeric" maxlength="3" placeholder="755"></label></div>
           <label class="row small"><input type="checkbox" id="wsAutoDeploy"> Tự đẩy lên hosting khi có tin tức / sản phẩm mới hoặc sửa đổi</label>
           <div class="row wrap"><button class="btn" type="submit">Lưu</button><button class="btn" type="button" id="wsTest">Kiểm tra kết nối</button><button class="btn primary" type="button" id="wsDeploy">Đăng lên hosting</button><span class="small muted" id="wsDeployInfo"></span></div>
           <ul class="ws-steps" id="wsTestOut" hidden></ul></form>
@@ -1913,7 +1915,7 @@ const Demo = (() => {
       changes:[{id:1,name:RL.sources[0].name,url:RL.sources[0].url,detected_at:now(),status:"new",summary:"• Meta làm rõ: đăng, chia sẻ, bình luận hoặc tham gia nhóm với tần suất rất cao (kể cả bằng công cụ tự động) là spam.\n• Có thể hạn chế cả tài khoản đăng ít nếu nội dung lặp lại.\n• Việc của đội: giữ trần bài/ngày, mỗi bài một cách viết khác."}],
       incidents:[{id:1,kind:"block",account_name:"Linh Nguyễn",detail:"Facebook báo bạn thao tác quá nhanh, tạm chặn đăng bài",lesson:"24 giờ trước khi bị chặn nick đã đăng 7 bài, up 8 lượt, xin vào 3 nhóm. Facebook báo thao tác quá nhanh: nghỉ 3 ngày, sau đó chạy 50% giới hạn trong 7 ngày.",created_at:now()}],
       custom:[],rested_groups:[]};
-    S.ws={settings:{site_name:"MỘC TÂM",site_legal_name:"",site_tagline:"Nhà máy sản xuất & gia công trà túi lọc, cà phê, ngũ cốc, bột thiên nhiên",site_domain:"",site_about:"",site_address:"",site_email:"",site_phone:"0386992326",site_certs:"GMP – ISO – FDA – VSATTP",site_color:"#2f5d3a",site_ga_id:"",site_posts_week:"3",site_write_days:"1,3,5",site_write_time:"09:45",site_auto_publish:"1",site_min_seo:"75",site_ftp_host:"",site_ftp_user:"",site_ftp_dir:"/public_html",site_ftp_tls:"1",site_ftp_pass_set:false,site_deploy_mode:"auto",site_auto_deploy:"1",site_sync_url:"",site_sync_url_auto:"https://moctamvn.vn/mt-sync.php",site_deploy_msg:""},
+    S.ws={settings:{site_name:"MỘC TÂM",site_legal_name:"",site_tagline:"Nhà máy sản xuất & gia công trà túi lọc, cà phê, ngũ cốc, bột thiên nhiên",site_domain:"",site_about:"",site_address:"",site_email:"",site_phone:"0386992326",site_certs:"GMP – ISO – FDA – VSATTP",site_color:"#2f5d3a",site_ga_id:"",site_posts_week:"3",site_write_days:"1,3,5",site_write_time:"09:45",site_auto_publish:"1",site_min_seo:"75",site_ftp_host:"",site_ftp_user:"",site_ftp_dir:"/public_html",site_ftp_tls:"1",site_ftp_pass_set:false,site_deploy_mode:"auto",site_auto_deploy:"1",site_chmod_file:"755",site_chmod_dir:"755",site_sync_url:"",site_sync_url_auto:"https://moctamvn.vn/mt-sync.php",site_deploy_msg:""},
       keywords:[["gia công trà túi lọc","gia công",1],["gia công trà thảo mộc theo yêu cầu","gia công",1],["OEM trà túi lọc thương hiệu riêng","gia công",1],["gia công bột ngũ cốc","gia công",1],["nguồn hàng trà túi lọc sỉ","bán sỉ",1],["gia công cà phê hòa tan","gia công",2],["thủ tục công bố sản phẩm trà túi lọc","pháp lý",2],["cách chọn xưởng gia công thực phẩm uy tín","gia công",2]].map(([k,c,p],i)=>({id:i+1,keyword:k,cluster:c,priority:p,status:i<2?"written":"planned"})),
       posts:[],last_build:now(),last_deploy:null};
     S.tg={mode:"prefer",include:["nguồn hàng"],exclude:["quần áo"]};
@@ -3342,7 +3344,7 @@ function renderWs(){
   $("#wsAuto").checked=cf.site_auto_publish==="1";
   const md=cf.site_deploy_mode||"auto", isHttp=md==="http"; $("#wsMode").value=md; $("#wsHttpBox").hidden=!isHttp; $("#wsFtpFields").hidden=isHttp;
   $("#wf-site_sync_url").value=cf.site_sync_url||""; $("#wsSyncUrlShow").textContent=cf.site_sync_url_auto||"(điền tên miền ở tab Thông tin công ty)";
-  $("#wsAutoDeploy").checked=cf.site_auto_deploy!=="0";
+  $("#wsAutoDeploy").checked=cf.site_auto_deploy!=="0"; $("#wf-site_chmod_file").value=cf.site_chmod_file||"755"; $("#wf-site_chmod_dir").value=cf.site_chmod_dir||"755";
   $("#wsFtpFields").innerHTML=[["site_ftp_host","Máy chủ FTP (VD ftp.moctamvn.vn hoặc IP)","text"],["site_ftp_user","Tài khoản FTP","text"],["site_ftp_pass",cf.site_ftp_pass_set?"Mật khẩu (đã lưu, để trống nếu giữ nguyên)":"Mật khẩu FTP","password"],["site_ftp_dir","Thư mục trên hosting","text"]]
     .map(([k,l,ty])=>`<label class="f" for="wf-${k}">${l}<input type="${ty}" id="wf-${k}" data-k="${k}" autocomplete="off" value="${k==="site_ftp_pass"?"":esc(cf[k]||"")}"></label>`).join("");
   const cm=cf.site_check_msg||""; $("#wsCheckInfo").textContent=cm?(cm.startsWith("OK")?"Lần kiểm tra trước: ổn":"Lần kiểm tra trước: "+cm.replace(/^LỖI \S+ \S+: /,"lỗi ở ")):"";
@@ -3421,7 +3423,7 @@ $("#wsTest").onclick=async e=>{ e.target.disabled=true; const o=$("#wsTestOut");
     o.innerHTML=r.steps.map(x=>`<li class="${x.ok?"ok":"bad"}"><b>${x.ok?"✓":"✗"} ${esc(x.name)}</b> ${esc(x.msg||"")}</li>`).join("")+(r.ok?'<li class="ok"><b>Kết nối tốt.</b> Bấm “Đăng lên hosting”.</li>':"");
   }catch(err){ o.innerHTML=`<li class="bad">${esc(err.message)}</li>`; } e.target.disabled=false; };
 $("#wsDeploy").onclick=async e=>{ e.target.disabled=true; $("#wsDeployInfo").textContent="Đang tải website lên hosting…";
-  try{ const r=await api("/website/deploy","POST"); toast(r.files||r.deleted?`Đã đăng ${r.files} tệp mới/sửa${r.deleted?`, xóa ${r.deleted} tệp cũ`:""} lên ${r.host}`:`Website trên ${r.host} đã mới nhất`); loadWs(); }catch(err){ toast(err.message); $("#wsDeployInfo").textContent=err.message; } e.target.disabled=false; };
+  try{ const r=await api("/website/deploy","POST"); toast((r.files||r.deleted?`Đã đăng ${r.files} tệp mới/sửa (quyền ${r.perms})${r.deleted?`, xóa ${r.deleted} tệp cũ`:""} lên ${r.host}`:`Website trên ${r.host} đã mới nhất`)+(r.warn?". "+r.warn:"")); loadWs(); }catch(err){ toast(err.message); $("#wsDeployInfo").textContent=err.message; } e.target.disabled=false; };
 $("#wsBuild").onclick=async e=>{ e.target.disabled=true; try{ const r=await api("/website/build","POST"); toast(`Đã dựng lại website: ${r.pages} trang, ${r.posts} bài viết`); loadWs(); }catch(err){ toast(err.message); } e.target.disabled=false; };
 document.addEventListener("click",e=>{ const a=e.target.closest("#wsView,#wsZip,[data-wsview]"); if(a&&DEMO){ e.preventDefault(); toast("Bản demo: website thật nằm trên máy chạy phần mềm, mở tại địa chỉ /site/"); } });
 

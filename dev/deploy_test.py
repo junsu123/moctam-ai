@@ -98,6 +98,8 @@ try:
     t = c.post("/api/website/deploy/test").json(); chk("kiểm tra cổng PHP", t["ok"], [s["msg"] for s in t["steps"]])
     d = c.post("/api/website/deploy").json()
     chk("đăng qua cổng PHP", d["mode"] == "http" and (php / "tin-tuc" / slug / "index.html").exists() and (php / "sitemap.xml").exists(), d)
+    chk("cổng PHP đặt quyền 755", oct((php / "sitemap.xml").stat().st_mode & 0o777)[2:] == "755" and oct((php / "tin-tuc").stat().st_mode & 0o777)[2:] == "755"
+        and d["perm_fail"] == 0)
     import httpx
     u = "http://127.0.0.1:8137/mt-sync.php"
     def call(path, tk=tok, data=b"x"): return httpx.post(u, params={"op": "put", "path": path}, headers={"X-MT-Token": tk}, content=data).status_code
@@ -130,6 +132,18 @@ try:
     chk("đã đổi thư mục, sitemap lên đúng chỗ", db.get_settings()["site_ftp_dir"] == "/public_html/moctamvn.vn" and (served / "sitemap.xml").exists())
     chk("robots.txt chặn Google đã bị ghi đè", "Disallow: /" not in (served / "robots.txt").read_text(), [x["name"] + ("✓" if x["ok"] else "✗") for x in r["steps"]])
     chk("không để lại tệp thử", not list(root3.rglob("mt-probe-*")))
+    md = lambda p: oct(p.stat().st_mode & 0o777)[2:]
+    chk("quyền tệp / thư mục 755", [md(served / "sitemap.xml"), md(served / "tin-tuc"), md(served / "assets" / "style.css")] == ["755"] * 3,
+        [md(served / "sitemap.xml"), md(served / "tin-tuc"), md(served / "assets" / "style.css")])
+    t3 = D.test(); chk("kiểm tra kết nối: đặt được quyền", any(x["name"] == "Đặt quyền tệp" and x["ok"] for x in t3["steps"]))
+    os.chmod(served / "sitemap.xml", 0o600); os.chmod(served / "tin-tuc", 0o644); os.chmod(served, 0o750)
+    c.put("/api/website/settings", json={"site_chmod_file": "644", "site_chmod_dir": "755"})
+    chk("chặn quyền 777", c.put("/api/website/settings", json={"site_chmod_file": "777"}).status_code == 400)
+    d = c.post("/api/website/deploy").json()
+    chk("đổi quyền: tải lại toàn bộ, đặt lại quyền", d["files"] > 5 and d["perms"] == "644/755" and md(served / "sitemap.xml") == "644"
+        and md(served / "tin-tuc") == "755", (d["files"], d["perms"], md(served / "sitemap.xml"), md(served / "tin-tuc")))
+    chk("không đụng quyền thư mục gốc web", md(served) == "750")
+    os.chmod(served, 0o755); c.put("/api/website/settings", json={"site_chmod_file": "755"}); c.post("/api/website/deploy")
     r2 = D.check(base="http://127.0.0.1:8139"); chk("kiểm tra lại: ổn, không sửa gì", r2["ok"] and not r2["fixed"])
     # Vy viết xong bài đạt chuẩn: tự đăng + đẩy lên hosting ngay, không ai bấm
     chk("tự đăng bật mặc định", db.get_settings()["site_auto_publish"] == "1")

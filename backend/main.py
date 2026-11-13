@@ -2886,7 +2886,7 @@ def fb_policy_teach():
 SITE_KEYS = {"site_name", "site_legal_name", "site_tagline", "site_domain", "site_about", "site_address", "site_email", "site_phone",
              "site_certs", "site_founded", "site_color", "site_ga_id", "site_posts_week", "site_write_days", "site_write_time",
              "site_auto_publish", "site_min_seo", "site_ftp_host", "site_ftp_user", "site_ftp_pass", "site_ftp_dir", "site_ftp_tls",
-             "site_deploy_mode", "site_auto_deploy", "site_sync_url"}
+             "site_deploy_mode", "site_auto_deploy", "site_sync_url", "site_chmod_file", "site_chmod_dir"}
 
 
 @app.get("/api/website")
@@ -2908,6 +2908,10 @@ def website_settings(data: dict):
             import site_deploy
             h, p = site_deploy.clean_host(str(v))
             v = f"{h}:{p}" if p else h
+        if k in ("site_chmod_file", "site_chmod_dir"):
+            v = str(v).strip()
+            if not re.fullmatch(r"[0-7]{3}", v) or int(v[2]) & 2 or not int(v[0]) & 4:
+                raise HTTPException(400, "Quyền phải là 3 số như 755 hoặc 644 (không cho người khác ghi: không dùng 777, 666)")
         if k == "site_deploy_mode" and v not in ("auto", "ftps", "ftp", "sftp", "http"):
             raise HTTPException(400, "Cách đăng không hợp lệ")
         if k in ("site_ftp_host", "site_ftp_user", "site_ftp_dir", "site_deploy_mode"):

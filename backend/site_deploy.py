@@ -31,6 +31,16 @@ def _st() -> dict:
     return db.get_settings()
 
 
+def perms(st: dict | None = None) -> tuple[str, str]:
+    """Quyền tệp / thư mục đặt sau khi tải lên (mặc định 755 / 755; không cho quyền ghi cho người khác)."""
+    st = st or _st()
+
+    def ok(v, d):
+        v = str(v or "").strip()
+        return v if re.fullmatch(r"[0-7]{3}", v) and not int(v[2]) & 2 and int(v[0]) & 4 else d
+    return ok(st.get("site_chmod_file"), "755"), ok(st.get("site_chmod_dir"), "755")
+
+
 def _site_dir() -> Path:
     import website
     return website.SITE_DIR
@@ -154,6 +164,13 @@ class FtpConn:
         import io
         self.ftp.storbinary(f"STOR {dest}", io.BytesIO(data))
 
+    def chmod(self, path: str, mode: str) -> bool:
+        try:
+            self.ftp.sendcmd(f"SITE CHMOD {mode} {path}")
+            return True
+        except ftplib.all_errors:
+            return False
+
     def delete(self, dest: str):
         try:
             self.ftp.delete(dest)
@@ -210,6 +227,13 @@ class SftpConn:
         with self.sftp.open(dest, "wb") as f:
             f.write(data)
 
+    def chmod(self, path: str, mode: str) -> bool:
+        try:
+            self.sftp.chmod(path, int(mode, 8))
+            return True
+        except OSError:
+            return False
+
     def delete(self, dest: str):
         try:
             self.sftp.remove(dest)
@@ -231,10 +255,15 @@ class HttpConn:
         self.c = httpx.Client(timeout=60, follow_redirects=True, headers={"X-MT-Token": token, "User-Agent": "MocTam-Sync/1"})
         r = self._call("ping")
         self.writable = r.get("writable", True)
+        self.version = int(r.get("v", 1))
+        self.fm, self.dm = perms()
         self.stage = "data"
 
     def _call(self, op: str, path: str = "", data: bytes = b"") -> dict:
-        r = self.c.post(self.url, params={"op": op, "path": path}, content=data)
+        params = {"op": op, "path": path}
+        if op == "put":
+            params.update(fm=self.fm, dm=self.dm)
+        r = self.c.post(self.url, params=params, content=data)
         if r.status_code == 404:
             raise RuntimeError(f"Chưa có {SYNC_FILE} trên hosting ({self.url}). Tải tệp ở mục Đăng lên hosting rồi tải lên thư mục public_html.")
         if r.status_code == 403:
@@ -258,6 +287,9 @@ class HttpConn:
 
     def put(self, dest: str, data: bytes):
         self._call("put", dest.lstrip("/"), data)
+
+    def chmod(self, path: str, mode: str) -> bool:
+        return self.version >= 2  # cổng bản 2 tự đặt quyền khi ghi tệp
 
     def delete(self, dest: str):
         try:
@@ -379,13 +411,15 @@ def deploy(full: bool = False, who: str = "sếp") -> dict:
             root = find_root(conn, st)
             if conn.mode != "http" and root != (st.get("site_ftp_dir") or "/public_html") and root not in ("/", "."):
                 db.set_setting("site_ftp_dir", root)
-            key = f"{conn.mode}|{clean_host(st.get('site_ftp_host') or '')[0] if conn.mode != 'http' else sync_url(st)}|{root}"
+            fm, dm = perms(st)
+            key = f"{conn.mode}|{clean_host(st.get('site_ftp_host') or '')[0] if conn.mode != 'http' else sync_url(st)}|{root}|{fm}{dm}"
             old = _manifest()
             had = old.get("files", {}) if (old.get("key") == key and not full) else {}
             files = _local_files()
             todo = [r for r, (_, h) in files.items() if had.get(r) != h]
             todo.sort(key=lambda r: (r.endswith("index.html") and "/" not in r, r == "sitemap.xml"))  # trang chủ, sitemap lên sau cùng
             done = dict(had)
+            dirs_done, bad_perm = set(), 0
             try:
                 for rel in todo:
                     if rel == SYNC_FILE:
@@ -393,7 +427,15 @@ def deploy(full: bool = False, who: str = "sếp") -> dict:
                     dest = _join(root, rel)
                     if "/" in dest:
                         conn.mkdirs(dest.rsplit("/", 1)[0])
+                    if conn.mode != "http":  # thư mục con (không đụng thư mục gốc web, VD public_html của cPanel để 750)
+                        parts = rel.split("/")[:-1]
+                        for i in range(1, len(parts) + 1):
+                            sub = "/".join(parts[:i])
+                            if sub not in dirs_done:
+                                dirs_done.add(sub)
+                                bad_perm += not conn.chmod(_join(root, sub), dm)
                     conn.put(dest, files[rel][0].read_bytes())
+                    bad_perm += not conn.chmod(dest, fm)
                     done[rel] = files[rel][1]
                     up += 1
                 for rel in [r for r in had if r not in files]:
@@ -409,10 +451,16 @@ def deploy(full: bool = False, who: str = "sếp") -> dict:
         where = sync_url(st).rsplit("/", 1)[0] if conn.mode == "http" else f"{clean_host(st.get('site_ftp_host') or '')[0]}{'' if root.startswith('/') else '/'}{root}"
         db.set_setting("site_last_deploy", db.now())
         _sync["fail_at"] = 0.0  # đăng được rồi thì tự đồng bộ chạy lại ngay, không chờ hết 30 phút
-        db.set_setting("site_deploy_msg", f"OK: {up} tệp mới/sửa, xóa {rm} tệp cũ ({MODES.get(conn.mode, conn.mode)})")
+        warn = ""
+        if bad_perm:
+            warn = (f" · {bad_perm} tệp / thư mục chưa đặt được quyền {fm}/{dm}: "
+                    + (f"tải lại {SYNC_FILE} mới (bản cũ không đặt quyền)" if conn.mode == "http"
+                       else "hosting không cho đổi quyền qua FTP, vào cPanel → File Manager chọn tệp → Permissions"))
+        db.set_setting("site_deploy_msg", f"OK: {up} tệp mới/sửa, xóa {rm} tệp cũ ({MODES.get(conn.mode, conn.mode)}){warn}")
         if up or rm:
             db.log("vy", "Đăng website lên hosting", f"{who}: tải {up} tệp, xóa {rm} tệp cũ ở {where} ({MODES.get(conn.mode)})")
-        return {"files": up, "deleted": rm, "unchanged": len(files) - up, "host": where, "dir": root, "mode": conn.mode}
+        return {"files": up, "deleted": rm, "unchanged": len(files) - up, "host": where, "dir": root, "mode": conn.mode,
+                "perms": f"{fm}/{dm}", "perm_fail": bad_perm, "warn": warn.strip(" ·")}
     except Exception as e:
         db.set_setting("site_deploy_msg", "LỖI: " + str(e)[:300])
         raise
@@ -473,8 +521,14 @@ def test() -> dict:
             step("Thư mục website", True, root + ("" if conn.is_dir(root) else " (chưa có, sẽ tạo mới — kiểm tra lại đúng thư mục web chưa)"))
         name = f"mt-test-{secrets.token_hex(3)}.txt"
         conn.put(_join(root, name), b"moctam ok")
+        fm, dm = perms(st)
+        can = conn.chmod(_join(root, name), fm)
         conn.delete(_join(root, name))
         step("Ghi thử tệp", True, "ghi và xóa được tệp thử")
+        step("Đặt quyền tệp", can, f"đặt được quyền {fm} (thư mục {dm})" if can else
+             (f"{SYNC_FILE} trên hosting là bản cũ, không đặt quyền: tải lại tệp mới rồi ghi đè" if conn.mode == "http" else
+              f"hosting không cho đổi quyền qua FTP (lệnh SITE CHMOD). Tệp sẽ theo quyền mặc định của hosting; nếu web báo 403 "
+              f"thì vào cPanel → File Manager đặt thư mục {dm}, tệp {fm}"))
     except Exception as e:
         step("Ghi thử tệp", False, explain(e, conn.mode, host, port, conn.stage) if not isinstance(e, RuntimeError) else str(e))
         return {"ok": False, "steps": steps}
@@ -496,20 +550,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !is_string($t) || strlen($TOKEN) < 
 }
 $op = isset($_GET['op']) ? $_GET['op'] : '';
 $root = __DIR__;
-if ($op === 'ping') { echo json_encode(array('ok' => true, 'v' => 1, 'writable' => is_writable($root), 'php' => PHP_VERSION)); exit; }
+if ($op === 'ping') { echo json_encode(array('ok' => true, 'v' => 2, 'writable' => is_writable($root), 'php' => PHP_VERSION)); exit; }
 $p = isset($_GET['path']) ? (string)$_GET['path'] : '';
 if (!preg_match('#^[A-Za-z0-9_\-][A-Za-z0-9._\-/]*$#', $p) || strpos($p, '..') !== false || preg_match('#(^|/)\.#', $p)
     || preg_match('#\.(php\d?|phtml|phar|pht|cgi|pl|py|sh|asp|aspx|jsp|shtml)(\.|$)#i', $p) || basename($p) === basename(__FILE__)) {
   http_response_code(400); echo '{"ok":false,"error":"bad path"}'; exit;
 }
 $f = $root . '/' . $p;
+function mt_mode($k, $d) { $v = isset($_GET[$k]) ? (string)$_GET[$k] : ''; if (!preg_match('/^[0-7]{3}$/', $v)) return $d; $m = octdec($v); return (($m & 02) || !($m & 0400)) ? $d : $m; }
+$fm = mt_mode('fm', 0755); $dm = mt_mode('dm', 0755);
 if ($op === 'put') {
   $d = dirname($f);
-  if (!is_dir($d) && !@mkdir($d, 0755, true)) { http_response_code(500); echo '{"ok":false,"error":"mkdir"}'; exit; }
+  if (!is_dir($d) && !@mkdir($d, $dm, true)) { http_response_code(500); echo '{"ok":false,"error":"mkdir"}'; exit; }
+  $cur = $root; foreach (array_slice(explode('/', $p), 0, -1) as $seg) { $cur .= '/' . $seg; @chmod($cur, $dm); }
   $data = file_get_contents('php://input');
   $tmp = $f . '.part';
   if (@file_put_contents($tmp, $data) === false || !@rename($tmp, $f)) { @unlink($tmp); http_response_code(500); echo '{"ok":false,"error":"write"}'; exit; }
-  @chmod($f, 0644);
+  @chmod($f, $fm);
   echo json_encode(array('ok' => true, 'bytes' => strlen($data))); exit;
 }
 if ($op === 'del') { if (is_file($f)) { @unlink($f); } echo '{"ok":true}'; exit; }
@@ -620,6 +677,7 @@ def find_web_root(base: str, st: dict | None = None) -> str | None:
             tok = secrets.token_hex(8).encode()
             try:
                 conn.put(_join(path, name), tok)
+                conn.chmod(_join(path, name), perms(st)[0])
             except Exception:
                 continue
             try:
@@ -685,6 +743,8 @@ def check(base: str | None = None, fix: bool = True) -> dict:
         step("Mở sitemap", True, f"{final} (HTTP 200, đúng bản Vy đã đăng)")
     else:
         why = (f"HTTP {r.status_code}" if r.status_code != 200 else "hosting trả về sitemap khác bản Vy đăng (trang cũ / WordPress / trang mặc định)")
+        if r.status_code == 403:
+            why += f" (web không được đọc tệp: quyền tệp / thư mục sai, Vy đặt lại quyền {'/'.join(perms(st))} và tải lại)"
         step("Mở sitemap", False, f"{base}/sitemap.xml: {why}")
         if fix and configured(st) and (st.get("site_deploy_mode") or "auto") != "http":
             try:

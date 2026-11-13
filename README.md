@@ -204,6 +204,11 @@ công ty (VD `moctamvn.vn`). Tab **Đăng lên hosting**:
   (`/public_html`), DirectAdmin (`/domains/<tên miền>/public_html`), Plesk (`/httpdocs`), hoặc tài khoản FTP mở thẳng vào thư mục web.
   FTPS dùng lại phiên TLS ở kênh dữ liệu (hosting vsftpd / Pure-FTPd bắt buộc, không thì lỗi 522).
 - Chỉ tải tệp thay đổi (so md5 lần trước), xóa trên hosting tệp đã gỡ (bài gỡ đăng, sản phẩm ẩn).
+- **Quyền tệp / thư mục**: tải xong mỗi tệp, phần mềm đặt quyền (mặc định tệp **755**, thư mục **755**; sửa ở ô *Quyền tệp* /
+  *Quyền thư mục*, không cho 777 / 666) qua FTP `SITE CHMOD`, SFTP chmod, hoặc cổng PHP bản 2 (tải lại `mt-sync.php` nếu dùng bản
+  cũ). Hosting tạo tệp / thư mục 644 thì web báo 403, sitemap không đọc được: cập nhật xong phần mềm tự tải lại toàn bộ với quyền
+  mới. Không đổi quyền thư mục gốc web (`public_html` của cPanel để 750). Hosting không cho đổi quyền qua FTP thì Kiểm tra kết nối
+  và thông báo sau khi đăng nói rõ để sếp đặt trong cPanel → File Manager → Permissions.
 - **Tự đẩy lên** (bật sẵn): Vy đăng / gỡ bài, sửa sản phẩm, thông tin công ty thì khoảng 2 phút sau tự dựng lại và đẩy lên
   hosting; lỗi thì ghi sổ lỗi, 30 phút sau thử lại (đăng tay thành công thì chạy lại ngay).
 - Lệnh CEO: “đẩy website lên hosting”, “đưa tin tức / sản phẩm lên online”, “kiểm tra kết nối hosting” (xong báo Telegram).

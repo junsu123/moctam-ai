@@ -534,7 +534,7 @@ DEFAULT_SETTINGS = {
     "site_posts_week": "3", "site_write_days": "1,3,5", "site_write_time": "09:45", "site_auto_publish": "1",
     "site_min_seo": "75", "site_last_write": "", "site_last_build": "", "site_last_deploy": "",
     "site_ftp_host": "", "site_ftp_user": "", "site_ftp_pass": "", "site_ftp_dir": "/public_html", "site_ftp_tls": "1", "site_deploy_mode": "auto", "site_auto_deploy": "1", "site_sync_url": "",
-    "site_sync_token": "", "site_sync_fp": "", "site_deploy_ok_mode": "", "site_deploy_msg": "", "site_check_msg": "",
+    "site_sync_token": "", "site_sync_fp": "", "site_deploy_ok_mode": "", "site_deploy_msg": "", "site_check_msg": "", "site_chmod_file": "755", "site_chmod_dir": "755",
 }
 
 DATA_DIR = DB_PATH.parent
