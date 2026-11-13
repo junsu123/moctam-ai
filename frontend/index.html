@@ -1387,7 +1387,9 @@ label.f{font-weight:600;color:var(--muted)}
           <ol class="steps"><li>Mua tên miền (VD moctam.vn) và gói hosting có FTP ở nhà cung cấp hosting.</li><li>Điền tên miền ở tab <b>Thông tin công ty</b> để thẻ canonical và sitemap dùng đúng địa chỉ.</li>
             <li>Điền FTP bên dưới (lấy ở cPanel → FTP Accounts hoặc email kích hoạt hosting), bấm <b>Kiểm tra kết nối</b> rồi <b>Đăng lên hosting</b>. Mạng chặn FTP thì chọn <b>Cổng nhận PHP</b>. Hoặc <a href="/api/website/export.zip" id="wsZip">tải file zip</a> và tải lên thư mục public_html.</li>
             <li>Bật <b>Tự đẩy lên</b>: Vy đăng bài, gỡ bài, sửa sản phẩm hay thông tin công ty thì khoảng 2 phút sau website trên mạng tự cập nhật.</li>
-            <li>Vào Google Search Console, thêm tên miền, gửi địa chỉ <code id="wsSitemap">/sitemap.xml</code> để Google đọc website.</li></ol></section>
+            <li>Vào Google Search Console, thêm tên miền, gửi địa chỉ <code id="wsSitemap">/sitemap.xml</code> để Google đọc website.</li></ol>
+          <div class="row wrap"><button class="btn" type="button" id="wsCheck">Kiểm tra sitemap trên mạng</button><span class="small muted" id="wsCheckInfo"></span></div>
+          <ul class="ws-steps" id="wsCheckOut" hidden></ul></section>
         <form class="card" id="wsFtp"><h3>Kết nối hosting</h3>
           <label class="f" for="wsMode">Cách đăng<select id="wsMode" data-k="site_deploy_mode">
             <option value="auto">Tự chọn (FTPS → FTP)</option><option value="ftps">FTPS (FTP bảo mật)</option><option value="ftp">FTP thường</option>
@@ -2697,6 +2699,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
         Object.assign(p,body); const sc=demoSeo(p); Object.assign(p,{seo:sc,seo_score:sc.score,words:sc.words,policy_note:sc.policy.map(x=>x.msg).join("; ")||null}); return p; }
       if((m=P.match(/^\/website\/posts\/(\d+)\/(publish|unpublish)$/))){ const p=W.posts.find(x=>x.id==m[1]); if(m[2]==="publish"){ if(p.seo.policy.some(x=>x.level==="high")) throw new Error("Bài phạm luật quảng cáo: "+p.seo.policy.map(x=>x.msg).join("; ")); p.status="published"; p.published_at=now(); log("vy","Đăng bài website",`“${p.title}” lên mục Tin tức`); } else p.status="review"; W.last_build=now(); return p; }
       if(P==="/website/build"){ W.last_build=now(); return {pages:14+W.posts.filter(p=>p.status==="published").length,posts:W.posts.filter(p=>p.status==="published").length,products:S.products.length}; }
+      if(P==="/website/check") return {ok:false,fixed:[],steps:[{name:"Tìm tên miền",ok:true,msg:"moctamvn.vn → 103.x.x.x"},{name:"Mở sitemap",ok:false,msg:"Bản demo không mở được tên miền thật. Trên máy chạy phần mềm, Vy mở sitemap như Google, tự tìm thư mục web đúng và đăng lại."}]};
       if(P==="/website/deploy/test") return {ok:false,steps:[{name:"Tìm máy chủ",ok:true,msg:"ftp.moctamvn.vn → 103.x.x.x"},{name:"Mở cổng",ok:false,msg:"Bản demo không kết nối được hosting thật. Trên máy chạy phần mềm, mỗi bước báo rõ lỗi và cách sửa."}]};
       if(P==="/website/deploy"){ if(!W.settings.site_ftp_host) throw new Error("Chưa điền máy chủ FTP, tài khoản và mật khẩu ở mục Website → Đăng lên hosting"); throw new Error("Bản demo không kết nối được hosting thật"); }
     }
@@ -3342,6 +3345,7 @@ function renderWs(){
   $("#wsAutoDeploy").checked=cf.site_auto_deploy!=="0";
   $("#wsFtpFields").innerHTML=[["site_ftp_host","Máy chủ FTP (VD ftp.moctamvn.vn hoặc IP)","text"],["site_ftp_user","Tài khoản FTP","text"],["site_ftp_pass",cf.site_ftp_pass_set?"Mật khẩu (đã lưu, để trống nếu giữ nguyên)":"Mật khẩu FTP","password"],["site_ftp_dir","Thư mục trên hosting","text"]]
     .map(([k,l,ty])=>`<label class="f" for="wf-${k}">${l}<input type="${ty}" id="wf-${k}" data-k="${k}" autocomplete="off" value="${k==="site_ftp_pass"?"":esc(cf[k]||"")}"></label>`).join("");
+  const cm=cf.site_check_msg||""; $("#wsCheckInfo").textContent=cm?(cm.startsWith("OK")?"Lần kiểm tra trước: ổn":"Lần kiểm tra trước: "+cm.replace(/^LỖI \S+ \S+: /,"lỗi ở ")):"";
   const msg=cf.site_deploy_msg||"";
   $("#wsDeployInfo").textContent=(d.last_deploy?`Đăng lần cuối ${fmtTime(d.last_deploy)} ${fmtDate(d.last_deploy)}`:"Chưa đăng lên hosting")
     +(msg.startsWith("LỖI")?" · "+msg:"")+(cf.site_sync_pending?" · có thay đổi chờ đẩy lên":"");
@@ -3401,6 +3405,15 @@ $("#wsInfo").addEventListener("submit",async e=>{ e.preventDefault(); const body
   try{ ST.ws=await api("/website/settings","PUT",body); renderWs(); toast("Đã lưu thông tin. Bấm “Dựng lại website” để cập nhật trang"); }catch(err){ toast(err.message); } });
 $("#wsFtp").addEventListener("submit",async e=>{ e.preventDefault(); const body={}; e.target.querySelectorAll("[data-k]").forEach(i=>body[i.dataset.k]=i.value); body.site_auto_deploy=$("#wsAutoDeploy").checked?"1":"0";
   try{ ST.ws=await api("/website/settings","PUT",body); renderWs(); toast("Đã lưu kết nối hosting"); }catch(err){ toast(err.message); } });
+$("#wsCheck").onclick=async e=>{ e.target.disabled=true; const o=$("#wsCheckOut"); o.hidden=false; o.innerHTML='<li class="muted">Đang mở sitemap trên tên miền như Google đọc… (có lỗi sửa được thì Vy sửa và đăng lại, có thể mất 1–2 phút)</li>';
+  try{ const r=await api("/website/check","POST");
+    o.innerHTML=(r.fixed&&r.fixed.length?`<li class="ok"><b>Vy đã sửa:</b> ${esc(r.fixed.join("; "))}</li>`:"")
+      +r.steps.map(x=>`<li class="${x.ok?"ok":"bad"}"><b>${x.ok?"✓":"✗"} ${esc(x.name)}</b> ${esc(x.msg||"")}${x.fix_domain?` <button class="btn" type="button" data-fixdom="${esc(x.fix_domain)}">Dùng ${esc(x.fix_domain)}</button>`:""}</li>`).join("")
+      +(r.ok?`<li class="ok"><b>Google đọc được sitemap.</b> ${esc(r.next||"")}</li>`:"");
+    loadWs();
+  }catch(err){ o.innerHTML=`<li class="bad">${esc(err.message)}</li>`; } e.target.disabled=false; };
+$("#wsCheckOut").addEventListener("click",async e=>{ const b=e.target.closest("[data-fixdom]"); if(!b) return; b.disabled=true;
+  try{ ST.ws=await api("/website/settings","PUT",{site_domain:b.dataset.fixdom}); await api("/website/build","POST"); toast("Đã đổi tên miền, Vy dựng lại và tự đẩy lên sau ít phút. Bấm Kiểm tra lại sau 2 phút"); renderWs(); }catch(err){ toast(err.message); } });
 $("#wsMode").addEventListener("change",e=>{ const h=e.target.value==="http"; $("#wsHttpBox").hidden=!h; $("#wsFtpFields").hidden=h; });
 $("#wsSyncDl").addEventListener("click",()=>setTimeout(loadWs,800));
 $("#wsTest").onclick=async e=>{ e.target.disabled=true; const o=$("#wsTestOut"); o.hidden=false; o.innerHTML='<li class="muted">Đang kiểm tra… (lưu cài đặt trước khi kiểm tra)</li>';

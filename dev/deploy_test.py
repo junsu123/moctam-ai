@@ -113,9 +113,37 @@ try:
 finally:
     ps.terminate()
 
+# --- kiểm tra sitemap trên mạng: hosting cPanel tên miền phụ (web đọc public_html/moctamvn.vn), Vy tải nhầm vào public_html
+root3 = SP / "deploy_web"; shutil.rmtree(root3, ignore_errors=True); served = root3 / "public_html" / "moctamvn.vn"; served.mkdir(parents=True)
+(served / "robots.txt").write_text("User-agent: *\nDisallow: /\n")
+au3 = DummyAuthorizer(); au3.add_user("moctam", "secret", str(root3), perm="elradfmwMT")
+class H3(FTPHandler): authorizer = au3
+srv3 = FTPServer(("127.0.0.1", 2133), H3); threading.Thread(target=srv3.serve_forever, daemon=True).start()
+web3 = subprocess.Popen([sys.executable, "-m", "http.server", "8139", "--bind", "127.0.0.1", "-d", str(served)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+time.sleep(0.8)
+try:
+    c.put("/api/website/settings", json={"site_deploy_mode": "auto", "site_ftp_host": "127.0.0.1:2133", "site_ftp_dir": "/public_html"})
+    D.MANIFEST.unlink(missing_ok=True); c.post(f"/api/website/posts/{pid}/publish")
+    d = c.post("/api/website/deploy").json(); chk("đăng nhầm vào public_html", d["dir"] == "/public_html" and not (served / "sitemap.xml").exists())
+    r = D.check(base="http://127.0.0.1:8139")
+    chk("kiểm tra sitemap: tìm ra thư mục web thật và sửa", r["ok"] and r["fixed"] and "/public_html/moctamvn.vn" in r["fixed"][0], r.get("fixed"))
+    chk("đã đổi thư mục, sitemap lên đúng chỗ", db.get_settings()["site_ftp_dir"] == "/public_html/moctamvn.vn" and (served / "sitemap.xml").exists())
+    chk("robots.txt chặn Google đã bị ghi đè", "Disallow: /" not in (served / "robots.txt").read_text(), [x["name"] + ("✓" if x["ok"] else "✗") for x in r["steps"]])
+    chk("không để lại tệp thử", not list(root3.rglob("mt-probe-*")))
+    r2 = D.check(base="http://127.0.0.1:8139"); chk("kiểm tra lại: ổn, không sửa gì", r2["ok"] and not r2["fixed"])
+    (served / "sitemap.xml").write_text("<html>trang lỗi</html>")
+    r3 = D.check(base="http://127.0.0.1:8139", fix=False)
+    chk("sitemap trên mạng khác bản Vy: báo lỗi", not r3["ok"] and "khác bản Vy" in r3["steps"][0]["msg"], r3["steps"][0]["msg"][:70])
+    db.set_setting("site_domain", "")
+    chk("chưa có tên miền: báo", "Chưa điền tên miền" in D.check()["steps"][0]["msg"])
+    db.set_setting("site_domain", "https://moctamvn.vn")
+finally:
+    web3.terminate(); srv3.close_all()
+
 # --- lệnh CEO
 p1 = ceo_orders._rule_plan("đẩy website lên hosting giúp anh"); p2 = ceo_orders._rule_plan("kiểm tra kết nối hosting")
 p3 = ceo_orders._rule_plan("đưa tin tức lên online")
+chk("CEO hiểu lệnh sitemap", ceo_orders._rule_plan("kiểm tra sitemap không thể truy cập")["actions"] == [{"type": "site_deploy", "check": True}])
 chk("CEO hiểu lệnh", [p["actions"][0] for p in (p1, p2, p3)] == [{"type": "site_deploy"}, {"type": "site_deploy", "test": True}, {"type": "site_deploy"}],
     [p["actions"] for p in (p1, p2, p3)])
 print("KẾT QUẢ:", "OK" if not bad else "LỖI " + ", ".join(bad))

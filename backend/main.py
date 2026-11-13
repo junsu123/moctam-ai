@@ -3059,6 +3059,13 @@ def website_deploy_test():
     return site_deploy.test()
 
 
+@app.post("/api/website/check")
+def website_check():
+    """Mở sitemap.xml / robots.txt trên tên miền như Googlebot, tìm lỗi, tự sửa thư mục web và đăng lại."""
+    import site_deploy
+    return site_deploy.check()
+
+
 @app.get("/api/website/mt-sync.php")
 def website_sync_php(new: int = 0):
     """Tệp cổng nhận PHP (có mã bí mật của máy này) để tải lên public_html một lần."""

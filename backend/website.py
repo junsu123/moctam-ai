@@ -1095,7 +1095,7 @@ def overview() -> dict:
     keys = ["site_name", "site_legal_name", "site_tagline", "site_domain", "site_about", "site_address", "site_email", "site_phone",
             "site_certs", "site_founded", "site_color", "site_ga_id", "site_posts_week", "site_write_days", "site_write_time",
             "site_auto_publish", "site_min_seo", "site_ftp_host", "site_ftp_user", "site_ftp_dir", "site_ftp_tls",
-            "site_deploy_mode", "site_auto_deploy", "site_sync_url", "site_deploy_msg", "site_deploy_ok_mode"]
+            "site_deploy_mode", "site_auto_deploy", "site_sync_url", "site_deploy_msg", "site_deploy_ok_mode", "site_check_msg"]
     cfg = {k: st.get(k) for k in keys}
     cfg["site_ftp_pass_set"] = bool(st.get("site_ftp_pass"))
     import site_deploy

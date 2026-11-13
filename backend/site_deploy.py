@@ -578,3 +578,195 @@ def tick(now=None, wait: int = WAIT):
     if wait <= 0:
         return run()
     threading.Thread(target=run, daemon=True).start()
+
+
+# ---------------------------------------------------------------- kiểm tra sitemap trên mạng (như Google đọc)
+GOOGLEBOT = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+
+
+def _fetch(url: str):
+    import httpx
+    with httpx.Client(timeout=20, follow_redirects=True, headers={"User-Agent": GOOGLEBOT}, verify=True) as c:
+        return c.get(url)
+
+
+def _probe_roots(conn, st: dict) -> list[str]:
+    """Các thư mục có thể là thư mục web trên hosting (chỉ những thư mục có thật)."""
+    d = domain(st)
+    want = "/" + (st.get("site_ftp_dir") or "/public_html").strip("/")
+    cands = [want, f"/public_html/{d}", f"/domains/{d}/public_html", "/public_html", f"/{d}/public_html", f"/{d}/httpdocs", f"/{d}",
+             "/httpdocs", "/htdocs", "/www", "/web", "/html", f"/home/{d}/public_html", "/"]
+    out = []
+    for c in cands:
+        c = c.replace("//", "/") or "/"
+        if c in out or (c != "/" and not c.strip("/")):
+            continue
+        if c == "/" or conn.is_dir(c if conn.mode != "sftp" else c.lstrip("/") or "."):
+            out.append(c)
+    return out
+
+
+def find_web_root(base: str, st: dict | None = None) -> str | None:
+    """Đặt một tệp thử vào từng thư mục, mở bằng trình duyệt: thư mục nào hiện ra trên tên miền là thư mục web thật."""
+    st = st or _st()
+    conn = open_conn(st)
+    if conn.mode == "http":
+        conn.close()
+        return None
+    try:
+        for r in _probe_roots(conn, st):
+            path = r if conn.mode != "sftp" else (r.lstrip("/") or ".")
+            name = f"mt-probe-{secrets.token_hex(4)}.txt"
+            tok = secrets.token_hex(8).encode()
+            try:
+                conn.put(_join(path, name), tok)
+            except Exception:
+                continue
+            try:
+                ok = _fetch(f"{base}/{name}").content.strip() == tok
+            except Exception:
+                ok = False
+            conn.delete(_join(path, name))
+            if ok:
+                return path
+    finally:
+        conn.close()
+    return None
+
+
+def check(base: str | None = None, fix: bool = True) -> dict:
+    """Mở sitemap.xml, robots.txt, trang chủ trên tên miền như Googlebot; tìm nguyên nhân, sửa được thì tự sửa và đăng lại."""
+    import xml.etree.ElementTree as ET
+    from urllib.parse import urlparse
+    st = _st()
+    steps, fixed = [], []
+
+    def step(name, ok, msg=""):
+        steps.append({"name": name, "ok": ok, "msg": msg})
+        return ok
+
+    dom = (st.get("site_domain") or "").strip().rstrip("/")
+    if not dom:
+        step("Tên miền", False, "Chưa điền tên miền ở tab Thông tin công ty: sitemap đang ghi đường dẫn tương đối, Google không đọc được")
+        return {"ok": False, "steps": steps}
+    host = clean_host(dom)[0]
+    base = (base or dom).rstrip("/")
+    local = _site_dir() / "sitemap.xml"
+    if not local.exists():
+        import website
+        website.build()
+    if base == dom:
+        try:
+            step("Tìm tên miền", True, f"{host} → {socket.gethostbyname(host)}")
+        except Exception:
+            step("Tìm tên miền", False, f"Tên miền {host} chưa trỏ về máy chủ nào (chưa có bản ghi DNS). Vào trang quản lý tên miền, "
+                 "trỏ bản ghi A của @ và www về IP hosting, chờ vài giờ")
+            return {"ok": False, "steps": steps}
+
+    def get(path):
+        try:
+            return _fetch(base + path), None
+        except Exception as e:
+            return None, e
+    r, err = get("/sitemap.xml")
+    if err is not None:
+        s = str(err)
+        if isinstance(err, ssl.SSLError) or "ssl" in s.lower() or "certificate" in s.lower():
+            step("Mở sitemap", False, "Tên miền chưa có chứng chỉ SSL (https lỗi). Vào cPanel → SSL/TLS Status → Run AutoSSL "
+                 "(hoặc nhờ hosting cài Let's Encrypt miễn phí). Google chỉ đọc được khi https chạy")
+        else:
+            step("Mở sitemap", False, f"Không mở được {base}/sitemap.xml: {s[:150]}. Hosting đang tắt, tên miền trỏ sai IP hoặc tường lửa chặn")
+        return {"ok": False, "steps": steps}
+    final = str(r.url)
+    sent = _manifest().get("files", {}).get("sitemap.xml")
+    got = hashlib.md5(r.content).hexdigest()
+    same = r.status_code == 200 and (got == sent or r.content.strip() == local.read_bytes().strip())
+    if r.status_code == 200 and same:
+        step("Mở sitemap", True, f"{final} (HTTP 200, đúng bản Vy đã đăng)")
+    else:
+        why = (f"HTTP {r.status_code}" if r.status_code != 200 else "hosting trả về sitemap khác bản Vy đăng (trang cũ / WordPress / trang mặc định)")
+        step("Mở sitemap", False, f"{base}/sitemap.xml: {why}")
+        if fix and configured(st) and (st.get("site_deploy_mode") or "auto") != "http":
+            try:
+                if not st.get("site_last_deploy"):
+                    deploy(who="Vy kiểm tra sitemap")
+                    fixed.append("đăng website lên hosting lần đầu")
+                else:
+                    root = find_web_root(base, st)
+                    cur = st.get("site_ftp_dir") or "/public_html"
+                    if root and ("/" + root.strip("/")) != ("/" + cur.strip("/")):
+                        db.set_setting("site_ftp_dir", root)
+                        deploy(full=True, who="Vy sửa thư mục web")
+                        fixed.append(f"thư mục web thật là {root} (trước tải vào {cur}): đã đổi và đăng lại toàn bộ")
+                    elif root:
+                        deploy(full=True, who="Vy kiểm tra sitemap")
+                        fixed.append(f"thư mục {root} đúng, đã tải lại toàn bộ website")
+                    else:
+                        step("Tìm thư mục web", False, "Đã thử đặt tệp vào mọi thư mục có trên hosting nhưng không thư mục nào hiện ra trên "
+                             f"{host}: tên miền đang trỏ về máy chủ khác với hosting FTP này, hoặc tên miền chưa gắn vào gói hosting "
+                             "(cPanel → Domains / Addon Domains). Kiểm tra IP trong email hosting so với bản ghi A của tên miền")
+            except Exception as e:
+                step("Tự sửa", False, str(e)[:300])
+            if fixed:
+                return {**check(base, fix=False), "fixed": fixed}
+        elif (st.get("site_deploy_mode") or "auto") == "http" and fix and configured(st):
+            try:
+                deploy(full=True, who="Vy kiểm tra sitemap")
+                fixed.append("đã tải lại toàn bộ website qua cổng nhận PHP")
+                return {**check(base, fix=False), "fixed": fixed}
+            except Exception as e:
+                step("Tự sửa", False, str(e)[:300])
+        elif not configured(st):
+            step("Kết nối hosting", False, "Chưa điền kết nối hosting nên chưa đăng được: vào tab Đăng lên hosting")
+    if r.status_code == 200:
+        ctype = r.headers.get("content-type", "")
+        if "html" in ctype:
+            step("Kiểu tệp", False, f"Hosting trả sitemap dạng {ctype} (thường là trang lỗi / chuyển hướng), Google cần XML")
+        try:
+            root_el = ET.fromstring(r.content)
+            locs = [x.text or "" for x in root_el.iter() if x.tag.endswith("loc")]
+            live = urlparse(final).netloc if base == dom else host  # base khác tên miền: chỉ khi kiểm thử
+            bad = [u for u in locs if urlparse(u).netloc != live]
+            if bad:
+                step("Địa chỉ trong sitemap", False, f"{len(bad)}/{len(locs)} địa chỉ ghi {urlparse(bad[0]).netloc} nhưng trang chạy ở "
+                     f"{urlparse(final).netloc}: Google báo “URL không được phép”. Sửa tên miền ở tab Thông tin công ty thành "
+                     f"{urlparse(final).scheme}://{urlparse(final).netloc}")
+                steps[-1]["fix_domain"] = f"{urlparse(final).scheme}://{urlparse(final).netloc}"
+            else:
+                step("Địa chỉ trong sitemap", True, f"{len(locs)} trang, cùng tên miền {urlparse(final).netloc}")
+            for u in locs[:3]:
+                try:
+                    pr = _fetch(u if base == dom else base + urlparse(u).path)
+                    if pr.status_code != 200:
+                        step("Mở thử trang", False, f"{u}: HTTP {pr.status_code}")
+                        break
+                except Exception as e:
+                    step("Mở thử trang", False, f"{u}: {str(e)[:100]}")
+                    break
+            else:
+                step("Mở thử trang", True, f"{min(3, len(locs))} trang đầu mở được")
+        except ET.ParseError as e:
+            step("Đọc XML", False, f"Sitemap trên hosting hỏng ({e}); tải lại bằng nút Đăng lên hosting")
+        xr = r.headers.get("x-robots-tag", "")
+        if "noindex" in xr.lower():
+            step("Thẻ chặn Google", False, f"Hosting gắn X-Robots-Tag: {xr} (thường do .htaccess hoặc chế độ bảo trì)")
+    rb, err = get("/robots.txt")
+    if rb is not None and rb.status_code == 200:
+        txt, block, ua = rb.text, False, None
+        for line in txt.splitlines():
+            k, _, v = line.partition(":")
+            k, v = k.strip().lower(), v.strip()
+            if k == "user-agent":
+                ua = v.lower()
+            elif k == "disallow" and v == "/" and ua in ("*", "googlebot"):
+                block = True
+        if block:
+            step("robots.txt", False, "robots.txt trên hosting chặn Google (Disallow: /). Bản của Vy cho phép; đăng lại website để ghi đè, "
+                 "nếu vẫn thế là thư mục web khác (xem bước Mở sitemap)")
+        else:
+            step("robots.txt", True, "cho Google đọc" + (", có dòng Sitemap" if "sitemap:" in txt.lower() else ""))
+    ok = all(s["ok"] for s in steps)
+    db.set_setting("site_check_msg", ("OK " if ok else "LỖI ") + db.now() + ": " + "; ".join(s["name"] for s in steps if not s["ok"]))
+    return {"ok": ok, "steps": steps, "fixed": fixed, "sitemap": f"{dom}/sitemap.xml",
+            "next": "Vào Google Search Console → Sơ đồ trang web, gửi lại “sitemap.xml”. Trạng thái “Không thể tìm nạp” có thể còn hiện "
+                    "vài giờ sau lần gửi đầu; bấm vào sitemap → Gửi lại." if ok else ""}

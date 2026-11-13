@@ -284,6 +284,11 @@ def execute(act: dict) -> str:
 
         def job(via):
             try:
+                if act.get("check"):
+                    r = site_deploy.check()
+                    followup(("Sitemap trên mạng ổn" if r["ok"] else "Sitemap còn lỗi") + (" (em đã sửa: " + "; ".join(r["fixed"]) + ")" if r.get("fixed") else "")
+                             + ": " + "; ".join(f"{x['name']} {'✓' if x['ok'] else '✗'} {x['msg']}" for x in r["steps"]), via)
+                    return
                 if act.get("test"):
                     r = site_deploy.test()
                     followup(("Kết nối hosting ổn: " if r["ok"] else "Kết nối hosting lỗi: ")
@@ -296,6 +301,8 @@ def execute(act: dict) -> str:
             except Exception as e:
                 followup(f"Chưa đẩy được website lên hosting: {e}", via)
         _bg(job, act.get("_via", "web"))
+        if act.get("check"):
+            return "Em đang mở sitemap trên tên miền như Google đọc, có lỗi sửa được thì em sửa luôn, xong em báo sếp"
         return "Em đang kiểm tra kết nối hosting, xong em báo sếp" if act.get("test") else "Em đang dựng lại website và đẩy lên hosting, xong em báo sếp"
     if t == "coach_now":
         import coach
@@ -672,7 +679,7 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - write_posts {count 1-10, product_id?, target: group|profile|page, angle?, note?}: giao Lan viết bài
 - plan {}: giao Tuấn xếp lịch đăng các bài đã duyệt
 - feed_style {style: invite|natural}: sếp muốn bình luận MỜI SỈ vào cả bài không liên quan (invite) hoặc chỉ bình luận tự nhiên (natural)
-- site_deploy {test?: true}: sếp bảo đẩy / đăng / cập nhật website lên hosting (tin tức, sản phẩm lên online); test true khi sếp hỏi kiểm tra kết nối hosting
+- site_deploy {test?: true, check?: true}: check true khi sếp nói sitemap / Google không đọc được website. Sếp bảo đẩy / đăng / cập nhật website lên hosting (tin tức, sản phẩm lên online); test true khi sếp hỏi kiểm tra kết nối hosting
 - coach_now {}: cho các agent đủ kết quả thật mới gửi việc cho Claude kèm cặp ngay (theo lô, giảm 50%)
 - cleanup_data {run: true|false}: sếp hỏi dung lượng dữ liệu (run false) hoặc bảo dọn dẹp / dọn dữ liệu / dữ liệu phình to (run true)
 - update_app {}: sếp bảo cập nhật / nâng cấp phần mềm, tải bản mới (git pull) rồi tự khởi động lại khi sale rảnh
@@ -809,6 +816,8 @@ def _rule_plan(text: str) -> dict:
         return {"reply": "Dạ.", "actions": [{"type": "feed_style", "style": "natural"}]}
     if re.search(r"(bình luận|comment|cmt).{0,40}mời (nhập )?sỉ|mời (nhập )?sỉ.{0,30}(bình luận|comment|cmt|bài không liên quan|mọi bài)", low):
         return {"reply": "Dạ.", "actions": [{"type": "feed_style", "style": "invite"}]}
+    if re.search(r"sitemap|site ?map|search console|google (không|chưa) (đọc|tìm|index)", low):
+        return {"reply": "Dạ.", "actions": [{"type": "site_deploy", "check": True}]}
     if re.search(r"(kiểm tra|test|thử).{0,15}(kết nối )?(hosting|ftp)|(hosting|ftp).{0,20}(lỗi|không (kết nối|vào|đăng))", low):
         return {"reply": "Dạ.", "actions": [{"type": "site_deploy", "test": True}]}
     if re.search(r"(đẩy|đưa|đồng bộ|up|tải)\s*(lại\s*)?(website|trang web|web\b|tin tức|sản phẩm)\s*(lên|online)|"

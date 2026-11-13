@@ -206,7 +206,16 @@ công ty (VD `moctamvn.vn`). Tab **Đăng lên hosting**:
   hosting; lỗi thì ghi sổ lỗi, 30 phút sau thử lại (đăng tay thành công thì chạy lại ngay).
 - Lệnh CEO: “đẩy website lên hosting”, “đưa tin tức / sản phẩm lên online”, “kiểm tra kết nối hosting” (xong báo Telegram).
 
-Hoặc tải zip rồi tải lên `public_html`. Sau đó gửi `https://ten-mien/sitemap.xml` vào Google Search Console.
+- **Kiểm tra sitemap trên mạng** (tab Đăng lên hosting, hoặc nhắn CEO “kiểm tra sitemap”, “Google không đọc được web”): phần mềm
+  mở `https://tên-miền/sitemap.xml`, `robots.txt` và vài trang như Googlebot, báo từng lỗi kèm cách sửa: tên miền chưa trỏ về hosting,
+  chưa có SSL, HTTP 404, hosting trả sitemap khác (trang cũ / WordPress), địa chỉ trong sitemap khác tên miền đang chạy (www / không
+  www, có nút **Dùng tên miền này**), `robots.txt` chặn Google, X-Robots-Tag noindex. **Tự sửa thư mục web**: sitemap trên mạng không
+  phải bản Vy đăng thì Vy đặt một tệp thử vào từng thư mục trên hosting (`public_html/<tên miền>` của tên miền phụ cPanel,
+  `domains/<tên miền>/public_html`, `httpdocs`...), thư mục nào hiện ra trên tên miền là thư mục web thật: đổi sang đó, đăng lại toàn bộ
+  rồi kiểm tra lại. Không thư mục nào hiện ra thì tên miền đang trỏ về máy chủ khác hoặc chưa gắn vào gói hosting.
+
+Hoặc tải zip rồi tải lên `public_html`. Sau đó gửi `https://ten-mien/sitemap.xml` vào Google Search Console (lần gửi đầu Search
+Console có thể báo “Không thể tìm nạp” vài giờ; kiểm tra sitemap ổn thì bấm Gửi lại).
 
 ### Giao diện website (bán hàng)
 
