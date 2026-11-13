@@ -416,9 +416,11 @@ def write(keyword: str | None = None, kid: int | None = None) -> dict:
         db.set_setting("site_last_write", db.now())
         db.log("vy", "Viết bài website", f"“{d['title']}” (từ khóa: {kw}), {r['words']} chữ, điểm SEO {r['score']}/100"
                + ("" if r["ok"] else ". Chưa đạt, chờ sếp xem") + ".")
+        live = False
         if s().get("site_auto_publish") == "1" and r["ok"]:
             publish(pid)
-        return {"id": pid, "score": r["score"], "ok": r["ok"]}
+            live = _push_now()
+        return {"id": pid, "score": r["score"], "ok": r["ok"], "published": s().get("site_auto_publish") == "1" and r["ok"], "pushing": live}
     finally:
         workflows.set_status("vy", "idle", "Chờ lịch viết bài tiếp theo")
 
@@ -488,6 +490,37 @@ def publish(pid: int) -> dict:
     db.log("vy", "Đăng bài website", f"“{p['title']}” lên mục Tin tức")
     build()
     return get(pid)
+
+
+def _push_now() -> bool:
+    """Bài vừa tự đăng: đẩy lên hosting ngay (chạy nền), không chờ nhịp tự đồng bộ 2 phút."""
+    try:
+        import site_deploy
+        st = s()
+        if st.get("site_auto_deploy", "1") != "1" or not site_deploy.configured(st):
+            return False
+        threading.Thread(target=site_deploy.tick, kwargs={"wait": 0}, daemon=True).start()
+        return True
+    except Exception as e:
+        print("[site push]", e)
+        return False
+
+
+def auto_publish_waiting() -> int:
+    """Bài Vy viết đang chờ duyệt mà nay đạt chuẩn (sếp hạ điểm tối thiểu, sửa bài) thì tự đăng."""
+    if s().get("site_auto_publish") != "1":
+        return 0
+    n = 0
+    for p in db.q("SELECT id FROM site_posts WHERE status='review' AND author='vy' AND seo_score >= ? AND COALESCE(policy_note,'')=''",
+                  (_i("site_min_seo", 75),)):
+        q = get(p["id"])
+        if q and seo_check(q)["ok"]:
+            try:
+                publish(q["id"])
+                n += 1
+            except ValueError:
+                pass
+    return n
 
 
 def unpublish(pid: int) -> dict:
@@ -1024,6 +1057,7 @@ def tick(now):
     """Ngày viết bài (mặc định thứ 2, 4, 6) đúng giờ: Vy viết đủ số bài tuần chia đều các ngày.
     Mỗi lượt: dữ liệu website đổi (tin tức, sản phẩm, thông tin công ty) thì tự đẩy lên hosting."""
     try:
+        auto_publish_waiting()
         import site_deploy
         site_deploy.tick(now)
     except Exception as e:

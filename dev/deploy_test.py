@@ -131,6 +131,19 @@ try:
     chk("robots.txt chặn Google đã bị ghi đè", "Disallow: /" not in (served / "robots.txt").read_text(), [x["name"] + ("✓" if x["ok"] else "✗") for x in r["steps"]])
     chk("không để lại tệp thử", not list(root3.rglob("mt-probe-*")))
     r2 = D.check(base="http://127.0.0.1:8139"); chk("kiểm tra lại: ổn, không sửa gì", r2["ok"] and not r2["fixed"])
+    # Vy viết xong bài đạt chuẩn: tự đăng + đẩy lên hosting ngay, không ai bấm
+    chk("tự đăng bật mặc định", db.get_settings()["site_auto_publish"] == "1")
+    db.set_setting("site_min_seo", "0")
+    w = W.write(keyword="trà túi lọc gừng sả nguồn sỉ")
+    np = W.get(w["id"])
+    chk("Vy viết xong: tự đăng", w["published"] and np["status"] == "published" and w["pushing"], w)
+    for _ in range(60):
+        if (served / "tin-tuc" / np["slug"] / "index.html").exists() and np["slug"] in (served / "sitemap.xml").read_text(): break
+        time.sleep(0.25)
+    chk("bài mới lên hosting và sitemap không cần bấm", (served / "tin-tuc" / np["slug"] / "index.html").exists() and np["slug"] in (served / "sitemap.xml").read_text())
+    db.run("UPDATE site_posts SET status='review' WHERE id=?", (pid,)); db.set_setting("site_min_seo", "0")
+    chk("bài chờ duyệt đạt chuẩn: tự đăng ở lượt sau", W.auto_publish_waiting() >= 1 and W.get(pid)["status"] == "published")
+    db.set_setting("site_min_seo", "75")
     (served / "sitemap.xml").write_text("<html>trang lỗi</html>")
     r3 = D.check(base="http://127.0.0.1:8139", fix=False)
     chk("sitemap trên mạng khác bản Vy: báo lỗi", not r3["ok"] and "khác bản Vy" in r3["steps"][0]["msg"], r3["steps"][0]["msg"][:70])

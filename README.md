@@ -188,7 +188,9 @@ lấy từ thư mục ảnh sản phẩm (ảnh tổng hợp nhà máy nếu đ�
 Chưa đạt thì Vy sửa tối đa 2 lần. Bài hứa chữa bệnh bị chặn, không đăng được.
 
 **Sếp duyệt**: mở bài trong bảng để sửa tiêu đề, mô tả, nội dung, câu hỏi thường gặp (điểm SEO chấm lại khi lưu), xem dạng
-trang, rồi **Duyệt & đăng**. Bật “Vy tự đăng” để bài đạt điểm tối thiểu (mặc định 75) tự lên website.
+trang, rồi **Duyệt & đăng**. **Vy tự đăng** (bật sẵn, sếp chốt không bấm tay): Vy viết xong, bài đạt điểm tối thiểu (mặc định 75)
+và không phạm luật thì đăng ngay và đẩy lên hosting liền (không chờ nhịp 2 phút); bài chưa đạt nằm ở Chờ duyệt, sau này đạt chuẩn
+(sếp sửa bài, hạ điểm tối thiểu) thì lượt sau tự đăng. Tắt ở tab Thông tin công ty nếu muốn duyệt từng bài.
 
 **Đưa lên mạng**: website dựng vào `data/site/`, xem trước tại `/site/` trên máy chạy phần mềm. Điền tên miền ở tab Thông tin
 công ty (VD `moctamvn.vn`). Tab **Đăng lên hosting**:
