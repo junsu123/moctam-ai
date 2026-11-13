@@ -191,8 +191,22 @@ Chưa đạt thì Vy sửa tối đa 2 lần. Bài hứa chữa bệnh bị ch�
 trang, rồi **Duyệt & đăng**. Bật “Vy tự đăng” để bài đạt điểm tối thiểu (mặc định 75) tự lên website.
 
 **Đưa lên mạng**: website dựng vào `data/site/`, xem trước tại `/site/` trên máy chạy phần mềm. Điền tên miền ở tab Thông tin
-công ty. Đăng lên hosting bằng FTP / FTPS (tab Đăng lên hosting) hoặc tải zip rồi tải lên `public_html`. Sau đó gửi
-`https://ten-mien/sitemap.xml` vào Google Search Console.
+công ty (VD `moctamvn.vn`). Tab **Đăng lên hosting**:
+- **Cách đăng**: *Tự chọn* (FTPS, máy chủ không nhận thì tự dùng FTP thường; cổng 22 thì SFTP), FTPS, FTP, SFTP, hoặc
+  **Cổng nhận PHP qua HTTPS** khi mạng / hosting chặn cổng FTP: bấm *Tải mt-sync.php* (có mã bí mật riêng), tải lên
+  `public_html` một lần bằng cPanel → File Manager; phần mềm đẩy tệp qua cổng 443. Cổng chỉ ghi tệp tĩnh (không nhận
+  `.php`, `.htaccess`, tệp ẩn, không thoát thư mục), sai mã bị chặn.
+- **Kiểm tra kết nối**: từng bước tìm máy chủ → mở cổng → đăng nhập → thư mục web → ghi thử, lỗi báo tiếng Việt kèm cách
+  sửa (sai máy chủ, cổng bị chặn / IP bị khóa, sai mật khẩu, FTPS không nhận, kênh passive bị chặn, không có quyền ghi).
+- Ô máy chủ tự làm sạch (`ftp://user@ftp.moctamvn.vn:21/` → `ftp.moctamvn.vn:21`); tự dò thư mục web cPanel
+  (`/public_html`), DirectAdmin (`/domains/<tên miền>/public_html`), Plesk (`/httpdocs`), hoặc tài khoản FTP mở thẳng vào thư mục web.
+  FTPS dùng lại phiên TLS ở kênh dữ liệu (hosting vsftpd / Pure-FTPd bắt buộc, không thì lỗi 522).
+- Chỉ tải tệp thay đổi (so md5 lần trước), xóa trên hosting tệp đã gỡ (bài gỡ đăng, sản phẩm ẩn).
+- **Tự đẩy lên** (bật sẵn): Vy đăng / gỡ bài, sửa sản phẩm, thông tin công ty thì khoảng 2 phút sau tự dựng lại và đẩy lên
+  hosting; lỗi thì ghi sổ lỗi, 30 phút sau thử lại (đăng tay thành công thì chạy lại ngay).
+- Lệnh CEO: “đẩy website lên hosting”, “đưa tin tức / sản phẩm lên online”, “kiểm tra kết nối hosting” (xong báo Telegram).
+
+Hoặc tải zip rồi tải lên `public_html`. Sau đó gửi `https://ten-mien/sitemap.xml` vào Google Search Console.
 
 ### Giao diện website (bán hàng)
 
@@ -1199,7 +1213,8 @@ backend/
   prospect_rules.py  Điều kiện tìm khách sỉ sếp đặt, bài sếp dạy Mai, chấm lại theo điều kiện
   junk.py        Data rác sếp loại: chặn đích danh, học chữ chung của data rác, trừ điểm/loại khách giống vậy
   fb_policy.py   Luật Facebook: bộ luật, kiểm bài, giới hạn an toàn mỗi nick, sự cố & bài học, theo dõi chính sách Meta
-  website.py     Website công ty + Vy: từ khóa, viết bài, bảng kiểm SEO, dựng trang tĩnh, sitemap, schema, zip, FTP
+  website.py     Website công ty + Vy: từ khóa, viết bài, bảng kiểm SEO, dựng trang tĩnh, sitemap, schema, zip
+  site_deploy.py Đưa website lên hosting: FTP/FTPS/SFTP/cổng PHP, kiểm tra kết nối, tải tệp đổi, tự đồng bộ
   group_target.py Sếp chỉ đạo nơi đăng: chế độ all/prefer/only, từ khóa nên đăng / tránh, nhóm tập trung, xem trước
   post_care.py   Bảo chăm bài đã đăng: câu bình luận up bài tự viết (Claude hoặc mẫu), dòng liên hệ Zalo, xem thử
   group_feed.py  Lướt bảng tin nhóm: mọi nick đọc >=20 bài, lọc 3 lớp (chữ, Claude, học từ sếp), bình luận người hỏi mua (kèm ảnh)

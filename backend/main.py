@@ -2885,7 +2885,8 @@ def fb_policy_teach():
 # ------------------------------------------------------------------ website công ty (Vy)
 SITE_KEYS = {"site_name", "site_legal_name", "site_tagline", "site_domain", "site_about", "site_address", "site_email", "site_phone",
              "site_certs", "site_founded", "site_color", "site_ga_id", "site_posts_week", "site_write_days", "site_write_time",
-             "site_auto_publish", "site_min_seo", "site_ftp_host", "site_ftp_user", "site_ftp_pass", "site_ftp_dir", "site_ftp_tls"}
+             "site_auto_publish", "site_min_seo", "site_ftp_host", "site_ftp_user", "site_ftp_pass", "site_ftp_dir", "site_ftp_tls",
+             "site_deploy_mode", "site_auto_deploy", "site_sync_url"}
 
 
 @app.get("/api/website")
@@ -2903,6 +2904,14 @@ def website_settings(data: dict):
     for k, v in data.items():
         if k == "site_ftp_pass" and not str(v):
             continue  # để trống = giữ mật khẩu cũ
+        if k == "site_ftp_host" and v:
+            import site_deploy
+            h, p = site_deploy.clean_host(str(v))
+            v = f"{h}:{p}" if p else h
+        if k == "site_deploy_mode" and v not in ("auto", "ftps", "ftp", "sftp", "http"):
+            raise HTTPException(400, "Cách đăng không hợp lệ")
+        if k in ("site_ftp_host", "site_ftp_user", "site_ftp_dir", "site_deploy_mode"):
+            db.set_setting("site_deploy_ok_mode", "")
         if k == "site_domain" and v:
             v = str(v).strip().rstrip("/")
             if not re.match(r"^https?://", v):
@@ -3034,14 +3043,29 @@ def website_zip():
 
 
 @app.post("/api/website/deploy")
-def website_deploy():
+def website_deploy(full: int = 0):
     import website
     try:
-        return website.deploy()
+        return website.deploy(full=bool(full))
     except ValueError as e:
         raise HTTPException(400, str(e))
     except Exception as e:
         raise HTTPException(400, f"Không đăng được lên hosting: {e}")
+
+
+@app.post("/api/website/deploy/test")
+def website_deploy_test():
+    import site_deploy
+    return site_deploy.test()
+
+
+@app.get("/api/website/mt-sync.php")
+def website_sync_php(new: int = 0):
+    """Tệp cổng nhận PHP (có mã bí mật của máy này) để tải lên public_html một lần."""
+    import site_deploy
+    from fastapi.responses import Response
+    return Response(site_deploy.sync_php(new=bool(new)), media_type="application/octet-stream",
+                    headers={"Content-Disposition": f'attachment; filename="{site_deploy.SYNC_FILE}"'})
 
 
 @app.get("/site", include_in_schema=False)

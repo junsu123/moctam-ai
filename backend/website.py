@@ -6,7 +6,8 @@ Website là trang tĩnh (HTML thuần, nhanh, không cần máy chủ đặc bi�
   /gia-cong/       dịch vụ gia công   /san-pham/...     sản phẩm (không ghi giá: liên hệ Zalo)
   /tin-tuc/...     bài viết SEO       /lien-he/         liên hệ
   sitemap.xml, robots.txt, 404.html, schema.org (Organization, WebSite, Article, FAQPage, BreadcrumbList, Product)
-Xem trước tại /site/ trên máy chạy phần mềm; tải zip hoặc đăng lên hosting qua FTP.
+Xem trước tại /site/ trên máy chạy phần mềm; tải zip hoặc đăng lên hosting (FTP/FTPS/SFTP/cổng PHP, site_deploy.py),
+đổi bài / sản phẩm thì tự đẩy lên.
 """
 import html
 import io
@@ -1007,58 +1008,12 @@ def export_zip() -> bytes:
     return buf.getvalue()
 
 
-def deploy() -> dict:
-    """Đăng website lên hosting qua FTP (FTPS nếu bật)."""
-    import ftplib
-    st = s()
-    host, user, pw = (st.get("site_ftp_host") or "").strip(), (st.get("site_ftp_user") or "").strip(), st.get("site_ftp_pass") or ""
-    if not (host and user and pw):
-        raise ValueError("Chưa điền máy chủ FTP, tài khoản và mật khẩu ở mục Website → Đăng lên hosting")
-    if not (SITE_DIR / "index.html").exists():
-        build()
-    port = 21
-    if ":" in host:
-        host, port = host.rsplit(":", 1)[0], int(host.rsplit(":", 1)[1])
-    ftp = ftplib.FTP_TLS() if st.get("site_ftp_tls", "1") == "1" else ftplib.FTP()
-    ftp.connect(host, port, timeout=30)
-    ftp.login(user, pw)
-    if isinstance(ftp, ftplib.FTP_TLS):
-        ftp.prot_p()
-    root = (st.get("site_ftp_dir") or "/").rstrip("/") or "/"
-    n = 0
-    try:
-        made = set()
-
-        def ensure(d: str):
-            parts = [x for x in d.split("/") if x]
-            cur = ""
-            for x in parts:
-                cur += "/" + x
-                if cur in made:
-                    continue
-                try:
-                    ftp.mkd(cur)
-                except ftplib.error_perm:
-                    pass
-                made.add(cur)
-        ensure(root)
-        for f in sorted(SITE_DIR.rglob("*")):
-            if not f.is_file():
-                continue
-            rel = f.relative_to(SITE_DIR).as_posix()
-            dest = f"{root.rstrip('/')}/{rel}" if root != "/" else f"/{rel}"
-            ensure(dest.rsplit("/", 1)[0])
-            with open(f, "rb") as fh:
-                ftp.storbinary(f"STOR {dest}", fh)
-            n += 1
-    finally:
-        try:
-            ftp.quit()
-        except Exception:
-            pass
-    db.set_setting("site_last_deploy", db.now())
-    db.log("vy", "Đăng website lên hosting", f"Tải lên {n} tệp vào {host}{root}")
-    return {"files": n, "host": host, "dir": root}
+def deploy(full: bool = False) -> dict:
+    """Đăng website lên hosting (FTP / FTPS / SFTP / cổng nhận PHP): chi tiết ở site_deploy.py."""
+    import site_deploy
+    r = site_deploy.deploy(full=full)
+    site_deploy.mark_synced()
+    return r
 
 
 # ---------------------------------------------------------------- lịch làm việc của Vy
@@ -1066,7 +1021,13 @@ _busy = {"on": False}
 
 
 def tick(now):
-    """Ngày viết bài (mặc định thứ 2, 4, 6) đúng giờ: Vy viết đủ số bài tuần chia đều các ngày."""
+    """Ngày viết bài (mặc định thứ 2, 4, 6) đúng giờ: Vy viết đủ số bài tuần chia đều các ngày.
+    Mỗi lượt: dữ liệu website đổi (tin tức, sản phẩm, thông tin công ty) thì tự đẩy lên hosting."""
+    try:
+        import site_deploy
+        site_deploy.tick(now)
+    except Exception as e:
+        print("[site sync]", e)
     st = s()
     days = [int(x) for x in re.findall(r"\d", st.get("site_write_days") or "1,3,5")]
     if not days or (now.isoweekday() not in days) or now.strftime("%H:%M") < (st.get("site_write_time") or "09:45"):
@@ -1133,9 +1094,14 @@ def overview() -> dict:
     kws = db.q("SELECT * FROM site_keywords ORDER BY status='written', priority, id")
     keys = ["site_name", "site_legal_name", "site_tagline", "site_domain", "site_about", "site_address", "site_email", "site_phone",
             "site_certs", "site_founded", "site_color", "site_ga_id", "site_posts_week", "site_write_days", "site_write_time",
-            "site_auto_publish", "site_min_seo", "site_ftp_host", "site_ftp_user", "site_ftp_dir", "site_ftp_tls"]
+            "site_auto_publish", "site_min_seo", "site_ftp_host", "site_ftp_user", "site_ftp_dir", "site_ftp_tls",
+            "site_deploy_mode", "site_auto_deploy", "site_sync_url", "site_deploy_msg", "site_deploy_ok_mode"]
     cfg = {k: st.get(k) for k in keys}
     cfg["site_ftp_pass_set"] = bool(st.get("site_ftp_pass"))
+    import site_deploy
+    cfg["site_sync_ready"] = bool(st.get("site_sync_token"))
+    cfg["site_sync_url_auto"] = site_deploy.sync_url(st)
+    cfg["site_sync_pending"] = site_deploy.configured(st) and st.get("site_auto_deploy", "1") == "1" and site_deploy.fingerprint() != st.get("site_sync_fp")
     prods = [{"id": p["id"], "name": p["name"], "category": p.get("category"), "on": p["site_on"], "why": p["site_why"],
               "auto": p["site_auto"], "general": bool(p.get("is_general"))} for p in site_products(all_rows=True)]
     return {"posts": posts, "products": prods, "keywords": kws, "settings": cfg, "built": (SITE_DIR / "index.html").exists(),
