@@ -1,6 +1,11 @@
     <section class="view" id="v-leads" hidden>
       <div class="vh"><div><h1>Khách hàng</h1><p>Khách sỉ tiềm năng thu được từ bài đăng. Hà chấm điểm, soạn tin nhắn và nhắc bám khách sau 2 ngày chưa liên hệ.</p></div><button class="btn" id="junkToggle" hidden></button></div>
       <div class="pipe" id="pipe"></div>
+      <section class="card" id="ibCard" style="margin-bottom:12px"><div class="card-h"><div><h3>Tin nhắn Fanpage <span class="chip warn" id="ibCount" hidden></span></h3><p class="small muted" style="margin:2px 0 0">Khách nhắn Trang qua Messenger: Hà soạn câu trả lời (xin SĐT / Zalo, không báo giá), sếp duyệt rồi phần mềm gửi qua Graph API. Facebook chỉ cho Trang trả lời trong 24 giờ kể từ tin cuối của khách.</p></div>
+          <div class="row wrap"><button type="button" class="btn sm" id="ibSync">Đọc tin nhắn ngay</button></div></div>
+        <div class="cm-list" id="ibBody"><p class="muted small">Đang tải…</p></div>
+        <details class="small" style="margin-top:8px"><summary>Cài đặt tin nhắn Fanpage</summary><div class="row wrap" style="gap:12px;margin-top:6px;align-items:center"><label class="row small"><input type="checkbox" id="ibOn"> Đọc tin nhắn mỗi</label><input type="number" id="ibMin" min="5" max="120" style="width:70px" aria-label="Số phút"><span class="small">phút</span><label class="row small"><input type="checkbox" id="ibAuto"> Tự gửi câu Hà soạn, không chờ sếp duyệt</label><button type="button" class="btn sm" id="ibSave">Lưu</button></div></details>
+      </section>
       <div class="card junk-card" id="junkCard" hidden></div>
       <div class="split">
         <div class="sidecol">

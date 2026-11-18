@@ -37,12 +37,12 @@ function showFolder(f){ const box=$("#bFolderInfo"); box.hidden=false;
     +(DEMO?"":`<div class="thumbs" style="margin-top:8px">${f.samples.slice(0,8).map(n=>`<figure><img src="/api/bump/image?name=${encodeURIComponent(n)}" alt="${esc(n)}" title="${esc(n)}"></figure>`).join("")}</div>`); }
 async function loadBump(s){
   $("#bEnabled").checked=s.bump_enabled==="1"; $("#bFolder").value=s.bump_folder||""; $("#bTime").value=s.bump_time||"19:30";
-  $("#bAge").value=s.bump_max_age_days||7; $("#bPer").value=s.bump_max_per_nick||8; $("#bGap").value=s.bump_gap_minutes||6; $("#bTexts").value=s.bump_texts||""; $("#bContact").value=s.bump_contact??""; loadBaoSkill();
+  $("#bAge").value=s.bump_max_age_days||7; $("#bPer").value=s.bump_max_per_nick||8; $("#bGap").value=s.bump_gap_minutes||6; $("#bTexts").value=s.bump_texts||""; $("#bContact").value=s.bump_contact??""; $("#bStop").value=s.bump_stop_after??3; $("#bRest").value=s.bump_rest_days||30; $("#bWatch").checked=s.bump_check!=="0"; loadBaoSkill();
   const bm=document.querySelector(`input[name=bMode][value=${s.bump_text_mode==="list"?"list":"ai"}]`); if(bm) bm.checked=true; $("#bTextsL").hidden=s.bump_text_mode!=="list";
   const st=ST.dash?.stats; $("#bumpToday").textContent=`Hôm nay đã up ${st?.bumps_today||0} lượt`;
   if(s.bump_folder) showFolder(await api("/bump/folder"));
 }
-const bumpPayload=()=>({bump_enabled:$("#bEnabled").checked?"1":"0",bump_folder:$("#bFolder").value.trim(),bump_time:$("#bTime").value,bump_max_age_days:$("#bAge").value,bump_max_per_nick:$("#bPer").value,bump_gap_minutes:$("#bGap").value,bump_texts:$("#bTexts").value,bump_contact:$("#bContact").value.trim(),bump_text_mode:(document.querySelector("input[name=bMode]:checked")||{}).value||"ai"});
+const bumpPayload=()=>({bump_enabled:$("#bEnabled").checked?"1":"0",bump_folder:$("#bFolder").value.trim(),bump_time:$("#bTime").value,bump_max_age_days:$("#bAge").value,bump_max_per_nick:$("#bPer").value,bump_gap_minutes:$("#bGap").value,bump_texts:$("#bTexts").value,bump_contact:$("#bContact").value.trim(),bump_stop_after:$("#bStop").value,bump_rest_days:$("#bRest").value,bump_check:$("#bWatch").checked?"1":"0",bump_text_mode:(document.querySelector("input[name=bMode]:checked")||{}).value||"ai"});
 document.querySelectorAll("input[name=bMode]").forEach(r=>r.addEventListener("change",()=>{ $("#bTextsL").hidden=r.value!=="list"||!r.checked; }));
 async function loadBaoSkill(){ let d; try{ d=await api("/post-care"); }catch(e){ return; } const k=d.skill, box=$("#bSkill"); if(!box) return;
   const LV=["Học việc","Thạo việc","Giỏi","Master"]; const nx=k.next;

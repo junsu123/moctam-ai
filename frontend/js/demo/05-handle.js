@@ -7,6 +7,7 @@
     if(P==="/bump/preview-text") return {texts:demoBumpLines(+(new URLSearchParams(qs||"").get("n"))||3),mode:S.settings.bump_text_mode||"ai",contact:S.settings.bump_contact||"",ai:false};
     if(P.startsWith("/post-target")||P.startsWith("/friends")||/^\/groups\/\d+\/focus$/.test(P)) return demoFr(method,P,qs,body||{});
     if(P.startsWith("/comments")) return demoCm(method,P,qs,body||{});
+    if(P.startsWith("/page-inbox")) return demoIb(method,P,qs,body||{});
     if(P.startsWith("/replies")||P.startsWith("/feed")) return demoRp(method,P,qs,body||{});
       if(P.startsWith("/agents/")&&(method==="PUT"||method==="DELETE")){ S.prof=S.prof||{}; const aid=P.split("/")[2], cur=S.prof[aid]=S.prof[aid]||{};
        if(method==="DELETE"){ delete S.prof[aid]; return {id:aid}; }

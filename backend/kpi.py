@@ -166,8 +166,8 @@ def upsert_lead(name: str, text: str, post_id: int | None, author: str | None = 
     lead = None
     if phone:
         lead = db.one("SELECT * FROM leads WHERE phone=?", (phone,))
-    if not lead and author and post_id:
-        lead = db.one("SELECT * FROM leads WHERE fb_author=? AND post_id=?", (author, post_id))
+    if not lead and author and (post_id or origin == "messenger"):  # tin nhắn Fanpage: một người một khách
+        lead = db.one("SELECT * FROM leads WHERE fb_author=? AND post_id IS ?", (author, post_id))
     if lead:
         got_phone = bool(phone and not lead.get("phone"))
         if got_phone:
@@ -178,12 +178,13 @@ def upsert_lead(name: str, text: str, post_id: int | None, author: str | None = 
         return lead["id"], False, got_phone
     post = db.one("""SELECT p.id, p.sale_id, g.name gname FROM posts p LEFT JOIN groups g ON g.id=p.group_id WHERE p.id=?""",
                   (post_id,)) if post_id else None
-    src = f"Bình luận bài #{post_id} · {post['gname'] or 'Trang cá nhân'}" if post else "Bình luận Facebook"
+    src = f"Bình luận bài #{post_id} · {post['gname'] or 'Trang cá nhân'}" if post else \
+        ("Tin nhắn Fanpage" if origin == "messenger" else "Bình luận Facebook")
     data = {"need": text[:300], "business_type": ""}
     score = workflows.score_lead(data) + (20 if phone else 0)
     lid = db.run("""INSERT INTO leads(name, contact, channel, source, business_type, need, score, status, post_id, phone, phone_at,
                     origin, fb_author, created_at, updated_at) VALUES (?,?,?,?,?,?,?,'new',?,?,?,?,?,?,?)""",
-                 (name[:80], fmt_phone(phone) if phone else "Bình luận Facebook", "Facebook", src, "", text[:300], min(100, score),
+                 (name[:80], fmt_phone(phone) if phone else src if origin == "messenger" else "Bình luận Facebook", "Facebook", src, "", text[:300], min(100, score),
                   post_id, phone, db.now() if phone else None, origin, author, db.now(), db.now()))
     if post:
         db.run("UPDATE posts SET leads=COALESCE(leads,0)+1 WHERE id=?", (post_id,))

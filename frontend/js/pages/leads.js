@@ -1,6 +1,6 @@
 /* --------------------------------------------- khách hàng */
 async function loadLeads(){
-  ST.leads=await api("/leads");
+  ST.leads=await api("/leads"); loadInbox();
   try{ ST.junk=await api("/junk"); }catch(e){ ST.junk=null; }
   renderJunk();
   const shown=ST.leads.filter(l=>ST.showJunk?l.status==="junk":l.status!=="junk");
@@ -70,3 +70,22 @@ function renderLead(){
 }
 $("#leadForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/leads","POST",{name:$("#lName").value,contact:$("#lContact").value,post_id:+$("#lPost").value||null,business_type:$("#lType").value,need:$("#lNeed").value}); const fromPost=!!$("#lPost").value; e.target.reset(); toast(fromPost?"Đã thêm khách và ghi công cho bài đăng nguồn":"Đã thêm khách, Hà đã chấm điểm"); loadLeads(); refresh(); });
 
+/* tin nhắn Fanpage (Messenger): Hà soạn, sếp duyệt, gửi trong 24 giờ */
+const IB_ST={waiting:["Chờ sếp duyệt","warn"],sent:["Đã gửi","ok"],answered:["Sếp đã trả lời trên Facebook","ok"],skipped:["Bỏ qua",""],expired:["Quá 24 giờ, trả lời tay","bad"]};
+async function loadInbox(){ try{ ST.ib=await api("/page-inbox"); }catch(e){ return; } renderInbox(); }
+function renderInbox(){ const d=ST.ib, set=d.settings||{}, w=d.items.filter(x=>x.status==="waiting");
+  const b=$("#ibCount"); b.hidden=!w.length; b.textContent=w.length?`${w.length} chờ duyệt`:"";
+  $("#ibOn").checked=set.page_inbox_on!=="0"; $("#ibMin").value=set.page_inbox_minutes||10; $("#ibAuto").checked=set.page_inbox_auto==="1";
+  if(!d.configured){ $("#ibBody").innerHTML=`<p class="muted small">Chưa kết nối Fanpage. Vào <a href="#setup">Cài đặt</a> điền Page ID và Page Access Token. Token cần quyền <b>pages_messaging</b> để đọc và trả lời tin nhắn.</p>`; return; }
+  const left=h=>h<1?`${Math.max(1,Math.round(h*60))} phút`:`${Math.floor(h)} giờ`;
+  const rows=w.concat(d.items.filter(x=>x.status!=="waiting").slice(0,5));
+  $("#ibBody").innerHTML=rows.length?rows.map(t=>{ const [lb,cl]=IB_ST[t.status]||[t.status,""];
+    return `<article class="cm-item st-${t.status==="waiting"?"scheduled":t.status==="sent"?"done":t.status==="expired"?"failed":"x"}" data-ib="${t.id}"><div class="top"><span class="chip ${cl}">${lb}</span><b>${esc(t.name||"Khách")}</b>${t.phone?`<span>· ${esc(t.phone)}</span>`:""}<span>· ${fmtTime(t.last_at)} ${fmtDate(t.last_at)}</span>${t.left_h!=null?`<span>· còn ${left(t.left_h)} để trả lời</span>`:""}</div>
+      <p class="tx" style="color:var(--muted)">“${esc(t.last_text||"")}”</p>
+      ${t.status==="waiting"?`<textarea class="tx" rows="3" maxlength="1000" aria-label="Câu trả lời cho ${esc(t.name||"khách")}">${esc(t.draft||"")}</textarea><div class="acts"><button type="button" class="btn sm primary" data-iba="send">Duyệt và gửi</button><button type="button" class="btn sm" data-iba="redraft">Hà viết lại</button><button type="button" class="btn sm ghost" data-iba="skip">Bỏ qua</button></div>`:t.sent_text?`<p class="tx">→ ${esc(t.sent_text)}</p>`:""}
+      ${t.error?`<p class="er">${esc(t.error)}</p>`:""}</article>`; }).join("")
+    :`<p class="muted small">Chưa có tin nhắn nào chờ trả lời${d.last_sync?` (đọc lần cuối ${fmtTime(d.last_sync)})`:""}.</p>`; }
+$("#ibBody").addEventListener("click",async e=>{ const bt=e.target.closest("[data-iba]"); if(!bt) return; const card=bt.closest("[data-ib]"), id=card.dataset.ib, act=bt.dataset.iba; bt.disabled=true;
+  try{ await api(`/page-inbox/${id}/${act}`,"POST",act==="send"?{text:card.querySelector("textarea").value}:{}); toast({send:"Đã gửi tin nhắn cho khách qua Messenger",redraft:"Hà đã viết câu mới",skip:"Đã bỏ qua"}[act]); if(act==="send") loadLeads(); else loadInbox(); }catch(err){ toast(err.message); bt.disabled=false; } });
+$("#ibSync").onclick=async e=>{ e.target.disabled=true; try{ const r=await api("/page-inbox/sync","POST"); toast(r.new?`Có ${r.new} cuộc trò chuyện mới, Hà đã soạn sẵn câu trả lời`:"Không có tin nhắn mới chờ trả lời"); loadInbox(); }catch(err){ toast(err.message); } e.target.disabled=false; };
+$("#ibSave").onclick=async()=>{ try{ ST.ib=await api("/page-inbox/settings","PUT",{page_inbox_on:$("#ibOn").checked?"1":"0",page_inbox_minutes:$("#ibMin").value,page_inbox_auto:$("#ibAuto").checked?"1":"0"}); renderInbox(); toast("Đã lưu cài đặt tin nhắn Fanpage"); }catch(err){ toast(err.message); } };

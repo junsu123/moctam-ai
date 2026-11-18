@@ -350,8 +350,12 @@ def execute(act: dict) -> str:
     if t == "scan_fanpage":
         import ceo_brain
         r = ceo_brain.scan_fanpage()
-        return (f"Đã đọc bình luận {r['posts']} bài Fanpage 7 ngày qua: {r['new']} khách mới, {r['phones']} SĐT mới"
-                if r["ok"] else "Chưa đọc được Fanpage: " + r["why"])
+        import page_inbox
+        m = page_inbox.sync()
+        msg = (f" Tin nhắn Trang: {m['new']} cuộc mới chờ sếp duyệt câu trả lời (mục Khách hàng)." if m.get("ok")
+               else f" Tin nhắn Trang chưa đọc được: {m.get('why')}.")
+        return (f"Đã đọc bình luận {r['posts']} bài Fanpage 7 ngày qua: {r['new']} khách mới, {r['phones']} SĐT mới."
+                if r["ok"] else "Chưa đọc được Fanpage: " + r["why"] + ".") + msg
     if t == "focus_review":
         import channel_focus
         r = channel_focus.run(force=True, notify=False)
@@ -688,7 +692,7 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - focus_review {}: xem kênh tìm khách nào ra đơn, dồn sức cho kênh ra đơn, tạm dừng kênh chỉ ra số không ra đơn
 - suggest_keywords {}: CEO học chân dung khách đã mua, cho Mai thử từ khóa tìm khách mới và Tuấn thử chủ đề nhóm mới (14 ngày, không ra SĐT thì bỏ)
 - weekly_report {}: viết báo cáo tuần ngay (tuần qua, nút thắt, 3 việc tuần này)
-- scan_fanpage {}: đọc bình luận dưới bài Fanpage (Graph API) để lấy khách để SĐT / hỏi giá
+- scan_fanpage {}: đọc bình luận dưới bài Fanpage và tin nhắn Trang (Graph API) để lấy khách để SĐT / hỏi giá; Hà soạn trả lời tin nhắn chờ sếp duyệt
 - set_hot {product_id, hot: true|false, note?}: đánh dấu / bỏ đánh dấu sản phẩm đang bán chạy (cả đội tập trung chào mời)
 - daily_work {}: cả đội làm việc hằng ngày
 - meeting {topic}: triệu tập họp
@@ -832,7 +836,7 @@ def _rule_plan(text: str) -> dict:
     if re.search(UPDATE_RX, low):
         return {"reply": "Dạ em cập nhật phần mềm ngay.", "actions": [{"type": "update_app"}]}
     for rx, typ in ((r"báo cáo tuần|tổng kết tuần", "weekly_report"),
-                    (r"(bình luận|comment).{0,20}fanpage|fanpage.{0,20}(bình luận|comment|khách)", "scan_fanpage")):
+                    (r"(bình luận|comment|tin nhắn|inbox).{0,20}(fanpage|trang)|fanpage.{0,20}(bình luận|comment|khách|tin nhắn|inbox)", "scan_fanpage")):
         if re.search(rx, low):  # việc riêng của CEO: khớp trước các mẫu chung “báo cáo”, “bình luận”
             return {"reply": "Dạ em làm ngay.", "actions": [{"type": typ}]}
     critique = re.search(r"\b(sai|không đúng|chưa đúng|dài quá|quá dài|ngắn quá|quá ngắn|kém|tệ|đừng|không được|phải|nên|"
@@ -966,7 +970,7 @@ def _rule_plan(text: str) -> dict:
             acts.append({"type": "weekly_report"})
         if not acts and re.search(r"từ khóa (mới|khác)|tìm khách (theo )?(hướng|cách) (mới|khác)|tìm khách linh hoạt|đổi cách tìm khách", low):
             acts.append({"type": "suggest_keywords"})
-        if not acts and re.search(r"(bình luận|comment).{0,20}fanpage|fanpage.{0,20}(bình luận|comment|khách)", low):
+        if not acts and re.search(r"(bình luận|comment|tin nhắn|inbox).{0,20}fanpage|fanpage.{0,20}(bình luận|comment|khách|tin nhắn|inbox)", low):
             acts.append({"type": "scan_fanpage"})
         if not acts and re.search(r"kênh nào (ra|có) (đơn|khách)|dồn sức|tập trung (vào )?kênh|xem lại (các )?kênh|kênh (nào )?hiệu quả", low):
             acts.append({"type": "focus_review"})

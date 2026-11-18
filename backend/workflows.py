@@ -547,6 +547,8 @@ def plan_bumps(force: bool = False) -> int:
         db.log("bao", "Up bài", "Chưa cài thư mục ảnh sản phẩm (Bình luận → Cài đặt), hôm nay bỏ qua")
         return 0
     import post_care
+    import bump_watch
+    bump_watch.measure_stale()  # chấm hiệu quả các lượt cũ trước khi chọn bài
     set_status("bao", "working", "Rà soát bài đã đăng, viết câu bình luận kèm ảnh")
     now = db.clock()
     cutoff = (now - timedelta(days=int(s.get("bump_max_age_days") or 7))).strftime("%Y-%m-%d %H:%M:%S")
@@ -556,12 +558,15 @@ def plan_bumps(force: bool = False) -> int:
     total = 0
     import accounts
     for sale in accounts.working():  # mỗi nick up bài của chính nick đó
-        posts = db.q("""SELECT p.id, p.product_id FROM posts p LEFT JOIN products pr ON pr.id=p.product_id
+        posts = db.q("""SELECT p.id, p.product_id, p.bump_reset_at, COALESCE(pr.hot, 0) hot FROM posts p LEFT JOIN products pr ON pr.id=p.product_id
                         WHERE p.status='posted' AND p.account_id=? AND COALESCE(p.bump_enabled,1)=1
                         AND COALESCE(p.permalink_status,'') != 'removed' AND p.posted_at >= ? AND p.posted_at <= ?
+                        AND (p.group_id IS NULL OR p.group_id NOT IN (SELECT id FROM groups WHERE no_bump_until > ?))  -- nhóm đã xóa bình luận
                         AND p.id NOT IN (SELECT post_id FROM bumps WHERE created_at LIKE ? AND status NOT IN ('skipped', 'failed'))  -- lượt lỗi được thử lại khi bấm Up bài ngay
                         ORDER BY COALESCE(pr.hot, 0) DESC, COALESCE(p.last_bump_at, '') ASC, p.posted_at DESC LIMIT ?""",
-                     (sale["id"], cutoff, fresh, today + "%", per_nick))
+                     (sale["id"], cutoff, fresh, db.now(), today + "%", per_nick * 4))
+        # bài nhiều lượt không thêm gì thì thôi; bài đang ra khách / bình luận lên trước (giữ thứ tự cũ khi bằng điểm)
+        posts = sorted([p for p in posts if not bump_watch.stopped(p)], key=lambda p: (-p["hot"], -bump_watch.score(p["id"])))[:per_nick]
         t = now + timedelta(minutes=random.randint(1, 6))
         end = datetime.strptime(f"{today} {sale['active_to'] or '22:00'}", "%Y-%m-%d %H:%M")
         words = post_care.texts_for(posts, sale["id"]) if posts else []  # Bảo viết mỗi bài một câu khác nhau + dòng liên hệ

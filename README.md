@@ -737,6 +737,21 @@ D:\AnhSanPham\
 
 Up bài không gọi AI nên không tốn chi phí Claude.
 
+### Bình luận có ích không: Bảo đo và tự điều chỉnh
+
+- **Đo từng lượt**: lúc gửi, sale ghi số bình luận và số khách của bài. Lần sau vào lại bài (hoặc sau 48 giờ) Bảo tính lượt đó làm
+  bài có thêm bình luận / khách không (không tính bình luận của mình). Mỗi lượt đã gửi ở màn **Bình luận** có chip “Bài thêm 2 bình
+  luận, 1 khách” / “Bài chưa thêm bình luận, khách nào” / “Chưa đo”.
+- **Thẻ “Bình luận có ích không · 30 ngày”**: tỷ lệ lượt có ích, số bình luận và khách mới sau khi bình luận, số bình luận bị nhóm
+  xóa, 5 bài bình luận hiệu quả nhất.
+- **Thôi bình luận bài không ra gì**: bài có 3 lượt liền (sửa được, 0 = tắt) không thêm bình luận hay khách thì Bảo thôi bình luận
+  bài đó, dành lượt (vẫn trong trần 6 lượt/nick/ngày) cho bài khác; bài đang ra khách / bình luận được xếp trước. Bài bị thôi có
+  lý do và nút **Bình luận tiếp** (tính lại từ hôm nay).
+- **Nhóm xóa bình luận thì ngừng**: khi nick đã mở Chrome làm ca (không mở riêng), sale mở lại 1–2 bài có bình luận gửi trên 6 giờ
+  xem câu của mình còn không. Không còn thì ngừng bình luận mọi bài ở nhóm đó 30 ngày (sửa được), hủy các lượt đang chờ ở nhóm đó:
+  nhóm xóa bình luận là dấu hiệu sớm trước khi nick bị báo cáo / khóa. Nhóm đang ngừng hiện ở thẻ hiệu quả, nút **Bình luận lại**.
+  Tắt bằng ô “6 giờ sau xem lại bình luận còn không” trong cài đặt.
+
 ## KPI phòng kinh doanh và báo cáo Telegram
 
 **KPI:** số khách MỚI để lại số điện thoại mỗi ngày (mặc định tối thiểu 5, mục tiêu vượt 10; chỉnh ở trang
@@ -1060,6 +1075,18 @@ ai để SĐT hoặc hỏi giá thì thành khách, kênh **Bình luận Fanpage
 cần quyền đọc bình luận (`pages_read_engagement`). Báo cáo tuần có **gợi ý quảng cáo**: bài đang hút khách nhất và cách chạy thử
 (mục tiêu Tin nhắn / Khách tiềm năng, ngân sách nhỏ 3–5 ngày) để sếp tự chạy trong Trình quản lý quảng cáo, đo bằng phễu.
 
+**Tin nhắn Fanpage (Messenger), mục Khách hàng:** mỗi 10 phút (sửa được) phần mềm đọc các cuộc trò chuyện của Trang qua Graph API.
+Khách nhắn mà Trang chưa trả lời thì: khách vào mục **Khách hàng** (kênh “Tin nhắn Fanpage” trong phễu, khách để SĐT thì tính KPI,
+nhắn nhiều lần vẫn là một khách), **Hà soạn câu trả lời** (xin SĐT / Zalo, không báo giá, dùng sổ kiến thức trước khi hỏi Claude).
+Thẻ **Tin nhắn Fanpage** đầu trang Khách hàng: câu khách nhắn, câu Hà soạn (sửa được), còn bao lâu để trả lời, nút **Duyệt và gửi**,
+**Hà viết lại**, **Bỏ qua**, **Đọc tin nhắn ngay**.
+- **Luật 24 giờ của Messenger**: Trang chỉ được trả lời trong 24 giờ từ tin cuối của khách; quá hạn thì không gửi được (“Quá 24 giờ,
+  trả lời tay” trong Hộp thư Trang). Câu phạm Luật Facebook (hứa chữa bệnh...) bị chặn; giá bị tự bỏ như mọi tin khác.
+- Sếp đã tự trả lời trên Facebook thì thẻ ghi “Sếp đã trả lời trên Facebook”, không gửi trùng. Ô **Tự gửi câu Hà soạn** (mặc định tắt)
+  để gửi luôn không chờ duyệt (vẫn trong 24 giờ, vẫn qua Luật Facebook).
+- Token Trang cần thêm quyền **pages_messaging** (ứng dụng Meta phải được duyệt quyền này, hoặc sếp là quản trị viên ứng dụng); thiếu
+  quyền thì thẻ và màn Lỗi báo rõ. Nhắn CEO “đọc tin nhắn fanpage” cũng được.
+
 **Không lách luật Facebook.** CEO không né phát hiện tự động, không mẹo né lọc spam, không vượt trần bài / lời mời / bình luận,
 không tự nhắn tin hay kết bạn hàng loạt. Sếp yêu cầu “lách luật” thì CEO nói thẳng lý do (cả cụm nick có thể bị khóa cùng lúc, mất
 kênh bán chính) và đưa cách hợp lệ: Fanpage, quảng cáo, nội dung có giá trị, nhóm đúng tệp.
@@ -1251,6 +1278,9 @@ backend/
   site_deploy.py Đưa website lên hosting: FTP/FTPS/SFTP/cổng PHP, kiểm tra kết nối, tải tệp đổi, tự đồng bộ
   group_target.py Sếp chỉ đạo nơi đăng: chế độ all/prefer/only, từ khóa nên đăng / tránh, nhóm tập trung, xem trước
   post_care.py   Bảo chăm bài đã đăng: câu bình luận up bài tự viết (Claude hoặc mẫu), dòng liên hệ Zalo, xem thử
+  comments.py    Màn hình Bình luận: lịch bình luận theo ngày, sửa / hủy / gửi lại, lý do từng bài
+  bump_watch.py  Bình luận có ích không: đo từng lượt, thôi bài không ra gì, nhóm xóa bình luận thì ngừng
+  page_inbox.py  Tin nhắn Fanpage (Messenger): Hà soạn trả lời, sếp duyệt, gửi trong 24 giờ
   group_feed.py  Lướt bảng tin nhóm: mọi nick đọc >=20 bài, lọc 3 lớp (chữ, Claude, học từ sếp), bình luận người hỏi mua (kèm ảnh)
                  và chào người bán online (chỉ chữ, trần riêng), nhịp lướt theo luật nick, ngừng chào ở nhóm xóa bình luận
   friends.py     Kết bạn trong nhóm: điểm sôi nổi của nhóm, đọc bảng tin tìm người hợp tệp khách, trần lời mời, mở hồ sơ cho sale

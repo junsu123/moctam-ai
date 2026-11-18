@@ -1545,9 +1545,12 @@ def _do_bump(ctx, page, aid: int, bump_id: int):
         _check_blocked(page)
         body = page.inner_text("body").lower()
         m = re.search(r"(\d[\d.,]*)\s*(bình luận|comments?)\b", body)
+        cnt = None
         if m:  # số bình luận thật -> dữ liệu cho cả đội học
-            n = int(re.sub(r"[^\d]", "", m.group(1)) or 0)
+            n = cnt = int(re.sub(r"[^\d]", "", m.group(1)) or 0)
             db.run("UPDATE posts SET comments=MAX(COALESCE(comments,0), ?) WHERE id=?", (n, post["id"]))
+        import bump_watch
+        bump_watch.observe(post["id"], cnt)  # lượt trước của bài này có làm bài thêm bình luận / khách không
         if not any(t.lower() in body for t in s["removed_texts"]):
             try:
                 _scan_comments(page, post, sale, acc)
@@ -1572,6 +1575,7 @@ def _do_bump(ctx, page, aid: int, bump_id: int):
         _check_blocked(page)
         page.screenshot(path=str(shot))
         _bump_done(bump_id, "done", None, f"/shots/{shot.name}", str(img))
+        bump_watch.before(bump_id, post["id"], cnt)
         media_folder.record([img], "bump", post, acc["sale_id"], bump_id)
         db.run("UPDATE posts SET bump_count=COALESCE(bump_count,0)+1, last_bump_at=? WHERE id=?", (db.now(), post["id"]))
         db.log(agent, "Up bài", f"Bình luận ảnh {img.name} vào bài #{post['id']} ở {where} (nick {accounts.label(acc)})")
@@ -1629,7 +1633,14 @@ def due_work(aid: int, stamp: str | None = None) -> dict:
         rep = replies.due(aid)
     except Exception:
         rep = []
-    return {"posts": posts, "bumps": bumps, "scan": list(_scan_pending.get(aid, [])), "links": links, "replies": rep}
+    work = {"posts": posts, "bumps": bumps, "scan": list(_scan_pending.get(aid, [])), "links": links, "replies": rep}
+    if any(work.values()):  # đã mở Chrome thì tiện xem lại 1–2 bình luận up bài cũ còn không (không mở Chrome chỉ để xem)
+        try:
+            import bump_watch
+            work["checks"] = bump_watch.due_checks(aid)
+        except Exception as e:
+            print("[bump check]", e)
+    return work
 
 
 def _job_session(pw, aid: int):
@@ -1662,6 +1673,9 @@ def _job_session(pw, aid: int):
             _do_bump(ctx, page, aid, bid)
             done["bumps"] += 1
             _pause(page, 15, 40)
+        if work.get("checks"):  # bình luận up bài trên 6 giờ còn không, nhóm xóa thì ngừng bình luận nhóm đó
+            import bump_watch
+            bump_watch.check(page, aid, work["checks"])
         for rid in work.get("replies", []):  # câu trả lời khách sếp đã duyệt, tới giờ gửi
             import replies
             replies.send(page, aid, rid)

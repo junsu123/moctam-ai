@@ -33,8 +33,14 @@ def _reason(p: dict, s: dict, planned: bool, now: datetime) -> str:
         return "Bài đã bị gỡ hoặc ẩn"
     if str(p.get("bump_enabled")) == "0":
         return "Sếp đã tắt tự bình luận bài này"
+    if (p.get("no_bump_until") or "") > db.now():
+        return f"Nhóm đã xóa bình luận của mình: tạm ngừng bình luận nhóm này tới {p['no_bump_until'][8:10]}/{p['no_bump_until'][5:7]}"
     if s.get("bump_enabled") != "1":
         return "Đang tắt bình luận tự động (bật ở Cài đặt bên dưới)"
+    import bump_watch
+    why = bump_watch.stopped(p)
+    if why:
+        return why
     posted = _ts(p.get("posted_at"))
     if posted and posted > now - timedelta(hours=10):
         return "Vừa đăng chưa đủ 10 giờ, mai bình luận"
@@ -57,7 +63,7 @@ def overview(day: str | None = None, status: str = "", account_id: int | None = 
     if q.strip():
         where.append("(b.text LIKE ? OR p.title LIKE ? OR g.name LIKE ?)"); args += [f"%{q.strip()}%"] * 3
     items = db.q(f"""SELECT b.id, b.post_id, b.account_id, b.text, b.status, b.scheduled_for, b.done_at, b.error, b.screenshot,
-                            b.image, p.title, p.posted_url, p.permalink_status, g.name group_name, fa.name account_name, sa.name sale_name
+                            b.image, b.gain_comments, b.gain_leads, b.measured_at, b.removed, b.checked_at, p.title, p.posted_url, p.permalink_status, g.name group_name, fa.name account_name, sa.name sale_name
                      FROM bumps b LEFT JOIN posts p ON p.id=b.post_id LEFT JOIN groups g ON g.id=p.group_id
                      LEFT JOIN fb_accounts fa ON fa.id=b.account_id LEFT JOIN sales sa ON sa.id=b.sale_id
                      WHERE {' AND '.join(where)} ORDER BY COALESCE(b.scheduled_for, b.created_at), b.id LIMIT 300""", args)
@@ -73,13 +79,15 @@ def overview(day: str | None = None, status: str = "", account_id: int | None = 
     planned = s.get("bump_planned_date") == today
     posts = []
     for p in db.q("""SELECT p.id, p.title, p.posted_at, p.posted_url, p.account_id, p.permalink_status, p.bump_enabled,
-                            p.bump_count, p.last_bump_at, g.name group_name, fa.name account_name
+                            p.bump_count, p.last_bump_at, p.bump_reset_at, p.group_id, g.no_bump_until, g.name group_name, fa.name account_name
                      FROM posts p LEFT JOIN groups g ON g.id=p.group_id LEFT JOIN fb_accounts fa ON fa.id=p.account_id
                      WHERE p.status='posted' AND p.posted_at >= ? ORDER BY p.posted_at DESC LIMIT 200""", (since,)):
         b = db.one("""SELECT id, status, scheduled_for, error FROM bumps WHERE post_id=? AND created_at LIKE ?
                       ORDER BY id DESC LIMIT 1""", (p["id"], today + "%"))
         p["today"] = b
         p["reason"] = None if b else _reason(p, s, planned, now)
+        p["stopped"] = bool(p["reason"] and p["reason"].startswith(tuple("0123456789")))
+        p["resting"] = bool(p["reason"] and p["reason"].startswith("Nhóm đã xóa"))
         posts.append(p)
 
     nicks = []
@@ -94,10 +102,12 @@ def overview(day: str | None = None, status: str = "", account_id: int | None = 
 
     covered = sum(1 for p in posts if p["today"])
     eligible = sum(1 for p in posts if p["today"] or (p["reason"] or "").startswith(("Chờ", "Hết lượt")))
-    return {"day": day, "today": today, "items": items, "counts": counts, "posts": posts, "nicks": nicks,
+    import bump_watch
+    return {"effect": bump_watch.overview(), "day": day, "today": today, "items": items, "counts": counts, "posts": posts, "nicks": nicks,
             "covered": covered, "eligible": eligible, "planned_today": planned,
             "settings": {k: s.get(k, "") for k in ("bump_enabled", "bump_time", "bump_max_age_days", "bump_max_per_nick",
-                                                   "bump_gap_minutes", "bump_contact", "bump_text_mode", "bump_folder")}}
+                                                   "bump_gap_minutes", "bump_contact", "bump_text_mode", "bump_folder",
+                                                   "bump_stop_after", "bump_check", "bump_rest_days")}}
 
 
 def edit(bid: int, text: str) -> dict:

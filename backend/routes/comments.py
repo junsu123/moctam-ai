@@ -73,6 +73,20 @@ def comments_edit(bid: int, body: CommentEdit):
         raise HTTPException(400, str(e))
 
 
+@app.post("/api/comments/post/{pid}/resume")
+def comments_resume_post(pid: int):
+    import bump_watch
+    bump_watch.resume_post(pid)
+    return {"ok": True}
+
+
+@app.post("/api/comments/group/{gid}/resume")
+def comments_resume_group(gid: int):
+    import bump_watch
+    bump_watch.resume_group(gid)
+    return {"ok": True}
+
+
 @app.post("/api/comments/{bid}/{act}")
 def comments_act(bid: int, act: str):
     import comments

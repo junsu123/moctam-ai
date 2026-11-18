@@ -1,17 +1,39 @@
+  function demoIb(method,P,qs,body){ let m; const ago=min=>{ const d=new Date(Date.now()-min*60000), p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:00`; };
+    if(!S.ib){ S.ib={settings:{page_inbox_on:"1",page_inbox_minutes:"10",page_inbox_auto:"0"},last:now(),items:[
+      {id:1,name:"Shop Mộc An",phone:null,last_text:"Shop mình cần nhập trà gừng túi lọc tầm 200 hộp, bên bạn báo giá sỉ giúp mình nhé",last_at:ago(35),status:"waiting",left_h:23.4,draft:`Dạ em chào shop Mộc An ạ! Trà gừng túi lọc bên em có sẵn, nhập 200 hộp được giá sỉ tốt. Shop cho em xin SĐT hoặc Zalo để em gửi catalog, ảnh thật và báo giá trực tiếp nhé? Hoặc shop nhắn Zalo ${S.settings.price_zalo||"0386992326"} ạ.`},
+      {id:2,name:"Ngọc Trâm",phone:"0912 345 678",last_text:"Số mình 0912 345 678, gửi mình bảng giá bột ngũ cốc nha",last_at:ago(190),status:"waiting",left_h:20.8,draft:"Dạ em cảm ơn chị Trâm ạ! Em nhắn Zalo cho chị trong ít phút để gửi catalog và báo giá bột ngũ cốc nhé."},
+      {id:3,name:"Hùng Livestream",phone:null,last_text:"Bên bạn có nhận gia công nhãn riêng không",last_at:ago(600),status:"sent",sent_text:"Dạ bên em nhận gia công in nhãn riêng ạ, anh cho em xin SĐT/Zalo để em gửi quy trình và mẫu nhé.",left_h:null},
+      {id:4,name:"Bảo Ngọc",phone:null,last_text:"Cho mình xin catalog",last_at:ago(1600),status:"expired",left_h:null}]}; }
+    const view=()=>({configured:true,items:S.ib.items,counts:{},last_sync:S.ib.last,settings:{...S.ib.settings}});
+    if(method==="GET") return view();
+    if(P==="/page-inbox/sync"){ S.ib.last=now(); return {ok:true,conversations:4,new:0,answered:0}; }
+    if(P==="/page-inbox/settings"){ Object.assign(S.ib.settings,body); return view(); }
+    if((m=P.match(/^\/page-inbox\/(\d+)\/(send|skip|redraft)$/))){ const t=S.ib.items.find(x=>x.id==m[1]); if(!t||t.status!=="waiting") throw new Error("Cuộc trò chuyện này không còn chờ trả lời");
+      if(m[2]==="skip"){ t.status="skipped"; return t; }
+      if(m[2]==="redraft"){ t.draft=`Dạ em chào ${t.name} ạ! Anh/chị cho em xin SĐT hoặc Zalo để em gửi ảnh thật, catalog và báo giá sỉ nhé?`; return t; }
+      const txt=String(body.text||t.draft||"").trim(); if(/chữa|khỏi bệnh|giảm cân/i.test(txt)) throw new Error("Câu trả lời vi phạm Luật Facebook: hứa công dụng chữa bệnh");
+      Object.assign(t,{status:"sent",sent_text:txt,left_h:null}); log("ha","Trả lời tin nhắn Fanpage",`Gửi ${t.name}: “${txt.slice(0,60)}”`); return t; }
+    throw new Error("Không hỗ trợ"); }
   function demoCm(method,P,qs,body){ const q=new URLSearchParams(qs||""), td=today(); let m;
     const acc=sid=>{ const a=S.accounts.find(x=>x.sale_id===sid)||{}; return {account_id:a.id||null,account_name:a.name||((S.sales.find(x=>x.id===sid)||{}).name)||""}; };
     const row=b=>{ const p=S.posts.find(x=>x.id===b.post_id)||{}; return {...b,title:p.title||(p.content||"").split("\n")[0].slice(0,70),group_name:p.group_name||"",posted_url:p.posted_url||""}; };
     const ps=S.posts.filter(p=>p.status==="posted");
     if(!S.cm){ S.cm=[]; S.cmId=900; const tx=demoBumpLines(6); ps.filter(p=>p.sale_id&&p.bump_enabled!==0&&p.permalink_status==="found").slice(0,6).forEach((p,i)=>{ const st=i<3?"done":i<5?"scheduled":"failed";
-      const h=`${td} ${st==="done"?"19":"20"}:${String(31+i*5).padStart(2,"0")}`; S.cm.push({id:++S.cmId,post_id:p.id,...acc(p.sale_id),text:tx[i],status:st,scheduled_for:h,done_at:st==="done"?h+":20":null,error:st==="failed"?"Không thấy ô bình luận: nhóm đã tắt bình luận bài này":null,_day:td}); }); }
+      const h=`${td} ${st==="done"?"19":"20"}:${String(31+i*5).padStart(2,"0")}`; S.cm.push({id:++S.cmId,post_id:p.id,...acc(p.sale_id),text:tx[i],status:st,scheduled_for:h,done_at:st==="done"?h+":20":null,error:st==="failed"?"Không thấy ô bình luận: nhóm đã tắt bình luận bài này":null,gain_comments:i===0?2:i===1?0:null,gain_leads:i===0?1:i===1?0:null,measured_at:i<2?h:null,_day:td}); });
+      const gp=ps.find(p=>p.group_id&&p.sale_id&&!S.cm.some(b=>b.post_id===p.id)); S.cmRest=gp?[{id:gp.group_id,name:gp.group_name||"Nhóm",no_bump_until:`${td.slice(0,8)}28 08:00:00`}]:[]; S.cmStop=[]; S.cmGo=[]; }
+    if((m=P.match(/^\/comments\/(post|group)\/(\d+)\/resume$/))){ if(m[1]==="group") S.cmRest=S.cmRest.filter(g=>g.id!=m[2]); else S.cmGo.push(+m[2]); return {ok:true}; }
     if(method==="GET"){ const day=q.get("day")||td, st=q.get("status")||"", aid=+q.get("account_id")||null, s=(q.get("q")||"").toLowerCase();
       const all=S.cm.filter(b=>(b.scheduled_for||"").slice(0,10)===day).map(row); const counts={scheduled:0,running:0,done:0,failed:0,skipped:0}; all.forEach(b=>counts[b.status]++);
       const items=all.filter(b=>(!st||b.status===st)&&(!aid||b.account_id===aid)&&(!s||(b.text+b.title+b.group_name).toLowerCase().includes(s)));
       const posts=ps.map(p=>{ const b=[...S.cm].reverse().find(x=>x.post_id===p.id&&x._day===td), a=acc(p.sale_id);
-        const reason=b?null:!p.sale_id?"Không do nick sale đăng (fanpage/sếp tự đăng) nên không tự bình luận được":p.permalink_status==="removed"?"Bài đã bị gỡ hoặc ẩn":p.bump_enabled===0?"Sếp đã tắt tự bình luận bài này":p.permalink_status==="pending"?"Bài đang chờ nhóm duyệt, có link mới bình luận được":"Hết lượt hôm nay của nick (trần an toàn), mai bình luận tiếp";
-        return {id:p.id,title:row({post_id:p.id}).title,posted_at:p.posted_at,posted_url:p.posted_url,account_id:p.sale_id?a.account_id:null,account_name:p.sale_id?a.account_name:"",permalink_status:p.permalink_status,bump_enabled:p.bump_enabled,bump_count:p.bump_count||0,group_name:p.group_name,today:b?{id:b.id,status:b.status}:null,reason}; });
+        const rest=S.cmRest.find(g=>g.id===p.group_id), stop=!b&&p.sale_id&&!rest&&!S.cmGo.includes(p.id)&&p.bump_enabled!==0&&p.permalink_status==="found"&&(S.cmStop.length<2&&!S.cmStop.includes(p.id)?S.cmStop.push(p.id):S.cmStop.includes(p.id));
+        const reason=b?null:rest&&p.sale_id?`Nhóm đã xóa bình luận của mình: tạm ngừng bình luận nhóm này tới ${rest.no_bump_until.slice(8,10)}/${rest.no_bump_until.slice(5,7)}`:stop?"3 lượt bình luận gần nhất không thêm bình luận hay khách nào: Bảo thôi bình luận bài này":!p.sale_id?"Không do nick sale đăng (fanpage/sếp tự đăng) nên không tự bình luận được":p.permalink_status==="removed"?"Bài đã bị gỡ hoặc ẩn":p.bump_enabled===0?"Sếp đã tắt tự bình luận bài này":p.permalink_status==="pending"?"Bài đang chờ nhóm duyệt, có link mới bình luận được":"Hết lượt hôm nay của nick (trần an toàn), mai bình luận tiếp";
+        return {id:p.id,title:row({post_id:p.id}).title,posted_at:p.posted_at,posted_url:p.posted_url,account_id:p.sale_id?a.account_id:null,account_name:p.sale_id?a.account_name:"",permalink_status:p.permalink_status,bump_enabled:p.bump_enabled,bump_count:p.bump_count||0,group_name:p.group_name,stopped:!!stop&&!b,resting:!!rest&&!b&&!!p.sale_id,today:b?{id:b.id,status:b.status}:null,reason}; });
       const nicks=workingNicks().map(a=>({id:a.id,name:a.name,limit:6,per_nick:+S.settings.bump_max_per_nick||8,used:S.cm.filter(b=>b.account_id===a.id&&b._day===td&&b.status==="done").length}));
-      return {day,today:td,items,counts,posts,nicks,covered:posts.filter(p=>p.today).length,eligible:posts.filter(p=>p.today||/^Hết lượt|^Chờ/.test(p.reason||"")).length,planned_today:true,settings:{...S.settings}}; }
+      const dn=S.cm.filter(b=>b.status==="done").length, tops=ps.filter(p=>p.sale_id).slice(0,3);
+      const effect={days:30,done:dn+41,measured:dn+33,useful:15,comments:26,leads:4,removed:S.cmRest.length,useful_pct:Math.round(1500/(dn+33)),stop_after:+S.settings.bump_stop_after||3,resting:S.cmRest,
+        top:tops.map((p,i)=>({post_id:p.id,title:row({post_id:p.id}).title,group_name:p.group_name,n:6-i,gc:[7,4,3][i],gl:[2,1,1][i]}))};
+      return {effect,day,today:td,items,counts,posts,nicks,covered:posts.filter(p=>p.today).length,eligible:posts.filter(p=>p.today||/^Hết lượt|^Chờ/.test(p.reason||"")).length,planned_today:true,settings:{...S.settings}}; }
     const b=S.cm.find(x=>x.id==(P.match(/\/comments\/(\d+)/)||[])[1]); if(!b) throw new Error("Không tìm thấy lượt bình luận này");
     if(method==="PUT"){ if(b.status!=="scheduled") throw new Error("Chỉ sửa được bình luận đang chờ gửi"); const t=String(body.text||"").trim().replace(/\s+/g," "); if(t.length<4) throw new Error("Câu bình luận quá ngắn"); b.text=t; log("bao","Sửa bình luận",`Sếp sửa câu bình luận bài #${b.post_id}: “${t.slice(0,60)}”`); return row(b); }
     if((m=P.match(/\/(cancel|retry|rewrite)$/))){

@@ -181,6 +181,10 @@ CREATE TABLE IF NOT EXISTS ai_fallback (
 CREATE TABLE IF NOT EXISTS ai_batches (
   id TEXT PRIMARY KEY, task TEXT, meta TEXT, status TEXT DEFAULT 'in_progress', created_at TEXT, ended_at TEXT
 );
+CREATE TABLE IF NOT EXISTS page_threads (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, conv_id TEXT UNIQUE, psid TEXT, name TEXT, last_text TEXT, last_at TEXT, page_last_at TEXT,
+  lead_id INTEGER, draft TEXT, status TEXT DEFAULT 'waiting', sent_text TEXT, sent_at TEXT, error TEXT, created_at TEXT, updated_at TEXT
+);
 CREATE TABLE IF NOT EXISTS bumps (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   post_id INTEGER, sale_id INTEGER, image TEXT, text TEXT, status TEXT DEFAULT 'scheduled',
@@ -385,6 +389,9 @@ MIGRATIONS = [
     ("groups", "member_sale_ids", "TEXT DEFAULT ''"), ("products", "images", "TEXT DEFAULT '[]'"),
     ("posts", "permalink_status", "TEXT"), ("posts", "bump_enabled", "INTEGER DEFAULT 1"),
     ("posts", "bump_count", "INTEGER DEFAULT 0"), ("posts", "last_bump_at", "TEXT"),
+    ("bumps", "comments_before", "INTEGER"), ("bumps", "leads_before", "INTEGER"), ("bumps", "gain_comments", "INTEGER"),
+    ("bumps", "gain_leads", "INTEGER"), ("bumps", "measured_at", "TEXT"), ("bumps", "checked_at", "TEXT"),
+    ("bumps", "removed", "INTEGER DEFAULT 0"), ("groups", "no_bump_until", "TEXT"), ("posts", "bump_reset_at", "TEXT"),
     ("leads", "post_id", "INTEGER"),
     ("leads", "phone", "TEXT"), ("leads", "origin", "TEXT DEFAULT 'manual'"), ("leads", "fb_author", "TEXT"),
     ("leads", "escalated_at", "TEXT"), ("leads", "escalate_reason", "TEXT"), ("leads", "consult_note", "TEXT"),
@@ -440,6 +447,12 @@ DEFAULT_SETTINGS = {
     "bump_text_mode": "ai",  # ai: Bảo tự viết mỗi lần (Claude nếu có khóa); list: chọn ngẫu nhiên từ bump_texts
     "bump_texts": "Còn hàng sỉ nhé cả nhà\nAi cần báo giá sỉ cứ inbox mình nha\nHàng mới về, ảnh thật tại xưởng\n",
     "bump_planned_date": "",
+    "bump_stop_after": "3",  # bài N lượt bình luận gần nhất không thêm bình luận/khách nào: thôi bình luận bài đó (0 = không ngừng)
+    "bump_check": "1",  # 6 giờ sau nick mở lại bài xem bình luận còn không; nhóm xóa thì ngừng bình luận nhóm đó
+    "bump_rest_days": "30",
+    "page_inbox_on": "1",  # đọc tin nhắn Fanpage (Messenger, Graph API), Hà soạn trả lời chờ sếp duyệt
+    "page_inbox_minutes": "10",
+    "page_inbox_auto": "0",  # 1: tự gửi câu Hà soạn không chờ duyệt (vẫn trong 24 giờ, vẫn qua Luật Facebook)
     "learn_enabled": "1",
     "learn_time": "23:15",
     "learn_last_date": "",
@@ -695,7 +708,7 @@ def sample_counts() -> dict:
 
 # ---------------------------------------------------------------- bắt đầu chạy thật
 RESET_TABLES = {  # bảng: mô tả cho sếp
-    "posts": "bài đăng", "prospects": "khách sỉ Mai tìm", "bumps": "lượt up bài", "image_usage": "lịch sử dùng ảnh", "leads": "khách hàng",
+    "posts": "bài đăng", "prospects": "khách sỉ Mai tìm", "bumps": "lượt up bài", "page_threads": "tin nhắn Fanpage", "image_usage": "lịch sử dùng ảnh", "leads": "khách hàng",
     "replies": "tin nhắn Hà soạn", "comment_seen": "bình luận đã quét", "meetings": "cuộc họp",
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",

@@ -3,6 +3,7 @@
         <div class="row wrap"><button class="btn primary" type="button" id="cmPlan">Xếp lịch bình luận ngay</button></div></div>
       <p class="fr-note"><b>Mỗi bài tối đa 1 bình luận/ngày, trong giờ hoạt động của nick, cách nhau vài phút.</b> Không bình luận 24/24 hay lặp cùng một câu: Facebook coi là spam, nhóm xóa bình luận và khóa tính năng bình luận của nick. Số lượt mỗi nick theo trần ở <a href="#fbrules">Luật Facebook</a>.</p>
       <div class="pr-stats fr-stats" id="cmStats"></div>
+      <section class="card" id="cmEffect" style="margin-bottom:12px"></section>
       <div class="fr-grid">
         <section class="card"><div class="card-h"><h3>Bình luận theo ngày</h3>
             <div class="fr-filters cm-filters"><input type="date" id="cmDay" aria-label="Ngày"><select id="cmSt" aria-label="Trạng thái"><option value="">Mọi trạng thái</option><option value="scheduled">Chờ gửi</option><option value="done">Đã gửi</option><option value="failed">Lỗi</option><option value="skipped">Bỏ qua / đã hủy</option></select>
@@ -28,7 +29,10 @@
               <label class="f" for="bAge">Bình luận bài đăng trong vòng (ngày)<input type="number" id="bAge" min="1" max="60"></label>
               <label class="f" for="bPer">Tối đa lượt mỗi nick/ngày<input type="number" id="bPer" min="1" max="50"></label>
               <label class="f" for="bGap">Cách nhau tối thiểu (phút)<input type="number" id="bGap" min="2" max="120"></label>
+              <label class="f" for="bStop">Thôi bình luận bài sau N lượt liền không thêm gì (0 = không thôi)<input type="number" id="bStop" min="0" max="10"></label>
+              <label class="f" for="bRest">Nhóm xóa bình luận: ngừng bình luận nhóm đó (ngày)<input type="number" id="bRest" min="1" max="90"></label>
             </div>
+            <label class="row small"><input type="checkbox" id="bWatch"> 6 giờ sau xem lại bình luận còn không (ghép vào ca làm việc của nick, không mở Chrome riêng)</label>
             <label class="f" for="bContact">Dòng liên hệ luôn gắn cuối bình luận<input type="text" id="bContact" maxlength="120" placeholder="VD: Cần hàng liên hệ Zalo 0386992326"></label>
             <fieldset class="f" style="border:0;padding:0;margin:0"><legend class="small" style="font-weight:600;margin-bottom:4px">Câu bình luận đi kèm ảnh</legend>
               <label class="row small"><input type="radio" name="bMode" value="ai"> Bảo tự viết mỗi bài một câu ngắn khác nhau (dùng Claude nếu đã nhập khóa)</label>

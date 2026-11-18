@@ -89,6 +89,8 @@ def _tick():
     replies.tick(now)  # Bảo tìm bài đang hỏi mua, viết sẵn câu trả lời chờ sếp duyệt
     import group_feed
     group_feed.tick(now)  # mọi nick lướt bảng tin nhóm theo nhịp luật Facebook, Bảo viết sẵn bình luận chờ duyệt
+    import page_inbox
+    page_inbox.tick(now)  # tin nhắn Fanpage mới: Hà soạn trả lời chờ sếp duyệt (Graph API, trong 24 giờ)
     import website
     website.tick(now)  # Vy viết bài website theo lịch
     import coach
