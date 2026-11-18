@@ -111,7 +111,7 @@ try:
     (php / "mt-sync.php").write_text(code.replace(tok, "x" * 40))
     e = c.post("/api/website/deploy", params={"full": 1}); chk("tệp cũ mã khác: báo tải lại", e.status_code == 400 and "Tải lại tệp mới" in e.json()["detail"])
     (php / "mt-sync.php").unlink()
-    e = c.post("/api/website/deploy"); chk("chưa tải cổng lên: báo rõ", "Chưa có mt-sync.php" in e.json()["detail"])
+    e = c.post("/api/website/deploy"); chk("chưa tải cổng lên: báo rõ", "Chưa có mt-sync.php" in e.json()["detail"], e.json())
 finally:
     ps.terminate()
 

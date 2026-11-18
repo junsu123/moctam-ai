@@ -21,6 +21,7 @@ for t in $TESTS; do
   x=$(grep -cE "^CÓ LỖI [0-9]+/|^KẾT QUẢ: LỖI" "$MT_WORK/out_$t.log")
   st=ok; { [ "$ec" != 0 ] || [ "$x" != 0 ] || [ -n "$xong" ]; } && { st=HỎNG; FAILED="$FAILED $t"; }
   echo "$t $st exit=$ec tb=$tb $(( $(date +%s)-t0 ))s | $(tail -1 "$MT_WORK/out_$t.log" | cut -c1-120)"
+  [ "$st" = ok ] || grep -E "✗|Error|LỖI" "$MT_WORK/out_$t.log" | tail -4 | cut -c1-300 | sed 's/^/    > /'
 done
 [ -n "$FB" ] && kill $FB 2>/dev/null; [ -n "$MK" ] && kill $MK 2>/dev/null
 if [ -n "$FAILED" ]; then echo "TỔNG: $(( N-$(echo $FAILED | wc -w) ))/$N đạt. Hỏng:$FAILED (log ở $MT_WORK/out_<test>.log)"; exit 1; fi
