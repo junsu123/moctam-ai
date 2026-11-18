@@ -1,0 +1,33 @@
+    <section class="view" id="v-page" hidden>
+      <div class="vh"><div><h1>Nuôi Page</h1><p>Mỗi sáng Lan viết bài cho Trang theo tỉ lệ <b>80% bài có ích</b> (kiến thức nguyên liệu, cách pha, hậu trường xưởng, mẹo bán hàng online, hỏi đáp khách sỉ, hỏi ý kiến) và <b>20% giới thiệu sản phẩm</b>. Đến giờ, <b>nick quản trị Trang</b> mở Chrome, chuyển sang dùng Facebook dưới tên Trang, đăng bài kèm ảnh rồi chuyển về nick cá nhân. Không dùng Graph API.</p></div>
+        <div class="row wrap"><button class="btn primary" type="button" id="pgWrite">Lan viết 1 bài ngay</button></div></div>
+      <p class="fr-note"><b>Không dùng các nick sale khác like, chia sẻ, theo dõi hay bình luận Trang.</b> Đó là tương tác giả (hành vi không xác thực): Facebook giảm tiếp cận của Trang và có thể khóa cả cụm nick lẫn Trang. Trang lớn lên nhờ bài có ích, đăng đều đúng giờ, và khách thật được mời từ các bình luận trong nhóm.</p>
+      <p class="fr-note" id="pgReady" hidden></p>
+      <div class="pr-stats fr-stats" id="pgStats"></div>
+      <div class="fr-grid">
+        <div>
+          <section class="card"><div class="card-h"><div><h3>Bài sắp đăng lên Trang</h3><p class="small muted" style="margin:2px 0 0">Bài chờ duyệt nằm ở mục Bài đăng (nếu bật duyệt trước).</p></div></div>
+            <div class="cm-list" id="pgUp"><p class="muted small">Đang tải…</p></div></section>
+          <section class="card" style="margin-top:12px"><div class="card-h"><div><h3>Bài Trang 30 ngày</h3><p class="small muted" style="margin:2px 0 0" id="pgStatAt"></p></div></div>
+            <ul class="cm-top" id="pgPosted"></ul></section>
+        </div>
+        <div>
+          <section class="card"><div class="card-h"><div><h3>Chủ đề nào được tương tác</h3><p class="small muted" style="margin:2px 0 0">Tương tác = cảm xúc + 2 × bình luận + 3 × chia sẻ. Chủ đề tương tác cao được viết nhiều hơn, vẫn chừa 30% thử đều. Bỏ tích để không viết chủ đề đó.</p></div></div>
+            <ul class="cm-top" id="pgTopics"></ul></section>
+          <form class="card" id="pgForm" style="margin-top:12px"><h3>Cài đặt nuôi Page</h3>
+            <label class="row small"><input type="checkbox" id="pgOn"> Bật nuôi Page (Lan viết mỗi sáng, nick quản trị đăng theo giờ)</label>
+            <label class="f" for="pgUrl">Link Trang<input type="url" id="pgUrl" placeholder="https://facebook.com/moctamvn"></label>
+            <label class="f" for="pgAdmin">Nick quản trị Trang (nick sale là quản trị viên / biên tập viên của Trang)<select id="pgAdmin"><option value="">Chọn nick</option></select></label>
+            <div class="grid3">
+              <label class="f" for="pgPer">Bài mỗi ngày (0–3)<input type="number" id="pgPer" min="0" max="3"></label>
+              <label class="f" for="pgTimes">Giờ đăng (cách nhau dấu phẩy)<input type="text" id="pgTimes" placeholder="08:30,20:30"></label>
+              <label class="f" for="pgSale">% bài giới thiệu sản phẩm<input type="number" id="pgSale" min="0" max="50"></label>
+            </div>
+            <label class="row small"><input type="checkbox" id="pgReview"> Sếp duyệt từng bài trước khi đăng (bài nằm ở cột Chờ duyệt của mục Bài đăng)</label>
+            <div class="row wrap" style="margin-top:8px"><button class="btn primary" type="submit">Lưu cài đặt</button></div>
+            <p class="small muted" style="margin:8px 0 0">Nick quản trị phải đăng nhập và là quản trị viên Trang. Facebook đổi chữ nút “Chuyển ngay” thì thêm chữ mới vào <code>page_switch</code> trong <code>backend/fb_selectors.json</code>. Bài Trang tính vào trần bài/ngày của nick theo Luật Facebook.</p>
+          </form>
+        </div>
+      </div>
+    </section>
+

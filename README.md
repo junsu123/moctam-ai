@@ -149,6 +149,33 @@ luật nghỉ / nửa trần như cũ. Nick rơi xuống Nguy hiểm thì nhật
 Đăng nhập nick, nút **Mở Chrome** và **Mở hồ sơ** (kết bạn) luôn hiện cửa sổ trên màn hình vì cần người thao tác. Đổi chế độ
 áp dụng từ lượt việc tiếp theo. Máy vẫn phải bật, không ngủ và còn mạng thì sale mới làm việc được.
 
+## Nuôi Page (không dùng Graph API)
+
+Mục **Nuôi Page** (thanh bên, dưới Bình luận). Trang lớn lên bằng bài có ích, đăng đều, đúng giờ; phần mềm làm như sau:
+- **Lan viết lịch nội dung**: mỗi sáng 07:30 Lan viết đủ số bài cho các giờ còn lại hôm nay (mặc định 1 bài/ngày, tối đa 3, giờ
+  08:30 và 20:30, sửa được). Tỉ lệ **80/20**: phần lớn là bài có ích (kiến thức nguyên liệu, cách pha / công thức, hậu trường xưởng,
+  mẹo bán hàng online cho người bán lại, hỏi đáp khách sỉ từ sổ kiến thức, câu hỏi ý kiến), khoảng 20% (sửa được) giới thiệu sản phẩm
+  kèm lời mời nhắn Trang / Zalo. Bài có ích không chèn quảng cáo, không ghi giá, không hứa công dụng chữa bệnh, không bịa lời khách,
+  không kêu gọi like / share / tag; câu mở đầu khác các bài gần đây; qua Luật Facebook. Nút **Lan viết 1 bài ngay**. Bật ô **Sếp duyệt
+  từng bài** thì bài nằm ở cột Chờ duyệt của mục Bài đăng.
+- **Nick quản trị đăng dưới tên Trang**: chọn một nick sale là quản trị viên / biên tập viên của Trang và điền link Trang. Đến giờ, trong
+  ca làm việc của nick đó, sale mở Trang, bấm **Chuyển ngay** (dùng Facebook dưới tên Trang), đăng bài kèm ảnh như đăng trang cá nhân,
+  lưu link bài, rồi **chuyển về nick cá nhân** (mở lại Trang thấy nút Chuyển ngay là đã về). Chưa chuyển về được thì màn Lỗi báo; ca sau
+  sale chuyển về trước khi làm bất cứ việc gì, không được thì dừng ca, để **không bao giờ đăng bài nhóm / bình luận dưới tên Trang**.
+  Bài Trang tính vào trần bài/ngày của nick (Luật Facebook). Facebook đổi chữ nút thì sửa `page_switch`, `account_menu`, `switch_back`,
+  `page_composer` trong `backend/fb_selectors.json`.
+- **Học từ tương tác thật**: mỗi ngày một lần, trong ca làm việc sẵn có của nick quản trị (không mở Chrome riêng), sale đọc số người theo
+  dõi Trang và cảm xúc / bình luận / chia sẻ của 6 bài Trang gần nhất (14 ngày). Thẻ **Chủ đề nào được tương tác** cho biết số bài,
+  tương tác trung bình (cảm xúc + 2 × bình luận + 3 × chia sẻ), số khách của từng chủ đề; Lan viết chủ đề tương tác cao nhiều hơn (vẫn
+  chừa 30% thử đều, không lặp chủ đề bài trước). Bỏ tích chủ đề để không viết chủ đề đó.
+- Bình luận dưới bài Trang được sale quét để lấy khách như mọi bài khác (chỉ đọc). Nick **không** tự trả lời dưới bài Trang bằng tên
+  nick cá nhân và không up bài Trang.
+- **Không làm**: không dùng các nick sale khác like / chia sẻ / theo dõi / bình luận Trang để “seeding”. Đó là tương tác giả (hành vi
+  không xác thực): Facebook giảm tiếp cận của Trang, có thể khóa cả cụm nick lẫn Trang.
+
+Đã kết nối Graph API (Cài đặt → Fanpage) thì bài Trang không có nick quản trị vẫn đăng qua API như trước; bài có nick quản trị luôn đăng
+qua Chrome của nick đó.
+
 ## Luật Facebook: học luật, kiểm bài, giữ nhịp đăng an toàn
 
 Mục **Luật Facebook** (nhóm Facebook ở thanh bên). Cả đội học luật từ chính sách của Meta và luật quảng cáo thực phẩm Việt Nam:
@@ -1301,6 +1328,7 @@ backend/
   bump_watch.py  Bình luận có ích không: đo từng lượt, thôi bài không ra gì, nhóm xóa bình luận thì ngừng
   page_inbox.py  Tin nhắn Fanpage (Messenger): Hà soạn trả lời, sếp duyệt, gửi trong 24 giờ
   nick_health.py Sức khỏe từng nick: điểm rủi ro 30 ngày, tự giảm trần nick yếu, báo Telegram
+  page_grow.py   Nuôi Page không API: Lan viết lịch 80/20, nick quản trị chuyển sang Trang đăng bài, đọc tương tác, học chủ đề
   group_feed.py  Lướt bảng tin nhóm: mọi nick đọc >=20 bài, lọc 3 lớp (chữ, Claude, học từ sếp), bình luận người hỏi mua (kèm ảnh)
                  và chào người bán online (chỉ chữ, trần riêng), nhịp lướt theo luật nick, ngừng chào ở nhóm xóa bình luận
   friends.py     Kết bạn trong nhóm: điểm sôi nổi của nhóm, đọc bảng tin tìm người hợp tệp khách, trần lời mời, mở hồ sơ cho sale

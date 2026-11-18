@@ -9,6 +9,7 @@
     if(P.startsWith("/comments")) return demoCm(method,P,qs,body||{});
     if(P.startsWith("/page-inbox")) return demoIb(method,P,qs,body||{});
     if(P.startsWith("/nick-health")) return demoNh(method,P,qs,body||{});
+    if(P.startsWith("/page-grow")) return demoPg(method,P,qs,body||{});
     if(P.startsWith("/replies")||P.startsWith("/feed")) return demoRp(method,P,qs,body||{});
       if(P.startsWith("/agents/")&&(method==="PUT"||method==="DELETE")){ S.prof=S.prof||{}; const aid=P.split("/")[2], cur=S.prof[aid]=S.prof[aid]||{};
        if(method==="DELETE"){ delete S.prof[aid]; return {id:aid}; }

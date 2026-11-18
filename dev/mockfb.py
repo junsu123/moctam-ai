@@ -21,7 +21,8 @@ window.showPreviews = (d, files, box) => { if (window.NOPREVIEW) return;
   setTimeout(() => bar.remove(), 1500);
 };
 </script>"""
-MODE = {"graphql": "url", "pending": False}   # graphql: url | id | none
+MODE = {"graphql": "url", "pending": False}
+PAGE = {"as": False}  # nick đang dùng Facebook dưới tên Trang Mộc Tâm   # graphql: url | id | none
 
 MODERN_COMPOSER = """<div role="button" tabindex="0" id="open"><span>Bạn viết gì đi...</span></div>
 <script>
@@ -579,6 +580,19 @@ class H(BaseHTTPRequestHandler):
             return self._html(seller_html(path.strip("/")))
         if path == "/me":
             return self._html(COMPOSER % {"label": "Bạn đang nghĩ gì?"} + feed("/me", "/posts/pfbid{id}"))
+        if path == "/moctampage":  # Trang: chưa chuyển thì có nút Chuyển ngay; đã chuyển thì có ô viết bài + menu chuyển về
+            top = "<h1>Mộc Tâm - Trà túi lọc</h1><div>1,2K người theo dõi</div>"
+            sw = ('<script>const sw=(on)=>fetch("/pageswitch",{method:"POST",body:JSON.stringify({on})}).then(()=>location.href="/moctampage");</script>')
+            if PAGE["as"]:
+                acct = ('<div role="button" aria-label="Trang cá nhân của bạn" id="acct">Mộc Tâm</div><div id="menu" hidden>'
+                        '<div role="button" id="back">Chuyển sang Linh Nguyễn</div></div>'
+                        '<script>acct.onclick=()=>{menu.hidden=false}; back.onclick=()=>sw(0);</script>')
+                return self._html(sw + acct + top + COMPOSER % {"label": "Bạn đang nghĩ gì?"} + feed("/moctampage", "/moctampage/posts/pfbid{id}"))
+            return self._html(sw + top + '<div role="button" id="go" onclick="sw(1)">Chuyển ngay</div>' + feed("/moctampage", "/moctampage/posts/pfbid{id}"))
+        m = re.match(r"^/moctampage/posts/pfbid(\d+)$", path)
+        if m:
+            p = next((x for x in POSTS if x["id"] == int(m.group(1))), {"text": ""})
+            return self._html(f"<h1>Mộc Tâm</h1><div>{html.escape(p['text'])}</div><div>Tất cả cảm xúc: 12</div><div>3 bình luận</div><div>2 lượt chia sẻ</div>")
         return self._html("<h1>Facebook giả lập</h1>")
 
     def do_POST(self):
@@ -608,8 +622,11 @@ class H(BaseHTTPRequestHandler):
             MY["on"] = bool(d.get("on", True))
         if self.path == "/leave":
             MY["groups"].pop(d["slug"], None); MY["left"].append(d["slug"])
+        if self.path == "/pageswitch":
+            PAGE["as"] = bool(d.get("on"))
         if self.path == "/record":
             d["id"] = 1000 + len(POSTS)
+            d["as_page"] = PAGE["as"]
             if MODE["pending"] and d.get("where") == "/groups/modern":
                 d["pending"] = True
             POSTS.append(d)

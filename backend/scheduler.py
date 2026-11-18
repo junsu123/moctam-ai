@@ -40,8 +40,8 @@ def _tick():
         learning.nightly_async()
     # Bài Fanpage đã duyệt và đến giờ -> đăng qua Graph API
     if facebook.configured():
-        for p in db.q("""SELECT * FROM posts WHERE target_type='page' AND status='scheduled'
-                         AND scheduled_for <= ?""", (stamp,)):
+        for p in db.q("""SELECT * FROM posts WHERE target_type='page' AND status='scheduled' AND account_id IS NULL
+                         AND scheduled_for <= ?""", (stamp,)):  # bài có nick quản trị: nick đăng qua Chrome
             res = facebook.publish_post(p)
             if res["ok"]:
                 workflows.mark_posted(p["id"], res["url"], "Fanpage (tự động)", res["id"])
@@ -89,6 +89,8 @@ def _tick():
     replies.tick(now)  # Bảo tìm bài đang hỏi mua, viết sẵn câu trả lời chờ sếp duyệt
     import group_feed
     group_feed.tick(now)  # mọi nick lướt bảng tin nhóm theo nhịp luật Facebook, Bảo viết sẵn bình luận chờ duyệt
+    import page_grow
+    page_grow.tick(now)  # nuôi Trang: mỗi sáng Lan viết bài cho Trang, nick quản trị đăng trong ca
     import nick_health
     nick_health.tick(now)  # mỗi giờ: nick rơi xuống Nguy hiểm thì báo Telegram
     import page_inbox

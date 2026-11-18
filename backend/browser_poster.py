@@ -774,6 +774,53 @@ def _block(aid: int, reason: str):
         print("[telegram]", e)
 
 
+def _page_url() -> str:
+    u = (db.get_settings().get("page_url") or "").strip()
+    return fb_url(u) if u else ""
+
+
+def _switch_to_page(page, aid: int):
+    """Nick quản trị chuyển sang dùng Facebook dưới tên Trang (nút “Chuyển ngay” trên Trang)."""
+    s, url = selectors(), _page_url()
+    if not url:
+        raise RuntimeError("Chưa điền link Trang (mục Nuôi Page → Cài đặt)")
+    page.goto(url, wait_until="domcontentloaded", timeout=60000)
+    page.wait_for_timeout(3000)
+    _check_blocked(page)
+    if _visible_first(page, s["page_switch"]):
+        db.set_setting("page_acting_aid", str(aid))  # ghi trước: lỡ đứt giữa chừng thì ca sau chuyển về trước khi làm việc nhóm
+        _wait_click(page, s["page_switch"], timeout=10)
+        page.wait_for_timeout(3500)
+        _wait_click(page, s["page_switch"], timeout=3)  # hộp xác nhận (nếu có)
+        page.wait_for_timeout(2500)
+        page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        page.wait_for_timeout(3000)
+    if _visible_first(page, s["page_switch"]):
+        raise RuntimeError("Không chuyển sang Trang được: nick này chưa là quản trị viên / biên tập viên của Trang, hoặc Facebook đổi chữ "
+                           "nút “Chuyển ngay” (thêm chữ đang thấy vào page_switch trong backend/fb_selectors.json)")
+
+
+def _switch_back(page, aid: int) -> bool:
+    """Chuyển về nick cá nhân. Xác nhận bằng cách mở lại Trang: lại thấy nút “Chuyển ngay” là đã về."""
+    s, url, acc = selectors(), _page_url(), accounts.get(aid) or {}
+    for _ in range(2):
+        try:
+            if _wait_click(page, s["account_menu"], timeout=8):
+                page.wait_for_timeout(1500)
+                if _wait_click(page, ([acc["name"]] if acc.get("name") else []) + s["switch_back"], timeout=6, role=None):
+                    page.wait_for_timeout(4000)
+            page.goto(url or FB_BASE, wait_until="domcontentloaded", timeout=60000)
+            page.wait_for_timeout(2500)
+            if not url or _visible_first(page, s["page_switch"]):
+                db.set_setting("page_acting_aid", "")
+                return True
+        except Blocked:
+            raise
+        except Exception as e:
+            print("[page switch back]", e)
+    return False
+
+
 def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
     """Đăng (hoặc đăng thử) một bài bằng nick đang mở."""
     post = db.one("""SELECT p.*, g.url group_url, g.name group_name FROM posts p
@@ -796,6 +843,9 @@ def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
                 raise RuntimeError(f"Nhóm “{post.get('group_name') or ''}” chưa có link. Vào Hội nhóm, bấm “Thêm link” ở dòng nhóm này "
                                    "rồi bấm Đăng lại")
             url, labels = fb_url(post["group_url"]), selectors()["group_composer"]
+        elif post["target_type"] == "page":  # nuôi Trang không qua API: chuyển sang Trang rồi đăng như trang cá nhân
+            _switch_to_page(page, aid)
+            url, labels = _page_url(), selectors()["page_composer"] + selectors()["profile_composer"]
         else:
             url, labels = f"{FB_BASE}/me", selectors()["profile_composer"]
         imgs, warn = media_folder.pick_for_post(post, acc["sale_id"])
@@ -838,6 +888,17 @@ def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
             import group_finder
             group_finder.mark_not_member(post["group_id"], aid)
         db.log(agent, "Lỗi đăng bài", f"Bài #{post_id} (nick {accounts.label(acc)}): {str(e).splitlines()[0][:200]}")
+    finally:
+        if post.get("target_type") == "page" and db.get_settings().get("page_acting_aid") == str(aid):
+            try:
+                back = _switch_back(page, aid)
+            except Exception:
+                back = False
+            if not back:
+                import errors
+                errors.report("browser", "Nick quản trị chưa chuyển về nick cá nhân được",
+                              f"Nick {accounts.label(acc)} vừa đăng bài Trang nhưng chưa chuyển về. Ca sau sale chuyển về trước khi làm việc "
+                              "nhóm; không được thì dừng ca. Sếp mở Chrome nick này, bấm ảnh đại diện → chuyển về trang cá nhân.", screen="page")
 
 
 def _job_post(pw, aid: int, post_id: int, dry_run: bool):
@@ -1039,6 +1100,8 @@ def _find_permalink(page, post: dict) -> tuple[str | None, str]:
     if post["target_type"] == "group" and post.get("group_url"):
         base = fb_url(post["group_url"]).rstrip("/")
         pages = [base + p for p in s.get("my_posts_paths", ["/my_posted_content", ""])]
+    elif post["target_type"] == "page" and _page_url():
+        pages = [_page_url()]
     else:
         pages = [f"{FB_BASE}/me"]
     for u in pages:
@@ -1229,6 +1292,7 @@ def _scan_comments(page, post: dict, sale: dict, acc: dict | None = None) -> dic
                         VALUES (?,?,?,?,?,?,?)""", (post["id"], author, h, lead_id, sale["id"], (acc or {}).get("id"), db.now()))
         lead = db.one("SELECT phone FROM leads WHERE id=?", (lead_id,)) if lead_id else None
         if (lead_id and not (lead or {}).get("phone") and st.get("auto_reply_comments") == "1" and texts
+                and post.get("target_type") != "page"  # bài Trang: không trả lời dưới tên nick cá nhân
                 and _replies_today((acc or {}).get("id")) < max_reply
                 and not db.one("SELECT id FROM comment_seen WHERE lead_id=? AND replied=1", (lead_id,))):
             try:
@@ -1638,6 +1702,9 @@ def due_work(aid: int, stamp: str | None = None) -> dict:
         try:
             import bump_watch
             work["checks"] = bump_watch.due_checks(aid)
+            import page_grow
+            if page_grow.stats_due(aid):
+                work["page_stats"] = True
         except Exception as e:
             print("[bump check]", e)
     return work
@@ -1656,6 +1723,8 @@ def _job_session(pw, aid: int):
     ctx, page = _open(pw, aid)
     done = {"posts": 0, "bumps": 0, "scan": 0, "links": 0, "replies": 0}
     try:
+        if db.get_settings().get("page_acting_aid") == str(aid) and not _switch_back(page, aid):  # ca trước còn đang dưới tên Trang
+            raise RuntimeError("Nick đang dùng Facebook dưới tên Trang, chưa chuyển về được: dừng ca để không đăng nhóm dưới tên Trang")
         for pid in work["posts"]:
             _do_post(ctx, page, aid, pid, False)
             done["posts"] += 1
@@ -1673,6 +1742,9 @@ def _job_session(pw, aid: int):
             _do_bump(ctx, page, aid, bid)
             done["bumps"] += 1
             _pause(page, 15, 40)
+        if work.get("page_stats"):  # nick quản trị Trang: mỗi ngày đọc số người theo dõi và tương tác bài Trang (chỉ đọc)
+            import page_grow
+            page_grow.read_stats(page)
         if work.get("checks"):  # bình luận up bài trên 6 giờ còn không, nhóm xóa thì ngừng bình luận nhóm đó
             import bump_watch
             bump_watch.check(page, aid, work["checks"])

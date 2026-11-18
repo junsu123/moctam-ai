@@ -510,7 +510,11 @@ def plan_distribution(keywords: list[str] | None = None, limit: int | None = Non
     page_slots = ["10:00", "19:30"]
     for i, post in enumerate([] if keywords else with_images(db.q("SELECT * FROM posts WHERE status='approved' AND target_type='page' ORDER BY id"))[:2]):
         when = f"{db.today()} {page_slots[i]}"
-        db.run("UPDATE posts SET scheduled_for=?, status='scheduled' WHERE id=?", (when, post["id"]))
+        import facebook
+        import page_grow
+        adm = None if facebook.configured() else page_grow.admin_account()  # không có API: nick quản trị đăng qua Chrome
+        db.run("UPDATE posts SET scheduled_for=?, status='scheduled', account_id=?, sale_id=? WHERE id=?",
+               (when, (adm or {}).get("id"), (adm or {}).get("sale_id"), post["id"]))
         plan.append({"post_id": post["id"], "group": "Fanpage", "time": when})
     adm = sum(x["count"] for x in admin_plan)
     db.log("tuan", "Xếp lịch", (f"Đã xếp {len(plan)} bài cho hôm nay" + (f", cộng {adm} bài cho nhóm mình quản lý" if adm else "")) if plan or adm
@@ -559,7 +563,7 @@ def plan_bumps(force: bool = False) -> int:
     import accounts
     for sale in accounts.working():  # mỗi nick up bài của chính nick đó
         posts = db.q("""SELECT p.id, p.product_id, p.bump_reset_at, COALESCE(pr.hot, 0) hot FROM posts p LEFT JOIN products pr ON pr.id=p.product_id
-                        WHERE p.status='posted' AND p.account_id=? AND COALESCE(p.bump_enabled,1)=1
+                        WHERE p.status='posted' AND p.account_id=? AND COALESCE(p.bump_enabled,1)=1 AND p.target_type != 'page'
                         AND COALESCE(p.permalink_status,'') != 'removed' AND p.posted_at >= ? AND p.posted_at <= ?
                         AND (p.group_id IS NULL OR p.group_id NOT IN (SELECT id FROM groups WHERE no_bump_until > ?))  -- nhóm đã xóa bình luận
                         AND p.id NOT IN (SELECT post_id FROM bumps WHERE created_at LIKE ? AND status NOT IN ('skipped', 'failed'))  -- lượt lỗi được thử lại khi bấm Up bài ngay

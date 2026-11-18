@@ -152,5 +152,29 @@
     "Post comment",
     "Post",
     "Send"
+  ],
+  "page_switch": [
+    "Chuyển ngay",
+    "Switch now",
+    "Chuyển sang Trang",
+    "Switch to Page"
+  ],
+  "page_composer": [
+    "Bạn đang nghĩ gì",
+    "Tạo bài viết",
+    "What's on your mind",
+    "Create post"
+  ],
+  "account_menu": [
+    "Trang cá nhân của bạn",
+    "Your profile",
+    "Tài khoản",
+    "Account"
+  ],
+  "switch_back": [
+    "Chuyển sang",
+    "Switch to",
+    "Xem tất cả trang cá nhân",
+    "See all profiles"
   ]
 }

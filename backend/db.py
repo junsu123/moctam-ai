@@ -181,6 +181,7 @@ CREATE TABLE IF NOT EXISTS ai_fallback (
 CREATE TABLE IF NOT EXISTS ai_batches (
   id TEXT PRIMARY KEY, task TEXT, meta TEXT, status TEXT DEFAULT 'in_progress', created_at TEXT, ended_at TEXT
 );
+CREATE TABLE IF NOT EXISTS page_stats (day TEXT PRIMARY KEY, followers INTEGER, fans INTEGER, created_at TEXT);
 CREATE TABLE IF NOT EXISTS page_threads (
   id INTEGER PRIMARY KEY AUTOINCREMENT, conv_id TEXT UNIQUE, psid TEXT, name TEXT, last_text TEXT, last_at TEXT, page_last_at TEXT,
   lead_id INTEGER, draft TEXT, status TEXT DEFAULT 'waiting', sent_text TEXT, sent_at TEXT, error TEXT, created_at TEXT, updated_at TEXT
@@ -391,6 +392,7 @@ MIGRATIONS = [
     ("posts", "bump_count", "INTEGER DEFAULT 0"), ("posts", "last_bump_at", "TEXT"),
     ("bumps", "comments_before", "INTEGER"), ("bumps", "leads_before", "INTEGER"), ("bumps", "gain_comments", "INTEGER"),
     ("bumps", "gain_leads", "INTEGER"), ("bumps", "measured_at", "TEXT"), ("bumps", "checked_at", "TEXT"),
+    ("posts", "page_topic", "TEXT"), ("posts", "reactions", "INTEGER DEFAULT 0"), ("posts", "shares", "INTEGER DEFAULT 0"),
     ("bumps", "removed", "INTEGER DEFAULT 0"), ("groups", "no_bump_until", "TEXT"), ("posts", "bump_reset_at", "TEXT"),
     ("leads", "post_id", "INTEGER"),
     ("leads", "phone", "TEXT"), ("leads", "origin", "TEXT DEFAULT 'manual'"), ("leads", "fb_author", "TEXT"),
@@ -450,6 +452,9 @@ DEFAULT_SETTINGS = {
     "bump_stop_after": "3",  # bài N lượt bình luận gần nhất không thêm bình luận/khách nào: thôi bình luận bài đó (0 = không ngừng)
     "bump_check": "1",  # 6 giờ sau nick mở lại bài xem bình luận còn không; nhóm xóa thì ngừng bình luận nhóm đó
     "bump_rest_days": "30",
+    "page_grow_on": "1",  # nuôi Trang qua Chrome của nick quản trị (không dùng Graph API): Lan viết, nick đăng dưới tên Trang
+    "page_url": "", "page_admin_account": "", "page_grow_per_day": "1", "page_grow_times": "08:30,20:30", "page_grow_sale_pct": "20",
+    "page_grow_review": "0", "page_grow_off": "", "page_grow_plan_time": "07:30", "page_acting_aid": "",
     "nick_health_auto": "1",  # nick "Cần để ý" chạy 75% trần, "Nguy hiểm" 50% (Bảng sức khỏe nick)
     "page_inbox_on": "1",  # đọc tin nhắn Fanpage (Messenger, Graph API), Hà soạn trả lời chờ sếp duyệt
     "page_inbox_minutes": "10",
@@ -709,7 +714,7 @@ def sample_counts() -> dict:
 
 # ---------------------------------------------------------------- bắt đầu chạy thật
 RESET_TABLES = {  # bảng: mô tả cho sếp
-    "posts": "bài đăng", "prospects": "khách sỉ Mai tìm", "bumps": "lượt up bài", "page_threads": "tin nhắn Fanpage", "image_usage": "lịch sử dùng ảnh", "leads": "khách hàng",
+    "posts": "bài đăng", "prospects": "khách sỉ Mai tìm", "bumps": "lượt up bài", "page_threads": "tin nhắn Fanpage", "page_stats": "số liệu Trang", "image_usage": "lịch sử dùng ảnh", "leads": "khách hàng",
     "replies": "tin nhắn Hà soạn", "comment_seen": "bình luận đã quét", "meetings": "cuộc họp",
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",
