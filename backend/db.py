@@ -450,6 +450,7 @@ DEFAULT_SETTINGS = {
     "bump_stop_after": "3",  # bài N lượt bình luận gần nhất không thêm bình luận/khách nào: thôi bình luận bài đó (0 = không ngừng)
     "bump_check": "1",  # 6 giờ sau nick mở lại bài xem bình luận còn không; nhóm xóa thì ngừng bình luận nhóm đó
     "bump_rest_days": "30",
+    "nick_health_auto": "1",  # nick "Cần để ý" chạy 75% trần, "Nguy hiểm" 50% (Bảng sức khỏe nick)
     "page_inbox_on": "1",  # đọc tin nhắn Fanpage (Messenger, Graph API), Hà soạn trả lời chờ sếp duyệt
     "page_inbox_minutes": "10",
     "page_inbox_auto": "0",  # 1: tự gửi câu Hà soạn không chờ duyệt (vẫn trong 24 giờ, vẫn qua Luật Facebook)

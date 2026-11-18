@@ -116,6 +116,25 @@ sang giao diện máy tính. Nếu không đính được ảnh, sale vẫn đă
 hạn chế dù đã giãn cách, nên giữ số bài/ngày vừa phải, nội dung có giá trị và đúng luật từng nhóm.
 Máy chạy phần mềm phải bật trong giờ đăng bài; Chrome của các nick chạy trên chính máy đó.
 
+### Sức khỏe từng nick
+
+Thẻ **Sức khỏe từng nick · 30 ngày** đầu trang **Nhân viên sale**: mỗi nick một điểm 0–100 (100 = khỏe), nick yếu nhất xếp đầu.
+Điểm bị trừ theo dấu hiệu rủi ro thật trong 30 ngày:
+
+| Dấu hiệu | Trừ |
+|---|---|
+| Bị Facebook chặn / checkpoint trong 7 ngày (8–30 ngày trước) | 35 (20) mỗi lần |
+| Bài bị gỡ / ẩn | 8 mỗi bài, tối đa 32 |
+| Bình luận up bài / trả lời / chào bị nhóm xóa | 6 mỗi bình luận, tối đa 24 |
+| Bài đăng lỗi trong 7 ngày | 3 mỗi bài, tối đa 12 |
+| Mời kết bạn từ 10 người mà dưới 30% đồng ý | 10 |
+| Đang checkpoint / lỗi đăng nhập (chưa đăng nhập) | 25 (10) |
+
+Từ 80 điểm là **Khỏe**, 50–79 **Cần để ý**, dưới 50 **Nguy hiểm**. Mỗi nick hiện các dấu hiệu, điểm bị trừ và việc nên làm
+(VD “Bớt bình luận ở nhóm đã xóa bình luận”). **Tự giảm việc** (mặc định bật, ô trên thẻ): nick Cần để ý chạy 75% trần Luật Facebook,
+Nguy hiểm chạy 50% (bài, lượt up, xin vào nhóm, lời mời, giãn cách dài ra), để giảm việc trước khi bị khóa; nick vừa bị chặn vẫn theo
+luật nghỉ / nửa trần như cũ. Nick rơi xuống Nguy hiểm thì nhật ký và Telegram báo (mỗi nick một lần mỗi ngày, cần bật cảnh báo nick).
+
 ### Chrome chạy ngầm: sếp vẫn dùng máy bình thường
 
 **Cài đặt → Chrome của sale khi làm việc** (mặc định **Chạy ngầm**):
@@ -1281,6 +1300,7 @@ backend/
   comments.py    Màn hình Bình luận: lịch bình luận theo ngày, sửa / hủy / gửi lại, lý do từng bài
   bump_watch.py  Bình luận có ích không: đo từng lượt, thôi bài không ra gì, nhóm xóa bình luận thì ngừng
   page_inbox.py  Tin nhắn Fanpage (Messenger): Hà soạn trả lời, sếp duyệt, gửi trong 24 giờ
+  nick_health.py Sức khỏe từng nick: điểm rủi ro 30 ngày, tự giảm trần nick yếu, báo Telegram
   group_feed.py  Lướt bảng tin nhóm: mọi nick đọc >=20 bài, lọc 3 lớp (chữ, Claude, học từ sếp), bình luận người hỏi mua (kèm ảnh)
                  và chào người bán online (chỉ chữ, trần riêng), nhịp lướt theo luật nick, ngừng chào ở nhóm xóa bình luận
   friends.py     Kết bạn trong nhóm: điểm sôi nổi của nhóm, đọc bảng tin tìm người hợp tệp khách, trần lời mời, mở hồ sơ cho sale

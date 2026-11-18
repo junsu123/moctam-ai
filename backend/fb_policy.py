@@ -275,7 +275,8 @@ def factor(acc: dict) -> float:
                 f = min(f, float(s().get("fbp_new_nick_factor") or 0.5))
         except ValueError:
             pass
-    return f
+    import nick_health  # nick nhiều dấu hiệu rủi ro (bài bị gỡ, bình luận bị xóa...): tự giảm việc trước khi bị khóa
+    return min(f, nick_health.factor(acc))
 
 
 def limits(acc: dict) -> dict:
@@ -378,6 +379,8 @@ def _activity_24h(aid: int) -> dict:
 
 def on_block(aid: int, reason: str) -> dict:
     """Nick bị chặn / kiểm tra: ghi sự cố, cho nghỉ, giảm nửa giới hạn một thời gian, rút bài học."""
+    import nick_health
+    nick_health._cache.pop(aid, None)
     act = _activity_24h(aid)
     rest_days, after_days = _i("fbp_rest_days", 3), _i("fbp_after_days", 7)
     rest_until = (db.clock() + timedelta(days=rest_days)).strftime("%Y-%m-%d %H:%M:%S")

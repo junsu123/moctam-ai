@@ -3,7 +3,7 @@ const LOGIN={ok:["ok","Đã đăng nhập"],not_logged_in:["warn","Chưa đăng 
 const PST={scheduled:["warn","Trong lịch"],posting:["talking","Đang đăng"],posted:["ok","Đã đăng"],failed:["bad","Lỗi"],approved:["","Chờ xếp"]};
 let salesBusy=false;
 async function loadSales(){
-  if(salesBusy) return; salesBusy=true;
+  if(salesBusy) return; salesBusy=true; loadHealth();
   try{
     ST.sales=await api("/sales"); const grid=$("#salesGrid");
     const gd=$("#salesGuide"); if(gd&&!gd.dataset.touched){ gd.open=!ST.sales.some(x=>!x.is_sample&&x.status!=="fired"); }
@@ -72,3 +72,16 @@ $("#saleForm").addEventListener("submit",async e=>{ e.preventDefault();
   try{ await api("/sales","POST",{name:$("#saName").value,fb_name:$("#saFb").value}); e.target.reset(); toast((hadSample?"Đã tuyển sale mới. Các sale mẫu đã rời văn phòng. ":"Đã tuyển sale mới. ")+"Bấm Mở Chrome để đăng nhập nick đầu tiên, rồi thêm 2–4 nick nữa."); }catch(err){ toast(err.message); }
   loadSales(); refresh(); });
 
+/* sức khỏe từng nick */
+let nhAt=0;
+async function loadHealth(force){ if(!force&&Date.now()-nhAt<60000) return; nhAt=Date.now(); try{ ST.nh=await api("/nick-health"); }catch(e){ return; } renderHealth(); }
+function renderHealth(){ const d=ST.nh, c=d.counts||{}; $("#nhAuto").checked=!!d.auto;
+  const COL={good:"var(--accent)",warn:"var(--honey)",bad:"var(--danger)"}, CH={good:"ok",warn:"warn",bad:"bad"};
+  $("#nhSum").innerHTML=[["good","Khỏe"],["warn","Cần để ý"],["bad","Nguy hiểm"]].map(([k,t])=>`<span class="chip ${CH[k]}">${t}: ${c[k]||0}</span>`).join("");
+  $("#nhList").innerHTML=d.items.length?d.items.map(r=>`<li class="${r.level}"><div class="hd"><b title="${esc(r.name||"")}">${esc(r.name||"Nick #"+r.id)}</b><span class="small muted">${esc(r.sale_name||"")}</span><span class="sc" style="color:${COL[r.level]}">${r.score}</span></div>
+      <span class="meter" role="img" aria-label="Sức khỏe ${r.score}/100"><i style="width:${Math.max(3,r.score)}%;background:${COL[r.level]}"></i></span>
+      <div class="row wrap" style="gap:6px"><span class="chip ${CH[r.level]}">${esc(r.label)}</span>${r.factor<1?`<span class="chip">Đang chạy ${Math.round(r.factor*100)}% trần</span>`:""}</div>
+      ${r.signals.length?`<ul>${r.signals.map(s=>`<li>${esc(s.text)} <span class="muted">(−${s.minus})</span></li>`).join("")}</ul>`:'<p class="adv muted">Chưa có dấu hiệu rủi ro nào trong 30 ngày.</p>'}
+      ${r.advice.length?`<p class="adv"><b>Nên:</b> ${esc(r.advice[0])}</p>`:""}</li>`).join("")
+    :'<li class="muted small">Chưa có nick nào.</li>'; }
+$("#nhAuto").onchange=async e=>{ try{ ST.nh=await api("/nick-health/settings","PUT",{auto:e.target.checked?1:0}); renderHealth(); toast(e.target.checked?"Nick sức khỏe kém sẽ tự giảm việc":"Đã tắt tự giảm việc theo sức khỏe nick"); }catch(err){ toast(err.message); } };

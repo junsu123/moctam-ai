@@ -1,3 +1,10 @@
+  function demoNh(method,P,qs,body){ if(body&&"auto" in body) S.nhAuto=!!+body.auto; const auto=S.nhAuto!==false;
+    const SIG=[[],[["comment",18,"3 bình luận bị nhóm xóa"],["removed",8,"1 bài bị gỡ / ẩn"]],[["block",35,"Bị Facebook chặn / checkpoint 1 lần trong 7 ngày"],["removed",16,"2 bài bị gỡ / ẩn"],["friends",10,"Chỉ 17% lời mời kết bạn được đồng ý (2/12)"]]];
+    const ADV={block:"Cho nick nghỉ vài ngày, sếp đăng nhập tay lướt như người thường; giữ nửa trần khi chạy lại",comment:"Bớt bình luận ở nhóm đã xóa bình luận; câu bình luận ngắn, đúng nội dung bài",removed:"Xem nội quy các nhóm đã gỡ bài (Luật Facebook → sự cố), bớt đăng nhóm cấm bán hàng",friends:"Mời ít hơn, chỉ mời người đang hỏi nguồn hàng hợp ngành"};
+    const acs=S.accounts.filter(a=>a.enabled), items=acs.map((a,i)=>{ const sg=SIG[i===1?1:i===acs.length-1?2:0], sc=100-sg.reduce((n,x)=>n+x[1],0), lv=sc>=80?"good":sc>=50?"warn":"bad";
+      return {id:a.id,name:a.name,sale_name:(S.sales.find(x=>x.id===a.sale_id)||{}).name,score:sc,level:lv,label:{good:"Khỏe",warn:"Cần để ý",bad:"Nguy hiểm"}[lv],
+        signals:sg.map(([c,m,t])=>({code:c,minus:m,text:t})),advice:sg.slice(0,2).map(x=>ADV[x[0]]),factor:auto?{good:1,warn:0.75,bad:0.5}[lv]:1}; }).sort((x,y)=>x.score-y.score);
+    const counts={good:0,warn:0,bad:0}; items.forEach(r=>counts[r.level]++); return {items,counts,auto}; }
   function demoIb(method,P,qs,body){ let m; const ago=min=>{ const d=new Date(Date.now()-min*60000), p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:00`; };
     if(!S.ib){ S.ib={settings:{page_inbox_on:"1",page_inbox_minutes:"10",page_inbox_auto:"0"},last:now(),items:[
       {id:1,name:"Shop Mộc An",phone:null,last_text:"Shop mình cần nhập trà gừng túi lọc tầm 200 hộp, bên bạn báo giá sỉ giúp mình nhé",last_at:ago(35),status:"waiting",left_h:23.4,draft:`Dạ em chào shop Mộc An ạ! Trà gừng túi lọc bên em có sẵn, nhập 200 hộp được giá sỉ tốt. Shop cho em xin SĐT hoặc Zalo để em gửi catalog, ảnh thật và báo giá trực tiếp nhé? Hoặc shop nhắn Zalo ${S.settings.price_zalo||"0386992326"} ạ.`},
