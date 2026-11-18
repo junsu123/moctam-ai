@@ -271,6 +271,10 @@ class HttpConn:
         try:
             j = r.json()
         except ValueError:
+            if r.status_code == 200:  # nhiều hosting (và php -S) trả trang chủ thay cho lỗi 404 khi thiếu tệp
+                raise RuntimeError(f"{self.url} trả về một trang web, không phải cổng nhận của phần mềm. Chưa có {SYNC_FILE} trên hosting "
+                                   "(hosting trả trang mặc định thay cho lỗi 404), hoặc hosting chưa chạy PHP. Tải tệp ở mục Đăng lên hosting "
+                                   "rồi tải lên thư mục public_html.")
             raise RuntimeError(f"{self.url} trả về HTTP {r.status_code}, không phải cổng nhận của phần mềm (hosting chưa chạy PHP hoặc tường lửa chặn).")
         if not j.get("ok"):
             raise RuntimeError(f"Cổng nhận báo lỗi: {j.get('error')} ({path})")
