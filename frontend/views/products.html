@@ -1,0 +1,23 @@
+    <section class="view" id="v-products" hidden>
+      <div class="vh"><div><h1>Sản phẩm</h1><p>Thông tin này là "tài liệu bán hàng" các agent dùng khi viết bài và tư vấn. Ghi mô tả và điểm mạnh càng rõ, bài càng thuyết phục. <b>Không ghi giá</b>: mọi bài viết, tin nhắn đều mời khách liên hệ Zalo <b class="zalo-num">0386992326</b> để được báo giá (sửa số Zalo ở Cài đặt).</p></div></div>
+      <div class="hot-bar" id="hotBar"></div>
+      <div class="gen-bar" id="genBar"></div>
+      <div class="products" id="prodGrid"></div>
+      <form class="card" id="prodForm">
+        <h3>Thêm sản phẩm</h3>
+        <div class="grid3">
+          <label class="f" for="pName">Tên<input type="text" id="pName" required></label>
+          <label class="f" for="pCat">Dòng<select id="pCat"><option>Trà túi lọc</option><option>Bột ngũ cốc</option><option>Bột thiên nhiên</option><option>Cà phê hòa tan</option><option>Khác</option></select></label>
+          <label class="f" for="pMoq">Nhập tối thiểu<input type="text" id="pMoq" placeholder="50 hộp"></label>
+          <label class="f" for="pDesc">Mô tả<input type="text" id="pDesc"></label>
+          <label class="f" for="pSell" style="grid-column:1/-1">Điểm mạnh khi bán<input type="text" id="pSell"></label>
+          <label class="row small" style="grid-column:1/-1"><input type="checkbox" id="pHot"> 🔥 Sản phẩm đang bán chạy: cả đội tập trung chào mời</label>
+          <label class="row small" style="grid-column:1/-1"><input type="checkbox" id="pGen"> <span>📷 <b>Ảnh tổng hợp nhà máy</b>: mọi bài đăng chỉ lấy ảnh ngẫu nhiên trong thư mục ảnh của mục này</span></label>
+          <label class="f" for="pHotNote" style="grid-column:1/-1">Lưu ý khi chào sản phẩm bán chạy (không bắt buộc)<input type="text" id="pHotNote" placeholder="VD: đang vào mùa Tết, tặng 5 hộp khi nhập từ 100 hộp"></label>
+          <label class="f" for="pFolder" style="grid-column:1/-1">Thư mục ảnh của sản phẩm trên máy này (sale chọn ngẫu nhiên ảnh trong đây để đăng)<input type="text" id="pFolder" placeholder="VD: D:\AnhSanPham\Tra gung mat ong"></label>
+        </div>
+        <div><button class="btn primary" type="submit">Thêm sản phẩm</button></div>
+      </form>
+    </section>
+
+    <!-- KPI & BÁO CÁO -->

@@ -1,0 +1,34 @@
+    <section class="view" id="v-meeting" hidden>
+      <div class="vh">
+        <div><h1>Phòng họp</h1><p>Mỗi sáng các agent họp giao ban: báo cáo số liệu, tranh luận một vấn đề, rồi trưởng phòng chốt việc. Sếp có thể chen vào phát biểu bất cứ lúc nào.</p></div>
+      </div>
+      <div class="split">
+        <div class="stage-slot" id="slot-meeting"></div>
+        <div class="sidecol">
+          <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. Muốn họp về một chủ đề, nhắn CEO ở <a href="#ceo">Giao việc</a>, ví dụ “Họp về giá sỉ mùa Tết”. Sếp vẫn chen vào cuộc họp được.</p>
+          <div class="card" id="startCard" data-direct>
+            <h3>Mở cuộc họp mới</h3>
+            <label class="f" for="topicSel">Chủ đề tranh luận
+              <select id="topicSel"></select></label>
+            <label class="f" for="topicCustom">Hoặc sếp tự đặt chủ đề
+              <input type="text" id="topicCustom" placeholder="VD: Có nên làm combo quà Tết cho khách sỉ?"></label>
+            <button class="btn primary" id="btnStart">Bắt đầu họp</button>
+          </div>
+          <div class="card">
+            <div class="card-h"><h3 id="mTitle">Biên bản</h3><span class="chip" id="mState">—</span></div>
+            <p class="small muted" id="mTopic"></p>
+            <div class="transcript" id="transcript"><div class="empty">Chưa có cuộc họp nào. Bấm "Bắt đầu họp" để triệu tập.</div></div>
+            <form class="row" id="bossForm">
+              <input type="text" class="grow" id="bossText" placeholder="Sếp phát biểu…" aria-label="Sếp phát biểu">
+              <button class="btn primary" type="submit">Gửi</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Việc được giao</h3><ul class="tasks" id="taskList"></ul></div>
+        <div class="card"><h3>Các cuộc họp trước</h3><div class="sidecol" id="history"></div></div>
+      </div>
+    </section>
+
+    <!-- BÀI ĐĂNG -->

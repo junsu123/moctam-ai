@@ -1,0 +1,20 @@
+    <section class="view" id="v-samples" hidden>
+      <div class="vh"><div><h1>Thư viện bài mẫu sỉ</h1><p>Sếp tạo danh sách các bài đăng sỉ mẫu. Lan học từ thư viện này để viết lại hay hơn: mỗi bài đăng vào nhóm là một bản viết lại của một bài mẫu (giữ đúng thông tin, đổi cách nói, emoji, thứ tự, câu mở đầu), không đăng bài linh tinh, không ghi giá. Bài mẫu ra nhiều bình luận, nhiều khách thì Lan dùng nhiều hơn.</p></div>
+        <div class="row wrap"><label class="row small" style="white-space:nowrap"><input type="checkbox" id="smpOn"> Đăng nhóm theo bài mẫu</label><button class="btn" type="button" id="smpMake">Lan viết ngay 3 bài</button></div></div>
+      <p class="small muted" id="smpStats" style="margin:-6px 0 12px"></p>
+      <form class="card smp-add" id="smpForm">
+        <h3 style="margin:0 0 6px">Thêm bài mẫu</h3>
+        <label class="f" for="smpTitle">Tên gợi nhớ (không bắt buộc)<input type="text" id="smpTitle" placeholder="VD: Tìm đại lý trà túi lọc"></label>
+        <label class="f" for="smpText"><span>Nội dung bài mẫu. Chỗ cần số điện thoại viết <b>{số điện thoại}</b>, phần mềm thay bằng số Zalo báo giá.</span><textarea id="smpText" rows="9" placeholder="Dán bài đăng sỉ mẫu vào đây…"></textarea></label>
+        <div class="row wrap"><button class="btn primary" type="submit">Thêm vào thư viện</button><button class="btn ghost" type="button" id="smpBulkBtn">Dán nhiều bài một lần</button></div>
+        <div id="smpBulk" hidden class="stack" style="margin-top:8px"><label class="f" for="smpBulkText"><span>Dán nhiều bài, các bài cách nhau bằng một dòng chỉ có <b>---</b></span><textarea id="smpBulkText" rows="10"></textarea></label>
+          <div><button class="btn sm primary" type="button" id="smpBulkGo">Thêm tất cả</button></div></div>
+      </form>
+      <div class="smp-grid" id="smpList"><p class="muted small">Đang tải…</p></div>
+      <section class="card" id="crCard" style="margin-top:18px">
+        <div class="card-h"><div><h3>CEO học duyệt bài</h3><p class="small muted" style="margin:2px 0 0">CEO Đức học cách viết bài từ thư viện bài mẫu trên, từ quy định của sếp và từ mỗi lần sếp sửa hay hủy bài CEO đã duyệt. Mọi bài đăng nhóm đều được CEO chấm điểm trước khi đăng; chưa đạt thì Lan viết lại theo góp ý.</p></div></div>
+        <div id="crBody"><p class="muted small">Đang tải…</p></div>
+      </section>
+    </section>
+
+    <!-- LUẬT FACEBOOK -->

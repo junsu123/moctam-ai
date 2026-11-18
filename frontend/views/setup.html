@@ -1,0 +1,139 @@
+    <section class="view" id="v-setup" hidden>
+      <div class="vh"><div><h1>Cài đặt</h1><p>Chi phí AI, lịch làm việc tự động, giọng văn thương hiệu và kết nối Fanpage.</p></div></div>
+      <div class="card" id="teamCard"><div class="card-h"><h3>Tên và khuôn mặt của đội</h3><span class="small muted">Áp dụng cho văn phòng 3D, lời CEO, Telegram</span></div>
+        <p class="small muted">Đổi tên gọi của từng agent (cả nhân viên sale) và tải ảnh mặt lên. Ảnh được cắt vuông lấy phần giữa, hiện trên nhân vật 3D và ảnh đại diện. Agent tự giới thiệu bằng tên mới; CEO hiểu cả tên cũ lẫn tên mới. Chỉ dùng ảnh anh có quyền dùng.</p>
+        <ul class="team-list" id="teamList"></ul></div>
+      <form class="card" id="costForm">
+        <div class="card-h"><h3>Chi phí AI</h3><span class="chip" id="costState">—</span></div>
+        <div class="cost-top">
+          <div class="sidecol">
+            <div class="spend"><span class="small muted">Đã dùng tháng này</span><div><b id="costSpent">$0</b> <span class="muted" id="costBudgetTxt"></span></div>
+              <div class="bar"><i id="costBar" style="width:0"></i></div>
+              <p class="small muted" style="margin-top:6px" id="costProj"></p></div>
+            <div><span class="small muted">14 ngày gần nhất</span><div class="spark" id="costSpark"></div></div>
+            <div class="tbl-wrap"><table style="min-width:0"><thead><tr><th>Việc</th><th class="num">Lượt</th><th class="num">Token vào / ra</th><th class="num">Chi phí</th></tr></thead><tbody id="costRows"></tbody></table></div>
+            <div id="costFallback" class="small"></div>
+          </div>
+          <div class="sidecol">
+            <div><span class="small muted">Chọn nhanh một gói (ước tính cho 3 nick sale)</span>
+              <div class="presets" id="presets" style="margin-top:6px">
+                <button type="button" class="preset" data-preset="tiet_kiem"><b>Tiết kiệm</b><span>Haiku cho mọi việc, viết bài theo lô</span><em>dưới 1 USD/tháng</em></button>
+                <button type="button" class="preset" data-preset="can_bang"><b>Cân bằng</b><span>Sonnet viết bài (theo lô), tư vấn khách và CEO hiểu lệnh; Haiku cho họp, chấm bài</span><em>khoảng 5–9 USD/tháng</em></button>
+                <button type="button" class="preset" data-preset="chat_luong"><b>Chất lượng</b><span>Sonnet cho mọi việc</span><em>khoảng 8–15 USD/tháng</em></button>
+              </div></div>
+            <div class="grid3">
+              <label class="f" for="mPosts">Viết bài đăng<select id="mPosts"></select></label>
+              <label class="f" for="mReplies">Hà tư vấn khách<select id="mReplies"></select></label>
+              <label class="f" for="mMeeting">Cuộc họp<select id="mMeeting"></select></label>
+              <label class="f" for="mCeo">CEO hiểu lệnh sếp<select id="mCeo"></select></label>
+              <label class="f" for="mReview">CEO chấm bài<select id="mReview"></select></label>
+            </div>
+            <label class="row small"><input type="checkbox" id="cBatch"> Viết bài hằng ngày theo lô: rẻ hơn 50%, bài có sau vài phút (tối đa 24 giờ)</label>
+            <div class="grid2">
+              <label class="f" for="cBudget">Ngân sách tháng (USD)<input type="number" id="cBudget" min="0" step="0.5"></label>
+              <label class="f" for="cRounds">Số vòng tranh luận khi họp<select id="cRounds"><option value="1">1 vòng (rẻ hơn)</option><option value="2">2 vòng</option><option value="3">3 vòng</option></select></label>
+            </div>
+            <div><span class="small muted">Họp vào các ngày</span><div class="days" id="cDays" style="margin-top:4px"></div></div>
+            <p class="small muted">Chạm 100% ngân sách: mọi việc tự chuyển sang Haiku. Chạm 120%: tạm ngừng gọi AI, dùng nội dung mẫu đến tháng sau. Đặt 0 để bỏ giới hạn.</p>
+            <div><button class="btn primary" type="submit">Lưu cấu hình chi phí</button></div>
+          </div>
+        </div>
+      </form>
+      <div class="grid2">
+        <form class="card" id="setForm">
+          <h3>Công ty &amp; lịch làm việc</h3>
+          <label class="f" for="sName">Tên xưởng<input type="text" id="sName"></label>
+          <label class="f" for="sVoice">Giọng văn thương hiệu<textarea id="sVoice"></textarea></label>
+          <label class="f" for="sContact">Thông tin liên hệ cuối bài<input type="text" id="sContact"></label>
+          <label class="f" for="sZalo">Số Zalo báo giá (mọi bài, tin nhắn đều mời khách liên hệ số này, không ghi giá)<input type="text" id="sZalo" inputmode="tel" placeholder="0386992326"></label>
+          <label class="f" for="sPriceLine">Câu mời liên hệ giá (để trống: “💬 Giá vui lòng liên hệ trực tiếp Zalo …”)<input type="text" id="sPriceLine"></label>
+          <div class="grid2">
+            <label class="f" for="sTime">Giờ họp giao ban<input type="time" id="sTime"></label>
+            <label class="f" for="sPer">Số bài đăng nhóm mỗi ngày<input type="number" id="sPer" min="1" max="20"></label>
+          </div>
+          <label class="f" for="sTz">Múi giờ (giờ họp, giờ đăng bài, báo cáo Telegram đều theo múi giờ này)<select id="sTz"></select></label>
+          <p class="small muted" id="sTzNote"></p>
+          <label class="row small"><input type="checkbox" id="sAutoM"> Tự động họp mỗi ngày</label>
+          <label class="row small"><input type="checkbox" id="sAutoW"> Sau họp tự giao việc (viết bài, xếp lịch, lọc khách cần bám)</label>
+          <h3>Nhân viên sale đăng bài</h3>
+          <label class="row small"><input type="checkbox" id="sGroupFit"> <span><b>Lan chỉnh bài theo nhóm:</b> bài đã xếp vào nhóm có câu hỏi mua, bình luận khách thật thì Lan sửa câu mở đầu cho trúng điều người nhóm đó hỏi (không thêm thông tin mới, giữ Zalo; 1 lần gọi Claude mỗi bài)</span></label>
+          <label class="row small"><input type="checkbox" id="sImgReq"> <span><b>Bắt buộc có ảnh:</b> bài không có ảnh thì không đăng lên Facebook (nhóm, trang cá nhân, Fanpage)</span></label>
+          <label class="row small"><input type="checkbox" id="sImg"> Đính kèm ảnh sản phẩm khi đăng (chọn ngẫu nhiên trong thư mục ảnh của từng sản phẩm)</label>
+          <div class="grid3">
+            <label class="f" for="sImgMin">Ít nhất (ảnh/bài)<input type="number" id="sImgMin" min="1" max="10"></label>
+            <label class="f" for="sImgMax">Nhiều nhất (ảnh/bài)<input type="number" id="sImgMax" min="1" max="10"></label>
+            <label class="f" for="sImgDays">Không dùng lại ảnh trong (ngày)<input type="number" id="sImgDays" min="1" max="180"></label>
+          </div>
+          <p class="small muted">Một ảnh không được đăng lại ở cùng nhóm, hay bởi cùng nick, trong số ngày trên. Ảnh chưa đăng lần nào được ưu tiên trước.</p>
+          <fieldset class="f" style="border:0;padding:0;margin:4px 0 0"><legend class="small" style="font-weight:600;margin-bottom:4px">Chrome của sale khi làm việc</legend>
+            <label class="row small" style="align-items:flex-start"><input type="radio" name="sBrowser" value="background" style="margin-top:3px"><span><b>Chạy ngầm</b> (nên dùng): Chrome thật vẫn chạy nhưng cửa sổ nằm ngoài màn hình. Sếp dùng máy bình thường, sale không giành chuột, bàn phím hay khay nhớ tạm.</span></label>
+            <label class="row small" style="align-items:flex-start"><input type="radio" name="sBrowser" value="show" style="margin-top:3px"><span><b>Hiện cửa sổ</b>: xem sale làm việc. Cửa sổ có thể hiện lên khi sale bắt đầu việc mới.</span></label>
+            <label class="row small" style="align-items:flex-start"><input type="radio" name="sBrowser" value="headless" style="margin-top:3px"><span><b>Ẩn hoàn toàn</b>: không có cửa sổ nào. Facebook dễ nhận ra trình duyệt chạy ẩn và hay hỏi xác minh hơn, chỉ nên dùng khi chạy trên máy chủ.</span></label>
+            <p class="small muted" style="margin:4px 0 0">Đăng nhập nick, nút “Mở Chrome” và “Mở hồ sơ” kết bạn luôn hiện cửa sổ vì cần người thao tác. Áp dụng từ lượt việc tiếp theo của sale.</p></fieldset>
+          <h3>Fanpage (đăng tự động)</h3>
+          <label class="f" for="sPage">Page ID<input type="text" id="sPage"></label>
+          <label class="f" for="sToken">Page Access Token<input type="text" id="sToken" autocomplete="off"></label>
+          <div><button class="btn primary" type="submit">Lưu cài đặt</button></div>
+        </form>
+        <div class="sidecol">
+          <form class="card" id="resetForm">
+            <div class="card-h"><h3>Bắt đầu chạy thật</h3><span class="chip" id="resetChip"></span></div>
+            <p class="small muted">Xóa toàn bộ dữ liệu thử nghiệm để đội bắt đầu làm việc thật. Phần mềm tự sao lưu một bản vào thư mục data/backups trước khi xóa.</p>
+            <div id="resetPreview" class="note"></div>
+            <label class="row small"><input type="checkbox" id="rsProd"> Xóa cả sản phẩm đã nhập (thư mục ảnh trên máy không bị đụng tới)</label>
+            <label class="row small"><input type="checkbox" id="rsGroup"> Xóa cả hội nhóm đã nhập</label>
+            <label class="row small"><input type="checkbox" id="rsFound" checked> Thành lập công ty ngay sau khi xóa, vốn <input type="text" id="rsCap" value="10.000.000" inputmode="numeric" style="width:120px;padding:3px 7px" aria-label="Vốn ban đầu"> đồng</label>
+            <label class="f" for="rsConfirm"><span>Gõ <b>CHAY THAT</b> để xác nhận</span><input type="text" id="rsConfirm" autocomplete="off" placeholder="CHAY THAT"></label>
+            <div><button class="btn primary" type="submit" id="rsBtn" disabled>Xóa dữ liệu thử nghiệm</button></div>
+          </form>
+          <div class="card" id="hkCard">
+            <div class="card-h"><h3>Dung lượng dữ liệu</h3><span class="chip" id="hkChip">—</span></div>
+            <p class="small muted">Mỗi đêm (03:20, máy tắt đêm thì lúc bật máy) phần mềm tự dọn: nhật ký hoạt động trên 60 ngày, ảnh chụp màn hình trên 30 ngày, sao lưu cũ (giữ 5 bản), bộ nhớ đệm Chrome của các nick, rồi nén lại dữ liệu. Bài đăng, khách, đơn, chi phí AI, kho bài và những gì agent đã học luôn được giữ.</p>
+            <div class="hk-grid" id="hkGrid"></div>
+            <p class="small muted" id="hkLast"></p>
+            <div><button type="button" class="btn ghost" id="hkRun">Dọn ngay</button></div>
+          </div>
+          <div class="card" id="sampleCard" hidden>
+            <div class="card-h"><h3>Dữ liệu mẫu</h3><span class="chip warn" id="sampleChip"></span></div>
+            <p class="small muted" id="sampleTxt"></p>
+            <p class="small muted">Sale mẫu tự rời văn phòng khi bạn tuyển sale đầu tiên. Khách mẫu tự được xóa khi có khách thật đầu tiên và không bao giờ được chuyển sang Telegram. Sản phẩm và hội nhóm mẫu nên thay bằng thông tin thật của xưởng.</p>
+            <div><button type="button" class="btn ghost danger" id="sampleDel">Xóa toàn bộ dữ liệu mẫu</button></div>
+          </div>
+          <form class="card" id="aiForm">
+            <div class="card-h"><h3>Khóa API Claude</h3><span class="chip" id="aiState">—</span></div>
+            <p class="small muted">Khóa API giúp các agent thực sự suy nghĩ, viết bài, họp và tư vấn bằng Claude. Không có khóa, phần mềm vẫn chạy bằng nội dung mẫu.</p>
+            <div id="aiBox" class="note"></div>
+            <ol class="steps small">
+              <li>Mở <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>, đăng nhập, vào <b>API Keys</b> → <b>Create Key</b>.</li>
+              <li>Nạp tín dụng ở mục <b>Billing</b> (nên đặt giới hạn chi tiêu tháng tại đó).</li>
+              <li>Dán khóa vào ô dưới và bấm <b>Kiểm tra và lưu</b>.</li>
+            </ol>
+            <label class="f" for="aiKey">Khóa API (bắt đầu bằng sk-ant-)
+              <div class="row"><input type="password" class="grow" id="aiKey" autocomplete="off" spellcheck="false" placeholder="sk-ant-api03-…"><button type="button" class="btn sm ghost" id="aiShow" aria-label="Hiện hoặc ẩn khóa">Hiện</button></div></label>
+            <div class="actions"><button class="btn primary" type="submit" id="aiSave">Kiểm tra và lưu</button><button type="button" class="btn" id="aiTest">Kiểm tra lại khóa đang dùng</button><button type="button" class="btn ghost danger" id="aiDel">Xóa khóa</button></div>
+            <p class="small muted">Khóa chỉ lưu trên máy này (trong data/company.db), không gửi đi đâu ngoài Anthropic và không hiện lại đầy đủ trên giao diện.</p>
+          </form>
+          <form class="card" id="tgSetForm">
+            <div class="card-h"><h3>Bot Telegram</h3><span class="chip" id="tgsState">—</span></div>
+            <p class="small muted">Mọi việc cả đội làm xong (đăng bài, up bài, tìm nhóm, viết bài, xếp lịch, họp, CEO xử lý việc sếp giao…) đều được báo về Telegram của sếp, cùng báo cáo sáng/tối, khách cần tư vấn và cảnh báo nick.</p>
+            <div id="tgsBox" class="note"></div>
+            <ol class="steps small">
+              <li>Trên Telegram, nhắn <b>@BotFather</b> → gửi <b>/newbot</b> → đặt tên bot → BotFather gửi lại <b>token</b> dạng <code>123456789:AAH…</code>.</li>
+              <li>Dán token vào ô dưới, bấm <b>Kiểm tra và lưu</b>.</li>
+              <li>Bấm <b>Tạo mã ghép nối</b>, mở bot vừa tạo trên Telegram và gửi mã 6 số đó.</li>
+            </ol>
+            <label class="f" for="tgsToken">Token bot Telegram
+              <div class="row"><input type="password" class="grow" id="tgsToken" autocomplete="off" spellcheck="false" placeholder="123456789:AAH…"><button type="button" class="btn sm ghost" id="tgsShow" aria-label="Hiện hoặc ẩn token">Hiện</button></div></label>
+            <div class="actions"><button class="btn primary" type="submit" id="tgsSave">Kiểm tra và lưu</button><button type="button" class="btn" id="tgsPair">Tạo mã ghép nối</button><button type="button" class="btn" id="tgsTest">Gửi tin thử</button><button type="button" class="btn ghost danger" id="tgsDel">Xóa token</button></div>
+            <div id="tgsPairBox"></div>
+            <label class="row small"><input type="checkbox" id="tgsDone"> Báo về Telegram mọi việc đã hoàn thành (gom các việc xong gần nhau thành một tin, khoảng mỗi phút)</label>
+            <p class="small muted">Giờ báo cáo sáng/tối, cảnh báo KPI và khách cần tư vấn chỉnh ở <a href="#kpi">KPI &amp; Báo cáo</a>. Token chỉ lưu trên máy này và không hiện lại đầy đủ.</p>
+          </form>
+          <div class="card"><h3>Bình luận tự động (up bài)</h3><p class="small muted" style="margin:0">Cài đặt và lịch bình luận mỗi ngày vào bài đã đăng nằm ở mục <a href="#comments">Bình luận</a>.</p></div>
+          <div class="card"><h3>Về việc đăng bài Facebook</h3>
+            <div class="note">Meta đã gỡ API đăng bài vào hội nhóm từ tháng 4/2024 và không cho ứng dụng đăng lên trang cá nhân. Đăng tự động bằng trình duyệt, nhất là khi chạy nhiều nick, có thể khiến nick bị checkpoint hoặc khóa.<br><br>
+            Vì vậy: <b>Fanpage</b> đăng qua Graph API chính thức. <b>Hội nhóm và trang cá nhân</b> do nhân viên sale AI đăng bằng hồ sơ Chrome của nick mình, có giới hạn bài/ngày, giãn cách và tự dừng khi gặp checkpoint. Giữ số bài vừa phải để giảm rủi ro cho nick.</div>
+          </div>
+        </div>
+      </div>
+    </section>

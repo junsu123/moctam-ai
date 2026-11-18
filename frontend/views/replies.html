@@ -1,0 +1,21 @@
+    <section class="view" id="v-replies" hidden>
+      <div class="vh"><div><h1>Trả lời khách & lướt bảng tin nhóm</h1><p>Mỗi nick lướt <b>bảng tin nhóm</b> (facebook.com/groups/feed), đọc ít nhất 20 bài. Bảo chọn người <b>đang hỏi mua</b> trà, ngũ cốc, cà phê, bột (bình luận kèm 1 ảnh ngẫu nhiên trong thư mục ảnh) và người <b>đang bán hàng online</b> hỏi chuyện khác như tài khoản quảng cáo, livestream (chào nhẹ, chỉ chữ, kèm Zalo). Sếp duyệt (sửa được), đúng nick đó gửi trong giờ làm.</p></div>
+        <div class="row wrap"><button class="btn" type="button" id="rpAll">Duyệt tất cả</button><button class="btn" type="button" id="rpRun">Bảo đọc nhóm sôi nổi</button><button class="btn primary" type="button" id="fdRun">Lướt bảng tin ngay</button></div></div>
+      <p class="fr-note"><b>Không bình luận mọi bài trên bảng tin, không chạy 24/24.</b> Bình luận quảng cáo vào bài không liên quan, cùng một câu ở nhiều bài, hoặc bình luận suốt đêm là spam theo luật Facebook: nhóm xóa bình luận, chặn thành viên, Facebook khóa tính năng bình luận rồi khóa nick. Bảo chỉ bình luận đúng người, mỗi câu viết riêng, mỗi nick vài câu mỗi ngày, cách nhau 45–90 phút, trong giờ làm. Chào người bán online: mỗi người một lần, tối đa 2 câu/nick/ngày, không chào ở nhóm cấm bán hàng, nhóm từng xóa bình luận chào thì ngừng 30 ngày. Số lượt lướt mỗi ngày do luật của từng nick quyết định (nick mới ít hơn). Câu sếp sửa được lưu làm mẫu cho Bảo học.</p>
+      <div class="pr-stats fr-stats" id="rpStats"></div>
+      <div class="fr-grid">
+        <section class="card"><div class="card-h"><div><h3>Mọi nick hôm nay</h3><p class="small muted" style="margin:2px 0 0">Lượt lướt bảng tin và số câu bình luận mỗi nick; nick mới hoặc vừa bị chặn còn một nửa. Hết lượt thì câu đã duyệt dời sang sáng mai.</p></div></div>
+          <ul class="fr-nicks" id="rpNicks"><li class="muted small">Đang tải…</li></ul><p class="fd-stop" id="fdStop" hidden></p></section>
+        <section class="card"><div class="card-h"><div><h3>Tay nghề Bảo: trả lời khách</h3><p class="small muted" style="margin:2px 0 0">Claude viết mẫu và chấm câu Bảo tự viết. Lên Master thì Bảo tự viết, không gọi Claude nữa.</p></div></div>
+          <div class="rp-skill" id="rpSkill"><p class="muted small">Đang tải…</p></div></section>
+      </div>
+      <section class="card">
+        <div class="card-h"><h3>Bình luận chờ sếp duyệt</h3>
+          <div class="fr-filters"><select id="rpKind" aria-label="Loại bài"><option value="">Mọi loại</option><option value="buyer">Hỏi mua</option><option value="seller">Người bán online</option></select><select id="rpSt" aria-label="Trạng thái"><option value="">Cần xử lý</option><option value="approved">Đã duyệt, chờ gửi</option><option value="sent">Đã gửi</option><option value="failed">Gửi lỗi</option><option value="skipped">Bỏ qua</option></select></div></div>
+        <div class="fr-list" id="rpList"><p class="muted small">Đang tải…</p></div>
+      </section>
+      <details class="card" style="margin-top:12px"><summary><b>Cài đặt lướt bảng tin nhóm</b></summary><form id="fdSetF"></form></details>
+      <details class="card" style="margin-top:12px"><summary><b>Cài đặt trả lời khách</b></summary><form id="rpSetF"></form></details>
+    </section>
+
+    <!-- KHÁCH HÀNG -->

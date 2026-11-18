@@ -1,0 +1,43 @@
+    <section class="view" id="v-comments" hidden>
+      <div class="vh"><div><h1>Bình luận tự động</h1><p>Mỗi ngày từ <b id="cmTime">19:30</b>, Bảo rà soát các bài đã đăng còn hiển thị và xếp cho <b>đúng nick đã đăng</b> vào lại bài, bình luận 1 ảnh sản phẩm kèm một câu ngắn mới (mỗi bài một câu khác nhau) và dòng liên hệ, để bài nổi lại trong nhóm. Sếp xem lịch, sửa câu trước khi gửi, hủy hoặc gửi lại ở đây.</p></div>
+        <div class="row wrap"><button class="btn primary" type="button" id="cmPlan">Xếp lịch bình luận ngay</button></div></div>
+      <p class="fr-note"><b>Mỗi bài tối đa 1 bình luận/ngày, trong giờ hoạt động của nick, cách nhau vài phút.</b> Không bình luận 24/24 hay lặp cùng một câu: Facebook coi là spam, nhóm xóa bình luận và khóa tính năng bình luận của nick. Số lượt mỗi nick theo trần ở <a href="#fbrules">Luật Facebook</a>.</p>
+      <div class="pr-stats fr-stats" id="cmStats"></div>
+      <div class="fr-grid">
+        <section class="card"><div class="card-h"><h3>Bình luận theo ngày</h3>
+            <div class="fr-filters cm-filters"><input type="date" id="cmDay" aria-label="Ngày"><select id="cmSt" aria-label="Trạng thái"><option value="">Mọi trạng thái</option><option value="scheduled">Chờ gửi</option><option value="done">Đã gửi</option><option value="failed">Lỗi</option><option value="skipped">Bỏ qua / đã hủy</option></select>
+              <select id="cmAcc" aria-label="Nick"><option value="">Mọi nick</option></select><input type="search" id="cmQ" placeholder="Tìm câu, bài, nhóm" aria-label="Tìm"></div></div>
+          <div class="cm-list" id="cmList"><p class="muted small">Đang tải…</p></div></section>
+        <div>
+          <section class="card"><div class="card-h"><div><h3>Bài đã đăng · hôm nay</h3><p class="small muted" style="margin:2px 0 0" id="cmCov"></p></div></div>
+            <ul class="cm-posts" id="cmPosts"><li class="muted small">Đang tải…</li></ul></section>
+          <section class="card" style="margin-top:12px"><div class="card-h"><div><h3>Lượt mỗi nick hôm nay</h3><p class="small muted" style="margin:2px 0 0">Đã gửi / trần an toàn (nick mới hoặc vừa bị chặn còn một nửa).</p></div></div>
+            <ul class="fr-nicks" id="cmNicks"></ul></section>
+        </div>
+      </div>
+          <form class="card" id="bumpForm" style="margin-top:12px">
+            <div class="card-h"><h3>Cài đặt bình luận tự động · Bảo phụ trách</h3><span class="chip" id="bumpToday"></span></div>
+            <p class="small muted">Mỗi ngày, từ giờ đã chọn, mỗi nhân viên sale vào lại các bài mình đã đăng và bình luận một ảnh sản phẩm lấy từ thư mục trên máy này, để bài nổi lên đầu nhóm. Mỗi bài tối đa 1 lần/ngày, mỗi ảnh không lặp lại trên cùng một bài cho tới khi dùng hết ảnh.</p>
+            <label class="row small"><input type="checkbox" id="bEnabled"> Bật tự bình luận mỗi ngày vào bài đã đăng</label>
+            <label class="f" for="bFolder">Thư mục ảnh sản phẩm trên máy chạy phần mềm
+              <div class="row"><input type="text" class="grow" id="bFolder" placeholder="VD: D:\AnhSanPham"><button type="button" class="btn sm" id="bCheck">Kiểm tra thư mục</button></div></label>
+            <div id="bFolderInfo" class="note" hidden></div>
+            <p class="small muted">Mẹo: tạo thư mục con theo tên sản phẩm (VD <b>Tra gung mat ong</b>) để bài nào up đúng ảnh sản phẩm đó. Ảnh để ngoài thư mục gốc dùng chung cho mọi bài.</p>
+            <div class="grid2">
+              <label class="f" for="bTime">Bắt đầu bình luận lúc<input type="time" id="bTime"></label>
+              <label class="f" for="bAge">Bình luận bài đăng trong vòng (ngày)<input type="number" id="bAge" min="1" max="60"></label>
+              <label class="f" for="bPer">Tối đa lượt mỗi nick/ngày<input type="number" id="bPer" min="1" max="50"></label>
+              <label class="f" for="bGap">Cách nhau tối thiểu (phút)<input type="number" id="bGap" min="2" max="120"></label>
+            </div>
+            <label class="f" for="bContact">Dòng liên hệ luôn gắn cuối bình luận<input type="text" id="bContact" maxlength="120" placeholder="VD: Cần hàng liên hệ Zalo 0386992326"></label>
+            <fieldset class="f" style="border:0;padding:0;margin:0"><legend class="small" style="font-weight:600;margin-bottom:4px">Câu bình luận đi kèm ảnh</legend>
+              <label class="row small"><input type="radio" name="bMode" value="ai"> Bảo tự viết mỗi bài một câu ngắn khác nhau (dùng Claude nếu đã nhập khóa)</label>
+              <label class="row small"><input type="radio" name="bMode" value="list"> Chọn ngẫu nhiên từ danh sách dưới</label></fieldset>
+            <label class="f" for="bTexts" id="bTextsL">Danh sách câu (mỗi dòng một câu)<textarea id="bTexts" rows="3"></textarea></label>
+            <div class="row wrap" style="gap:8px;align-items:center"><button type="button" class="btn sm" id="bPrev">Xem thử câu Bảo viết</button><span class="small muted">Chưa gửi, chỉ xem trước.</span></div>
+            <ul class="small" id="bPrevOut" hidden style="margin:6px 0 0;padding-left:18px"></ul>
+            <section class="bk" id="bSkill" aria-live="polite"></section>
+            <div class="actions"><button class="btn primary" type="submit">Lưu cài đặt</button><button type="button" class="btn" id="bNow">Xếp lịch bình luận ngay</button></div>
+          </form>
+    </section>
+

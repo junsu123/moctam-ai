@@ -16,7 +16,7 @@ idle_hook = None      # main.py gán: _idle() -> bool
 _busy = threading.Lock()
 WAIT_IDLE_S = int(os.getenv("UPDATE_WAIT_IDLE_S", "7200"))  # chờ sale rảnh tối đa 2 giờ
 CHECK_ALIVE_S = int(os.getenv("UPDATE_CHECK_ALIVE_S", "240"))  # sau chừng này giây mà bản cũ còn chạy = bản mới lỗi
-RESTART_FILES = ("requirements.txt", "run.bat", "run.sh", "frontend/index.html")
+RESTART_FILES = ("requirements.txt", "run.bat", "run.sh")
 
 
 def _git(*args, timeout=60) -> subprocess.CompletedProcess:
@@ -69,7 +69,7 @@ def pull() -> dict:
                     "msg": f"Phần mềm đang là bản mới nhất ({new}), không cần khởi động lại."}
         commits = [c for c in _git("log", "--format=%s", f"{old}..{new}").stdout.splitlines() if c.strip()]
         files = _git("diff", "--name-only", old, new).stdout.split()
-        restart = any((f.startswith("backend/") and f.endswith((".py", ".json"))) or f in RESTART_FILES for f in files)
+        restart = any((f.startswith("backend/") and f.endswith((".py", ".json"))) or f.startswith("frontend/") or f in RESTART_FILES for f in files)
         db.log("ceo", "Tải bản mới", f"{old} → {new}: " + " · ".join(c[:80] for c in commits[:5]))
         return {"ok": True, "changed": True, "restart": restart, "old": old, "new": new, "commits": commits, "files": files,
                 "msg": f"Đã tải bản mới {old} → {new} ({len(commits)} thay đổi)."}

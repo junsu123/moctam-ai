@@ -1,0 +1,30 @@
+    <section class="view" id="v-ceo" hidden>
+      <div class="vh">
+        <div><h1>Giao việc</h1><p>Nhắn việc cho CEO Đức. CEO chia việc cho cả đội và báo lại khi xong, kể cả qua Telegram.</p></div>
+        <div class="actions">
+          <button class="btn" id="btnDaily" data-direct>Giao việc hằng ngày</button>
+          <button class="btn primary" id="btnCall" data-direct>Triệu tập họp</button>
+        </div>
+      </div>
+      <div class="strip">
+        <div class="banner" id="coBanner" hidden></div>
+        <div class="banner" id="demoBanner" hidden>Bạn đang xem <b>bản xem trước với dữ liệu mẫu</b>. Mọi thao tác chạy được nhưng không lưu lại. Chạy phần mềm trên máy (hướng dẫn trong README) để dùng thật.</div>
+        <div class="alert" id="saleAlert" hidden><span id="saleAlertTxt"></span><a class="btn sm" href="#sales">Xử lý</a></div>
+      </div>
+      <div class="desk">
+        <section class="card ceo-chat" id="ceoChat">
+          <div class="card-h"><h2>CEO Đức</h2><span class="small muted" id="ceoChatMode"></span></div>
+          <div class="chatlog" id="ceoLog" aria-live="polite"></div>
+          <p class="small ceo-run" id="ceoRun" hidden></p>
+          <form class="ceo-form" id="ceoForm"><input type="text" class="grow" id="ceoIn" placeholder="Nhắn việc cho CEO, VD: Viết 3 bài về trà gừng" aria-label="Việc giao cho CEO" autocomplete="off"><button class="btn primary" type="submit">Giao việc</button></form>
+          <div class="chips" id="ceoSugg"></div>
+        </section>
+        <section class="today" aria-label="Hôm nay">
+          <a class="kpi-hero" id="officeKpi" href="#kpi"></a>
+          <div class="kpis" id="kpis"></div>
+        </section>
+      </div>
+      <div class="card"><h3>Nhật ký hoạt động</h3><ol class="feed" id="feed"></ol></div>
+    </section>
+
+    <!-- CÔNG TY -->

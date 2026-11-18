@@ -1,0 +1,68 @@
+    <section class="view" id="v-kpi" hidden>
+      <div class="vh"><div><h1>KPI & Báo cáo</h1><p>KPI phòng kinh doanh tính bằng số khách mới để lại số điện thoại mỗi ngày. Nhân viên sale tự đọc bình luận trên bài của mình, tạo khách và trả lời xin SĐT. Khách AI không tư vấn được sẽ được chuyển cho sếp qua Telegram kèm kịch bản tư vấn.</p></div>
+        <div class="actions"><button class="btn" id="btnScan">Quét bình luận ngay</button></div></div>
+      <div class="kpi-hero" id="kpiHero"></div>
+      <div class="learn-top">
+        <div class="sidecol">
+          <div class="card"><div class="card-h"><h3>14 ngày gần nhất</h3><span class="small muted" id="kStreak"></span></div><div class="khist" id="kHist"></div></div>
+          <div class="tbl-wrap"><table style="min-width:520px"><thead><tr><th>Nick</th><th class="num">SĐT / KPI</th><th class="num">Khách</th><th class="num">Đã xin SĐT</th><th class="num">Bài</th><th class="num">Up</th></tr></thead><tbody id="kSales"></tbody></table></div>
+          <div class="card" id="fnCard"><div class="card-h"><h3>Từ SĐT tới đơn hàng</h3>
+            <select id="fnDays" aria-label="Khoảng thời gian"><option value="30">30 ngày</option><option value="7">7 ngày</option><option value="90">90 ngày</option></select></div>
+            <p class="small muted">Kênh nào ra khách mua thật, không chỉ ra số điện thoại. “Sếp đã gọi” tính khách sếp bấm Đã gọi / Chốt đơn / Không mua hoặc đã liên hệ.</p>
+            <div id="fnBody"></div></div>
+          <div class="card" id="fcCard"><div class="card-h"><h3>Dồn sức vào kênh ra đơn</h3><span class="chip" id="fcMode">—</span></div>
+            <p class="small muted" id="fcIntro"></p>
+            <ul class="fc-list" id="fcList"></ul><div id="fcProp"></div>
+            <div class="actions" style="margin-top:8px"><button class="btn sm" id="fcRun" type="button">CEO xem lại ngay</button>
+              <label class="row small"><input type="checkbox" id="fcOn"> Mỗi tuần CEO tự xem lại</label></div></div>
+          <form class="card" id="kpiForm">
+            <h3>Đặt KPI</h3>
+            <div class="grid3">
+              <label class="f" for="kMin">Tối thiểu (khách có SĐT/ngày)<input type="number" id="kMin" min="1" max="200"></label>
+              <label class="f" for="kMax">Mục tiêu vượt<input type="number" id="kMax" min="1" max="500"></label>
+              <label class="f" for="kCheck">Kiểm tra tiến độ lúc<input type="time" id="kCheck"></label>
+            </div>
+            <p class="small muted">KPI được chia đều cho các nick đang chạy. Khách tính cho nick đã đăng bài mà khách bình luận. Đến giờ kiểm tra, nếu đang chậm, đội tự quét lại bình luận và báo sếp.</p>
+            <h3>Chuyển khách cho sếp</h3>
+            <label class="row small"><input type="checkbox" id="kEscPhone"> Mọi khách đã để SĐT (AI không gọi điện, nhắn Zalo được)</label>
+            <label class="row small"><input type="checkbox" id="kEscCx"> Khách hỏi vượt khả năng AI: số lượng lớn, in nhãn riêng, chiết khấu, đại lý, hóa đơn, khiếu nại</label>
+            <label class="f" for="kEscH">Khách có SĐT mà chưa ai tư vấn sau (giờ), 0 để tắt<input type="number" id="kEscH" min="0" step="0.5"></label>
+            <h3>Tìm khách trong bình luận</h3>
+            <label class="row small"><input type="checkbox" id="kScan"> Tự quét bình luận các bài của từng nick</label>
+            <div class="grid2">
+              <label class="f" for="kScanT">Các giờ quét (cách nhau dấu phẩy)<input type="text" id="kScanT" placeholder="11:30,16:30,20:45"></label>
+              <label class="f" for="kScanAge">Quét bài đăng trong vòng (ngày)<input type="number" id="kScanAge" min="1" max="30"></label>
+            </div>
+            <label class="row small"><input type="checkbox" id="kReply"> Trả lời khách quan tâm chưa có SĐT để xin số điện thoại</label>
+            <label class="f" for="kReplyMax">Tối đa câu trả lời mỗi nick/ngày<input type="number" id="kReplyMax" min="0" max="40"></label>
+            <label class="f" for="kReplyT">Câu trả lời xin SĐT (mỗi dòng một câu, chọn ngẫu nhiên)<textarea id="kReplyT" rows="3"></textarea></label>
+            <div><button class="btn primary" type="submit">Lưu KPI</button></div>
+          </form>
+        </div>
+        <div class="sidecol">
+          <form class="card" id="tgForm">
+            <div class="card-h"><h3>Telegram</h3><span class="chip" id="tgState">—</span></div>
+            <ol class="steps small">
+              <li>Trên Telegram, nhắn <b>@BotFather</b> → gửi <b>/newbot</b> → đặt tên → nhận token.</li>
+              <li>Dán token vào ô dưới, bấm <b>Lưu token</b> (hoặc nhập ở <a href="#setup">Cài đặt → Bot Telegram</a>).</li>
+              <li>Bấm <b>Tạo mã ghép nối</b>, mở bot vừa tạo và gửi mã 6 số đó.</li>
+            </ol>
+            <label class="f" for="tgToken">Token bot<div class="row"><input type="text" class="grow" id="tgToken" autocomplete="off" placeholder="123456789:AA…"><button class="btn sm" type="submit">Lưu token</button></div></label>
+            <div id="tgPair"></div>
+            <div class="actions"><button type="button" class="btn" id="tgPairBtn">Tạo mã ghép nối</button><button type="button" class="btn" id="tgTest">Gửi tin thử</button><button type="button" class="btn" id="tgNow">Gửi báo cáo ngay</button></div>
+            <div class="grid2">
+              <label class="f" for="tgM">Báo cáo sáng<input type="time" id="tgM"></label>
+              <label class="f" for="tgE">Báo cáo cuối ngày<input type="time" id="tgE"></label>
+            </div>
+            <label class="row small"><input type="checkbox" id="tgL"> Gửi ngay khách cần sếp tư vấn (có nút Đã gọi / Chốt đơn / Không mua / Nhắc sau)</label>
+            <label class="row small"><input type="checkbox" id="tgK"> Cảnh báo KPI chậm, chúc mừng khi đạt KPI</label>
+            <label class="row small"><input type="checkbox" id="tgN"> Cảnh báo nick bị checkpoint, đăng xuất</label>
+            <p class="small muted">Lệnh trong Telegram: /baocao, /kpi, /khach, /hop [chủ đề], /tamdung, /tieptuc. Chỉ chat đã ghép nối mới ra lệnh được.</p>
+            <div class="actions"><button type="button" class="btn primary" id="tgSave">Lưu cài đặt báo cáo</button><button type="button" class="btn ghost danger" id="tgUnlink">Hủy ghép nối</button></div>
+          </form>
+          <div class="card"><div class="card-h"><h3>Khách đang chờ sếp</h3><a class="btn sm" href="#leads">Mở danh sách khách</a></div><ul class="recent" id="kBoss"></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ĐÀO TẠO -->

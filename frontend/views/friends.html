@@ -1,0 +1,20 @@
+    <section class="view" id="v-friends" hidden>
+      <div class="vh"><div><h1>Kết bạn trong nhóm</h1><p>Tuấn chấm điểm các nhóm nick đang ở theo độ sôi nổi (bài mỗi ngày, bình luận, cảm xúc, thành viên mới), mở bảng tin nhóm sôi nổi nhất và chọn ra người đang bán hàng online, đang hỏi nguồn hàng trà, ngũ cốc. Kết bạn với họ để bài đăng của nick tới đúng người.</p></div>
+        <div class="row wrap"><button class="btn primary" type="button" id="frRun">Tuấn tìm người ngay</button></div></div>
+      <p class="fr-note" id="frNote"><b>Sale tự bấm “Thêm bạn bè”.</b> Phần mềm không tự gửi lời mời: Facebook coi gửi lời mời hàng loạt bằng công cụ là spam, nick dễ bị chặn tính năng kết bạn hoặc khóa. Bấm <b>Mở hồ sơ</b>, Chrome của nick mở sẵn vài trang cá nhân; bấm Thêm bạn bè trên từng trang rồi quay lại đánh dấu <b>Đã gửi</b>. Mỗi nick có trần lời mời mỗi ngày.</p>
+      <div class="pr-stats fr-stats" id="frStats"></div>
+      <div class="fr-grid">
+        <section class="card"><div class="card-h"><div><h3>Nhóm sôi nổi nhất</h3><p class="small muted" style="margin:2px 0 0">Nhóm nick đang ở, xếp theo điểm sôi nổi 0–100. Nhóm sếp chọn tập trung đăng được cộng điểm.</p></div></div>
+          <ol class="fr-rank" id="frRank"><li class="muted small">Đang tải…</li></ol></section>
+        <section class="card"><div class="card-h"><div><h3>Lời mời hôm nay</h3><p class="small muted" style="margin:2px 0 0">Trần mỗi nick theo Luật Facebook; nick mới hoặc vừa bị chặn còn một nửa.</p></div></div>
+          <ul class="fr-nicks" id="frNicks"><li class="muted small">Đang tải…</li></ul></section>
+      </div>
+      <section class="card">
+        <div class="card-h"><h3>Người nên kết bạn</h3>
+          <div class="fr-filters"><select id="frAcc" aria-label="Nick"><option value="">Mọi nick</option></select>
+            <select id="frSt" aria-label="Trạng thái"><option value="">Chờ gửi</option><option value="sent">Đã gửi lời mời</option><option value="accepted">Đã đồng ý</option><option value="skipped">Bỏ qua</option></select></div></div>
+        <div class="fr-list" id="frList"><p class="muted small">Đang tải…</p></div>
+      </section>
+      <details class="card" id="frSet" style="margin-top:12px"><summary><b>Cài đặt gợi ý kết bạn</b></summary><form id="frSetF"></form></details>
+    </section>
+

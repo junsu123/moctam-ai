@@ -1,0 +1,37 @@
+    <section class="view" id="v-fbrules" hidden>
+      <div class="vh"><div><h1>Luật Facebook</h1><p>Cả đội học luật Facebook và luật quảng cáo thực phẩm: CEO kiểm bài trước khi duyệt, sale kiểm lại ngay trước khi đăng, mỗi nick có nhịp đăng an toàn. Nick bị chặn hay bài bị gỡ thì Tuấn rút kinh nghiệm. Mỗi tuần Tuấn đọc lại chính sách của Meta và báo sếp khi có thay đổi.</p></div>
+        <div class="actions"><button class="btn" id="fbpWatch">Đọc lại chính sách ngay</button></div></div>
+      <div class="banner fbp-risk"><b>Điều quan trọng nhất:</b> chính sách “Tính toàn vẹn của tài khoản” của Meta cấm dùng tài khoản bằng phần mềm tự động (script), trừ khi qua kênh được phép. Đăng bằng nick cá nhân qua Chrome tự động vẫn có thể bị khóa dù làm đúng mọi giới hạn dưới đây; các giới hạn này giảm rủi ro chứ không loại bỏ được. Kênh tự động được phép là <b>Fanpage qua API</b> (Cài đặt → Fanpage).</div>
+      <div id="fbpChanges"></div>
+      <div class="fbp-grid">
+        <section class="card"><div class="card-h"><div><h3>Nhịp đăng hôm nay của từng nick</h3><p class="small muted" style="margin:2px 0 0">Đã làm / trần an toàn. Nick mới (dưới 14 ngày) và nick vừa bị chặn chạy nửa giới hạn.</p></div></div>
+          <div class="tbl-wrap"><table><thead><tr><th>Nick</th><th class="num">Bài</th><th class="num">Up</th><th class="num">Vào nhóm</th><th class="num" title="Khoảng cách tối thiểu giữa 2 bài">Cách</th><th>Tình trạng</th></tr></thead><tbody id="fbpNicks"></tbody></table></div></section>
+        <form class="card" id="fbpLimits"><div class="card-h"><div><h3>Giới hạn an toàn</h3><p class="small muted" style="margin:2px 0 0">Áp dụng cho mọi nick, kể cả bài đăng vào nhóm mình quản lý.</p></div></div>
+          <div class="grid3" id="fbpLimitFields"></div>
+          <label class="row small"><input type="checkbox" id="fbpOn"> Bật kiểm luật Facebook</label>
+          <label class="row small"><input type="checkbox" id="fbpTighten"> Nhiều nick bị chặn trong 7 ngày thì tự hạ trần bài/ngày</label>
+          <div><button class="btn primary" type="submit">Lưu giới hạn</button></div></form>
+      </div>
+      <section class="card"><div class="card-h"><div><h3>Luật cả đội đang giữ</h3><p class="small muted" style="margin:2px 0 0" id="fbpRuleStats"></p></div></div>
+        <div id="fbpRules"></div>
+        <details class="fbp-add"><summary>Thêm luật của sếp</summary>
+          <form id="fbpRuleForm" class="stack" style="margin-top:8px">
+            <label class="f" for="fbrTitle">Tên luật<input type="text" id="fbrTitle" required placeholder="VD: Không nhắc tên đối thủ"></label>
+            <label class="f" for="fbrText">Giải thích cho cả đội (không bắt buộc)<input type="text" id="fbrText" placeholder="VD: Nhóm báo cáo bài so sánh thương hiệu khác"></label>
+            <label class="f" for="fbrPhr">Cụm từ bị cấm, cách nhau dấu phẩy (bài có cụm này sẽ bị chặn)<input type="text" id="fbrPhr" placeholder="VD: trà Phúc Long, rẻ hơn Cozy"></label>
+            <label class="f" for="fbrLvl">Mức<select id="fbrLvl"><option value="high">Chặn, không cho đăng</option><option value="medium">Nhắc, trừ điểm khi duyệt</option></select></label>
+            <div><button class="btn primary" type="submit">Thêm luật</button></div></form></details>
+      </section>
+      <div class="fbp-grid">
+        <section class="card"><div class="card-h"><div><h3>Kiểm thử một bài</h3><p class="small muted" style="margin:2px 0 0">Dán bài để xem có phạm luật không, như CEO và sale kiểm.</p></div></div>
+          <label class="f" for="fbpText">Nội dung bài<textarea id="fbpText" rows="6" placeholder="Dán bài đăng vào đây"></textarea></label>
+          <div><button class="btn" type="button" id="fbpCheck">Kiểm tra</button></div><div id="fbpCheckRes" aria-live="polite"></div></section>
+        <section class="card"><div class="card-h"><div><h3>Sự cố &amp; bài học</h3><p class="small muted" style="margin:2px 0 0">Nick bị chặn, bài bị gỡ và điều Tuấn rút ra.</p></div></div>
+          <ul class="fbp-inc" id="fbpInc"></ul><div id="fbpRested"></div></section>
+      </div>
+      <section class="card"><div class="card-h"><div><h3>Chính sách Meta đang theo dõi</h3><p class="small muted" style="margin:2px 0 0" id="fbpWatchInfo"></p></div>
+          <label class="row small"><input type="checkbox" id="fbpWatchOn"> Đọc lại mỗi tuần lúc <input type="time" id="fbpWatchTime" style="width:auto;padding:3px 6px"></label></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Trang chính sách</th><th>Đọc lần cuối</th><th>Thay đổi lần cuối</th><th>Tình trạng</th></tr></thead><tbody id="fbpSources"></tbody></table></div></section>
+    </section>
+
+    <!-- WEBSITE -->

@@ -1,0 +1,32 @@
+    <section class="view" id="v-prospects" hidden>
+      <div class="vh"><div><h1>Tìm khách sỉ</h1><p>Mục tiêu của cả đội: tìm khách sỉ trên mạng và lấy <b>số điện thoại</b> để sếp gọi. Mai đọc bình luận trong nhóm để bắt người đang hỏi nguồn hàng, quét thư viện quảng cáo Facebook tìm trang đang chạy quảng cáo bán thực phẩm, tìm shop livestream; đọc cả trang Giới thiệu để lấy SĐT kinh doanh công khai. Có SĐT là vào mục Khách hàng và báo sếp qua Telegram ngay. Mai <b>không tự nhắn tin</b> cho ai.</p></div>
+        <div class="row wrap"><button class="btn primary" type="button" id="prRun">Mai đi tìm ngay</button></div></div>
+      <div class="pr-src" id="prSrc" role="group" aria-label="Nguồn tìm"></div>
+      <div class="pr-ch" id="prCh" aria-label="Khách có SĐT theo kênh, 7 ngày"></div>
+      <div class="pr-top">
+        <div class="pr-stats" id="prStats" role="group" aria-label="Lọc theo hạng"></div>
+        <form class="card pr-paste" id="prPaste">
+          <label class="f" for="prUrls">Dán link để Mai phân tích (Facebook, TikTok, Shopee; mỗi dòng 1 link)<textarea id="prUrls" rows="2" placeholder="https://www.facebook.com/tenshop&#10;https://www.tiktok.com/@tenshop"></textarea></label>
+          <div class="row" style="justify-content:space-between"><span class="small muted">Mai mở bằng Chrome của 1 nick sale, chỉ đọc trang công khai.</span><button class="btn sm primary" type="submit">Phân tích</button></div>
+        </form>
+      </div>
+      <div class="pr-rules">
+        <details class="card" id="prCrit"><summary><span><b>Điều kiện tìm khách sỉ của sếp</b><span class="small muted" id="prCritSum"></span></span></summary><div id="prCritBody"></div></details>
+        <section class="card" id="prTeach"><h3 style="margin:0 0 4px">Sếp dạy Mai kỹ năng tìm kiếm Facebook</h3>
+          <p class="small muted" style="margin:0 0 8px">Viết như đang chỉ việc cho nhân viên. Từ khóa để trong ngoặc kép. Dùng chữ “ưu tiên”, “loại”, “bắt buộc phải có” để Mai hiểu là điều kiện. Dán link nhóm để Mai đọc bình luận nhóm đó.</p>
+          <form id="prTeachF" class="stack"><textarea id="prTeachIn" rows="4" aria-label="Bài dạy cho Mai" placeholder="VD: Gõ “cần nhập trà túi lọc” rồi chọn Bài viết gần đây. Ưu tiên shop có livestream, ở Hà Nội. Loại các shop bán “quần áo”, “mỹ phẩm”. Bắt buộc phải có “ship” hoặc “inbox”."></textarea>
+            <div><button class="btn sm primary" type="submit">Dạy Mai</button></div></form>
+          <ul class="pr-lessons" id="prLessons"></ul></section>
+      </div>
+      <div class="pr-filters row wrap" id="prFilters">
+        <select id="prPf" aria-label="Nền tảng"><option value="">Mọi nền tảng</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="shopee">Shopee</option></select>
+        <select id="prType" aria-label="Loại người bán"><option value="">Mọi loại người bán</option></select>
+        <select id="prPh" aria-label="Số điện thoại"><option value="">Có và chưa có SĐT</option><option value="yes">Chỉ khách có SĐT</option><option value="no">Chưa có SĐT</option></select>
+        <select id="prSt" aria-label="Trạng thái"><option value="">Đang theo dõi</option><option value="needs_manual">Cần sếp xem tay</option><option value="contacted">Đã liên hệ</option><option value="rejected">Đã loại</option></select>
+        <span class="small muted grow" id="prLast"></span>
+      </div>
+      <div id="prList" class="pr-list"><p class="muted small">Đang tải…</p></div>
+      <details class="card" id="prSet"><summary><b>Cách Mai tìm và cài đặt</b></summary><div id="prSetBody"></div></details>
+    </section>
+
+    <!-- THƯ VIỆN BÀI MẪU SỈ -->

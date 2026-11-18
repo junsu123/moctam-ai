@@ -1,0 +1,24 @@
+    <section class="view" id="v-leads" hidden>
+      <div class="vh"><div><h1>Khách hàng</h1><p>Khách sỉ tiềm năng thu được từ bài đăng. Hà chấm điểm, soạn tin nhắn và nhắc bám khách sau 2 ngày chưa liên hệ.</p></div><button class="btn" id="junkToggle" hidden></button></div>
+      <div class="pipe" id="pipe"></div>
+      <div class="card junk-card" id="junkCard" hidden></div>
+      <div class="split">
+        <div class="sidecol">
+          <div class="tbl-wrap"><table><thead><tr><th>Khách</th><th>SĐT</th><th>Nhu cầu</th><th>Nguồn</th><th class="num">Điểm</th><th>Trạng thái</th></tr></thead><tbody id="leadRows"></tbody></table></div>
+          <form class="card" id="leadForm">
+            <h3>Thêm khách</h3>
+            <div class="grid3">
+              <label class="f" for="lName">Tên / shop<input type="text" id="lName" required></label>
+              <label class="f" for="lContact">Liên hệ<input type="text" id="lContact" placeholder="Link FB, Zalo…"></label>
+              <label class="f" for="lPost">Đến từ bài đăng nào<select id="lPost"><option value="">Không rõ / khác</option></select></label>
+              <label class="f" for="lType">Kinh doanh<select id="lType"><option>Livestream</option><option>Chạy quảng cáo</option><option>Sàn TMĐT</option><option>Bán đa kênh</option><option>Cửa hàng</option></select></label>
+              <label class="f" for="lNeed" style="grid-column:span 2">Nhu cầu<input type="text" id="lNeed" placeholder="VD: hỏi giá ngũ cốc 100 hũ"></label>
+            </div>
+            <div><button class="btn primary" type="submit">Thêm khách</button></div>
+          </form>
+        </div>
+        <div class="card" id="leadDetail"><div class="empty">Chọn một khách để Hà soạn tin nhắn.</div></div>
+      </div>
+    </section>
+
+    <!-- TÌM KHÁCH SỈ (Mai) -->

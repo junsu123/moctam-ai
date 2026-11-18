@@ -1,0 +1,29 @@
+    <section class="view" id="v-groups" hidden>
+      <div class="vh"><div><h1>Hội nhóm</h1><p>Danh sách nhóm Tuấn theo dõi. Ghi rõ luật nhóm và số ngày giãn cách để không bị báo spam hay chặn nick. Sale tự tìm nhóm mới theo chủ đề CEO chọn mỗi ngày và xin vào nhóm. Ở cột "Nick đã vào nhóm", bấm tên nick để đánh dấu; nhóm sếp tự nhập chưa đánh dấu nick nào thì coi như mọi nick đều đã vào, nhóm sale tự tìm thì chỉ nick đã vào mới đăng.</p></div></div>
+      <section class="card mg" id="mgCard">
+        <div class="card-h"><div><h3>Nhóm trong các nick</h3><p class="small muted" style="margin:2px 0 0">Đăng vào nhóm nick đã tham gia sẵn. Tuấn đánh giá từng nhóm: nên đăng, đăng ít hay thoát. Nhóm mới vào nghỉ vài ngày mới đăng. Nhóm nick quản lý được đăng đều mỗi ngày. Bài đăng nhóm theo mẫu của sếp (trang Bài đăng).</p></div>
+          <button class="btn sm primary" type="button" id="mgRun">Tuấn rà soát ngay</button></div>
+        <div id="mgBody"><p class="muted small">Đang tải…</p></div>
+      </section>
+      <section class="card gf" id="gfCard">
+        <div class="card-h"><h3>Tìm nhóm mới</h3><div class="row wrap"><button class="btn sm primary" type="button" id="gfRun">Sale đi tìm ngay</button><button class="btn sm" type="button" id="gfJoin">Xin vào nhóm ngay</button></div></div>
+        <div id="gfBody"><p class="muted small">Đang tải…</p></div>
+      </section>
+      <div class="err" id="groupWarn" hidden></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Nhóm</th><th>Chủ đề</th><th class="num">Thành viên</th><th>Luật nhóm</th><th>Giãn cách</th><th>Đăng gần nhất</th><th>Trạng thái</th><th class="num">Khách</th><th>Nick đã vào nhóm</th><th></th></tr></thead><tbody id="groupRows"></tbody></table></div>
+      <form class="card" id="groupForm">
+        <h3>Thêm nhóm</h3>
+        <div class="grid3">
+          <label class="f" for="grName">Tên nhóm<input type="text" id="grName" required></label>
+          <label class="f" for="grUrl">Link nhóm (bắt buộc)<input type="text" id="grUrl" required inputmode="url" placeholder="https://www.facebook.com/groups/…"></label>
+          <label class="f" for="grTopic">Chủ đề<input type="text" id="grTopic" placeholder="Nguồn hàng, Livestream…"></label>
+          <label class="f" for="grMembers">Thành viên<input type="number" id="grMembers" value="0"></label>
+          <label class="f" for="grDays">Giãn cách (ngày)<input type="number" id="grDays" value="3" min="1"></label>
+          <label class="f" for="grRules">Luật nhóm<input type="text" id="grRules"></label>
+        </div>
+        <p class="small muted">Lấy link: mở nhóm trên Facebook bằng máy tính, copy địa chỉ trên thanh trình duyệt. Link từ điện thoại hay link chia sẻ cũng được, phần mềm tự đổi.</p>
+        <div><button class="btn primary" type="submit">Thêm nhóm</button></div>
+      </form>
+    </section>
+
+    <!-- KẾT BẠN TRONG NHÓM -->

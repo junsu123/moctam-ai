@@ -1,0 +1,79 @@
+    <section class="view" id="v-learn" hidden>
+      <div class="vh"><div><h1>Đào tạo</h1><p>Mỗi đêm, các agent tự xem lại kết quả thật (khách, bình luận, bài sếp sửa hoặc loại, tin nhắn chốt đơn) rồi ghi bài học vào sổ tay, đặt mục tiêu cho ngày mai và dùng những bài học đó khi làm việc. Sếp xem, sửa, ghim hoặc xóa bất kỳ bài học nào.</p></div>
+        <div class="actions" data-direct><button class="btn primary" id="btnLearn">Cho cả đội học ngay</button></div></div>
+      <div class="card co-card" id="coCard">
+        <div class="card-h"><h3>Claude kèm cặp từng agent</h3><span class="chip" id="coChip">—</span></div>
+        <p class="small muted">Mỗi agent tự ghi lại kết quả thật của việc mình làm (sếp duyệt, sửa, loại; có khách; chốt đơn; khách không mua). Agent nào đủ <b id="coMin">5</b> kết quả mới và đã <span id="coDays">7</span> ngày chưa được kèm thì tự gửi việc cho Claude chấm, không qua CEO. Các agent đến lượt được gom chung một lô lúc <span id="coTime">22:30</span> (giảm 50% chi phí); Claude chỉ nhận xét từ chính các kết quả đó, ghi bài học vào sổ tay và bỏ bài học đã sai.</p>
+        <div class="co-list" id="coList"></div>
+        <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><span class="small muted" id="coCost"></span><button type="button" class="btn ghost" id="coRun">Kèm cặp ngay</button></div>
+      </div>
+      <div class="learn-top">
+        <div class="card"><div class="card-h"><h3>Lan đang chọn góc viết như thế nào</h3><span class="small muted" id="explTxt"></span></div>
+          <p class="small" id="learnData"></p>
+          <p class="small muted">Cơ hội được chọn của mỗi góc, tính từ số khách và bình luận thật của bài đã đăng, nhân với mức sếp duyệt bài góc đó.</p>
+          <div class="wbars" id="angleBars"></div></div>
+        <div class="sidecol">
+          <div class="card"><h3>Sản phẩm được ưu tiên</h3><div class="wbars" id="prodBars"></div></div>
+          <form class="card" id="learnForm">
+            <div class="card-h"><h3>Cài đặt tự học</h3><span class="small muted" id="learnLast"></span></div>
+            <label class="row small"><input type="checkbox" id="lnOn"> Tự học mỗi đêm</label>
+            <div class="grid2"><label class="f" for="lnTime">Giờ tự học<input type="time" id="lnTime"></label>
+              <label class="f" for="lnExp">Tỉ lệ thử cái mới<select id="lnExp"><option value="0.1">10% (bám cái đang hiệu quả)</option><option value="0.25">25% (cân bằng)</option><option value="0.4">40% (thử nhiều)</option></select></label></div>
+            <p class="small muted">Bài học chỉ thay đổi cách viết, chọn góc, sản phẩm, nhóm và giờ đăng. Giới hạn bài/ngày, giãn cách và luật nhóm do sếp đặt, agent không tự đổi được.</p>
+            <div><button class="btn primary" type="submit">Lưu</button></div>
+          </form>
+        </div>
+      </div>
+      <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. Agent nào làm chưa đúng, nhắn CEO ở <a href="#ceo">Giao việc</a> (ví dụ “Lan viết dài quá, viết dưới 150 chữ”), CEO sẽ ghi thành bài học bắt buộc cho agent đó.</p>
+      <div class="card kb" id="kbCard">
+        <div class="card-h"><h3>Sổ kiến thức của đội</h3><span class="chip" id="kbSelf">—</span></div>
+        <p class="small muted">Mỗi ngày các agent tự học kiến thức mới hợp với việc đang làm và ghi vào sổ. Khi làm việc, agent tra sổ trước; câu đã biết thì tự trả lời, không cần hỏi Claude. Chưa biết mới hỏi Claude, và câu trả lời luôn được lưu lại để lần sau tự dùng.</p>
+        <div class="kb-stats" id="kbStats"></div>
+        <form class="row kb-ask" id="kbAsk"><input type="text" class="grow" id="kbQ" placeholder="Hỏi đội một điều, VD: khách chê giá cao thì trả lời sao?" aria-label="Câu hỏi cho đội"><button class="btn primary" type="submit">Hỏi</button></form>
+        <div id="kbAns"></div>
+        <div class="row kb-filter"><select id="kbAgent" aria-label="Lọc theo agent"><option value="">Cả đội</option></select><input type="text" class="grow" id="kbSearch" placeholder="Tìm trong sổ…" aria-label="Tìm trong sổ kiến thức">
+          <button type="button" class="btn" id="kbStudy" data-direct>Học ngay</button></div>
+        <ul class="kb-list" id="kbList"></ul>
+        <div class="kb-bottom">
+          <details data-direct><summary class="small">Dạy kiến thức cho agent</summary>
+            <form class="stack" id="kbTeach" style="margin-top:8px">
+              <div class="grid2"><label class="f" for="kbTAgent">Dạy cho<select id="kbTAgent"></select></label>
+                <label class="f" for="kbTTopic">Chủ đề<input type="text" id="kbTTopic" required placeholder="VD: chính sách đổi trả"></label></div>
+              <label class="f" for="kbTQ">Câu hỏi mà kiến thức này trả lời (không bắt buộc)<input type="text" id="kbTQ" placeholder="VD: Hàng lỗi có được đổi không?"></label>
+              <label class="f" for="kbTC">Nội dung<textarea id="kbTC" rows="3" required placeholder="VD: Đổi mới trong 7 ngày nếu hàng lỗi do vận chuyển, khách gửi video mở hàng."></textarea></label>
+              <label class="row small"><input type="checkbox" id="kbTFaq"> Đây là câu trả lời dùng được để trả lời khách (Hà tự dùng khi khách hỏi đúng ý này)</label>
+              <div><button class="btn sm primary" type="submit">Dạy</button></div></form></details>
+          <details><summary class="small">Cài đặt tự học kiến thức</summary>
+            <form class="stack" id="kbSet" style="margin-top:8px">
+              <label class="row small"><input type="checkbox" id="kbOn"> Dùng sổ kiến thức khi làm việc, mỗi ngày trả lời các câu sếp và khách hỏi còn chờ</label>
+              <label class="row small"><input type="checkbox" id="kbStudyOn"> Tự học kiến thức chung với Claude (không khuyên dùng)</label>
+              <p class="small muted" id="kbStudyNote">Mặc định tắt: Claude tự viết kiến thức từ hiểu biết chung, không có dữ liệu mới của xưởng, dễ đưa lời khuyên chung chung vào bài. Khi tắt, agent chỉ dùng: điều sếp dạy, luật Facebook, câu sếp và khách hỏi thật, kinh nghiệm thật.</p>
+              <label class="row small"><input type="checkbox" id="kbIdle"> Lúc rảnh, agent tự học, luyện tập, ôn bài để lên cấp (không bao giờ ngồi không)</label>
+              <label class="f" for="kbIdleN">Số buổi học với Claude mỗi agent/ngày lúc rảnh<input type="number" id="kbIdleN" min="0" max="24"></label>
+              <div class="grid2"><label class="f" for="kbTime">Giờ tự học<input type="time" id="kbTime"></label>
+                <label class="f" for="kbN">Số kiến thức mỗi agent/ngày<input type="number" id="kbN" min="1" max="5"></label></div>
+              <p class="small muted">Có khóa Claude: buổi học sáng 1 lần gọi Haiku/agent; học lúc rảnh tối đa số buổi trên, mỗi buổi 1 lần gọi Haiku (6 buổi × 7 agent ≈ 0,02 USD/ngày). Chưa có khóa: học từ thư viện có sẵn; câu hỏi chưa biết được ghi lại để học khi có khóa.</p>
+              <div><button class="btn sm primary" type="submit">Lưu</button></div></form></details>
+        </div>
+      </div>
+      <div class="card kb" id="styleCard">
+        <div class="card-h"><h3>Lan học phong cách viết để tự viết content</h3><span class="chip" id="stState">—</span></div>
+        <p class="small muted">Mọi bài Claude viết đều được lưu vào kho. Lan tách mỗi bài thành câu mở đầu, ý lợi ích, dòng giá, dịch vụ, câu kêu gọi, hashtag; câu ở bài được duyệt hoặc có khách được điểm cao, bài bị loại bị trừ điểm, bài sếp sửa được học nặng hơn. Đủ vốn thì Lan tự ghép bài mới theo phong cách đó, không cần gọi Claude.</p>
+        <div class="kb-stats" id="stStats"></div>
+        <div class="st-progress"><div class="row" style="justify-content:space-between"><span class="small" id="stReadyTxt"></span><span class="small muted" id="stShareTxt"></span></div><div class="bar"><div id="stBar"></div></div></div>
+        <div class="st-grid">
+          <div><h4>Phong cách đã học</h4><ul class="recent" id="stProfile"></ul>
+            <h4 style="margin-top:10px">So sánh chất lượng</h4><ul class="recent" id="stQuality"></ul></div>
+          <div><h4>Câu mở đầu hay dùng</h4><ul class="recent st-snips" id="stHooks"></ul>
+            <h4 style="margin-top:10px">Câu kêu gọi hay dùng</h4><ul class="recent st-snips" id="stCtas"></ul></div>
+        </div>
+        <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><label class="small" for="stMode">Chế độ</label><select id="stMode" style="width:auto"><option value="auto">Tự động: tự viết tăng dần, Claude viết phần còn lại</option><option value="always">Luôn tự viết khi đủ vốn</option><option value="off">Tắt: luôn nhờ Claude viết</option></select>
+          <select id="stProd" style="width:auto" aria-label="Sản phẩm viết thử"></select><button type="button" class="btn" id="stTry">Lan viết thử 1 bài</button></div>
+        <div id="stPreview"></div>
+        <details style="margin-top:10px"><summary class="small">Kho bài đã lưu (20 bài gần nhất)</summary><ul class="kb-list" id="stLib" style="margin-top:6px"></ul></details>
+      </div>
+      <div class="agents-learn" id="learnGrid"></div>
+    </section>
+
+    <!-- CÀI ĐẶT -->
+    <!-- LỖI -->

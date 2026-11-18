@@ -1,0 +1,49 @@
+/* Nhóm trong các nick */
+.mg .card-h{align-items:flex-start;gap:12px}
+.mg-nicks{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.mg-nick{border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:12.5px;background:var(--panel)}
+.mg-nick b{font-size:13px}
+.mg-sec{margin-top:14px}
+.mg-sec h4{margin:0 0 6px;font-size:13px;display:flex;align-items:center;gap:8px}
+.mg-list{list-style:none;margin:0;padding:0}
+.mg-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:8px 0;border-bottom:1px solid var(--line);align-items:center}
+.mg-list li:last-child{border-bottom:0}
+.mg-list .nm{font-weight:600;font-size:13.5px;color:var(--ink);text-decoration:none;overflow-wrap:anywhere}
+.mg-list .meta{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.mg-list .why{font-size:12px;grid-column:1/-1;color:var(--muted)}
+.mg-prog{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:4px}
+.mg-prog .bar{width:120px;height:6px}
+@media (max-width:560px){ .mg-list li{grid-template-columns:minmax(0,1fr)} .mg .card-h{flex-direction:column} }
+/* CEO học duyệt bài */
+.ceo-rv{font-size:12px;background:var(--panel-2);border-radius:8px;padding:5px 8px;color:var(--muted);overflow-wrap:anywhere}
+.ceo-rv b{color:var(--ink)}
+.ceo-rv.ok b{color:var(--accent)}
+.ceo-rv.bad{background:var(--danger-soft)}
+.ceo-rv.bad b{color:var(--danger)}
+.cr-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:10px}
+.cr-kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:13px;margin:0}
+.cr-kv dt{color:var(--muted)}
+.cr-kv dd{margin:0}
+@media (max-width:900px){ .cr-grid{grid-template-columns:minmax(0,1fr)} }
+/* Thư viện bài mẫu */
+.smp-add{margin-bottom:16px}
+.smp-add textarea{font-size:13px;line-height:1.5}
+.smp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:14px}
+.smp{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.smp.off{opacity:.6}
+.smp-h{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.smp-h b{font-size:14px;overflow-wrap:anywhere}
+.smp pre{margin:0;white-space:pre-wrap;font:inherit;font-size:12.5px;line-height:1.5;max-height:190px;overflow:hidden;position:relative;overflow-wrap:anywhere}
+.smp pre.open{max-height:none}
+.smp-st{display:flex;flex-wrap:wrap;gap:6px}
+.smp-prev{display:flex;flex-direction:column;gap:8px}
+.smp-prev article{background:var(--panel-2);border-radius:10px;padding:8px 10px;white-space:pre-wrap;font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
+.smp textarea{font-size:12.5px;line-height:1.5}
+/* Mẫu bài đăng nhóm */
+.tpl .card-h{align-items:flex-start;gap:12px}
+.tpl-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:10px}
+#tplText{font-size:13px;line-height:1.5;min-height:300px}
+.tpl-prev{display:flex;flex-direction:column;gap:10px;max-height:470px;overflow:auto}
+.tpl-prev article{border:1px solid var(--line);border-radius:10px;padding:10px 12px;white-space:pre-wrap;font-size:13px;line-height:1.5;background:var(--panel-2);overflow-wrap:anywhere}
+.tpl-prev h5{margin:0 0 4px;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+@media (max-width:900px){ .tpl-grid{grid-template-columns:minmax(0,1fr)} .tpl .card-h{flex-direction:column} }

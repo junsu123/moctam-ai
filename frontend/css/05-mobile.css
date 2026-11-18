@@ -1,0 +1,34 @@
+/* ---- điện thoại: thanh dưới 4 mục chính + "Thêm" mở bảng mọi mục */
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{background:var(--side);border-top:0;box-shadow:0 -6px 20px -12px rgba(0,0,0,.4)}
+  .nav{justify-content:space-around}
+  .nav-g{display:none}
+  .nav button:not(.pri){display:none}
+  .nav-more{display:flex!important}
+  .nav button{font-size:10.5px;color:var(--side-muted);padding:6px 2px;min-width:0}
+  .nav button.on::before{left:30%;right:30%;top:0;bottom:auto;height:3px;width:auto}
+  .nav .badge.err:not([hidden]){display:block}
+  body.nav-open .side{top:0;flex-direction:column;overflow-y:auto;padding:max(20px,env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px))}
+  body.nav-open .brand{display:flex}
+  body.nav-open .nav{flex-direction:column;justify-content:flex-start}
+  body.nav-open .nav-g{display:block}
+  body.nav-open .nav button,body.nav-open .nav button:not(.pri){display:flex;flex-direction:row;font-size:15px;gap:12px;padding:11px 12px;align-items:center}
+  body.nav-open .nav .badge,body.nav-open .nav .badge.err:not([hidden]){display:inline-block;position:static;width:auto;height:auto;font-size:11px;padding:0 7px;border-radius:10px;margin-left:auto}
+  body.nav-open #moreBadge{display:none!important}
+  body.nav-open .brand{padding-right:6px}
+  body.nav-open .nav-more{order:-1;align-self:flex-end;width:auto;font-size:14px!important}
+  body.nav-open .nav-more svg{display:none}
+  body.nav-open .nav-more::before{content:"Đóng"}
+  body.nav-open .nav-more{color:transparent!important;border:1px solid var(--side-line)!important;border-radius:9px!important;padding:6px 14px!important}
+  body.nav-open .nav-more::before{color:var(--side-ink)}
+  body.nav-open .nav button.on::before{left:-4px;right:auto;top:10px;bottom:10px;width:3px;height:auto}
+  h1{font-size:25px}
+  .main{padding-top:18px;padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+  .vh p{font-size:13px}
+  .today .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #officeKpi{grid-template-columns:minmax(0,1fr)}
+  .ceo-form input{font-size:16px}
+  .chatlog{max-height:240px}
+  .board{grid-template-columns:minmax(0,1fr)}
+}

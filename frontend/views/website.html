@@ -1,0 +1,59 @@
+    <section class="view" id="v-website" hidden>
+      <div class="vh"><div><h1>Website công ty</h1><p>Vy (Biên tập Website &amp; SEO) quản lý website giới thiệu nhà máy, lên kế hoạch từ khóa và viết bài chuẩn SEO để chủ shop, chủ thương hiệu tự tìm thấy xưởng trên Google. Bài nào cũng qua bảng kiểm SEO và luật quảng cáo, sếp duyệt rồi mới đăng.</p></div>
+        <div class="actions"><a class="btn" id="wsView" href="/site/" target="_blank" rel="noopener">Xem website</a><button class="btn" id="wsBuild">Dựng lại website</button></div></div>
+      <div class="pr-stats ws-stats" id="wsStats"></div>
+      <div class="ptabs" role="tablist" aria-label="Website" id="wsTabs">
+        <button type="button" role="tab" id="wtab-posts" aria-controls="wpanel-posts" aria-selected="true">Bài viết</button>
+        <button type="button" role="tab" id="wtab-kw" aria-controls="wpanel-kw" aria-selected="false" tabindex="-1">Từ khóa</button>
+        <button type="button" role="tab" id="wtab-prod" aria-controls="wpanel-prod" aria-selected="false" tabindex="-1">Sản phẩm</button>
+        <button type="button" role="tab" id="wtab-info" aria-controls="wpanel-info" aria-selected="false" tabindex="-1">Thông tin công ty</button>
+        <button type="button" role="tab" id="wtab-host" aria-controls="wpanel-host" aria-selected="false" tabindex="-1">Đăng lên hosting</button>
+      </div>
+      <div role="tabpanel" id="wpanel-posts" aria-labelledby="wtab-posts" class="ppanel">
+        <div class="row wrap"><button class="btn primary" type="button" id="wsWrite">Vy viết bài mới</button><span class="small muted" id="wsWriteInfo"></span></div>
+        <div class="tbl-wrap"><table class="ws-table"><thead><tr><th>Bài viết</th><th class="num">SEO</th><th>Tình trạng</th><th class="num">Chữ</th><th>Ngày</th></tr></thead><tbody id="wsPosts"></tbody></table></div>
+      </div>
+      <div role="tabpanel" id="wpanel-kw" aria-labelledby="wtab-kw" class="ppanel" hidden>
+        <form class="card row wrap" id="wsKwForm" style="align-items:flex-end">
+          <label class="f grow" for="wsKw" style="flex:2 1 240px">Từ khóa khách hay tìm trên Google<input type="text" id="wsKw" required placeholder="VD: gia công trà gừng túi lọc"></label>
+          <label class="f" for="wsKwPr" style="flex:0 1 150px">Ưu tiên<select id="wsKwPr"><option value="1">Cao</option><option value="2" selected>Vừa</option><option value="3">Thấp</option></select></label>
+          <button class="btn primary" type="submit">Thêm</button><button class="btn" type="button" id="wsKwPlan">Vy nghĩ thêm từ khóa</button></form>
+        <div class="tbl-wrap"><table><thead><tr><th>Từ khóa</th><th>Nhóm</th><th>Ưu tiên</th><th>Tình trạng</th><th></th></tr></thead><tbody id="wsKws"></tbody></table></div>
+      </div>
+      <div role="tabpanel" id="wpanel-prod" aria-labelledby="wtab-prod" class="ppanel" hidden>
+        <p class="small muted" style="margin:0 0 10px">Website chỉ hiện từng sản phẩm riêng lẻ. Vy tự bỏ ảnh tổng hợp nhà máy, combo, bộ quà, nhóm nhiều loại. Sản phẩm nào Vy nhận sai thì chọn Hiện hoặc Ẩn, rồi bấm Dựng lại website. Ảnh trên website lấy từ ảnh tải lên và thư mục ảnh riêng của từng sản phẩm (tối đa 10 ảnh).</p>
+        <div class="tbl-wrap"><table class="ws-table"><thead><tr><th>Sản phẩm</th><th>Trên website</th><th>Hiện / ẩn</th></tr></thead><tbody id="wsProds"></tbody></table></div>
+      </div>
+      <div role="tabpanel" id="wpanel-info" aria-labelledby="wtab-info" class="ppanel" hidden>
+        <form class="card" id="wsInfo"><h3>Thông tin hiện trên website</h3><div class="grid3" id="wsInfoFields"></div>
+          <h3 style="margin-top:6px">Lịch viết bài của Vy</h3><div class="grid3" id="wsSchedFields"></div>
+          <label class="row small"><input type="checkbox" id="wsAuto"> Vy viết xong, bài đạt điểm SEO tối thiểu và không phạm luật thì tự đăng và đẩy lên website ngay (không chờ sếp duyệt)</label>
+          <div><button class="btn primary" type="submit">Lưu</button></div></form>
+      </div>
+      <div role="tabpanel" id="wpanel-host" aria-labelledby="wtab-host" class="ppanel" hidden>
+        <section class="card"><h3>Cách đưa website lên mạng</h3>
+          <ol class="steps"><li>Mua tên miền (VD moctam.vn) và gói hosting có FTP ở nhà cung cấp hosting.</li><li>Điền tên miền ở tab <b>Thông tin công ty</b> để thẻ canonical và sitemap dùng đúng địa chỉ.</li>
+            <li>Điền FTP bên dưới (lấy ở cPanel → FTP Accounts hoặc email kích hoạt hosting), bấm <b>Kiểm tra kết nối</b> rồi <b>Đăng lên hosting</b>. Mạng chặn FTP thì chọn <b>Cổng nhận PHP</b>. Hoặc <a href="/api/website/export.zip" id="wsZip">tải file zip</a> và tải lên thư mục public_html.</li>
+            <li>Bật <b>Tự đẩy lên</b>: Vy đăng bài, gỡ bài, sửa sản phẩm hay thông tin công ty thì khoảng 2 phút sau website trên mạng tự cập nhật.</li>
+            <li>Vào Google Search Console, thêm tên miền, gửi địa chỉ <code id="wsSitemap">/sitemap.xml</code> để Google đọc website.</li></ol>
+          <div class="row wrap"><button class="btn" type="button" id="wsCheck">Kiểm tra sitemap trên mạng</button><span class="small muted" id="wsCheckInfo"></span></div>
+          <ul class="ws-steps" id="wsCheckOut" hidden></ul></section>
+        <form class="card" id="wsFtp"><h3>Kết nối hosting</h3>
+          <label class="f" for="wsMode">Cách đăng<select id="wsMode" data-k="site_deploy_mode">
+            <option value="auto">Tự chọn (FTPS → FTP)</option><option value="ftps">FTPS (FTP bảo mật)</option><option value="ftp">FTP thường</option>
+            <option value="sftp">SFTP (cổng 22, hosting có SSH)</option><option value="http">Cổng nhận PHP (khi chặn FTP)</option></select></label>
+          <div class="grid3" id="wsFtpFields"></div>
+          <div id="wsHttpBox" class="ws-http" hidden><ol class="steps small">
+            <li>Bấm <a href="/api/website/mt-sync.php" id="wsSyncDl">Tải mt-sync.php</a> (tệp có mã bí mật riêng của máy này, đừng gửi cho ai).</li>
+            <li>Vào cPanel → File Manager → thư mục <b>public_html</b> → Upload tệp vừa tải.</li>
+            <li>Bấm <b>Kiểm tra kết nối</b>. Địa chỉ cổng: <code id="wsSyncUrlShow"></code></li></ol>
+            <label class="f" for="wf-site_sync_url">Địa chỉ cổng nhận (để trống = tự theo tên miền)<input id="wf-site_sync_url" data-k="site_sync_url" autocomplete="off" placeholder="https://moctamvn.vn/mt-sync.php"></label></div>
+          <div class="grid3"><label class="f" for="wf-site_chmod_file">Quyền tệp trên hosting<input id="wf-site_chmod_file" data-k="site_chmod_file" inputmode="numeric" maxlength="3" placeholder="755"></label>
+            <label class="f" for="wf-site_chmod_dir">Quyền thư mục<input id="wf-site_chmod_dir" data-k="site_chmod_dir" inputmode="numeric" maxlength="3" placeholder="755"></label></div>
+          <label class="row small"><input type="checkbox" id="wsAutoDeploy"> Tự đẩy lên hosting khi có tin tức / sản phẩm mới hoặc sửa đổi</label>
+          <div class="row wrap"><button class="btn" type="submit">Lưu</button><button class="btn" type="button" id="wsTest">Kiểm tra kết nối</button><button class="btn primary" type="button" id="wsDeploy">Đăng lên hosting</button><span class="small muted" id="wsDeployInfo"></span></div>
+          <ul class="ws-steps" id="wsTestOut" hidden></ul></form>
+      </div>
+    </section>
+
+    <!-- SẢN PHẨM -->

@@ -1,0 +1,73 @@
+# GitHub tự kiểm tra code (tab Actions trên GitHub).
+# - Mỗi lần đẩy code / mở PR: kiểm tra cú pháp + nhóm test nhanh (không mở Chrome), khoảng 3–5 phút.
+# - Bộ test đầy đủ (Facebook giả lập, mở Chrome): bấm "Run workflow" ở tab Actions, và tự chạy mỗi Chủ nhật.
+name: Kiểm tra
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Chạy bộ test đầy đủ (lâu, mở Chrome)"
+        type: boolean
+        default: true
+  schedule:
+    - cron: "17 3 * * 0"   # 10:17 sáng Chủ nhật giờ Việt Nam (vài test xếp lịch theo giờ làm của nick, chạy ban ngày cho đúng)
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nhanh:
+    name: Cú pháp + test nhanh
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Cài thư viện
+        run: |
+          pip install -r requirements.txt -r dev/requirements-dev.txt
+          python -m playwright install --with-deps chromium
+      - name: Kiểm tra cú pháp
+        run: bash dev/check.sh
+      - name: Test nhanh
+        run: bash dev/run.sh quick
+      - name: Lưu log test
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-test-nhanh
+          path: dev/work/out_*.log
+
+  day-du:
+    name: Bộ test đầy đủ
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.full)
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Cài thư viện
+        run: |
+          pip install -r requirements.txt -r dev/requirements-dev.txt
+          python -m playwright install --with-deps chromium
+      - name: Chạy tất cả test
+        run: bash dev/run.sh
+      - name: Lưu log test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-test-day-du
+          path: dev/work/out_*.log

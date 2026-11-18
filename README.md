@@ -1229,7 +1229,9 @@ Khóa được lưu trong `data/company.db` trên máy bạn, chỉ hiện dạn
 
 ```
 backend/
-  main.py        API web (FastAPI) + phục vụ giao diện
+  main.py        Tạo app web (FastAPI), tự khởi động lại khi có bản mới, trả giao diện
+  routes/        Các nhóm API /api/... (mỗi file một nhóm: posts, comments, sales, prospects, website...)
+  ui.py          Ghép giao diện từ frontend/app.html + css/ views/ js/
   agents.py      Hồ sơ 5 agent: vai trò, tính cách, ngoại hình 3D
   workflows.py   Việc của từng agent: viết bài, xếp lịch nhóm, chăm khách, số liệu
   meeting.py     Phòng họp: báo cáo → tranh luận → chốt việc
@@ -1277,11 +1279,14 @@ data/
   media/         Ảnh sản phẩm để đăng kèm
   shots/         Ảnh chụp màn hình sau mỗi lần đăng
 frontend/
-  index.html     Giao diện web + văn phòng 3D (Three.js)
+  app.html       Khuôn giao diện (dòng @@include ghép các file dưới)
+  css/           Kiểu chữ, bố cục, từng nhóm trang
+  views/         Mỗi trang một file HTML (<section id="v-...">), _shell.html = thanh bên
+  js/            core, api, router, world3d (văn phòng 3D, Three.js), pages/<trang>.js, demo/ (bản xem trước giả lập)
 ```
 
 Muốn thêm agent mới: thêm hồ sơ vào `agents.py` (`AGENTS`, `ORDER`), thêm vào `DEBATERS` trong
-`meeting.py`, thêm vào `AGENT_DEFS` và một vị trí bàn trong `DESKS` ở `frontend/index.html`.
+`meeting.py`, thêm vào `AGENT_DEFS` và một vị trí bàn trong `DESKS` ở `frontend/js/world3d.js`.
 
 ## Chi phí AI và cách tối ưu
 
@@ -1323,4 +1328,15 @@ theo lô giảm 50%. Khi Anthropic đổi giá, sửa bảng `PRICES` trong `bac
 
 Thư mục `dev/`: Facebook giả lập (`mockfb.py`, cổng 8098), TikTok/Shopee giả lập (`mockmkt.py`, 8096/8095) và các bài kiểm tra.
 `dev/run.sh` tự bật giả lập, chạy test rồi tắt; mỗi test in một dòng kết quả, log đầy đủ ở `dev/work/`.
-Chạy một vài test: `dev/run.sh reply_test care_test`. Chạy hết: `dev/run.sh`. File `CLAUDE.md` ghi bản đồ code và cách làm tiết kiệm token.
+Chạy một vài test: `dev/run.sh reply_test care_test`. Nhóm test nhanh (không mở Chrome): `dev/run.sh quick`. Chạy hết: `dev/run.sh`.
+Cuối mỗi lần chạy in `TỔNG: n/m đạt`; có test hỏng thì thoát mã 1. Kiểm tra cú pháp: `dev/check.sh`. Thư viện cho test: `pip install -r dev/requirements-dev.txt`.
+File `CLAUDE.md` ghi bản đồ code và cách làm tiết kiệm token.
+
+**GitHub tự kiểm tra** (tab **Actions** trên GitHub, file `.github/workflows/test.yml`): mỗi lần đẩy code lên `main` (hoặc mở PR),
+GitHub kiểm tra cú pháp và chạy nhóm test nhanh (khoảng 3–5 phút); hỏng thì có dấu ✗ đỏ cạnh commit và GitHub gửi mail, log test
+tải về ở mục Artifacts. Bộ test đầy đủ (mở Chrome trên Facebook giả lập, lâu) chạy mỗi Chủ nhật hoặc bấm **Run workflow**.
+
+**Mã nguồn chia nhỏ để sửa nhanh, đỡ tốn Claude:**
+- `backend/main.py` chỉ còn phần khởi tạo; các nhóm API ở `backend/routes/<nhóm>.py` (sản phẩm, bài đăng, bình luận, sale, website...).
+- Giao diện ở `frontend/`: khuôn `app.html`, `css/`, mỗi trang một file `views/<trang>.html` + `js/pages/<trang>.js`, bản xem trước
+  giả lập ở `js/demo/`. Phần mềm tự ghép thành một trang khi mở (`backend/ui.py`); `python backend/ui.py ra.html` ghi bản một file.

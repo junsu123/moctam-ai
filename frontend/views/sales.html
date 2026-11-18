@@ -1,0 +1,22 @@
+    <section class="view" id="v-sales" hidden>
+      <div class="vh"><div><h1>Nhân viên sale</h1><p>Mỗi sale AI giữ 3–5 tài khoản Facebook, mỗi nick một hồ sơ Chrome riêng trên máy đang chạy phần mềm. Sale làm theo ca: mở Chrome của một nick, làm hết việc đến giờ của nick đó (đăng bài, up bài, quét bình luận), đóng lại rồi chuyển sang nick kế tiếp.</p></div></div>
+      <details class="note guide" id="salesGuide"><summary><b>Hướng dẫn bắt đầu với một sale mới</b></summary>
+        <ol class="steps" style="margin-top:6px">
+          <li>Tuyển sale ở cuối trang, rồi bấm <b>Thêm nick</b> cho đủ 3–5 nick.</li>
+          <li>Ở từng nick, bấm <b>Mở Chrome</b>: một cửa sổ Chrome riêng của nick hiện lên trên máy này. Đăng nhập Facebook, vào sẵn các nhóm cần đăng, rồi đóng cửa sổ. Phiên đăng nhập được giữ lại.</li>
+          <li>Vào <b>Hội nhóm</b>, đánh dấu nick nào đã là thành viên nhóm nào (nhóm sale tự tìm thì sale tự xin vào bằng từng nick).</li>
+          <li>Ở <b>Bài đăng</b>, chọn nick rồi bấm <b>Đăng thử</b> một bài: sale điền nội dung nhưng không bấm Đăng, kèm ảnh chụp để sếp kiểm tra. Ổn rồi thì để sale tự đăng theo lịch.</li>
+        </ol>
+        <p style="margin-top:6px">Tuấn chia bài đều cho các nick, mỗi nick có giới hạn bài/ngày và khung giờ riêng. Nick nào gặp checkpoint hoặc bị chặn tạm thời thì chỉ nick đó dừng, bài của nick trả về hàng đợi cho nick khác; các nick còn lại vẫn làm. Facebook không khuyến khích đăng tự động, nên giữ giới hạn mỗi nick vừa phải.</p></details>
+      <div class="sales" id="salesGrid"></div>
+      <form class="card" id="saleForm">
+        <h3>Tuyển nhân viên sale</h3>
+        <div class="grid3">
+          <label class="f" for="saName">Tên sale<input type="text" id="saName" required placeholder="VD: Linh"></label>
+          <label class="f" for="saFb">Tên nick đầu tiên<input type="text" id="saFb" placeholder="VD: Linh Nguyễn"></label>
+          <div style="align-self:end"><button class="btn primary" type="submit">Tuyển sale</button></div>
+        </div>
+      </form>
+    </section>
+
+    <!-- HỘI NHÓM -->

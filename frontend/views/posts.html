@@ -1,0 +1,55 @@
+    <section class="view" id="v-posts" hidden>
+      <div class="vh">
+        <div><h1>Bài đăng</h1><p>Lan viết bài, CEO duyệt (sếp vẫn sửa hoặc duyệt thay được), Tuấn xếp lịch theo nhóm và nick. Đến giờ, nhân viên sale AI tự mở Chrome của nick mình và đăng. Bài Fanpage đăng qua API chính thức.</p></div>
+        <div class="actions" id="postsActs"><button class="btn" id="btnPlan" data-direct>Tuấn xếp lịch đăng nhóm</button><button class="btn danger" id="btnReset" aria-expanded="false" aria-controls="resetPanel">Làm lại bài đăng</button></div>
+      </div>
+      <div class="ptabs" role="tablist" aria-label="Bài đăng">
+        <button type="button" role="tab" id="ptab-work" aria-controls="ppanel-work" aria-selected="true">Bài đăng <span class="chip num" id="ptabWorkN"></span></button>
+        <button type="button" role="tab" id="ptab-posted" aria-controls="ppanel-posted" aria-selected="false" tabindex="-1">Bài đã đăng <span class="chip num" id="ptabPostedN"></span></button>
+      </div>
+      <div role="tabpanel" id="ppanel-work" aria-labelledby="ptab-work" class="ppanel">
+      <p class="ap-note">Luật: sếp chỉ giao việc cho CEO. CEO tự giao Lan viết bài, tự duyệt bài nháp và cho Tuấn xếp lịch. Muốn viết thêm hay sửa cách viết, nhắn CEO ở <a href="#ceo">Giao việc</a> hoặc Telegram.</p>
+      <section class="card tpl" id="tplCard">
+        <div class="card-h"><div><h3>Bài đăng nhóm theo thư viện bài mẫu của sếp</h3><p class="small muted" style="margin:2px 0 0" id="tplStats">Đang tải…</p></div>
+          <div class="row wrap"><label class="row small" style="white-space:nowrap"><input type="checkbox" id="tplOn"> Đăng nhóm theo bài mẫu</label><a class="btn sm primary" href="#samples">Mở thư viện bài mẫu</a></div></div>
+      </section>
+      <section class="card tg" id="tgCard">
+        <div class="card-h"><div><h3>Chỉ đạo nơi đăng</h3><p class="small muted" style="margin:2px 0 0" id="tgSumTxt">Đang tải…</p></div>
+          <button class="btn sm" type="button" id="tgEdit" aria-expanded="false" aria-controls="tgForm" style="white-space:nowrap">Sửa chỉ đạo</button></div>
+        <div class="tg-sum" id="tgSum"></div>
+        <form class="tg-form" id="tgForm" hidden></form>
+      </section>
+      <form class="card" id="genForm" data-direct>
+        <h3>Giao Lan viết bài</h3>
+        <div class="grid3">
+          <label class="f" for="gCount">Số bài<input type="number" id="gCount" min="1" max="10" value="3"></label>
+          <label class="f" for="gProduct">Sản phẩm<select id="gProduct"></select></label>
+          <label class="f" for="gTarget">Đăng ở đâu<select id="gTarget"><option value="group">Hội nhóm</option><option value="profile">Trang cá nhân</option><option value="page">Fanpage</option></select></label>
+          <label class="f" for="gAngle">Góc tiếp cận<select id="gAngle"><option value="">Lan tự chọn</option><option value="nguon_hang">Nguồn hàng tận xưởng</option><option value="loi_nhuan">Biên lợi nhuận</option><option value="livestream">Dễ livestream</option><option value="ads">Dễ chạy quảng cáo</option><option value="oem">In nhãn riêng (OEM)</option><option value="cau_chuyen">Câu chuyện xưởng</option></select></label>
+          <label class="f" for="gNote" style="grid-column:span 2">Dặn thêm<input type="text" id="gNote" placeholder="VD: nhấn mạnh có video thật, sắp vào mùa lạnh"></label>
+        </div>
+        <div><button class="btn primary" type="submit" id="gBtn">Viết bài</button></div>
+      </form>
+      <section class="card reset-panel" id="resetPanel" hidden></section>
+      <div class="banner noimg" id="noImgBar" hidden></div>
+      <div class="board" id="board"></div>
+      </div>
+      <div role="tabpanel" id="ppanel-posted" aria-labelledby="ptab-posted" class="ppanel" hidden>
+      <div class="banner" id="noLinkBar" hidden></div>
+      <section class="card posted-card" id="postedCard">
+        <div class="card-h"><div><h3>Bài đã đăng</h3><p class="small muted" style="margin:2px 0 0" id="pdStats">Đang tải…</p></div></div>
+        <form class="pd-filters" id="pdFilters" role="search" onsubmit="return false">
+          <label class="f grow" for="pdQ">Tìm<input type="text" inputmode="search" enterkeyhint="search" id="pdQ" placeholder="Tên bài, nội dung, nhóm, link hoặc #mã bài"></label>
+          <label class="f" for="pdGroup">Nhóm<select id="pdGroup"><option value="">Tất cả nhóm</option></select></label>
+          <label class="f" for="pdAcc">Nick<select id="pdAcc"><option value="">Tất cả nick</option></select></label>
+          <label class="f" for="pdLink">Link bài<select id="pdLink"><option value="">Tất cả</option><option value="found">Đã lưu link</option><option value="missing">Chưa có link</option><option value="pending">Chờ nhóm duyệt</option><option value="removed">Bị xóa/ẩn</option></select></label>
+          <label class="f" for="pdDays">Thời gian<select id="pdDays"><option value="0">Mọi lúc</option><option value="1">Hôm nay</option><option value="7">7 ngày</option><option value="30">30 ngày</option><option value="90">90 ngày</option></select></label>
+          <label class="f" for="pdSort">Sắp xếp<select id="pdSort"><option value="new">Mới nhất</option><option value="old">Cũ nhất</option><option value="leads">Nhiều khách nhất</option><option value="comments">Nhiều bình luận nhất</option></select></label>
+        </form>
+        <div class="tbl-wrap"><table class="pd-table"><thead><tr><th>Ngày đăng</th><th>Bài viết</th><th>Đăng ở</th><th>Nick</th><th class="num">Ảnh</th><th>Link bài</th><th class="num">Up</th><th class="num">Bình luận</th><th class="num">Khách</th></tr></thead><tbody id="pdRows"></tbody></table></div>
+        <nav class="pager" id="pdPager" aria-label="Phân trang bài đã đăng"></nav>
+      </section>
+      </div>
+    </section>
+
+    <!-- NHÂN VIÊN SALE -->

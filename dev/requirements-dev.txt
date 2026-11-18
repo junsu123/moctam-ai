@@ -1,0 +1,4 @@
+# Thư viện chỉ dùng khi chạy test (dev/run.sh), máy chạy phần mềm không cần
+pyftpdlib
+pyopenssl
+httpx

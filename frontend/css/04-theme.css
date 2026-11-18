@@ -1,0 +1,162 @@
+/* ================================================================ Thiết kế lại 11/2026
+   Ý tưởng: thanh bên màu lá trà đậm là điểm nhận diện duy nhất; vùng làm việc yên tĩnh, sáng, chữ rõ.
+   Thứ bậc: bảng điều khiển chính (nền sáng, viền mảnh) > khối phụ (nền nhạt, không viền) > danh sách (đường kẻ). */
+body{font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--f-display);letter-spacing:-.01em}
+h1{font-size:30px;font-weight:700;line-height:1.1}
+h2{font-size:19px;font-weight:700}
+h3{font-size:16px;font-weight:650}
+h4{font-weight:650}
+::selection{background:var(--honey-soft)}
+:focus-visible{outline:2px solid var(--honey);outline-offset:2px;border-radius:6px}
+
+/* ---- thanh bên */
+.app{grid-template-columns:248px minmax(0,1fr)}
+.side{background:var(--side);color:var(--side-ink);border-right:0;gap:14px;padding-block:22px 16px}
+.brand{padding:0 6px 6px}
+.brand-mark{background:var(--honey);color:#1c1304;width:40px;height:40px;border-radius:55% 55% 55% 10%;font:800 19px var(--f-display);transform:rotate(-8deg)}
+.brand b{font:700 16px/1.15 var(--f-display);color:var(--side-ink)}
+.brand span{color:var(--side-muted)}
+.nav{gap:1px}
+.nav-g{display:block;font-size:11.5px;font-weight:600;color:var(--side-muted);padding:14px 10px 4px;opacity:.85}
+.nav-g:first-child{padding-top:2px}
+.nav button{color:var(--side-muted);padding:8px 10px;border-radius:9px;font-weight:500;position:relative}
+.nav button svg{opacity:.85}
+.nav button:hover{background:var(--side-2);color:var(--side-ink)}
+.nav button.on{background:var(--side-2);color:var(--side-ink);font-weight:600}
+.nav button.on::before{content:"";position:absolute;left:-4px;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--honey)}
+.nav button.on svg{opacity:1;color:var(--honey)}
+.nav .badge{background:var(--honey);color:#1c1304}
+.nav .badge.err{background:var(--danger);color:#fff}
+.nav-more{display:none!important}
+.mode{border:1px solid var(--side-line);color:var(--side-muted);border-radius:10px;background:transparent}
+.mode b{color:var(--side-ink)}
+.mode a{color:var(--honey)}
+.side :focus-visible{outline-color:var(--honey)}
+
+/* ---- vùng làm việc */
+.main{padding-block:26px 48px;padding-left:max(18px,2.4vw)}
+.view{gap:18px;max-width:1440px}
+.vh{align-items:flex-end;padding-bottom:2px}
+.vh p{font-size:13.5px;max-width:72ch;margin-top:6px}
+.btn{border-radius:9px;border-color:var(--line);background:var(--panel);transition:border-color .15s,background .15s}
+.btn:hover{border-color:var(--accent);background:var(--panel)}
+.btn.primary{box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.btn.ghost:hover{background:var(--panel-2)}
+
+/* bảng điều khiển chính: viền mảnh + bóng rất nhẹ; khối phụ trong thẻ: nền nhạt, không viền */
+.card{border-radius:var(--r);border-color:var(--line);box-shadow:var(--shadow);padding:16px;gap:12px}
+.card .card{box-shadow:none}
+.card-h h2,.card-h h3{margin:0}
+.note,.bench,.hot-bar,.imgfolder,.kb-ans,.st-post{border-radius:var(--r-s)}
+.sale-stats div,.kb-stats div,.skills div,.pipe div{border-radius:var(--r-s)}
+.chip{border-radius:999px;font-weight:600}
+.empty{border-radius:var(--r-s);background:color-mix(in srgb,var(--panel-2) 45%,transparent)}
+.banner{border:0;border-left:3px solid var(--honey);border-radius:var(--r-s);background:var(--honey-soft);padding:9px 14px}
+.alert{border:0;border-left:3px solid var(--danger);border-radius:var(--r-s)}
+.ap-note{border-left:3px solid var(--honey);border-radius:var(--r-s)}
+.ceo,.gf,.ceo-chat{border-top:1px solid var(--line)}
+.src{color:var(--honey)}
+.member-chips button.need{background:var(--danger-soft)}
+
+/* bảng: đầu cột chữ thường, đường kẻ mảnh */
+.tbl-wrap{border-radius:var(--r);box-shadow:var(--shadow)}
+th{text-transform:none;letter-spacing:0;font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel)}
+thead th{border-bottom:1px solid var(--line)}
+td{border-bottom-color:var(--line-2)}
+.phase,.lessons .src,.prod .cat{text-transform:none;letter-spacing:0}
+.phase{font-size:11.5px;font-weight:600}
+.prod .cat{font-size:12.5px}
+
+/* số liệu lớn: chữ tiêu đề, số thẳng hàng */
+.kpi .v,.co-tile .v,.sale-stats b,.kb-stats b,.skills b,.pipe b,.spend b,.kpi-hero .big{font-family:var(--f-display);font-weight:700;letter-spacing:-.02em}
+
+/* ---- Văn phòng: chỉ văn phòng 3D + cột việc của từng agent */
+.office-h{align-items:center}
+.office-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:stretch}
+.office-grid .stage{height:calc(100vh - 150px);min-height:520px;max-height:none}
+.crew{padding:14px 10px 10px 14px;max-height:calc(100vh - 150px);min-height:520px;display:flex;flex-direction:column}
+.crew-list{overflow-y:auto;padding-right:4px;gap:2px}
+.crew-item{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start;padding:10px 8px;border:0;border-bottom:1px solid var(--line-2);background:none;text-align:left;width:100%;border-radius:0}
+.crew-item:hover{background:var(--panel-2);border-radius:var(--r-s)}
+.crew-item .who{display:flex;flex-direction:column;gap:3px;min-width:0}
+.crew-top{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.crew-top b{font-size:14px}
+.crew-top .chip{margin-left:auto}
+.crew-role{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crew-now{font-size:13px;line-height:1.4}
+.crew-item.working .crew-now{font-weight:600}
+.crew-item .xp{height:5px;margin-top:3px}
+.crew-meta{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.crew-rec{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted);margin-top:2px}
+.crew-rec span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crew-rec time{opacity:.75}
+.chip.learning{background:color-mix(in srgb,#5a7fb0 18%,var(--panel));color:#3d6596}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip.learning{color:#9cbbe3}}
+:root[data-theme="dark"] .chip.learning{color:#9cbbe3}
+
+/* ---- Giao việc: bàn làm việc của sếp */
+.strip{display:flex;flex-direction:column;gap:8px}
+.strip:not(:has(> :not([hidden]))){display:none}
+.desk{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:stretch}
+.ceo-chat{gap:10px}
+.ceo-chat .card-h h2{font-size:18px}
+.chatlog{max-height:300px;min-height:96px;padding:4px 2px}
+.chatlog .b{background:var(--accent);color:var(--accent-ink)}
+.chatlog .c{background:var(--panel-2)}
+.ceo-form{display:flex;gap:8px;align-items:stretch}
+.ceo-form input{font-size:15px;padding:11px 14px;border-radius:11px}
+.ceo-form .btn{padding-inline:18px;border-radius:11px}
+.chips{margin:0}
+.chips button{border-radius:999px;background:transparent}
+.today{display:flex;flex-direction:column;gap:12px;min-width:0}
+.kpi-hero{border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+#officeKpi{grid-template-columns:auto minmax(0,1fr);gap:6px 18px;text-decoration:none;color:inherit}
+#officeKpi:hover{border-color:var(--accent)}
+#officeKpi > :last-child{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left!important}
+#officeKpi > :last-child span{margin:0!important}
+.today .kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kpi{border-radius:var(--r-s);border-color:var(--line-2);padding:11px 12px;box-shadow:none}
+.kpi .v{font-size:24px}
+.kpi.warn{border-color:var(--line-2)}
+.guide summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary::after{content:"Xem";margin-left:auto;font-size:12px;color:var(--accent);font-weight:600}
+.guide[open] summary::after{content:"Thu gọn"}
+.post .idea{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.stage{border-radius:var(--r);border-color:var(--line);box-shadow:var(--shadow)}
+.team .member{border-radius:var(--r-s)}
+
+/* ---- Bài đăng: cột kanban gọn, nội dung bài cắt ngắn */
+.col{border-radius:var(--r);background:color-mix(in srgb,var(--panel-2) 70%,transparent);padding:10px}
+.col>header b{font-size:15px}
+.post{border-radius:var(--r-s);border-color:var(--line-2);box-shadow:0 1px 0 rgba(23,36,28,.04)}
+.post h4{font-family:var(--f-body);font-weight:600;font-size:13.5px}
+.post pre{max-height:7.6em;font-size:12.8px;color:color-mix(in srgb,var(--ink) 88%,var(--muted))}
+.post pre:not(.open)::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.2em;background:linear-gradient(transparent,var(--panel))}
+.post .meta .chip{font-size:11px;padding:1px 7px}
+.col .empty{padding:9px;font-size:12.5px}
+
+/* ---- Nhân viên sale, sản phẩm, đào tạo */
+.nick{border-radius:var(--r-s);border-color:var(--line-2)}
+.prod.hot{box-shadow:var(--shadow),inset 0 0 0 1px var(--honey);border-color:var(--honey)}
+.hot-btn[aria-pressed="true"]{font-weight:700}
+.lessons li{border-radius:var(--r-s)}
+
+/* ---- trường nhập */
+input[type=text],input[type=number],input[type=url],input[type=time],input[type=password],select,textarea{border-radius:9px;border-color:var(--line);background:var(--panel);transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+input[type=checkbox]{accent-color:var(--accent)}
+label.f{font-weight:600;color:var(--muted)}
+
+.toast{border-radius:11px;background:var(--side);color:var(--side-ink);box-shadow:var(--shadow)}
+.drawer{box-shadow:-20px 0 40px -24px rgba(0,0,0,.35)}
+
+@media (max-width:1180px){
+  .desk{grid-template-columns:minmax(0,1fr)}
+  .office-grid{grid-template-columns:minmax(0,1fr)}
+  .office-grid .stage{height:60vh;min-height:380px}
+  .crew{max-height:none;min-height:0}
+  .today .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+

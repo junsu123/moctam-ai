@@ -1,0 +1,12 @@
+    <section class="view" id="v-errors" hidden>
+      <div class="vh"><div><h1>Lỗi</h1><p>Mọi lỗi ở bất kỳ màn hình nào và trong các việc tự động (đăng bài, up bài, quét bình luận, Chrome, Telegram, AI, lịch) đều được ghi ở đây, kèm cách xử lý. Lỗi giống nhau được gộp lại và đếm số lần lặp.</p></div>
+        <div class="row wrap"><button class="btn" type="button" id="errCopyAll">Sao chép lỗi chưa xử lý</button><button class="btn" type="button" id="errResolveAll">Đánh dấu tất cả đã xử lý</button></div></div>
+      <div class="err-tools">
+        <div class="seg" role="group" aria-label="Lọc theo trạng thái"><button type="button" data-es="open" class="on">Chưa xử lý</button><button type="button" data-es="resolved">Đã xử lý</button><button type="button" data-es="all">Tất cả</button></div>
+        <label class="row small" for="errSrc" style="gap:6px">Nguồn<select id="errSrc"><option value="">Tất cả nguồn</option></select></label>
+        <span class="small muted" id="errSum"></span>
+      </div>
+      <div id="errList" class="err-list"></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn sm ghost danger" type="button" id="errClear">Xóa các lỗi đã xử lý</button></div>
+    </section>
+
