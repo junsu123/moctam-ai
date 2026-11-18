@@ -2482,7 +2482,7 @@ def bump_post(pid: int):
     if not bid:
         raise HTTPException(400, "Bài này không do nhân viên sale đăng nên chưa up tự động được")
     if not media_folder.root():
-        raise HTTPException(400, "Chưa cài thư mục ảnh sản phẩm. Vào Cài đặt → Up bài")
+        raise HTTPException(400, "Chưa cài thư mục ảnh sản phẩm. Vào Bình luận → Cài đặt")
     return {"ok": True, "bump_id": bid, "note": "Sale sẽ up bài trong vòng 1 phút khi rảnh"}
 
 
@@ -2515,6 +2515,38 @@ def bumps(post_id: int | None = None):
     sql = """SELECT b.*, s.name sale_name, fa.name account_name FROM bumps b LEFT JOIN sales s ON s.id=b.sale_id
              LEFT JOIN fb_accounts fa ON fa.id=b.account_id"""
     return db.q(sql + (" WHERE b.post_id=?" if post_id else "") + " ORDER BY b.id DESC LIMIT 100", (post_id,) if post_id else ())
+
+
+# ------------------------------------------------------------------ màn hình Bình luận (bình luận tự động mỗi ngày)
+class CommentEdit(BaseModel):
+    text: str
+
+
+@app.get("/api/comments")
+def comments_get(day: str | None = None, status: str = "", account_id: int | None = None, q: str = ""):
+    import comments
+    return comments.overview(day, status, account_id, q)
+
+
+@app.put("/api/comments/{bid}")
+def comments_edit(bid: int, body: CommentEdit):
+    import comments
+    try:
+        return comments.edit(bid, body.text)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/comments/{bid}/{act}")
+def comments_act(bid: int, act: str):
+    import comments
+    fn = {"cancel": comments.cancel, "retry": comments.retry, "rewrite": comments.rewrite}.get(act)
+    if not fn:
+        raise HTTPException(404)
+    try:
+        return fn(bid)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
 
 # ------------------------------------------------------------------ chỉ đạo nơi đăng bài

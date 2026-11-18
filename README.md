@@ -642,6 +642,22 @@ luôn ghi bài đăng đang lấy ảnh ở đâu.
 
 Bỏ chọn “Bắt buộc có ảnh” nếu muốn cho phép đăng bài chỉ có chữ như trước.
 
+## Màn hình Bình luận: mỗi ngày tự bình luận vào từng bài đã đăng
+
+Mục **Bình luận** (thanh bên, dưới Bài đăng) gom toàn bộ việc bình luận tự động (up bài) vào một chỗ:
+- **Mỗi ngày** từ giờ đã cài (mặc định 19:30) Bảo rà soát mọi bài đã đăng còn hiển thị, xếp cho **đúng nick đã đăng**
+  bình luận 1 ảnh sản phẩm + một câu ngắn mới (mỗi bài một câu khác nhau) + dòng liên hệ của sếp.
+- **Bình luận theo ngày**: lọc theo ngày, trạng thái (chờ gửi, đã gửi, lỗi, bỏ qua), nick, hoặc tìm chữ. Lượt **chờ gửi**:
+  sửa câu (Luật Facebook kiểm lại, câu vi phạm bị chặn), **Bảo viết lại**, **Hủy**. Lượt **lỗi/bỏ qua**: **Gửi lại**.
+  Lượt đã gửi có nút mở bài và ảnh chụp màn hình.
+- **Bài đã đăng · hôm nay**: từng bài có lượt hôm nay chưa; chưa có thì ghi rõ lý do (vừa đăng dưới 10 giờ, đăng quá N ngày,
+  sếp tắt, bài bị gỡ, chưa đến giờ xếp, hết lượt của nick). Bật/tắt tự bình luận từng bài, **Bình luận ngay** một bài.
+- **Lượt mỗi nick hôm nay**: đã gửi / trần an toàn. Phần cài đặt (giờ, số ngày, lượt mỗi nick, khoảng cách, thư mục ảnh,
+  dòng liên hệ, cách viết câu) chuyển từ Cài đặt sang cuối màn hình này.
+- Giữ luật an toàn: mỗi bài tối đa 1 bình luận/ngày, trong giờ hoạt động của nick, cách nhau vài phút, theo trần
+  Luật Facebook; không bình luận 24/24. API: `GET /api/comments`, `PUT /api/comments/{id}`,
+  `POST /api/comments/{id}/cancel|retry|rewrite` (`backend/comments.py`, test `dev/comments_test.py`).
+
 ## Lưu link bài và tự động up bài
 
 **Link bài (bắt buộc lưu):** mỗi bài đăng phải có link thật trên Facebook (đã bỏ phần theo dõi `__cft__`). Sale lấy link

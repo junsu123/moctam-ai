@@ -53,7 +53,7 @@ HINTS = [
      "rồi tải lại trang.", None),
     (r"ERR_INTERNET_DISCONNECTED|ERR_NAME_NOT_RESOLVED|ERR_CONNECTION|ERR_TIMED_OUT|ConnectError|Connection refused|Connection reset|Network is unreachable|timed out|Timeout \d+ms",
      "Kiểm tra Internet của máy chạy phần mềm. Việc tự động sẽ thử lại ở lượt sau.", None),
-    (r"Thư mục ảnh|thư mục ảnh", "Vào Sản phẩm, chọn thư mục ảnh cho sản phẩm (hoặc Cài đặt → Up bài).", "products"),
+    (r"Thư mục ảnh|thư mục ảnh", "Vào Sản phẩm, chọn thư mục ảnh cho sản phẩm (hoặc Bình luận → Cài đặt).", "products"),
     (r"authentication_error|invalid x-api-key|Error code: 401", "Khóa API Claude sai hoặc đã bị thu hồi. Vào Cài đặt → Khóa API Claude, "
      "dán khóa mới và bấm Kiểm tra và lưu.", "setup"),
     (r"credit balance|billing|insufficient_quota|Error code: 402", "Tài khoản Anthropic hết tín dụng. Nạp thêm ở console.anthropic.com → Billing.", "setup"),

@@ -1523,7 +1523,7 @@ def _do_bump(ctx, page, aid: int, bump_id: int):
         return
     img = media_folder.pick(post)
     if not img:
-        _bump_done(bump_id, "failed", "Thư mục ảnh trống hoặc chưa cài. Vào Cài đặt → Up bài để chọn thư mục")
+        _bump_done(bump_id, "failed", "Thư mục ảnh trống hoặc chưa cài. Vào Bình luận → Cài đặt để chọn thư mục")
         return
     db.run("UPDATE bumps SET status='running' WHERE id=?", (bump_id,))
     workflows.set_status(agent, "working", f"Đang up bài ở {where} (nick {accounts.label(acc)})")

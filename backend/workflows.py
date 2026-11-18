@@ -365,11 +365,11 @@ def with_images(posts: list[dict]) -> list[dict]:
         if s.get("noimg_log_date") != today:  # báo 1 lần mỗi ngày, không spam nhật ký
             db.set_setting("noimg_log_date", today)
             db.log("tuan", "Bài thiếu ảnh chưa xếp lịch", f"{miss} bài chưa có ảnh nên không xếp đăng. Sếp thêm thư mục ảnh ở trang Sản phẩm "
-                   "hoặc Cài đặt → Up bài")
+                   "hoặc Bình luận → Cài đặt")
             import errors
             errors.report("image", "Có bài không có ảnh nên chưa đăng",
                           f"{miss} bài đã duyệt chưa có ảnh. Bài đăng lên Facebook bắt buộc kèm ảnh. Thêm thư mục ảnh cho sản phẩm "
-                          "(trang Sản phẩm) hoặc thư mục ảnh chung (Cài đặt → Up bài).", screen="products")
+                          "(trang Sản phẩm) hoặc thư mục ảnh chung (Bình luận → Cài đặt).", screen="products")
     return ok
 
 
@@ -544,7 +544,7 @@ def plan_bumps(force: bool = False) -> int:
         return 0
     db.set_setting("bump_planned_date", today)
     if not media_folder.root():
-        db.log("bao", "Up bài", "Chưa cài thư mục ảnh sản phẩm (Cài đặt → Up bài), hôm nay bỏ qua")
+        db.log("bao", "Up bài", "Chưa cài thư mục ảnh sản phẩm (Bình luận → Cài đặt), hôm nay bỏ qua")
         return 0
     import post_care
     set_status("bao", "working", "Rà soát bài đã đăng, viết câu bình luận kèm ảnh")

@@ -2,7 +2,7 @@
 
 Mỗi sản phẩm có một THƯ MỤC ẢNH riêng (trang Sản phẩm), ví dụ:
     D:\\AnhSanPham\\Tra gung mat ong\\      (bao nhiêu ảnh cũng được, kể cả thư mục con)
-Nếu sản phẩm chưa có thư mục riêng, dùng thư mục chung ở Cài đặt → Up bài:
+Nếu sản phẩm chưa có thư mục riêng, dùng thư mục chung ở Bình luận → Cài đặt:
     thư mục con có tên giống tên sản phẩm (có dấu hay không dấu đều được), hoặc ảnh để thẳng trong thư mục chung.
 
 Chống trùng lặp khi đăng bài (theo thứ tự ưu tiên):
@@ -159,8 +159,8 @@ def missing(post: dict) -> str | None:
     product = _product(post.get("product_id"))
     if product:
         return (f"Bài chưa có ảnh nên không đăng: sản phẩm “{product['name']}” chưa có ảnh. Vào Sản phẩm, điền thư mục ảnh "
-                "cho sản phẩm này (hoặc thư mục chung ở Cài đặt → Up bài)")
-    return ("Bài chưa có ảnh nên không đăng: chưa có thư mục ảnh chung. Vào Cài đặt → Up bài, điền thư mục ảnh sản phẩm "
+                "cho sản phẩm này (hoặc thư mục chung ở Bình luận → Cài đặt)")
+    return ("Bài chưa có ảnh nên không đăng: chưa có thư mục ảnh chung. Vào Bình luận → Cài đặt, điền thư mục ảnh sản phẩm "
             "(hoặc điền thư mục ảnh riêng ở trang Sản phẩm)")
 
 
@@ -233,7 +233,7 @@ def folder_info(product: dict) -> dict:
 
 
 def info() -> dict:
-    """Thư mục chung (Cài đặt → Up bài)."""
+    """Thư mục chung (Bình luận → Cài đặt)."""
     raw = (db.get_settings().get("bump_folder") or "").strip()
     r = root()
     if not r:

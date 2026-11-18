@@ -480,6 +480,21 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:
 .fr-item .sc{margin-left:auto;font-weight:800;font-size:12px;border-radius:7px;padding:1px 7px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
 .fr-item .acts{grid-column:2/3;display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
 .fr-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.fr-filters select{width:auto;min-width:140px;flex:1}
+.cm-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.cm-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);display:flex;flex-direction:column;gap:6px;min-width:0}
+.cm-item.st-failed{box-shadow:inset 3px 0 0 var(--danger)}.cm-item.st-done{box-shadow:inset 3px 0 0 var(--accent)}.cm-item.st-scheduled{box-shadow:inset 3px 0 0 var(--honey)}
+.cm-item .top{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:12.5px;color:var(--muted);min-width:0}
+.cm-item .top b{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.cm-item .tx{margin:0;font-size:14px;overflow-wrap:anywhere}.cm-item textarea.tx{width:100%;font:inherit}
+.cm-item .er{margin:0;font-size:12.5px;color:var(--danger)}
+.cm-item .acts{display:flex;flex-wrap:wrap;gap:6px}
+.cm-filters input[type=search]{flex:1;min-width:140px}.cm-filters input[type=date]{width:auto}
+.cm-posts{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:520px;overflow:auto}
+.cm-posts li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel)}
+.cm-posts .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cm-posts .mt{grid-column:1/2;font-size:12px;color:var(--muted)}
+.cm-posts .act{grid-row:1/3;grid-column:2;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:560px){.cm-posts li{grid-template-columns:minmax(0,1fr)}.cm-posts .act{grid-row:auto;grid-column:1/2;justify-content:flex-start}}
 .fr-set{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:10px;margin-top:10px}
 @media (max-width:980px){.fr-grid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:760px){.pr-stats.fr-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.fr-item{grid-template-columns:32px minmax(0,1fr)}.fr-ava{width:32px;height:32px;font-size:13px;grid-row:1/3}.fr-item .snip,.fr-item .acts{grid-column:1/-1}.fr-item .why{grid-column:2/3}}
@@ -980,6 +995,7 @@ label.f{font-weight:600;color:var(--muted)}
       <button data-v="meeting"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="3.5" r="1.5"/><circle cx="12" cy="20.5" r="1.5"/><circle cx="3.5" cy="12" r="1.5"/><circle cx="20.5" cy="12" r="1.5"/></svg>Phòng họp<span class="badge" id="liveBadge" hidden>LIVE</span></button>
       <span class="nav-g">Bán hàng</span>
       <button data-v="posts" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Bài đăng<span class="badge" id="draftBadge" hidden></span></button>
+      <button data-v="comments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg>Bình luận<span class="badge err" id="cmBadge" hidden></span></button>
       <button data-v="leads" class="pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>Khách hàng</button>
       <button data-v="prospects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21M8 10.5h5M10.5 8v5"/></svg>Tìm khách sỉ<span class="badge" id="prBadge" hidden></span></button>
       <button data-v="website"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></svg>Website</button>
@@ -1196,6 +1212,49 @@ label.f{font-weight:600;color:var(--muted)}
     </section>
 
     <!-- KẾT BẠN TRONG NHÓM -->
+    <section class="view" id="v-comments" hidden>
+      <div class="vh"><div><h1>Bình luận tự động</h1><p>Mỗi ngày từ <b id="cmTime">19:30</b>, Bảo rà soát các bài đã đăng còn hiển thị và xếp cho <b>đúng nick đã đăng</b> vào lại bài, bình luận 1 ảnh sản phẩm kèm một câu ngắn mới (mỗi bài một câu khác nhau) và dòng liên hệ, để bài nổi lại trong nhóm. Sếp xem lịch, sửa câu trước khi gửi, hủy hoặc gửi lại ở đây.</p></div>
+        <div class="row wrap"><button class="btn primary" type="button" id="cmPlan">Xếp lịch bình luận ngay</button></div></div>
+      <p class="fr-note"><b>Mỗi bài tối đa 1 bình luận/ngày, trong giờ hoạt động của nick, cách nhau vài phút.</b> Không bình luận 24/24 hay lặp cùng một câu: Facebook coi là spam, nhóm xóa bình luận và khóa tính năng bình luận của nick. Số lượt mỗi nick theo trần ở <a href="#fbrules">Luật Facebook</a>.</p>
+      <div class="pr-stats fr-stats" id="cmStats"></div>
+      <div class="fr-grid">
+        <section class="card"><div class="card-h"><h3>Bình luận theo ngày</h3>
+            <div class="fr-filters cm-filters"><input type="date" id="cmDay" aria-label="Ngày"><select id="cmSt" aria-label="Trạng thái"><option value="">Mọi trạng thái</option><option value="scheduled">Chờ gửi</option><option value="done">Đã gửi</option><option value="failed">Lỗi</option><option value="skipped">Bỏ qua / đã hủy</option></select>
+              <select id="cmAcc" aria-label="Nick"><option value="">Mọi nick</option></select><input type="search" id="cmQ" placeholder="Tìm câu, bài, nhóm" aria-label="Tìm"></div></div>
+          <div class="cm-list" id="cmList"><p class="muted small">Đang tải…</p></div></section>
+        <div>
+          <section class="card"><div class="card-h"><div><h3>Bài đã đăng · hôm nay</h3><p class="small muted" style="margin:2px 0 0" id="cmCov"></p></div></div>
+            <ul class="cm-posts" id="cmPosts"><li class="muted small">Đang tải…</li></ul></section>
+          <section class="card" style="margin-top:12px"><div class="card-h"><div><h3>Lượt mỗi nick hôm nay</h3><p class="small muted" style="margin:2px 0 0">Đã gửi / trần an toàn (nick mới hoặc vừa bị chặn còn một nửa).</p></div></div>
+            <ul class="fr-nicks" id="cmNicks"></ul></section>
+        </div>
+      </div>
+          <form class="card" id="bumpForm" style="margin-top:12px">
+            <div class="card-h"><h3>Cài đặt bình luận tự động · Bảo phụ trách</h3><span class="chip" id="bumpToday"></span></div>
+            <p class="small muted">Mỗi ngày, từ giờ đã chọn, mỗi nhân viên sale vào lại các bài mình đã đăng và bình luận một ảnh sản phẩm lấy từ thư mục trên máy này, để bài nổi lên đầu nhóm. Mỗi bài tối đa 1 lần/ngày, mỗi ảnh không lặp lại trên cùng một bài cho tới khi dùng hết ảnh.</p>
+            <label class="row small"><input type="checkbox" id="bEnabled"> Bật tự bình luận mỗi ngày vào bài đã đăng</label>
+            <label class="f" for="bFolder">Thư mục ảnh sản phẩm trên máy chạy phần mềm
+              <div class="row"><input type="text" class="grow" id="bFolder" placeholder="VD: D:\AnhSanPham"><button type="button" class="btn sm" id="bCheck">Kiểm tra thư mục</button></div></label>
+            <div id="bFolderInfo" class="note" hidden></div>
+            <p class="small muted">Mẹo: tạo thư mục con theo tên sản phẩm (VD <b>Tra gung mat ong</b>) để bài nào up đúng ảnh sản phẩm đó. Ảnh để ngoài thư mục gốc dùng chung cho mọi bài.</p>
+            <div class="grid2">
+              <label class="f" for="bTime">Bắt đầu bình luận lúc<input type="time" id="bTime"></label>
+              <label class="f" for="bAge">Bình luận bài đăng trong vòng (ngày)<input type="number" id="bAge" min="1" max="60"></label>
+              <label class="f" for="bPer">Tối đa lượt mỗi nick/ngày<input type="number" id="bPer" min="1" max="50"></label>
+              <label class="f" for="bGap">Cách nhau tối thiểu (phút)<input type="number" id="bGap" min="2" max="120"></label>
+            </div>
+            <label class="f" for="bContact">Dòng liên hệ luôn gắn cuối bình luận<input type="text" id="bContact" maxlength="120" placeholder="VD: Cần hàng liên hệ Zalo 0386992326"></label>
+            <fieldset class="f" style="border:0;padding:0;margin:0"><legend class="small" style="font-weight:600;margin-bottom:4px">Câu bình luận đi kèm ảnh</legend>
+              <label class="row small"><input type="radio" name="bMode" value="ai"> Bảo tự viết mỗi bài một câu ngắn khác nhau (dùng Claude nếu đã nhập khóa)</label>
+              <label class="row small"><input type="radio" name="bMode" value="list"> Chọn ngẫu nhiên từ danh sách dưới</label></fieldset>
+            <label class="f" for="bTexts" id="bTextsL">Danh sách câu (mỗi dòng một câu)<textarea id="bTexts" rows="3"></textarea></label>
+            <div class="row wrap" style="gap:8px;align-items:center"><button type="button" class="btn sm" id="bPrev">Xem thử câu Bảo viết</button><span class="small muted">Chưa gửi, chỉ xem trước.</span></div>
+            <ul class="small" id="bPrevOut" hidden style="margin:6px 0 0;padding-left:18px"></ul>
+            <section class="bk" id="bSkill" aria-live="polite"></section>
+            <div class="actions"><button class="btn primary" type="submit">Lưu cài đặt</button><button type="button" class="btn" id="bNow">Xếp lịch bình luận ngay</button></div>
+          </form>
+    </section>
+
     <section class="view" id="v-friends" hidden>
       <div class="vh"><div><h1>Kết bạn trong nhóm</h1><p>Tuấn chấm điểm các nhóm nick đang ở theo độ sôi nổi (bài mỗi ngày, bình luận, cảm xúc, thành viên mới), mở bảng tin nhóm sôi nổi nhất và chọn ra người đang bán hàng online, đang hỏi nguồn hàng trà, ngũ cốc. Kết bạn với họ để bài đăng của nick tới đúng người.</p></div>
         <div class="row wrap"><button class="btn primary" type="button" id="frRun">Tuấn tìm người ngay</button></div></div>
@@ -1722,30 +1781,7 @@ label.f{font-weight:600;color:var(--muted)}
             <label class="row small"><input type="checkbox" id="tgsDone"> Báo về Telegram mọi việc đã hoàn thành (gom các việc xong gần nhau thành một tin, khoảng mỗi phút)</label>
             <p class="small muted">Giờ báo cáo sáng/tối, cảnh báo KPI và khách cần tư vấn chỉnh ở <a href="#kpi">KPI &amp; Báo cáo</a>. Token chỉ lưu trên máy này và không hiện lại đầy đủ.</p>
           </form>
-          <form class="card" id="bumpForm">
-            <div class="card-h"><h3>Tự động up bài · Bảo phụ trách</h3><span class="chip" id="bumpToday"></span></div>
-            <p class="small muted">Mỗi ngày, từ giờ đã chọn, mỗi nhân viên sale vào lại các bài mình đã đăng và bình luận một ảnh sản phẩm lấy từ thư mục trên máy này, để bài nổi lên đầu nhóm. Mỗi bài tối đa 1 lần/ngày, mỗi ảnh không lặp lại trên cùng một bài cho tới khi dùng hết ảnh.</p>
-            <label class="row small"><input type="checkbox" id="bEnabled"> Bật tự động up bài</label>
-            <label class="f" for="bFolder">Thư mục ảnh sản phẩm trên máy chạy phần mềm
-              <div class="row"><input type="text" class="grow" id="bFolder" placeholder="VD: D:\AnhSanPham"><button type="button" class="btn sm" id="bCheck">Kiểm tra thư mục</button></div></label>
-            <div id="bFolderInfo" class="note" hidden></div>
-            <p class="small muted">Mẹo: tạo thư mục con theo tên sản phẩm (VD <b>Tra gung mat ong</b>) để bài nào up đúng ảnh sản phẩm đó. Ảnh để ngoài thư mục gốc dùng chung cho mọi bài.</p>
-            <div class="grid2">
-              <label class="f" for="bTime">Bắt đầu up lúc<input type="time" id="bTime"></label>
-              <label class="f" for="bAge">Up bài đăng trong vòng (ngày)<input type="number" id="bAge" min="1" max="60"></label>
-              <label class="f" for="bPer">Tối đa lượt up mỗi nick/ngày<input type="number" id="bPer" min="1" max="50"></label>
-              <label class="f" for="bGap">Cách nhau tối thiểu (phút)<input type="number" id="bGap" min="2" max="120"></label>
-            </div>
-            <label class="f" for="bContact">Dòng liên hệ luôn gắn cuối bình luận<input type="text" id="bContact" maxlength="120" placeholder="VD: Cần hàng liên hệ Zalo 0386992326"></label>
-            <fieldset class="f" style="border:0;padding:0;margin:0"><legend class="small" style="font-weight:600;margin-bottom:4px">Câu bình luận đi kèm ảnh</legend>
-              <label class="row small"><input type="radio" name="bMode" value="ai"> Bảo tự viết mỗi bài một câu ngắn khác nhau (dùng Claude nếu đã nhập khóa)</label>
-              <label class="row small"><input type="radio" name="bMode" value="list"> Chọn ngẫu nhiên từ danh sách dưới</label></fieldset>
-            <label class="f" for="bTexts" id="bTextsL">Danh sách câu (mỗi dòng một câu)<textarea id="bTexts" rows="3"></textarea></label>
-            <div class="row wrap" style="gap:8px;align-items:center"><button type="button" class="btn sm" id="bPrev">Xem thử câu Bảo viết</button><span class="small muted">Chưa gửi, chỉ xem trước.</span></div>
-            <ul class="small" id="bPrevOut" hidden style="margin:6px 0 0;padding-left:18px"></ul>
-            <section class="bk" id="bSkill" aria-live="polite"></section>
-            <div class="actions"><button class="btn primary" type="submit">Lưu cài đặt up bài</button><button type="button" class="btn" id="bNow">Up các bài ngay bây giờ</button></div>
-          </form>
+          <div class="card"><h3>Bình luận tự động (up bài)</h3><p class="small muted" style="margin:0">Cài đặt và lịch bình luận mỗi ngày vào bài đã đăng nằm ở mục <a href="#comments">Bình luận</a>.</p></div>
           <div class="card"><h3>Về việc đăng bài Facebook</h3>
             <div class="note">Meta đã gỡ API đăng bài vào hội nhóm từ tháng 4/2024 và không cho ứng dụng đăng lên trang cá nhân. Đăng tự động bằng trình duyệt, nhất là khi chạy nhiều nick, có thể khiến nick bị checkpoint hoặc khóa.<br><br>
             Vì vậy: <b>Fanpage</b> đăng qua Graph API chính thức. <b>Hội nhóm và trang cá nhân</b> do nhân viên sale AI đăng bằng hồ sơ Chrome của nick mình, có giới hạn bài/ngày, giãn cách và tự dừng khi gặp checkpoint. Giữ số bài vừa phải để giảm rủi ro cho nick.</div>
@@ -2161,9 +2197,36 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
   S.chat=[]; S.orders=[];
   setInterval(()=>{ if(S.settings.ceo_autopilot==="0") return; const d=S.posts.filter(p=>p.status==="draft"); if(d.length){ d.forEach(p=>p.status="approved"); log("ceo","Duyệt bài",`Duyệt ${d.length} bài`); } },15000);
   function demoChat(){ return {autopilot:S.settings.ceo_autopilot!=="0",running:Object.entries(S.status).filter(([k,v])=>k.startsWith("sale-")&&v.state==="working").map(([k,v])=>`${(S.sales.find(x=>"sale-"+x.id===k)||{}).name}: ${v.text}`),history:S.chat,orders:S.orders.filter(o=>o.active),suggestions:["Tình hình hôm nay thế nào?","Đăng bài lên các nhóm có từ khóa nguồn hàng, bán hàng online","Viết 3 bài về trà gừng mật ong","Xếp lịch đăng nhóm","Tìm nhóm theo chủ đề “hội chạy quảng cáo facebook”","Lan viết bài dài quá, viết dưới 150 chữ","Từ nay bài nào cũng nhắc giao hàng toàn quốc"]}; }
+  function demoCm(method,P,qs,body){ const q=new URLSearchParams(qs||""), td=today(); let m;
+    const acc=sid=>{ const a=S.accounts.find(x=>x.sale_id===sid)||{}; return {account_id:a.id||null,account_name:a.name||((S.sales.find(x=>x.id===sid)||{}).name)||""}; };
+    const row=b=>{ const p=S.posts.find(x=>x.id===b.post_id)||{}; return {...b,title:p.title||(p.content||"").split("\n")[0].slice(0,70),group_name:p.group_name||"",posted_url:p.posted_url||""}; };
+    const ps=S.posts.filter(p=>p.status==="posted");
+    if(!S.cm){ S.cm=[]; S.cmId=900; const tx=demoBumpLines(6); ps.filter(p=>p.sale_id&&p.bump_enabled!==0&&p.permalink_status==="found").slice(0,6).forEach((p,i)=>{ const st=i<3?"done":i<5?"scheduled":"failed";
+      const h=`${td} ${st==="done"?"19":"20"}:${String(31+i*5).padStart(2,"0")}`; S.cm.push({id:++S.cmId,post_id:p.id,...acc(p.sale_id),text:tx[i],status:st,scheduled_for:h,done_at:st==="done"?h+":20":null,error:st==="failed"?"Không thấy ô bình luận: nhóm đã tắt bình luận bài này":null,_day:td}); }); }
+    if(method==="GET"){ const day=q.get("day")||td, st=q.get("status")||"", aid=+q.get("account_id")||null, s=(q.get("q")||"").toLowerCase();
+      const all=S.cm.filter(b=>(b.scheduled_for||"").slice(0,10)===day).map(row); const counts={scheduled:0,running:0,done:0,failed:0,skipped:0}; all.forEach(b=>counts[b.status]++);
+      const items=all.filter(b=>(!st||b.status===st)&&(!aid||b.account_id===aid)&&(!s||(b.text+b.title+b.group_name).toLowerCase().includes(s)));
+      const posts=ps.map(p=>{ const b=[...S.cm].reverse().find(x=>x.post_id===p.id&&x._day===td), a=acc(p.sale_id);
+        const reason=b?null:!p.sale_id?"Không do nick sale đăng (fanpage/sếp tự đăng) nên không tự bình luận được":p.permalink_status==="removed"?"Bài đã bị gỡ hoặc ẩn":p.bump_enabled===0?"Sếp đã tắt tự bình luận bài này":p.permalink_status==="pending"?"Bài đang chờ nhóm duyệt, có link mới bình luận được":"Hết lượt hôm nay của nick (trần an toàn), mai bình luận tiếp";
+        return {id:p.id,title:row({post_id:p.id}).title,posted_at:p.posted_at,posted_url:p.posted_url,account_id:p.sale_id?a.account_id:null,account_name:p.sale_id?a.account_name:"",permalink_status:p.permalink_status,bump_enabled:p.bump_enabled,bump_count:p.bump_count||0,group_name:p.group_name,today:b?{id:b.id,status:b.status}:null,reason}; });
+      const nicks=workingNicks().map(a=>({id:a.id,name:a.name,limit:6,per_nick:+S.settings.bump_max_per_nick||8,used:S.cm.filter(b=>b.account_id===a.id&&b._day===td&&b.status==="done").length}));
+      return {day,today:td,items,counts,posts,nicks,covered:posts.filter(p=>p.today).length,eligible:posts.filter(p=>p.today||/^Hết lượt|^Chờ/.test(p.reason||"")).length,planned_today:true,settings:{...S.settings}}; }
+    const b=S.cm.find(x=>x.id==(P.match(/\/comments\/(\d+)/)||[])[1]); if(!b) throw new Error("Không tìm thấy lượt bình luận này");
+    if(method==="PUT"){ if(b.status!=="scheduled") throw new Error("Chỉ sửa được bình luận đang chờ gửi"); const t=String(body.text||"").trim().replace(/\s+/g," "); if(t.length<4) throw new Error("Câu bình luận quá ngắn"); b.text=t; log("bao","Sửa bình luận",`Sếp sửa câu bình luận bài #${b.post_id}: “${t.slice(0,60)}”`); return row(b); }
+    if((m=P.match(/\/(cancel|retry|rewrite)$/))){
+      if(m[1]!=="retry"&&b.status!=="scheduled") throw new Error("Chỉ sửa, hủy hoặc viết lại bình luận đang chờ gửi");
+      if(m[1]==="cancel"){ b.status="skipped"; b.error="Sếp hủy"; return row(b); }
+      if(m[1]==="rewrite"){ b.text=demoBumpLines(1)[0]; return row(b); }
+      if(!["failed","skipped"].includes(b.status)) throw new Error("Chỉ thử lại lượt bị lỗi hoặc bỏ qua");
+      if(S.cm.some(x=>x.post_id===b.post_id&&x._day===td&&["scheduled","running","done"].includes(x.status))) throw new Error("Bài này hôm nay đã có lượt bình luận (mỗi bài tối đa 1 lần/ngày)");
+      const n={...b,id:++S.cmId,status:"scheduled",error:null,done_at:null,scheduled_for:now().slice(0,16),_day:td}; S.cm.push(n); return row(n); }
+    throw new Error("Không hỗ trợ"); }
   function demoBumpPlan(){ const ps=S.posts.filter(p=>p.status==="posted"&&p.sale_id&&p.bump_enabled!==0&&p.permalink_status!=="removed").slice(0,8); const tx=demoBumpLines(ps.length);
     S.status.nam={state:"working",text:"Rà soát bài đã đăng, viết câu bình luận kèm ảnh"}; setTimeout(()=>{ S.status.nam={state:"idle",text:`Hôm nay xếp ${ps.length} lượt up bài`}; },3000);
     log("bao","Lịch up bài",`Rà soát bài đã đăng: xếp ${ps.length} lượt bình luận ảnh kèm câu mới và dòng liên hệ`);
+    const td=today(); S.cm=S.cm||null; if(S.cm===null) demoCm("GET","/comments","",{}); const sel=ps.filter(p=>!S.cm.some(x=>x.post_id===p.id&&x._day===td&&x.status!=="skipped"&&x.status!=="failed"));
+    const it=sel.map((p,i)=>{ const a=S.accounts.find(x=>x.sale_id===p.sale_id)||{}; const n={id:++S.cmId,post_id:p.id,account_id:a.id||null,account_name:a.name||"",text:tx[i],status:"scheduled",scheduled_for:now().slice(0,16),_day:td}; S.cm.push(n); return n; });
+    it.forEach((b,i)=>setTimeout(()=>{ b.status="done"; b.done_at=now(); },4000+i*3000));
     ps.forEach((p,i)=>setTimeout(()=>{ p.bump_count=(p.bump_count||0)+1; p.last_bump_at=now(); p.last_bump="done|||"; log(`sale-${p.sale_id}`,"Up bài",`Bình luận ảnh vào bài #${p.id}: “${tx[i]}”`); },4000+i*3000)); return ps.length; }
   function demoCeoDo(t){ const low=t.toLowerCase();
     if(/^viết bài đi$|^viết bài$|^đăng bài đi$/.test(low.trim())) return ["Dạ sếp muốn em viết bài về sản phẩm nào ạ?",null,{type:"clarify",question:"Dạ sếp muốn em viết bài về sản phẩm nào ạ?",options:["Trà gừng mật ong","Bột ngũ cốc","Sản phẩm đang bán chạy"]}];
@@ -2416,6 +2479,7 @@ Cần catalog sản phẩm + bảng giá sỉ/gia công, ib trực tiếp để 
     if(P==="/post-care/relearn"){ S.baoLevel=0; log("bao","Học lại","Sếp cho Bảo học lại cách viết câu bình luận: gọi Claude và chấm điểm lại từ đầu"); return {}; }
     if(P==="/bump/preview-text") return {texts:demoBumpLines(+(new URLSearchParams(qs||"").get("n"))||3),mode:S.settings.bump_text_mode||"ai",contact:S.settings.bump_contact||"",ai:false};
     if(P.startsWith("/post-target")||P.startsWith("/friends")||/^\/groups\/\d+\/focus$/.test(P)) return demoFr(method,P,qs,body||{});
+    if(P.startsWith("/comments")) return demoCm(method,P,qs,body||{});
     if(P.startsWith("/replies")||P.startsWith("/feed")) return demoRp(method,P,qs,body||{});
       if(P.startsWith("/agents/")&&(method==="PUT"||method==="DELETE")){ S.prof=S.prof||{}; const aid=P.split("/")[2], cur=S.prof[aid]=S.prof[aid]||{};
        if(method==="DELETE"){ delete S.prof[aid]; return {id:aid}; }
@@ -3060,7 +3124,7 @@ function show(v){
   if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
   if(v==="ceo") loadCeoChat(true);
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
-  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="samples"){ loadPostSamples(); loadCeoReview(); } if(v==="fbrules") loadFbp(); if(v==="friends") loadFr(); if(v==="replies") loadRp(); if(v==="website") loadWs(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="comments") loadCm(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="samples"){ loadPostSamples(); loadCeoReview(); } if(v==="fbrules") loadFbp(); if(v==="friends") loadFr(); if(v==="replies") loadRp(); if(v==="website") loadWs(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
 $("#nav").addEventListener("click",e=>{ if(e.target.closest("#navMore")){ const o=!document.body.classList.contains("nav-open"); document.body.classList.toggle("nav-open",o); $("#navMore").setAttribute("aria-expanded",o); return; }
@@ -3529,7 +3593,7 @@ function renderBoard(){
   const miss=ST.posts.filter(p=>noImg(p)&&["approved","scheduled","draft","failed"].includes(p.status)).length, bar=$("#noImgBar");
   const nl=ST.posted?ST.posted.stats.missing+ST.posted.stats.pending:ST.posts.filter(noLink).length, lb=$("#noLinkBar");
   lb.hidden=!nl; if(nl) lb.innerHTML=`<b>${nl} bài đã đăng chưa lưu được link.</b> Bài chờ nhóm duyệt: sale tự lấy link khi bài được duyệt. Bài chưa tìm thấy: sale tự thử lại (sau 20 phút, 2, 6, 12, 24 giờ); hoặc bấm <b>Lấy link ngay</b>, hay dán link vào bài trong bảng dưới đây (lọc “Chưa có link”).`;
-  bar.hidden=!miss; if(miss) bar.innerHTML=`<b>${miss} bài chưa có ảnh nên sẽ không đăng.</b> Bài đăng lên Facebook bắt buộc kèm ảnh sản phẩm. Thêm thư mục ảnh cho sản phẩm ở <a href="#products">Sản phẩm</a> hoặc thư mục ảnh chung ở <a href="#setup">Cài đặt → Up bài</a>, Tuấn sẽ tự xếp lại các bài này.`;
+  bar.hidden=!miss; if(miss) bar.innerHTML=`<b>${miss} bài chưa có ảnh nên sẽ không đăng.</b> Bài đăng lên Facebook bắt buộc kèm ảnh sản phẩm. Thêm thư mục ảnh cho sản phẩm ở <a href="#products">Sản phẩm</a> hoặc thư mục ảnh chung ở <a href="#setup">Bình luận → Cài đặt</a>, Tuấn sẽ tự xếp lại các bài này.`;
   renderPosted();
   const work=ST.posts.filter(p=>["draft","approved","scheduled","posting","failed"].includes(p.status)).length;
   $("#ptabWorkN").textContent=work||"";
@@ -4071,6 +4135,44 @@ $("#tgForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ ST.tg
 
 /* --------------------------------------------- kết bạn trong nhóm */
 const FR_ST={suggested:"Chờ gửi",opened:"Đã mở hồ sơ",sent:"Đã gửi lời mời",accepted:"Đã đồng ý",skipped:"Bỏ qua"};
+/* --------------------------------------------- bình luận tự động */
+const CM_ST={scheduled:["Chờ gửi","warn"],running:["Đang gửi","warn"],done:["Đã gửi","ok"],failed:["Lỗi","bad"],skipped:["Bỏ qua",""]};
+async function loadCm(quiet){ const q=new URLSearchParams(); [["day","#cmDay"],["status","#cmSt"],["account_id","#cmAcc"],["q","#cmQ"]].forEach(([k,id])=>{ const v=$(id).value.trim(); if(v) q.set(k,v); });
+  try{ ST.cm=await api("/comments"+(q.toString()?"?"+q:"")); }catch(e){ if(!quiet) toast(e.message); return; }
+  renderCm(); if(!quiet){ try{ await loadBump(await api("/settings")); }catch(e){} } }
+function renderCm(){ const d=ST.cm, c=d.counts, set=d.settings||{};
+  if(!$("#cmDay").value) $("#cmDay").value=d.day; $("#cmTime").textContent=set.bump_time||"19:30";
+  const b=$("#cmBadge"); const nf=d.day===d.today?c.failed:0; b.hidden=!nf; b.textContent=nf||""; b.title=nf?`${nf} bình luận lỗi hôm nay`:"";
+  $("#cmStats").innerHTML=[[`${d.covered}<small class="muted" style="font-size:13px">/${d.eligible}</small>`,"Bài có bình luận hôm nay"],[c.done,"Đã gửi"],[c.scheduled+c.running,"Chờ gửi"],[c.failed,"Lỗi"]]
+    .map(([v,l])=>`<div class="pr-stat"><b>${v}</b><span>${l}</span></div>`).join("");
+  const acc=$("#cmAcc"), cur=acc.value; acc.innerHTML=`<option value="">Mọi nick</option>`+d.nicks.map(n=>`<option value="${n.id}">${esc(n.name)}</option>`).join(""); acc.value=cur;
+  const hm=t=>(t||"").slice(11,16);
+  $("#cmList").innerHTML=d.items.length?d.items.map(it=>{ const [lb,cl]=CM_ST[it.status]||[it.status,""];
+    return `<article class="cm-item st-${it.status}" data-id="${it.id}"><div class="top"><span class="chip ${cl}">${lb}</span><span>${it.status==="done"?"gửi lúc "+hm(it.done_at):"lúc "+hm(it.scheduled_for)}</span><span>· ${esc(it.account_name||it.sale_name||"")}</span><span>· ${esc(it.group_name||"Trang cá nhân")}</span></div>
+      <div class="small" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${esc(it.title||"Bài #"+it.post_id)}</b></div>
+      <p class="tx">${esc(it.text||"")}</p>${it.error?`<p class="er">${esc(it.error)}</p>`:""}
+      <div class="acts">${it.status==="scheduled"?`<button type="button" class="btn sm" data-cm="edit">Sửa câu</button><button type="button" class="btn sm" data-cm="rewrite">Bảo viết lại</button><button type="button" class="btn sm ghost" data-cm="cancel">Hủy</button>`:""}${["failed","skipped"].includes(it.status)?`<button type="button" class="btn sm" data-cm="retry">Gửi lại</button>`:""}${it.posted_url?`<a class="btn sm ghost" href="${esc(it.posted_url)}" target="_blank" rel="noopener">Mở bài</a>`:""}${it.screenshot&&!DEMO?`<a class="btn sm ghost" href="${esc(it.screenshot)}" target="_blank" rel="noopener">Ảnh chụp</a>`:""}</div></article>`; }).join("")
+    :`<p class="muted small">${d.day===d.today&&!d.planned_today?`Hôm nay chưa xếp lịch. Bảo tự xếp lúc ${esc(set.bump_time||"19:30")}, hoặc bấm <b>Xếp lịch bình luận ngay</b>.`:"Không có bình luận nào khớp bộ lọc."}</p>`;
+  $("#cmCov").textContent=`${d.covered} bài đã có lượt hôm nay. Bài vừa đăng dưới 10 giờ hoặc đăng quá ${set.bump_max_age_days||7} ngày thì không bình luận.`;
+  $("#cmPosts").innerHTML=d.posts.length?d.posts.map(p=>{ const t=p.today, st=t?(CM_ST[t.status]||[t.status,""]):null, can=p.account_id&&p.permalink_status!=="removed", off=p.bump_enabled===0;
+    return `<li><span class="nm" title="${esc(p.title||"")}">${esc(p.title||"Bài #"+p.id)}</span>
+      <span class="act">${can?`<button type="button" class="btn sm ghost" data-cmpost="${p.id}" data-on="${off?1:0}">${off?"Bật":"Tắt"} tự bình luận</button>`:""}${can&&!off&&!t?`<button type="button" class="btn sm" data-cmnow="${p.id}">Bình luận ngay</button>`:""}</span>
+      <span class="mt">${esc(p.group_name||"Trang cá nhân")}${p.account_name?" · "+esc(p.account_name):""} · đã bình luận ${p.bump_count||0} lần · ${t?`<span class="chip ${st[1]}">${st[0]}</span>`:esc(p.reason||"")}</span></li>`; }).join("")
+    :'<li class="muted small">Chưa có bài nào đã đăng trong mấy ngày gần đây.</li>';
+  $("#cmNicks").innerHTML=d.nicks.length?d.nicks.map(n=>{ const lim=Math.max(1,Math.min(n.limit,n.per_nick)); return `<li><span><b>${esc(n.name)}</b> <span class="small muted">${n.used}/${lim} lượt</span></span><span class="meter"><i style="width:${Math.min(100,Math.round(n.used/lim*100))}%"></i></span></li>`; }).join("")
+    :'<li class="muted small">Chưa có nick nào đăng nhập và đang làm việc.</li>'; }
+["#cmDay","#cmSt","#cmAcc"].forEach(id=>$(id).onchange=()=>loadCm(true));
+{ let t; $("#cmQ").oninput=()=>{ clearTimeout(t); t=setTimeout(()=>loadCm(true),300); }; }
+$("#cmPlan").onclick=()=>$("#bNow").click();
+$("#v-comments").addEventListener("click",async e=>{
+  const bt=e.target.closest("[data-cm]"); if(bt){ const card=bt.closest(".cm-item"), id=card.dataset.id, act=bt.dataset.cm;
+    if(act==="edit"){ const it=ST.cm.items.find(x=>x.id==id); card.querySelector(".tx").outerHTML=`<textarea class="tx" rows="3" maxlength="300" aria-label="Câu bình luận">${esc(it.text||"")}</textarea>`; bt.outerHTML=`<button type="button" class="btn sm primary" data-cm="save">Lưu câu</button>`; card.querySelector("textarea").focus(); return; }
+    bt.disabled=true;
+    try{ if(act==="save") await api(`/comments/${id}`,"PUT",{text:card.querySelector("textarea").value}); else await api(`/comments/${id}/${act}`,"POST");
+      toast({save:"Đã lưu câu bình luận",rewrite:"Bảo đã viết câu mới",cancel:"Đã hủy lượt bình luận này",retry:"Đã xếp gửi lại, sale gửi trong vài phút khi rảnh"}[act]); loadCm(true); }catch(err){ toast(err.message); bt.disabled=false; } return; }
+  const tg=e.target.closest("[data-cmpost]"); if(tg){ try{ await api(`/posts/${tg.dataset.cmpost}`,"PATCH",{bump_enabled:+tg.dataset.on}); toast(+tg.dataset.on?"Đã bật tự bình luận bài này":"Đã tắt tự bình luận bài này"); loadCm(true); }catch(err){ toast(err.message); } return; }
+  const nw=e.target.closest("[data-cmnow]"); if(nw){ nw.disabled=true; try{ await api(`/posts/${nw.dataset.cmnow}/bump`,"POST"); toast("Sale sẽ bình luận bài này trong vài phút khi rảnh"); loadCm(true); }catch(err){ toast(err.message); nw.disabled=false; } } });
+
 async function loadFr(quiet){ const q=new URLSearchParams(); if($("#frAcc").value) q.set("account_id",$("#frAcc").value); if($("#frSt").value) q.set("status",$("#frSt").value);
   try{ ST.fr=await api("/friends"+(q.toString()?"?"+q:"")); }catch(e){ if(!quiet) toast(e.message); return; } renderFr(); }
 function renderFr(){ const d=ST.fr, st=d.stats;
@@ -4735,7 +4837,7 @@ async function loadBaoSkill(){ let d; try{ d=await api("/post-care"); }catch(e){
 $("#bPrev").onclick=async e=>{ e.target.disabled=true; try{ await api("/settings","PUT",bumpPayload()); const r=await api("/bump/preview-text?n=3"); const o=$("#bPrevOut"); o.hidden=false; loadBaoSkill(); o.innerHTML=r.texts.map(t=>`<li>${esc(t)}</li>`).join("")+(r.mode==="ai"&&!r.ai?'<li class="muted" style="list-style:none;margin-left:-18px">Chưa có khóa Claude: Bảo tự viết từ những câu đã học (chưa học thì dùng mẫu có sẵn). Nhập khóa ở Cài đặt để Bảo học từ Claude.</li>':""); }catch(err){ toast(err.message); } e.target.disabled=false; };
 $("#bCheck").onclick=async()=>{ await api("/settings","PUT",{bump_folder:$("#bFolder").value.trim()}); showFolder(await api("/bump/folder")); };
 $("#bumpForm").addEventListener("submit",async e=>{ e.preventDefault(); await api("/settings","PUT",bumpPayload()); toast("Đã lưu cài đặt up bài"); showFolder(await api("/bump/folder")); });
-$("#bNow").onclick=async e=>{ e.target.disabled=true; await api("/settings","PUT",bumpPayload()); try{ const r=await api("/bump/plan-now","POST"); toast(r.scheduled?`Đã xếp ${r.scheduled} lượt up bài, sale bắt đầu trong vài phút`:"Không có bài nào cần up (bài quá cũ, vừa đăng, đã up hôm nay, hoặc thư mục ảnh trống)"); }catch(err){ toast(err.message); } e.target.disabled=false; };
+$("#bNow").onclick=async e=>{ e.target.disabled=true; await api("/settings","PUT",bumpPayload()); try{ const r=await api("/bump/plan-now","POST"); toast(r.scheduled?`Đã xếp ${r.scheduled} lượt bình luận, sale bắt đầu trong vài phút`:"Không có bài nào cần bình luận (bài quá cũ, vừa đăng, đã bình luận hôm nay, hoặc thư mục ảnh trống)"); }catch(err){ toast(err.message); } e.target.disabled=false; if(ST.view==="comments") loadCm(true); };
 function showAi(s){
   const live=s.ai_live, src=s.ai_key_source;
   $("#aiState").className="chip "+(live?"ok":"warn"); $("#aiState").textContent=live?"Đang dùng Claude":"Chế độ mô phỏng";
