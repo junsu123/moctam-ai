@@ -67,7 +67,7 @@ Mục **Phòng ban** (nhóm Điều hành ở thanh bên). Công ty chia 5 phòn
   Facebook), lối đi chung nối các cửa với phòng họp. Agent **tự đi sang bàn đồng nghiệp khi việc cần trao đổi**, ra đúng cửa phòng mình,
   theo lối đi, vào cửa phòng kia, nói nội dung việc (bong bóng thoại) rồi về chỗ: Lan viết bài → sang CEO; CEO duyệt bài → sang Tuấn; Tuấn
   xếp lịch → sang sale; Mai có khách → sang Hà; Hà → Minh; Khoa → CEO; Bảo, sale xong ca → Tuấn; Nhi tạo Trang → CEO; trưởng phòng
-  đánh giá / đề xuất tuyển → CEO; CEO tuyển người → sang chào nhân viên mới; nhân viên tuyển thêm → trưởng phòng của mình. Lâu không có
+  đánh giá / đề xuất tuyển → CEO; CEO tuyển người → sang chào nhân viên mới; nhân viên tuyển thêm → trưởng phòng của mình. Việc ghi có nhắc tên một đồng nghiệp → sang bàn người đó. Người đang bận đi việc khác thì rảnh mới đi (giữ tối đa 90 giây). Lâu không có
   việc chung thì thỉnh thoảng một người sang báo cáo trưởng phòng. Có họp thì mọi người đi thẳng từ chỗ đang đứng tới phòng họp.
 - Tắt việc tự đánh giá hằng tuần: cài đặt `dept_on=0` (hoặc nhắn CEO); đổi ngày / giờ: `dept_review_weekday`, `dept_review_time`.
 
@@ -1175,6 +1175,13 @@ với vốn mới.
 Mặc định bật (tắt/bật ở trang Công ty → khung CEO). Sếp không giao việc trực tiếp cho Minh, Lan, Tuấn, Hà, Khoa hay các
 sale nữa: các nút giao việc trực tiếp được ẩn, thay bằng khung **Giao việc cho CEO Đức** ở Văn phòng. Trên Telegram, nhắn
 tin bình thường (không cần lệnh) là giao việc cho CEO.
+
+**CEO gọi người phụ trách lên phòng nhận việc:** sếp giao việc gì CEO cũng tự biết việc đó của ai (viết bài → Lan, xếp lịch / nhóm /
+sale → Tuấn, tìm khách sỉ → Mai, tin nhắn khách → Hà, website → Vy, Trang Facebook → Nhi, báo cáo số liệu → Khoa, up bài / trả lời
+khách → Bảo, sản phẩm bán chạy / tuyển người → Minh; đánh giá phòng → các trưởng phòng). Ở Văn phòng 3D, CEO gọi “… ơi, lên phòng
+anh nhận việc nhé!”, người đó bỏ dở việc đang đi, sang bàn CEO nói “Dạ em nhận việc …” rồi về chỗ (nhiều người thì đứng xếp hàng).
+Sếp cũng có thể bảo CEO gọi **bất kỳ ai** (kể cả sale, nhân viên tuyển thêm): “Gọi Vy lên phòng giao việc viết bài SEO trà gừng”
+→ việc được ghi vào danh sách việc của Vy. Bảng tương ứng việc → người ở `WHO` trong `backend/ceo_orders.py`.
 
 **CEO tự làm:**
 

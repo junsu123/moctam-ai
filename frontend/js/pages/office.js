@@ -2,7 +2,7 @@
 /* agent tự đi sang bàn đồng nghiệp khi việc cần trao đổi (theo nhật ký việc vừa xong), thỉnh thoảng báo cáo trưởng phòng */
 const DEPT_OF={ceo:"director",khoa:"director",minh:"sales",lan:"sales",ha:"sales",mai:"sales",tuan:"groups",bao:"groups",nhi:"pages",vy:"website"};
 const DEPT_HEAD={director:"ceo",sales:"minh",groups:"tuan",pages:"nhi",website:"vy"};
-const VISIT={lastId:null,lastChat:Date.now()};
+const VISIT={lastId:null,lastChat:Date.now(),wait:[]};  // wait: người đang bận đi việc khác, rảnh sẽ đi (giữ 90 giây)
 function visitTarget(x,agents){ const a=x.agent_id||"", act=x.action||"", det=x.detail||"";
   if(a.startsWith("st-")) return DEPT_HEAD[(agents.find(g=>g.id===a)||{}).dept]||null;
   if(/Đánh giá phòng|Đề xuất tuyển/.test(act)) return "ceo";
@@ -15,11 +15,15 @@ function visitTarget(x,agents){ const a=x.agent_id||"", act=x.action||"", det=x.
   if(a==="bao") return "tuan";
   if(a==="nhi"&&/Đã tạo Trang|Nghiên cứu/.test(act)) return "ceo";
   if(a.startsWith("sale-")&&/Xong ca|Đăng bài/.test(act)) return "tuan";
+  if(a!=="ceo"){ const o=agents.find(g=>g.id!==a&&g.name&&new RegExp(`(^|[^\\p{L}])${g.name}([^\\p{L}]|$)`,"u").test(det)); if(o) return o.id; } // nhắc tên đồng nghiệp: sang trao đổi
   return null; }
-function officeVisits(agents,acts){ if(ST.view!=="office"||!window.World||!World.visit) return;
+function goVisit(from,to,text){ if(!World.visit(from,to,text)) VISIT.wait.push({from,to,text,until:Date.now()+90000}); }
+function officeVisits(agents,acts){ if(ST.view!=="office"||typeof World==="undefined"||!World.visit) return;
   const top=acts.length?acts[0].id:0; if(VISIT.lastId===null){ VISIT.lastId=top; return; }
-  const fresh=acts.filter(x=>x.id>VISIT.lastId).reverse().slice(-3); VISIT.lastId=Math.max(VISIT.lastId,top);
-  fresh.forEach((x,i)=>{ const to=visitTarget(x,agents); if(to) setTimeout(()=>World.visit(x.agent_id,to,`${x.action}: ${(x.detail||"").slice(0,70)}`),i*2500); });
+  const w=VISIT.wait.filter(v=>v.until>Date.now()); VISIT.wait=[]; w.forEach(v=>goVisit(v.from,v.to,v.text));
+  const fresh=acts.filter(x=>x.id>VISIT.lastId).reverse().slice(-5); VISIT.lastId=Math.max(VISIT.lastId,top);
+  fresh.forEach((x,i)=>{ if(x.action==="Lên phòng CEO nhận việc"){ setTimeout(()=>World.summon("ceo",x.agent_id,`Dạ em nhận việc: ${(x.detail||"").slice(0,80)}`),i*1800); return; }
+    const to=visitTarget(x,agents); if(to) setTimeout(()=>goVisit(x.agent_id,to,`${x.action}: ${(x.detail||"").slice(0,70)}`),i*2500); });
   if(!fresh.length&&Date.now()-VISIT.lastChat>150000){ VISIT.lastChat=Date.now(); // lâu không có việc chung: một người sang báo cáo trưởng phòng
     const pool=agents.filter(g=>{ const d=g.kind==="staff"?g.dept:DEPT_OF[g.id]; return d&&DEPT_HEAD[d]!==g.id&&(g.status||{}).state==="working"; });
     const g=pool[Math.floor(Math.random()*pool.length)]; if(g){ const d=g.kind==="staff"?g.dept:DEPT_OF[g.id]; World.visit(g.id,DEPT_HEAD[d],`Báo cáo: ${((g.status||{}).text||"việc đang làm").slice(0,70)}`); } } }

@@ -132,6 +132,8 @@ Trong file tính năng viết `def tick(now): ...` (kiểm tra giờ + cờ “�
 
 ### 4.9. Thêm lệnh cho CEO hiểu
 `backend/ceo_orders.py`: thêm dòng mô tả vào `ACTIONS_DOC`, mẫu câu (regex) vào `_rule_plan`, và nhánh `if t == "ten_viec":` trong `execute()`.
+Muốn CEO gọi đúng người lên phòng nhận việc đó: thêm `"ten_viec": ["lan"]` vào `WHO` (cùng file). Cảnh đi sang bàn CEO ở
+`summon()` (`js/world3d.js`), nhận tín hiệu từ nhật ký “Lên phòng CEO nhận việc” trong `officeVisits` (`js/pages/office.js`).
 
 ### 4.10. Thêm agent mới (khuôn: Nhi)
 Phòng ban ở `backend/departments.py`: agent thuộc phòng nào (`DEPTS[...]["core"]`), cách nghĩ của trưởng phòng (`MINDSET`), vị trí tuyển

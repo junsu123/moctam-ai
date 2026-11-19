@@ -240,10 +240,20 @@ const World = (() => {
   function goMeeting(id){ const c=chars[id]; if(!SEATS[id]||c.mode==="meeting"||c.mode==="toMeeting") return; const p=c.root.position;
     c.path=c.mode==="desk"? [...deskLeg(id),...seatLeg(id)] : [...route(p.x,p.z,...NAV.D),...seatLeg(id)]; c.final=SEATS[id]; c.mode="toMeeting"; }
   // sang bàn đồng nghiệp trao đổi công việc rồi về chỗ
-  function visit(from,to,text){ const c=chars[from], o=chars[to]; if(!c||!o||from===to||c.mode!=="desk"||o.mode==="meeting"||o.mode==="toMeeting") return false;
-    const d=deskSpot(to), sx=d.x-1.1, sz=d.z-0.2, [bx,bz]=beside(from);
+  const busyMeet=c=>c.mode==="meeting"||c.mode==="toMeeting";
+  const QUEUE=[[0,0],[0,0.95],[0,-0.95],[-0.9,0.5],[-0.9,-0.5]];
+  function standAt(to,c){ const d=deskSpot(to), n=Object.values(chars).filter(x=>x!==c&&x.visit&&x.visit.to===to&&(x.mode==="toVisit"||x.mode==="visiting")).length, [ox,oz]=QUEUE[n%5]; // nhiều người cùng đến: đứng xếp hàng
+    return [d.x-1.1+ox, d.z-0.2+oz]; }
+  function visit(from,to,text){ const c=chars[from], o=chars[to]; if(!c||!o||from===to||c.mode!=="desk"||busyMeet(o)) return false;
+    const d=deskSpot(to), [sx,sz]=standAt(to,c), [bx,bz]=beside(from);
     c.path=[V(bx,bz),...route(bx,bz,sx,sz)]; c.visit={text,back:[...route(sx,sz,bx,bz),V(deskSpot(from).x,deskSpot(from).z)],ry:Math.atan2(d.x-sx,d.z-sz),to};
     c.final={x:sx,z:sz,ry:c.visit.ry}; c.mode="toVisit"; return true; }
+  // CEO gọi một người (bất kỳ ai, đang đi đâu cũng bỏ dở) lên bàn mình nhận việc, nhận xong về chỗ
+  function summon(by,who,text){ const c=chars[who], o=chars[by]; if(!c||!o||by===who||busyMeet(c)) return false;
+    const d=deskSpot(by), [sx,sz]=standAt(by,c), p=c.root.position, h=deskSpot(who), [bx,bz]=beside(who);
+    c.path=c.mode==="desk"?[V(bx,bz),...route(bx,bz,sx,sz)]:route(p.x,p.z,sx,sz);
+    c.visit={text,back:[...route(sx,sz,bx,bz),V(h.x,h.z)],ry:Math.atan2(d.x-sx,d.z-sz),to:by}; c.final={x:sx,z:sz,ry:c.visit.ry}; c.mode="toVisit";
+    if(!busyMeet(o)) say(by,`${AGENT[who].name} ơi, lên phòng anh nhận việc nhé!`,4000); return true; }
   function goDesk(id){ const c=chars[id]; if(c.mode==="desk"||c.mode==="toDesk") return; const d=deskSpot(id);
     const back=[...deskLeg(id)].reverse();
     c.path = c.mode==="toMeeting"&&c.root.position.x<3 ? [...back,V(d.x,d.z)] : [...[...seatLeg(id)].reverse().slice(1),...back,V(d.x,d.z)]; c.final=d; c.mode="toDesk"; }
@@ -333,6 +343,6 @@ const World = (() => {
       if(st.state==="meeting"||st.state==="talking"||meetingRunning) goMeeting(a.id); else if(c.mode!=="toVisit"&&c.mode!=="visiting") goDesk(a.id); }
   }
   function mount(slot){ if(stage.parentNode!==slot){ slot.appendChild(stage); resize(); } }
-  return {setCam,sync,say,setBoard,mount,visit};
+  return {setCam,sync,say,setBoard,mount,visit,summon};
 })();
 

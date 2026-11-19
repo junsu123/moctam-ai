@@ -226,7 +226,7 @@
     if(method==="PATCH"&&(m=P.match(/^\/errors\/(\d+)$/))){ const e=S.errors.find(x=>x.id==m[1]); if(e) e.status=body.status; return {ok:true}; }
     if(method==="DELETE"&&P==="/errors/resolved"){ S.errors=S.errors.filter(e=>e.status!=="resolved"); return {ok:true}; }
     if(method==="POST"&&P==="/ceo/chat"){ S.chat.push({id:id(),role:"boss",text:body.text,via:"web",created_at:now()}); await wait(700); const [r,x,q]=demoCeoDo(body.text);
-      S.chat.push({id:id(),role:"ceo",text:x?`${r}\n• ${x}`:r,via:"web",created_at:now(),actions:q?[q]:[]}); log("ceo","Nhận việc từ sếp",body.text); return demoChat(); }
+      S.chat.push({id:id(),role:"ceo",text:x?`${r}\n• ${x}`:r,via:"web",created_at:now(),actions:q?[q]:[]}); log("ceo","Nhận việc từ sếp",body.text); demoSummon(body.text); return demoChat(); }
     if(method==="PUT"&&P==="/ceo/autopilot"){ S.settings.ceo_autopilot=body.on?"1":"0"; return demoChat(); }
     if(method==="DELETE"&&(m=P.match(/^\/ceo\/orders\/(\d+)$/))){ const o=S.orders.find(x=>x.id==m[1]); if(o) o.active=0; return demoChat(); }
     if(P==="/group-finder"&&method==="PUT"){ const st=S.gf; if(body.pool) st.pool=body.pool.map(x=>x.trim()).filter(Boolean);

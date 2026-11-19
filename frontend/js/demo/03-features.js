@@ -120,6 +120,12 @@
     const it=sel.map((p,i)=>{ const a=S.accounts.find(x=>x.sale_id===p.sale_id)||{}; const n={id:++S.cmId,post_id:p.id,account_id:a.id||null,account_name:a.name||"",text:tx[i],status:"scheduled",scheduled_for:now().slice(0,16),_day:td}; S.cm.push(n); return n; });
     it.forEach((b,i)=>setTimeout(()=>{ b.status="done"; b.done_at=now(); },4000+i*3000));
     ps.forEach((p,i)=>setTimeout(()=>{ p.bump_count=(p.bump_count||0)+1; p.last_bump_at=now(); p.last_bump="done|||"; log(`sale-${p.sale_id}`,"Up bài",`Bình luận ảnh vào bài #${p.id}: “${tx[i]}”`); },4000+i*3000)); return ps.length; }
+  // CEO gọi đúng người phụ trách lên phòng nhận việc (giống WHO trong backend/ceo_orders.py)
+  function demoSummon(t){ const low=t.toLowerCase(), who=new Set();
+    const called=AGENT_DEFS.find(g=>g.id!=="ceo"&&new RegExp(`(gọi|kêu|mời)\\s+${g.name.toLowerCase()}\\s`,"u").test(low)); if(called) who.add(called.id);
+    if(!called) [[/viết|bài viết/,"lan"],[/lịch|nhóm/,"tuan"],[/website|seo/,"vy"],[/trang|page/,"nhi"],[/khách sỉ|tìm khách/,"mai"],[/tin nhắn|trả lời khách/,"ha"],[/báo cáo|số liệu/,"khoa"],[/up bài|bình luận/,"bao"],[/bán chạy|tuyển/,"minh"]]
+      .forEach(([rx,a])=>{ if(rx.test(low)) who.add(a); });
+    [...who].slice(0,3).forEach(a=>log(a,"Lên phòng CEO nhận việc",t.slice(0,120))); }
   function demoCeoDo(t){ const low=t.toLowerCase();
     if(/^viết bài đi$|^viết bài$|^đăng bài đi$/.test(low.trim())) return ["Dạ sếp muốn em viết bài về sản phẩm nào ạ?",null,{type:"clarify",question:"Dạ sếp muốn em viết bài về sản phẩm nào ạ?",options:["Trà gừng mật ong","Bột ngũ cốc","Sản phẩm đang bán chạy"]}];
     if(["trà gừng mật ong","bột ngũ cốc","sản phẩm đang bán chạy"].includes(low.trim())) return [`Dạ, em giao Lan viết 3 bài về ${t.trim().toLowerCase()} (theo bài mẫu của sếp), CEO chấm xong em cho Tuấn xếp lịch.`];

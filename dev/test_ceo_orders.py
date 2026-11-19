@@ -26,3 +26,12 @@ pid = db.run("INSERT INTO posts(agent_id, target_type, title, content, status, c
 print("Trước khi duyệt:", db.q("SELECT status, COUNT(*) n FROM posts GROUP BY status"))
 print("CEO duyệt:", O.review_drafts(), "| bài hứa chữa bệnh:", db.one("SELECT status FROM posts WHERE id=?", (pid,))["status"],
       "| lý do:", db.one("SELECT reason FROM feedback WHERE post_id=? AND kind='reject'", (pid,))["reason"])
+# CEO gọi đúng người phụ trách lên phòng nhận việc
+db.run("DELETE FROM activity")
+for t in ["Viết 2 bài về trà gừng mật ong", "Gọi Vy lên phòng giao việc viết bài SEO trà gừng", "Kêu Hà vào phòng"]:
+    O.handle(t)
+up = [r["agent_id"] for r in db.q("SELECT agent_id FROM activity WHERE action='Lên phòng CEO nhận việc' ORDER BY id")]
+print("CEO gọi lên phòng:", up)
+assert up == ["lan", "vy", "ha"], up
+assert O.assignees({"type": "dept_review"}) == ["minh", "tuan", "nhi", "vy"] and O.assignees({"type": "task", "agent": "st-3"}) == ["st-3"]
+assert db.one("SELECT 1 FROM tasks WHERE agent_id='vy' AND title LIKE '%SEO%'")

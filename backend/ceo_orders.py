@@ -645,6 +645,15 @@ def execute(act: dict) -> str:
         db.run("INSERT INTO tasks(agent_id, title, status, due, created_at) VALUES (?,?,?,?,?)",
                (aid if aid != "all" else "minh", title[:200], "todo", db.today(), db.now()))
         return f"Giao {_name(aid)}: {title}"
+    if t == "call":
+        aid = _agent_id(str(act.get("agent") or ""))
+        if not aid or aid in ("all", "ceo"):
+            return "Chưa rõ sếp muốn gọi ai lên phòng"
+        job = (act.get("text") or "").strip()
+        if job:
+            db.run("INSERT INTO tasks(agent_id, title, status, due, created_at) VALUES (?,?,?,?,?)",
+                   (aid, job[:200], "todo", db.today(), db.now()))
+        return f"Em gọi {_name(aid)} lên phòng" + (f" giao việc: {job[:120]}" if job else " trao đổi")
     if t == "status":
         return status_text()
     return f"Không làm được việc “{t}”"
@@ -752,6 +761,8 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
   ngày. Không bình luận dạo vào bài không hỏi mua, không chạy 24/24 (spam, khóa nick): nói rõ điều này nếu sếp đòi
 - find_friends {}: Tuấn đọc nhóm sôi nổi nhất của các nick, chuẩn bị danh sách người nên kết bạn (sale tự bấm gửi, không tự gửi)
 - hire {reason}: tuyển thêm sale; fire {sale_id, reason}: cho sale nghỉ (chỉ khi sếp nói rõ)
+- call {agent, text?}: sếp bảo CEO GỌI một người (bất kỳ ai, kể cả sale / nhân viên mới) lên phòng để giao việc / trao đổi; text = việc giao
+  (mọi việc khác CEO tự gọi đúng người phụ trách lên nhận, không cần thêm call)
 - task {agent, title}: việc khác ghi vào danh sách việc của agent
 - status {}: báo cáo tình hình
 Chỉ dùng các việc trên. Không bịa số liệu. Lệnh không rõ thì không làm gì, hỏi lại sếp trong reply."""
@@ -850,6 +861,9 @@ def _rule_plan(text: str) -> dict:
                   r"(?:\s+(?:về|chủ đề|ngách)\s+([^\n]{2,60}))?\s*$", t, re.I)
     if m and (agent == "nhi" or "xu hướng" in low):
         return {"reply": "Dạ.", "actions": [{"type": "trend_page_idea", "name": m.group(1).strip(), "niche": (m.group(2) or "").strip()}]}
+    mc = re.search(r"(?:gọi|kêu|mời)\s+.{1,30}?\s(?:lên|vào|qua|sang)\s+(?:phòng|gặp|đây|nhận việc)(?:\s+(?:anh|em|sếp|ceo))?[\s,:.-]*(?:để\s+|giao\s+(?:việc\s+)?|nhận\s+việc\s*)?(.*)$", low)
+    if mc and agent:
+        return {"reply": "Dạ.", "actions": [{"type": "call", "agent": agent, "text": t[mc.start(1):].strip(" .,:-")}]}
     if re.search(r"trưởng phòng.{0,30}(đánh giá|xem lại|báo cáo|đề xuất)|(đánh giá|rà soát|xem lại) (các )?phòng( ban)?|phòng nào thiếu người", low):
         return {"reply": "Dạ.", "actions": [{"type": "dept_review"}]}
     if re.search(r"sitemap|site ?map|search console|google (không|chưa) (đọc|tìm|index)", low):
@@ -1027,6 +1041,43 @@ def _rule_plan(text: str) -> dict:
     return {"reply": reply, "actions": acts}
 
 
+# ---------------------------------------------------------------- CEO gọi người phụ trách lên phòng nhận việc
+WHO = {  # việc → ai phụ trách (CEO gọi người đó lên phòng giao việc; văn phòng 3D cho người đó đi sang bàn CEO)
+    "write_posts": ["lan"], "plan": ["tuan"], "feed_style": ["bao"], "site_deploy": ["vy"], "trend_page_idea": ["nhi"],
+    "focus_review": ["khoa"], "suggest_keywords": ["mai", "tuan"], "weekly_report": ["khoa"], "status": ["khoa"],
+    "scan_fanpage": ["ha"], "set_hot": ["minh"], "find_groups": ["tuan"], "join_groups": ["tuan"], "teach_mai": ["mai"],
+    "review_my_groups": ["tuan"], "find_prospects": ["mai"], "scan_comments": ["ha"], "pause_sale": ["tuan"],
+    "resume_sale": ["tuan"], "post_keyword": ["tuan", "lan"], "care_posts": ["bao"], "focus_group": ["tuan"],
+    "feed_scan": ["bao"], "reply_customers": ["bao"], "find_friends": ["tuan"], "hire": ["minh"], "fire": ["minh"],
+}
+DEPT_HEADS = {"sales": "minh", "groups": "tuan", "pages": "nhi", "website": "vy"}
+
+
+def assignees(act: dict) -> list[str]:
+    """Những người CEO gọi vào nhận việc này (agent cụ thể trong lệnh được ưu tiên)."""
+    t = act.get("type")
+    if t in ("teach", "order", "task", "call"):
+        raw = str(act.get("agent") or "")
+        if raw.startswith("st-"):
+            return [raw]
+        a = _agent_id(str(act.get("agent") or "")) if act.get("agent") not in (None, "", "all") else None
+        return [a] if a and a != "ceo" else []
+    if t == "dept_review":
+        d = act.get("dept")
+        return [DEPT_HEADS[d]] if d in DEPT_HEADS else list(DEPT_HEADS.values())
+    return list(WHO.get(t, []))
+
+
+def summon(act: dict, result: str):
+    """Ghi “lên phòng CEO nhận việc” cho từng người phụ trách (màn Văn phòng cho họ đi sang bàn CEO)."""
+    if not result or result.startswith(("Chưa", "Không", "Lỗi")):
+        return []
+    who = assignees(act)
+    for a in who:
+        db.log(a, "Lên phòng CEO nhận việc", result[:140])
+    return who
+
+
 def handle(text: str, via: str = "web") -> dict:
     """Sếp giao việc cho CEO. Trả về lời CEO và các việc đã làm."""
     text = (text or "").strip()[:1500]
@@ -1055,7 +1106,7 @@ def handle(text: str, via: str = "web") -> dict:
             import errors
             errors.report_exc("api", f"CEO làm việc “{a.get('type')}” bị lỗi", e)
             res = f"Lỗi khi làm “{a.get('type')}”: {str(e)[:120]}"
-        done.append({"type": a["type"], "result": res})
+        done.append({"type": a["type"], "result": res, "who": summon(a, res)})
     cl = plan.get("clarify") if isinstance(plan.get("clarify"), dict) else None
     if cl and cl.get("question") and not done:
         opts = [str(o)[:80] for o in (cl.get("options") or []) if str(o).strip()][:4]
