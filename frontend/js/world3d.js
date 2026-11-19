@@ -2,7 +2,7 @@
 const World = (() => {
   const stage=$("#stage"), canvas=$("#cv"), overlay=$("#overlay");
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.setPixelRatio(Math.min(Math.max(devicePixelRatio,1.25),2)); // vẽ dày điểm ảnh hơn cho nét sắc renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.outputEncoding = THREE.sRGBEncoding;
   const scene=new THREE.Scene();
   const camera=new THREE.PerspectiveCamera(38,1,0.1,200);
@@ -22,9 +22,10 @@ const World = (() => {
   scene.add(new THREE.HemisphereLight(0xffffff,0x9aa48f,0.75));
   const sun=new THREE.DirectionalLight(0xfff3dc,0.85); sun.position.set(-6,16,10); sun.castShadow=true;
   sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-16,right:16,top:12,bottom:-12,near:1,far:50}); sun.shadow.bias=-0.0005; scene.add(sun);
+  const rim=new THREE.DirectionalLight(0xd6ecff,0.35); rim.position.set(8,10,-14); scene.add(rim); // đèn ngược tạo viền sáng cho nhân vật nổi khối
 
   // vật liệu kiểu hoạt hình
-  const grad=(()=>{const t=new THREE.DataTexture(new Uint8Array([110,190,255]),3,1,THREE.LuminanceFormat); t.minFilter=t.magFilter=THREE.NearestFilter; t.needsUpdate=true; return t;})();
+  const grad=(()=>{const t=new THREE.DataTexture(new Uint8Array([95,160,215,255]),4,1,THREE.LuminanceFormat); t.minFilter=t.magFilter=THREE.NearestFilter; t.needsUpdate=true; return t;})();
   const mats={}; const toon=c=>mats[c]||(mats[c]=new THREE.MeshToonMaterial({color:new THREE.Color(c).convertSRGBToLinear(),gradientMap:grad}));
   const lineMat=new THREE.MeshBasicMaterial({color:0x1b2620,side:THREE.BackSide});
   const outline=(m,s=1.07)=>{const o=new THREE.Mesh(m.geometry,lineMat); o.scale.setScalar(s); m.add(o); return m;};
@@ -70,7 +71,7 @@ const World = (() => {
   let SEATS={}; const seatGroup=new THREE.Group(); scene.add(seatGroup);
   function layoutSeats(ids){ // ghế sếp luôn ở giữa phía trước, các agent xếp vòng quanh bàn
     seatGroup.clear(); SEATS={}; const order=[...ids]; order.splice(Math.floor((ids.length+1)/2),0,"boss");
-    const N=order.length, R=Math.max(2.45,N*1.15/(Math.PI*2));
+    const N=order.length, R=Math.min(4.15,Math.max(2.6,N*1.4/(Math.PI*2))); // nhân vật to hơn: ghế giãn ra
     order.forEach((id,i)=>{ const a=Math.PI+i*(Math.PI*2/N); const x=MC.x+Math.sin(a)*R, z=MC.z+Math.cos(a)*R;
       SEATS[id]={x,z,ry:Math.atan2(MC.x-x,MC.z-z)}; seatGroup.add(chair(x,z,SEATS[id].ry,id==="boss"?"#c9962d":"#3d4b44",true)); }); }
   function chair(x,z,ry,color,detached){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=ry; if(!detached) scene.add(g);
@@ -147,33 +148,43 @@ const World = (() => {
   mesh(box(0.5,1.1,0.5),"#e9efe9",{x:-12.3,y:0.55,z:3}); mesh(new THREE.CylinderGeometry(0.2,0.2,0.5,14),"#7cc4e8",{x:-12.3,y:1.35,z:3});
 
   /* --------------------------------------------- nhân vật chibi */
+  const CH=1.4; // độ to nhân vật so với bàn ghế
+  const blobMat=new THREE.MeshBasicMaterial({color:0x1b2620,transparent:true,opacity:0.2,depthWrite:false});
+  const cheekMat=new THREE.MeshBasicMaterial({color:0xf59a9e,transparent:true,opacity:0.75});
+  const hairShine=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.28,depthWrite:false});
+  const eyeSpark=m=>{ m.material=new THREE.MeshBasicMaterial({color:0xffffff}); return m; };
   function makeChar(a){
-    const L=a.look, root=new THREE.Group(); scene.add(root);
+    const L=a.look, root=new THREE.Group(); root.scale.setScalar(CH); scene.add(root);
+    const shade=new THREE.Mesh(new THREE.CircleGeometry(0.5,28),blobMat); shade.rotation.x=-Math.PI/2; shade.position.y=0.012; shade.renderOrder=1; root.add(shade); // bóng mềm dưới chân
     const body=new THREE.Group(); root.add(body);
     const legs=[-1,1].map(s=>{ const p=new THREE.Group(); p.position.set(0.15*s,0.55,0); body.add(p);
-      mesh(new THREE.CylinderGeometry(0.11,0.1,0.5,10),L.pants,{y:-0.25,parent:p});
-      const shoe=mesh(new THREE.SphereGeometry(0.13,12,8),"#2b2b2b",{y:-0.5,z:0.06,parent:p}); shoe.scale.set(1,0.6,1.45); return p; });
-    outline(mesh(new THREE.CylinderGeometry(0.31,0.37,0.62,18),L.shirt,{y:0.86,parent:body}),1.05);
-    mesh(new THREE.SphereGeometry(0.31,18,12),L.shirt,{y:1.16,parent:body}).scale.set(1,0.45,1);
+      outline(mesh(new THREE.CylinderGeometry(0.115,0.1,0.5,16),L.pants,{y:-0.25,parent:p}),1.09);
+      const shoe=outline(mesh(new THREE.SphereGeometry(0.135,18,12),"#2b2b2b",{y:-0.5,z:0.06,parent:p}),1.1); shoe.scale.set(1,0.6,1.45); return p; });
+    outline(mesh(new THREE.CylinderGeometry(0.31,0.37,0.62,28),L.shirt,{y:0.86,parent:body}),1.05);
+    outline(mesh(new THREE.SphereGeometry(0.31,28,16),L.shirt,{y:1.16,parent:body}),1.05).scale.set(1,0.45,1);
     mesh(new THREE.CylinderGeometry(0.1,0.12,0.08,10),L.skin,{y:1.27,parent:body});
     const arms=[-1,1].map(s=>{ const p=new THREE.Group(); p.position.set(0.39*s,1.1,0); body.add(p);
-      const arm=mesh(new THREE.CylinderGeometry(0.075,0.07,0.46,10),L.shirt,{y:-0.22,parent:p}); arm.rotation.z=0.12*s;
-      mesh(new THREE.SphereGeometry(0.085,10,8),L.skin,{x:0.03*s,y:-0.47,parent:p}); return p; });
-    const head=new THREE.Group(); head.position.y=1.68; body.add(head);
-    outline(mesh(new THREE.SphereGeometry(0.44,28,20),L.skin,{parent:head}),1.045);
+      const arm=outline(mesh(new THREE.CylinderGeometry(0.08,0.072,0.46,14),L.shirt,{y:-0.22,parent:p}),1.12); arm.rotation.z=0.12*s;
+      outline(mesh(new THREE.SphereGeometry(0.09,16,12),L.skin,{x:0.03*s,y:-0.47,parent:p}),1.12); return p; });
+    const head=new THREE.Group(); head.position.y=1.72; head.scale.setScalar(1.12); body.add(head); // đầu to kiểu chibi
+    outline(mesh(new THREE.SphereGeometry(0.44,44,32),L.skin,{parent:head}),1.045);
     const eyes=[-1,1].map(s=>{ const e=new THREE.Group(); e.position.set(0.16*s,0.02,0.37); head.add(e);
-      mesh(new THREE.SphereGeometry(0.085,14,10),"#ffffff",{parent:e,shadow:false}).scale.set(1,1.15,0.5);
-      mesh(new THREE.SphereGeometry(0.055,12,10),"#1b1b1b",{z:0.035,y:-0.01,parent:e,shadow:false}).scale.set(1,1.2,0.6);
-      mesh(new THREE.SphereGeometry(0.018,8,6),"#ffffff",{x:0.02,y:0.025,z:0.07,parent:e,shadow:false}); return e; });
-    const cheeks=[]; [-1,1].forEach(s=>{ const c=mesh(new THREE.CircleGeometry(0.065,16),"#f39a9a",{x:0.27*s,y:-0.11,z:0.35,parent:head,shadow:false}); c.rotation.y=0.6*s; c.material=new THREE.MeshBasicMaterial({color:0xf3a1a1,transparent:true,opacity:0.7}); cheeks.push(c); });
-    const mouth=mesh(new THREE.TorusGeometry(0.06,0.017,8,16,Math.PI),"#7a2b2b",{y:-0.15,z:0.42,parent:head,shadow:false}); mouth.rotation.z=Math.PI;
+      outline(mesh(new THREE.SphereGeometry(0.1,22,16),"#ffffff",{parent:e,shadow:false}),1.12).scale.set(1,1.2,0.5);
+      mesh(new THREE.SphereGeometry(0.072,20,14),L.eye||"#4a2e1f",{z:0.03,y:-0.012,parent:e,shadow:false}).scale.set(1,1.22,0.6);
+      mesh(new THREE.SphereGeometry(0.04,14,10),"#0e0e12",{z:0.06,y:-0.012,parent:e,shadow:false}).scale.set(1,1.2,0.5);
+      eyeSpark(mesh(new THREE.SphereGeometry(0.024,10,8),"#ffffff",{x:0.026,y:0.034,z:0.082,parent:e,shadow:false}));
+      eyeSpark(mesh(new THREE.SphereGeometry(0.012,8,6),"#ffffff",{x:-0.024,y:-0.036,z:0.08,parent:e,shadow:false})); return e; });
+    [-1,1].forEach(s=>{ const b=mesh(new THREE.CylinderGeometry(0.016,0.016,0.11,8),L.hair,{x:0.16*s,y:0.155,z:0.405,parent:head,shadow:false}); b.rotation.z=Math.PI/2-0.12*s; }); // lông mày
+    const cheeks=[]; [-1,1].forEach(s=>{ const c=mesh(new THREE.CircleGeometry(0.065,16),"#f39a9a",{x:0.27*s,y:-0.1,z:0.355,parent:head,shadow:false}); c.rotation.y=0.6*s; c.scale.set(1.25,0.85,1); c.material=cheekMat; cheeks.push(c); });
+    const mouth=mesh(new THREE.TorusGeometry(0.065,0.019,10,20,Math.PI),"#7a2b2b",{y:-0.15,z:0.42,parent:head,shadow:false}); mouth.rotation.z=Math.PI;
     // tóc
-    const capGeo=new THREE.SphereGeometry(0.47,28,14,0,Math.PI*2,0,Math.PI*0.52);
-    const cap=mesh(capGeo,L.hair,{y:0.04,parent:head}); cap.rotation.x=-0.28;
+    const capGeo=new THREE.SphereGeometry(0.47,40,20,0,Math.PI*2,0,Math.PI*0.52);
+    const cap=outline(mesh(capGeo,L.hair,{y:0.04,parent:head}),1.035); cap.rotation.x=-0.28;
+    const shine=new THREE.Mesh(new THREE.TorusGeometry(0.3,0.025,6,24,Math.PI*0.6),hairShine); shine.position.set(0,0.3,0.2); shine.rotation.set(-0.95,0,Math.PI*0.2); head.add(shine); // vệt bóng tóc
     if(L.hairStyle==="side"){ const f=mesh(box(0.55,0.13,0.18),L.hair,{x:0.1,y:0.3,z:0.33,parent:head}); f.rotation.z=-0.35; }
-    if(L.hairStyle==="long"){ const b=mesh(new THREE.SphereGeometry(0.47,20,14),L.hair,{y:-0.2,z:-0.12,parent:head}); b.scale.set(1.02,1.15,0.75);
+    if(L.hairStyle==="long"){ const b=outline(mesh(new THREE.SphereGeometry(0.47,32,20),L.hair,{y:-0.2,z:-0.12,parent:head}),1.035); b.scale.set(1.02,1.15,0.75);
       [-1,1].forEach(s=>mesh(box(0.14,0.55,0.2),L.hair,{x:0.4*s,y:-0.18,z:0.08,parent:head})); }
-    if(L.hairStyle==="bun"){ mesh(new THREE.SphereGeometry(0.19,16,12),L.hair,{y:0.45,z:-0.2,parent:head}); }
+    if(L.hairStyle==="bun"){ outline(mesh(new THREE.SphereGeometry(0.19,24,16),L.hair,{y:0.45,z:-0.2,parent:head}),1.08); }
     if(L.hairStyle==="spiky"){ for(let i=0;i<7;i++){ const a=i/7*Math.PI*2; const c=mesh(new THREE.ConeGeometry(0.11,0.3,8),L.hair,{x:Math.sin(a)*0.24,y:0.45,z:Math.cos(a)*0.2-0.05,parent:head}); c.rotation.set(Math.cos(a)*0.6,0,-Math.sin(a)*0.6); } }
     // phụ kiện
     if(L.accessory==="glasses"){ [-1,1].forEach(s=>mesh(new THREE.TorusGeometry(0.11,0.018,8,20),"#1b1b1b",{x:0.16*s,y:0.02,z:0.43,parent:head,shadow:false})); mesh(box(0.1,0.02,0.02),"#1b1b1b",{y:0.04,z:0.45,parent:head,shadow:false}); }
@@ -186,7 +197,7 @@ const World = (() => {
     if(L.tie){ mesh(box(0.1,0.36,0.03),L.tie,{y:0.9,z:0.345,parent:body}); mesh(box(0.13,0.08,0.04),L.tie,{y:1.1,z:0.33,parent:body});
       [-1,1].forEach(s=>{ const c=mesh(box(0.14,0.1,0.02),"#f4f4f4",{x:0.07*s,y:1.13,z:0.31,parent:body}); c.rotation.z=0.5*s; }); }
     root.traverse(o=>o.userData.agent=a.id);
-    const c={id:a.id,a,root,body,legs,arms,head,mouth,eyes,cheeks,path:[],mode:"desk",state:"idle",talk:0,blink:Math.random()*4,phase:Math.random()*10};
+    const c={shade,id:a.id,a,root,body,legs,arms,head,mouth,eyes,cheeks,path:[],mode:"desk",state:"idle",talk:0,blink:Math.random()*4,phase:Math.random()*10};
     if(a.face) setFace(c,a.face);
     return c;
   }
@@ -270,7 +281,7 @@ const World = (() => {
         if(dist<0.08){ c.path.shift(); if(!c.path.length){ if(c.mode==="toVisit"){ c.mode="visiting"; c.visitEnd=performance.now()+6500; say(c.id,c.visit.text,6200); } else c.mode=c.mode==="toMeeting"?"meeting":"desk"; } }
         else { const sp=2.4*dt; p.x+=dx/dist*Math.min(sp,dist); p.z+=dz/dist*Math.min(sp,dist); c.root.rotation.y=lerpA(c.root.rotation.y,Math.atan2(dx,dz),0.2); }
         const sw=Math.sin(t*11); c.legs[0].rotation.x=sw*0.6; c.legs[1].rotation.x=-sw*0.6; c.arms[0].rotation.x=-sw*0.5; c.arms[1].rotation.x=sw*0.5;
-        c.body.position.y=Math.abs(Math.sin(t*11))*0.06;
+        c.body.position.y=Math.abs(Math.sin(t*11))*0.06; c.shade.scale.setScalar(1-c.body.position.y*2);
       } else {
         const f=c.final||deskSpot(c.id); c.root.rotation.y=lerpA(c.root.rotation.y,f.ry,0.12);
         c.legs.forEach(l=>l.rotation.x+=(-1.45-l.rotation.x)*0.2); c.body.position.y+=(-0.04-c.body.position.y)*0.2;
@@ -288,7 +299,7 @@ const World = (() => {
     for(const id of Object.keys(tags)){
       if(id!=="boss"&&!chars[id]) continue;
       const base = id==="boss" ? new THREE.Vector3(SEATS.boss.x,0,SEATS.boss.z) : chars[id].root.position;
-      const top=place(id,new THREE.Vector3(base.x,id==="boss"?1.5:2.3,base.z));
+      const top=place(id,new THREE.Vector3(base.x,id==="boss"?1.5:3.45,base.z));
       const tg=tags[id]; tg.hidden=!top.vis||(id==="boss"&&!Object.values(chars).some(c=>c.mode==="meeting")); tg.style.left=top.x+"px"; tg.style.top=top.y+"px";
       top.y-=24;
       const b=bubbles[id]; const showMain = speech.id===id && performance.now()<speech.until;

@@ -60,6 +60,9 @@ Mục **Phòng ban** (nhóm Điều hành ở thanh bên). Công ty chia 5 phòn
   thì tuyển luôn và báo Telegram; *Chờ sếp duyệt* thì sếp bấm **Duyệt tuyển / Không** ở mục Phòng ban. Không đạt thì ghi lý do CEO không tuyển.
 - **Nhân viên mới** có tên, ngoại hình màu của phòng, bàn trống trong khu của phòng (mỗi phòng 2 bàn), lời dặn theo vị trí, lên cấp như
   agent khác. Sếp bấm **Cho nghỉ** để bỏ bớt người (việc của vị trí trở về trưởng phòng).
+- **Nhân vật chibi to, nét sắc**: nhân vật to gấp 1,4 lần so với bàn ghế, đầu to kiểu chibi, mắt long lanh (tròng màu + 2 đốm sáng),
+  lông mày, má hồng, vệt bóng trên tóc, viền đen quanh tay chân tóc, bóng mềm dưới chân, đèn ngược tạo viền sáng; vẽ dày điểm ảnh hơn
+  (tối thiểu 1,25×) nên cạnh mịn, không răng cưa. Ghế phòng họp tự giãn cho vừa người to.
 - **Văn phòng 3D có phòng thật**: mỗi phòng có vách kính thấp và cửa ra vào (Giám đốc, Kinh doanh, khu Sale, Hội nhóm, Website, Trang
   Facebook), lối đi chung nối các cửa với phòng họp. Agent **tự đi sang bàn đồng nghiệp khi việc cần trao đổi**, ra đúng cửa phòng mình,
   theo lối đi, vào cửa phòng kia, nói nội dung việc (bong bóng thoại) rồi về chỗ: Lan viết bài → sang CEO; CEO duyệt bài → sang Tuấn; Tuấn
