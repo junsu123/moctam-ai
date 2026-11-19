@@ -254,6 +254,29 @@ Lệnh trên bot ảnh: `/anh` (bài đang chờ ảnh, gửi lại prompt từn
 (chủ đề Nhi chọn). Gửi ảnh: trả lời đúng tin xin ảnh; gửi ảnh không trả lời thì gắn vào bài chờ ảnh lâu nhất. Bỏ ô **Báo việc của Nhi** thì
 bot chỉ gửi prompt ảnh. **Gỡ bot** thì Nhi quay về dùng bot chính. Chưa cài bot ảnh thì mọi thứ chạy qua bot chính như trước.
 
+## Các Trang của Nhi: từ khóa sếp đặt, duyệt bài, Nhi học theo sếp
+
+Mục **Các Trang của Nhi** (thanh bên, dưới Trang xu hướng): danh sách mọi Trang Nhi quản lý (đang chạy, tạm dừng, đang tạo).
+- **Sếp đặt nội dung cho từng Trang** (bấm *Ngành nghề và từ khóa*): ngành nghề / chủ đề của Trang, **từ khóa nội dung** (VD “món chay,
+  canh chua, mẹo nấu cơm”), chủ đề **không viết**, **lời dặn riêng** (giọng văn, cách xưng hô...), số bài/ngày, giờ đăng. Nhi viết mỗi bài
+  đúng tên Trang, ngành nghề và một từ khóa; bài của Trang chưa có từ khóa viết theo ngành nghề. Nút **Nhi gợi ý thêm từ khóa**: Nhi đề
+  xuất tối đa 6 từ khóa cùng tinh thần (từ chủ đề sếp duyệt ngay, được hưởng ứng), bấm để thêm rồi Lưu.
+- **Nhi tự chia bài cho các Trang**: tin nóng trong ngày giao cho **Trang hợp nhất** (so với từ khóa, ngành nghề, tên Trang), mỗi tin chỉ
+  một Trang mỗi ngày, bỏ tin dính chủ đề sếp cấm; bài còn lại **xoay vòng từ khóa** của Trang, ưu tiên từ khóa sếp hay duyệt ngay, ít
+  bị loại, có tương tác, lâu chưa viết (vẫn chừa 20% lượt thử từ khóa lâu chưa dùng). Thẻ Trang cho biết hôm nay Nhi chia chủ đề gì,
+  mỗi từ khóa đã viết bao nhiêu bài, sếp duyệt ngay bao nhiêu.
+- **Sếp duyệt bài trước khi đăng** (mặc định bật): bài Nhi viết nằm ở **Bài chờ sếp duyệt**, chưa xin ảnh. Sếp **Duyệt** (Nhi gửi prompt
+  ảnh lên Telegram như cũ), **sửa thẳng trong ô rồi duyệt**, hoặc **Loại** kèm lý do (sai chủ đề, không đúng từ khóa, giọng văn chưa hợp,
+  quá dài / ngắn, thông tin chưa đúng, trùng bài cũ). Có nút **Duyệt tất cả**. Bản sửa phạm Luật Facebook thì không duyệt được; giá bị
+  tự bỏ như mọi bài. Chờ quá 48 giờ thì bài bị bỏ. Có bài chờ duyệt thì bot ảnh (hoặc bot chính) nhắn sếp.
+- **Nhi ghi nhớ và viết theo ý sếp**, riêng từng Trang: sếp sửa bài thì Nhi so hai bản rút một bài học ngắn (có khóa Claude thì Claude
+  so; chưa có thì so độ dài, emoji, hashtag, câu mở đầu); sếp loại thì Nhi nhớ lý do; sếp dạy thêm ở ô *Dạy Nhi* của Trang. Mỗi lần viết,
+  đề bài có từ khóa, lời dặn, tối đa 8 điều Nhi ghi nhớ và 2 bản sếp đã sửa gần nhất để học giọng. Xem / xóa điều Nhi ghi nhớ ở
+  *Nhi ghi nhớ theo sếp* (giữ 12 bài học, lý do loại mới nhất mỗi Trang).
+- **Tắt duyệt khi Nhi đã hiểu ý**: chỉ số **Nhi hiểu ý sếp** = tỉ lệ bài sếp duyệt ngay không sửa trong 30 lần gần nhất (cả công ty và
+  từng Trang). Đủ 20 lần duyệt và từ 85% thì trang báo sếp có thể tắt. Bỏ ô **Sếp duyệt bài trước khi đăng** (hoặc nhắn CEO “tắt duyệt
+  bài Trang của Nhi”) thì Nhi viết xong xin ảnh ngay như trước; bật lại bất cứ lúc nào.
+
 ## Nuôi Page (không dùng Graph API)
 
 Mục **Nuôi Page** (thanh bên, dưới Bình luận). Trang lớn lên bằng bài có ích, đăng đều, đúng giờ; phần mềm làm như sau:
@@ -1469,6 +1492,7 @@ docs/
   departments.py Phòng ban: trưởng phòng tự đánh giá, đề xuất tuyển, CEO xét, nhân viên mới làm việc thật theo vị trí
   trend_create.py Nhi tự tạo Trang: chọn ý tưởng + nick an toàn, tạo trong ca của nick, chuyển về nick cá nhân, báo Telegram
   trend_learn.py Nhi tự học: điểm bài Trang so với mức của Trang, bài học kiểu bài / độ dài / giờ, độ chính xác chọn xu hướng
+  page_brain.py  Các Trang của Nhi: từ khóa sếp đặt, chia chủ đề cho các Trang, sếp duyệt / sửa / loại, Nhi ghi nhớ theo sếp
   trend_pages.py Nhi: Google Trends, đề xuất Trang, lịch bài Trang xu hướng, prompt ảnh gửi Telegram, nhận ảnh sếp trả lời
   page_grow.py   Nuôi Page không API: Lan viết lịch 80/20, nick quản trị chuyển sang Trang đăng bài, đọc tương tác, học chủ đề
   group_feed.py  Lướt bảng tin nhóm: mọi nick đọc >=20 bài, lọc 3 lớp (chữ, Claude, học từ sếp), bình luận người hỏi mua (kèm ảnh)

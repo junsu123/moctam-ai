@@ -1,0 +1,47 @@
+/* --------------------------------------------- Các Trang của Nhi: từ khóa sếp đặt, duyệt bài, Nhi ghi nhớ theo sếp */
+async function loadNp(){ try{ ST.np=await api("/nhi-pages"); }catch(e){ toast(e.message); return; } renderNp(); }
+function npSmart(s){ return s.n?`${s.pct}% <span class="muted">(${s.ok}/${s.n} bài duyệt ngay)</span>`:'<span class="muted">chưa có lần duyệt nào</span>'; }
+function renderNp(){ const d=ST.np, S=d.smart, hm=t=>t?`${t.slice(11,16)} ${t.slice(8,10)}/${t.slice(5,7)}`:"", act=d.pages.filter(p=>p.status==="active");
+  $("#npStats").innerHTML=[[act.length,"Trang đang chạy"],[d.queue.length,"Bài chờ sếp duyệt"],[act.reduce((a,p)=>a+p.today.length,0),"Bài hôm nay"],[S.n?S.pct+"%":"–","Nhi hiểu ý sếp"]]
+    .map(([v,l])=>`<div class="pr-stat"><b>${v}</b><span>${l}</span></div>`).join("");
+  $("#npRev").innerHTML=`<div class="row wrap" style="gap:10px;align-items:center"><label class="row"><input type="checkbox" id="npReview" ${d.review?"checked":""}> <b>Sếp duyệt bài trước khi đăng</b></label>
+    <span class="small">Nhi hiểu ý sếp: ${npSmart(S)}${S.n?` · sửa ${S.edit} · loại ${S.reject}`:""}</span></div>
+    <p class="small ${S.suggest_off&&d.review?"":"muted"}" style="margin:6px 0 0">${!d.review?"Đang tắt duyệt: Nhi viết xong gửi prompt ảnh ngay, bài đăng theo lịch. Bật lại bất cứ lúc nào.":S.suggest_off?`💡 ${S.pct}% trong ${S.n} lần gần nhất sếp duyệt ngay không sửa: Nhi đã hiểu ý, sếp có thể tắt duyệt.`:`Khi đủ ${S.need} lần duyệt và từ 85% bài được duyệt ngay không sửa, Nhi báo sếp có thể tắt duyệt.`}</p>`;
+  $("#npPages").innerHTML=d.pages.length?d.pages.map(p=>{ const kw=p.kw||[];
+    return `<article class="cm-item st-${p.status==="active"?"done":"x"}" data-np="${p.id}"><div class="top"><span class="chip ${p.status==="active"?"ok":p.status==="creating"?"warn":""}">${p.status==="active"?"Đang chạy":p.status==="creating"?"Đang tạo":"Tạm dừng"}</span><b>${esc(p.name)}</b><span>· ${esc(p.niche||"chưa ghi ngành nghề")}</span>${p.admin_name?`<span>· nick ${esc(p.admin_name)}</span>`:""}</div>
+      <p class="small muted" style="margin:0">${p.posts_per_day} bài/ngày lúc ${esc(p.times||"")} · hiểu ý sếp ở Trang này: ${npSmart(p.smart)}</p>
+      <p class="small" style="margin:2px 0"><b>Từ khóa:</b> ${kw.length?kw.map(k=>`<span class="chip" title="${k.n} bài 60 ngày · sếp duyệt ngay ${k.ok} · loại ${k.bad} · tương tác TB ${k.eng}">${esc(k.kw)}${k.n?` · ${k.n} bài${k.ok?`, ${k.ok} duyệt ngay`:""}`:""}</span>`).join(" "):'<span class="muted">chưa đặt: Nhi viết theo ngành nghề. Đặt từ khóa để Nhi viết đúng ý sếp.</span>'}</p>
+      ${p.today.length?`<p class="small" style="margin:2px 0"><b>Hôm nay:</b> ${p.today.map(t=>`${esc((t.scheduled_for||"").slice(11,16))} ${esc(t.trend_kind==="trend"?"🔥 ":"")}${esc(t.trend_topic||t.page_kw||"")}${t.status==="page_review"?' <span class="muted">(chờ duyệt)</span>':""}`).join(" · ")}</p>`:""}
+      <details class="small"><summary>Ngành nghề và từ khóa</summary><div style="display:grid;gap:6px;margin-top:6px">
+        <label>Ngành nghề / chủ đề của Trang<input data-f="niche" value="${esc(p.niche||"")}" placeholder="VD nấu ăn gia đình"></label>
+        <label>Từ khóa nội dung (cách nhau dấu phẩy)<textarea data-f="keywords" rows="2" placeholder="VD món chay, canh chua, mẹo nấu cơm">${esc(p.keywords||"")}</textarea></label>
+        <div class="row wrap" style="gap:6px;align-items:center"><button type="button" class="btn sm ghost" data-npa="suggest">Nhi gợi ý thêm từ khóa</button><span data-sug></span></div>
+        <label>Không viết về<input data-f="avoid" value="${esc(p.avoid||"")}" placeholder="VD rượu bia, chính trị"></label>
+        <label>Sếp dặn riêng Trang này<textarea data-f="boss_note" rows="2" placeholder="VD giọng thân mật, xưng mình; luôn kết bằng câu hỏi">${esc(p.boss_note||"")}</textarea></label>
+        <div class="row wrap" style="gap:6px"><label>Bài/ngày <input type="number" data-f="posts_per_day" min="1" max="5" value="${p.posts_per_day||1}" style="width:64px"></label><label>Giờ đăng <input data-f="times" value="${esc(p.times||"")}" style="width:130px"></label></div>
+        <div><button type="button" class="btn sm primary" data-npa="save">Lưu</button></div></div></details>
+      <details class="small"><summary>Nhi ghi nhớ theo sếp (${p.memory.length})</summary><ul style="margin:6px 0;padding-left:18px">${p.memory.map(m=>`<li>${m.kind==="reject"?"Sếp loại vì: ":m.kind==="note"?"Sếp dạy: ":""}${esc(m.text)} <button type="button" class="btn sm ghost" data-npforget="${m.id}" aria-label="Xóa điều này">×</button></li>`).join("")||'<li class="muted">Chưa có. Nhi ghi nhớ khi sếp sửa hoặc loại bài.</li>'}</ul>
+        <div class="row wrap" style="gap:6px"><input data-f="teach" placeholder="Dạy Nhi thêm cho Trang này" style="flex:1 1 200px"><button type="button" class="btn sm" data-npa="teach">Dạy</button></div></details></article>`; }).join("")
+    :'<p class="muted small">Chưa có Trang nào đang chạy. Tạo Trang ở mục <b>Trang xu hướng</b>.</p>';
+  $("#npAll").hidden=!d.queue.length;
+  $("#npQueue").innerHTML=d.queue.length?d.queue.map(p=>`<article class="cm-item st-scheduled" data-npp="${p.id}"><div class="top"><span class="chip warn">Chờ duyệt</span><b>${esc(p.page_name)}</b>${p.page_kw?`<span class="chip">${esc(p.page_kw)}</span>`:""}${p.trend_kind==="trend"?`<span class="chip ok">🔥 ${esc(p.trend_topic||"")}</span>`:""}<span>· đăng ${hm(p.scheduled_for)}</span></div>
+      <textarea data-npc rows="6" style="width:100%;box-sizing:border-box" aria-label="Nội dung bài">${esc(p.content||"")}</textarea>
+      <div class="acts"><button type="button" class="btn sm primary" data-npr="approve">Duyệt</button><select data-npwhy aria-label="Lý do loại">${d.reasons.map(r=>`<option>${esc(r)}</option>`).join("")}</select><button type="button" class="btn sm ghost" data-npr="reject">Loại</button></div></article>`).join("")
+    :`<p class="muted small">${d.review?"Không có bài nào chờ duyệt.":"Đang tắt duyệt: bài đi thẳng sang bước xin ảnh."}</p>`; }
+$("#npPlan").onclick=async e=>{ e.target.disabled=true; try{ const r=await api("/trends/plan","POST"); toast(r.written?`Nhi viết ${r.written} bài${ST.np&&ST.np.review?", chờ sếp duyệt":""}`:"Không còn giờ đăng trống hôm nay hoặc chưa có Trang đang chạy"); loadNp(); }catch(err){ toast(err.message); } e.target.disabled=false; };
+$("#npAll").onclick=async e=>{ e.target.disabled=true; try{ const r=await api("/nhi-pages/approve-all","POST"); toast(`Đã duyệt ${r.approved} bài, Nhi gửi prompt ảnh`); loadNp(); }catch(err){ toast(err.message); } e.target.disabled=false; };
+$("#v-nhipages").addEventListener("input",e=>{ const t=e.target.closest("[data-npc]"); if(!t) return; const card=t.closest("[data-npp]"), p=ST.np.queue.find(x=>x.id==card.dataset.npp);
+  card.querySelector('[data-npr="approve"]').textContent=t.value.trim()!==(p.content||"").trim()?"Lưu bản sửa và duyệt":"Duyệt"; });
+$("#v-nhipages").addEventListener("change",async e=>{ if(e.target.id!=="npReview") return; try{ await api("/nhi-pages/settings","PUT",{review:e.target.checked}); toast(e.target.checked?"Sếp duyệt từng bài trước khi đăng":"Đã tắt duyệt: Nhi tự xin ảnh và đăng theo lịch"); loadNp(); }catch(err){ toast(err.message); } });
+$("#v-nhipages").addEventListener("click",async e=>{
+  const r=e.target.closest("[data-npr]"); if(r){ const card=r.closest("[data-npp]"), id=card.dataset.npp, a=r.dataset.npr; r.disabled=true;
+    try{ if(a==="approve"){ const res=await api(`/nhi-pages/posts/${id}/review`,"POST",{action:"approve",content:card.querySelector("[data-npc]").value}); toast(res.review_result==="edit"?"Đã duyệt bản sếp sửa, Nhi ghi nhớ":"Đã duyệt, Nhi gửi prompt ảnh"); }
+      else { await api(`/nhi-pages/posts/${id}/review`,"POST",{action:"reject",reason:card.querySelector("[data-npwhy]").value}); toast("Đã loại, Nhi ghi nhớ lý do"); }
+      loadNp(); }catch(err){ toast(err.message); r.disabled=false; } return; }
+  const fg=e.target.closest("[data-npforget]"); if(fg){ try{ await api(`/nhi-pages/memory/${fg.dataset.npforget}`,"DELETE"); toast("Nhi đã bỏ điều này"); loadNp(); }catch(err){ toast(err.message); } return; }
+  const add=e.target.closest("[data-npadd]"); if(add){ const ta=add.closest("[data-np]").querySelector('[data-f="keywords"]'); ta.value=(ta.value.trim()?ta.value.trim().replace(/,\s*$/,"")+", ":"")+add.dataset.npadd; add.remove(); toast("Đã thêm vào ô từ khóa, bấm Lưu"); return; }
+  const b=e.target.closest("[data-npa]"); if(!b) return; const card=b.closest("[data-np]"), id=card.dataset.np, f=k=>card.querySelector(`[data-f=${k}]`).value; b.disabled=true;
+  try{ if(b.dataset.npa==="suggest"){ const r=await api(`/nhi-pages/${id}/suggest`,"POST"); card.querySelector("[data-sug]").innerHTML=r.keywords.length?r.keywords.map(k=>`<button type="button" class="btn sm" data-npadd="${esc(k)}">+ ${esc(k)}</button>`).join(" "):'<span class="muted">Chưa nghĩ ra từ khóa mới</span>'; b.disabled=false; return; }
+    if(b.dataset.npa==="teach"){ if(!f("teach").trim()){ b.disabled=false; return; } await api(`/nhi-pages/${id}`,"PUT",{teach:f("teach")}); toast("Nhi đã ghi nhớ"); }
+    else { await api(`/nhi-pages/${id}`,"PUT",{niche:f("niche"),keywords:f("keywords"),avoid:f("avoid"),boss_note:f("boss_note"),posts_per_day:f("posts_per_day"),times:f("times")}); toast("Đã lưu: Nhi viết theo từ khóa mới từ bài tiếp theo"); }
+    loadNp(); }catch(err){ toast(err.message); b.disabled=false; } });

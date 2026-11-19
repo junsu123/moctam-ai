@@ -10,6 +10,7 @@
     if(P.startsWith("/page-inbox")) return demoIb(method,P,qs,body||{});
     if(P.startsWith("/nick-health")) return demoNh(method,P,qs,body||{});
     if(P.startsWith("/page-grow")) return demoPg(method,P,qs,body||{});
+    if(P.startsWith("/nhi-pages")) return demoNp(method,P,qs,body||{});
     if(P.startsWith("/trends")||P.startsWith("/tg-img")) return demoTr(method,P,qs,body||{});
     if(P.startsWith("/departments")) return demoDp(method,P,body||{});
     if(P.startsWith("/replies")||P.startsWith("/feed")) return demoRp(method,P,qs,body||{});

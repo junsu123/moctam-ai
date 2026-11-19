@@ -197,20 +197,21 @@ def write_post(pg: dict, when: str) -> dict:
     from llm import llm
     import fb_policy
     import pricing
-    hot = db.q("SELECT title, niche, score, why FROM trend_hot WHERE day=? ORDER BY score DESC LIMIT 10", (db.today(),))
-    used = {r["topic"] for r in db.q("SELECT trend_topic topic FROM posts WHERE fb_page_ref=? AND created_at >= ?", (pg["id"], _ago(days=3)))}
-    fit = [h for h in hot if h["title"] not in used and (pg["niche"] or "").lower() in (h["niche"] + " " + h["title"]).lower()]
+    import page_brain
     import trend_learn
     sty = trend_learn.style(pg)
-    if sty["kind"] == "evergreen":  # số liệu cho thấy bài bền hợp hơn (hoặc lượt thử): không gắn tin nóng
-        fit = []
-    kind = "trend" if fit else "evergreen"
+    # tin nóng giao cho Trang hợp nhất (mỗi tin một Trang / ngày), không thì xoay vòng từ khóa sếp đặt; số liệu cho thấy bài bền hợp hơn thì bỏ tin nóng
+    ch = page_brain.choose(pg, allow_trend=sty["kind"] != "evergreen")
+    fit = [ch["hot"]] if ch["hot"] else []
+    kind = ch["kind"]
+    review = page_brain.review_on()
     learned = ("\nKinh nghiệm từ số liệu Trang: " + "; ".join(sty["notes"]) + "." if sty["notes"] else "") + \
         (f"\nBài được hưởng ứng nhất của Trang này (học giọng, không chép):\n{sty['example']}" if sty["example"] else "")
-    topic = (fit[0]["title"] if fit else pg["niche"]) or pg["name"]
+    topic = ch["topic"]
     recent = db.q("SELECT content FROM posts WHERE fb_page_ref=? ORDER BY id DESC LIMIT 6", (pg["id"],))
     ask = f"""Viết 1 bài cho Trang Facebook "{pg['name']}" (ngách: {pg['niche']}; {pg.get('description') or ''}).
 Chủ đề hôm nay: {topic}{(' — đang lên xu hướng: ' + fit[0]['why']) if fit else ' (chưa có xu hướng hợp ngách hôm nay: viết bài có ích, bền, không gắn tin nóng)'}.
+{page_brain.brief(pg, ch["kw"])}
 Yêu cầu: {sty['words'] or '60–160 chữ'}, mở đầu gây chú ý nhưng không giật tít sai sự thật; thông tin chung, không bịa số liệu / trích dẫn / lời người thật;
 không nói về người thật cụ thể theo kiểu bôi nhọ hay đồn đoán; không chính trị, không cờ bạc; không kêu gọi like / share / tag để nhận quà;
 kết bằng 1 câu hỏi mở để người đọc bình luận. 1–3 emoji, 2–3 hashtag.
@@ -228,10 +229,12 @@ JSON: {{"content": "...", "hashtags": "...", "image_prompt": "...", "image_note"
         text = d["content"]
     acc = db.one("SELECT * FROM fb_accounts WHERE id=?", (pg["admin_account_id"],)) or {}
     pid = db.run("""INSERT INTO posts(agent_id, target_type, title, content, hashtags, status, scheduled_for, account_id, sale_id, fb_page_ref,
-                    trend_topic, trend_kind, image_prompt, image_note, source, created_at) VALUES (?, 'page', ?, ?, ?, 'need_image', ?, ?, ?, ?, ?, ?, ?, ?, 'trend_page', ?)""",
-                 (writer, f"{pg['name']} · {topic}"[:120], text, d.get("hashtags") or "", when, acc.get("id"), acc.get("sale_id"), pg["id"], topic, kind,
-                  (d.get("image_prompt") or _mock_post(pg, topic)["image_prompt"])[:900], (d.get("image_note") or "")[:300], db.now()))
-    ask_image(pid)
+                    trend_topic, trend_kind, image_prompt, image_note, source, created_at, page_kw, nhi_draft)
+                    VALUES (?, 'page', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'trend_page', ?, ?, ?)""",
+                 (writer, f"{pg['name']} · {topic}"[:120], text, d.get("hashtags") or "", "page_review" if review else "need_image", when, acc.get("id"), acc.get("sale_id"), pg["id"], topic, kind,
+                  (d.get("image_prompt") or _mock_post(pg, topic)["image_prompt"])[:900], (d.get("image_note") or "")[:300], db.now(), ch["kw"], text))
+    if not review:
+        ask_image(pid)
     return db.one("SELECT * FROM posts WHERE id=?", (pid,))
 
 
@@ -333,6 +336,8 @@ def plan_today(force: bool = False) -> int:
     db.set_setting("trend_plan_day", db.today())
     db.run("""UPDATE posts SET status='rejected', error='Không có ảnh sau 24 giờ' WHERE status='need_image' AND source='trend_page'
               AND created_at <= ?""", (_ago(hours=24),))
+    import page_brain
+    page_brain.cleanup()
     now, n = db.clock().strftime("%H:%M"), 0
     for pg in db.q("SELECT * FROM fb_pages WHERE status='active' AND admin_account_id IS NOT NULL"):
         have = db.one("SELECT COUNT(*) n FROM posts WHERE fb_page_ref=? AND substr(scheduled_for,1,10)=?", (pg["id"], db.today()))["n"]
@@ -340,7 +345,10 @@ def plan_today(force: bool = False) -> int:
         for t in slots[:max(0, (pg["posts_per_day"] or 1) - have)]:
             write_post(pg, f"{db.today()} {t}")
             n += 1
-    if n:
+    if n and page_brain.review_on():
+        db.log("nhi", "Lên lịch bài Trang xu hướng", f"Viết {n} bài, chờ sếp duyệt ở mục Các Trang của Nhi")
+        _tg(f"📝 Nhi viết {n} bài cho các Trang, chờ sếp duyệt trong phần mềm (mục <b>Các Trang của Nhi</b>). Duyệt xong Nhi gửi prompt ảnh.")
+    elif n:
         db.log("nhi", "Lên lịch bài Trang xu hướng", f"Viết {n} bài, đã gửi prompt ảnh lên Telegram")
     return n
 

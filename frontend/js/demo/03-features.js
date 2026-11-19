@@ -1,3 +1,27 @@
+  // Các Trang của Nhi: từ khóa sếp đặt, hàng chờ duyệt, Nhi ghi nhớ theo sếp
+  function demoNp(method,P,qs,body){ if(!S.tr) demoTr("GET","/trends",{},{}); const td=today(), pn=id=>(S.tr.pages.find(p=>p.id===id)||{}).name||"";
+    if(!S.np){ S.np={review:true,seq:50,hist:{ok:14,edit:4,reject:2},
+        mem:[{id:1,page_id:1,kind:"lesson",text:"Sếp thích bài ngắn hơn: khoảng 60 chữ"},{id:2,page_id:1,kind:"reject",text:"Giọng văn chưa hợp (từ khóa “món chay”)"},{id:3,page_id:1,kind:"note",text:"Luôn gợi ý món hợp mùa"}],
+        queue:[{id:950,page_id:1,page_kw:"món chay",trend_kind:"evergreen",trend_topic:"món chay",scheduled_for:`${td} 19:30`,content:"🥗 Thứ Hai ăn chay nhẹ bụng: đậu hũ sốt nấm 15 phút\n\nĐậu hũ chiên vàng, rưới sốt nấm đông cô, thêm chút tiêu. Cơm nóng ăn kèm là hết sạch nồi.\n\nNhà bạn hay nấu món chay nào nhất? 👇\n#monchay #bepnhaminh"},
+          {id:951,page_id:1,page_kw:null,trend_kind:"trend",trend_topic:"món ngon cuối tuần",scheduled_for:`${td} 21:00`,content:"🍲 Cuối tuần này nấu gì? 3 món cả nhà mê mà không tốn công\n\n1. Canh chua cá lóc\n2. Thịt kho trứng\n3. Rau muống xào tỏi\n\nBạn chọn món nào? Bình luận để mình gửi cách làm nhé!"}]};
+      S.tr.pages.forEach(p=>{ if(p.id===1&&p.keywords==null) Object.assign(p,{keywords:"món chay, canh chua, mẹo nấu cơm, món ngon cuối tuần",avoid:"rượu bia",boss_note:"Giọng thân mật, xưng mình"}); }); }
+    const N=S.np, smart=h=>{ const n=h.ok+h.edit+h.reject; return {n,ok:h.ok,edit:h.edit,reject:h.reject,pct:n?Math.round(100*h.ok/n):0,need:20,suggest_off:n>=20&&h.ok/n>=0.85}; }; let m;
+    if(P==="/nhi-pages"&&method==="GET") return {review:N.review,smart:smart(N.hist),reasons:["Sai chủ đề của Trang","Không đúng từ khóa","Giọng văn chưa hợp","Quá dài","Quá ngắn","Thông tin chưa đúng / bịa","Trùng bài cũ","Khác"],
+      queue:N.queue.map(q=>({...q,page_name:pn(q.page_id)})),
+      pages:S.tr.pages.filter(p=>["active","paused","creating"].includes(p.status)).map(p=>({...p,admin_name:p.admin_name||"Linh 1",posts_per_day:p.posts_per_day||2,times:p.times||"09:00,19:30",
+        kw:(p.keywords||"").split(",").map(x=>x.trim()).filter(Boolean).map((k,i)=>({kw:k,n:[5,3,2,1][i]||0,ok:[4,2,1,0][i]||0,bad:i===1?1:0,eng:[42,30,18,9][i]||0,last:""})),
+        memory:N.mem.filter(x=>x.page_id===p.id).slice().reverse(),smart:smart(N.hist),today:N.queue.filter(q=>q.page_id===p.id).map(q=>({...q,status:"page_review"}))}))};
+    if(P==="/nhi-pages/settings"){ N.review=!!body.review; return {ok:true}; }
+    if(P==="/nhi-pages/approve-all"){ const n=N.queue.length; N.hist.ok+=n; N.queue=[]; return {approved:n}; }
+    if((m=P.match(/^\/nhi-pages\/posts\/(\d+)\/review$/))){ const q=N.queue.find(x=>x.id==m[1]); if(!q) throw new Error("Bài này không còn chờ duyệt"); N.queue=N.queue.filter(x=>x!==q);
+      if(body.action==="reject"){ N.hist.reject++; N.mem.push({id:++N.seq,page_id:q.page_id,kind:"reject",text:body.reason}); return {status:"rejected"}; }
+      const ed=(body.content||q.content).trim()!==q.content.trim(); if(ed){ N.hist.edit++; N.mem.push({id:++N.seq,page_id:q.page_id,kind:"lesson",text:`Sếp thích bài khoảng ${body.content.trim().split(/\s+/).length} chữ`}); } else N.hist.ok++;
+      S.tr.posts.unshift({id:q.id,status:"need_image",page_name:pn(q.page_id),trend_topic:q.trend_topic,scheduled_for:q.scheduled_for,content:body.content||q.content,image_prompt:"Warm home kitchen scene, 4:5 portrait, no text"}); return {review_result:ed?"edit":"ok"}; }
+    if((m=P.match(/^\/nhi-pages\/memory\/(\d+)$/))){ N.mem=N.mem.filter(x=>x.id!=m[1]); return {ok:true}; }
+    if((m=P.match(/^\/nhi-pages\/(\d+)\/suggest$/))) return {keywords:["bữa sáng nhanh","thực đơn tuần","món ăn dặm cho bé"]};
+    if((m=P.match(/^\/nhi-pages\/(\d+)$/))&&method==="PUT"){ const p=S.tr.pages.find(x=>x.id==m[1]); if(body.teach){ N.mem.push({id:++N.seq,page_id:p.id,kind:"note",text:body.teach}); return p; }
+      Object.assign(p,{niche:body.niche,keywords:body.keywords,avoid:body.avoid,boss_note:body.boss_note,posts_per_day:+body.posts_per_day||p.posts_per_day,times:body.times||p.times}); return p; }
+    throw new Error("Bản xem trước chưa hỗ trợ thao tác này"); }
   function demoTr(method,P,qs,body){ let m; const td=today(), hm=(d,t)=>`${d} ${t}`;
     if(!S.tr){ const a=workingNicks()[0]||{}; S.tr={id:900,
       pages:[{id:1,name:"Bếp Nhà Mình Mỗi Ngày",niche:"mẹo nấu ăn",category:"Ẩm thực",status:"active",auto_created_at:"x",avatar_path:"x",avatar_done:1,avatar_prompt:"Minimal flat logo icon: cooking pot with steam, warm orange, no text, square",cover_prompt:"Wide banner of a cozy Vietnamese home kitchen, no text, 1640x624",url:"https://facebook.com/bepnhaminh",admin_account_id:a.id,admin_name:a.name,posts_per_day:2,times:"09:00,19:30",followers:3420,posted_30d:41,avg_eng:58.3},

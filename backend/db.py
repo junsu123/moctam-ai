@@ -190,6 +190,8 @@ CREATE TABLE IF NOT EXISTS fb_pages (
   status TEXT DEFAULT 'idea', posts_per_day INTEGER DEFAULT 2, times TEXT DEFAULT '09:00,19:30', avatar_prompt TEXT, cover_prompt TEXT,
   reason TEXT, trends TEXT, followers INTEGER, stats_at TEXT, created_at TEXT, activated_at TEXT
 );
+CREATE TABLE IF NOT EXISTS page_memory (id INTEGER PRIMARY KEY AUTOINCREMENT, page_id INTEGER, kind TEXT, text TEXT, keyword TEXT, created_at TEXT);
+CREATE INDEX IF NOT EXISTS idx_page_memory ON page_memory(page_id);
 CREATE TABLE IF NOT EXISTS trends (id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT, title TEXT, traffic TEXT, traffic_n INTEGER, news TEXT, created_at TEXT);
 CREATE INDEX IF NOT EXISTS idx_trends_day ON trends(day);
 CREATE TABLE IF NOT EXISTS staff (id INTEGER PRIMARY KEY AUTOINCREMENT, dept TEXT, position TEXT, name TEXT, look TEXT, desk INTEGER,
@@ -413,6 +415,8 @@ MIGRATIONS = [
     ("posts", "fb_page_ref", "INTEGER"), ("posts", "trend_topic", "TEXT"), ("posts", "image_prompt", "TEXT"), ("posts", "image_note", "TEXT"),
     ("posts", "image_path", "TEXT"), ("posts", "img_req_msg", "TEXT"), ("posts", "img_req_at", "TEXT"),
     ("posts", "page_topic", "TEXT"), ("posts", "reactions", "INTEGER DEFAULT 0"), ("posts", "shares", "INTEGER DEFAULT 0"), ("posts", "trend_kind", "TEXT"), ("fb_pages", "create_tries", "INTEGER DEFAULT 0"), ("fb_pages", "create_error", "TEXT"), ("fb_pages", "create_at", "TEXT"), ("fb_pages", "auto_created_at", "TEXT"), ("fb_pages", "requested_name", "TEXT"), ("fb_pages", "alt_names", "TEXT"), ("fb_pages", "name_note", "TEXT"),
+    ("fb_pages", "keywords", "TEXT"), ("fb_pages", "avoid", "TEXT"), ("fb_pages", "boss_note", "TEXT"),
+    ("posts", "page_kw", "TEXT"), ("posts", "nhi_draft", "TEXT"), ("posts", "review_result", "TEXT"), ("posts", "reviewed_at", "TEXT"),
     ("fb_pages", "avatar_path", "TEXT"), ("fb_pages", "cover_path", "TEXT"), ("fb_pages", "avatar_done", "INTEGER DEFAULT 0"), ("fb_pages", "cover_done", "INTEGER DEFAULT 0"),
     ("fb_pages", "avatar_msg", "TEXT"), ("fb_pages", "cover_msg", "TEXT"), ("fb_pages", "img_tries", "INTEGER DEFAULT 0"), ("fb_pages", "img_error", "TEXT"),
     ("bumps", "removed", "INTEGER DEFAULT 0"), ("groups", "no_bump_until", "TEXT"), ("posts", "bump_reset_at", "TEXT"),
@@ -475,6 +479,7 @@ DEFAULT_SETTINGS = {
     "bump_check": "1",  # 6 giờ sau nick mở lại bài xem bình luận còn không; nhóm xóa thì ngừng bình luận nhóm đó
     "bump_rest_days": "30",
     "trend_on": "1", "trend_time": "07:40",
+    "trend_review": "1",  # sếp duyệt bài Trang của Nhi trước khi xin ảnh / đăng (tắt khi Nhi đã hiểu ý sếp)
     "trend_learn_min": "8",
     "dept_on": "1", "dept_review_weekday": "1", "dept_review_time": "08:40",  # trưởng phòng tự đánh giá phòng mỗi tuần (departments.py)
     "trend_autocreate": "1", "trend_create_per_week": "1", "trend_create_nick": "", "trend_create_posts": "2", "trend_create_times": "09:00,19:30",  # Nhi tự tạo Trang (trend_create.py)  # Nhi tự học: mỗi kiểu bài / độ dài / khung giờ cần từng này bài Trang mới so sánh
@@ -741,6 +746,7 @@ def sample_counts() -> dict:
 
 # ---------------------------------------------------------------- bắt đầu chạy thật
 RESET_TABLES = {  # bảng: mô tả cho sếp
+    "page_memory": "Nhi ghi nhớ theo sếp từng Trang",
     "posts": "bài đăng", "prospects": "khách sỉ Mai tìm", "bumps": "lượt up bài", "page_threads": "tin nhắn Fanpage", "page_stats": "số liệu Trang", "trends": "xu hướng đã đọc", "trend_hot": "chủ đề nóng", "image_usage": "lịch sử dùng ảnh", "leads": "khách hàng",
     "replies": "tin nhắn Hà soạn", "comment_seen": "bình luận đã quét", "meetings": "cuộc họp",
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",

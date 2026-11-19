@@ -9,7 +9,7 @@ import db
 db.DB_PATH = SP / "trendcreate.db"; db.DB_PATH.unlink(missing_ok=True)
 db.PROFILES_DIR = SP / "trendcreate_profiles"; shutil.rmtree(db.PROFILES_DIR, ignore_errors=True); db.PROFILES_DIR.mkdir()
 db.SHOTS_DIR = SP / "multi_shots"; db.SHOTS_DIR.mkdir(exist_ok=True)
-db.init(); db.set_setting("browser_headless", "1"); db.set_setting("anthropic_api_key", "")
+db.init(); db.set_setting("trend_review", "0"); db.set_setting("browser_headless", "1"); db.set_setting("anthropic_api_key", "")
 import accounts, browser_poster as B, trend_pages as T, trend_create as C
 B._pause = lambda *a, **k: None
 sent = []

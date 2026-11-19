@@ -6,7 +6,7 @@ from datetime import timedelta
 SP = Path(os.environ.get("MT_WORK") or Path(__file__).resolve().parent / "work")
 import db
 db.DB_PATH = SP / "trendlearn.db"; db.DB_PATH.unlink(missing_ok=True)
-db.init(); db.set_setting("anthropic_api_key", ""); db.set_setting("learn_explore", "0")
+db.init(); db.set_setting("trend_review", "0"); db.set_setting("anthropic_api_key", ""); db.set_setting("learn_explore", "0")
 from fastapi.testclient import TestClient
 import main, learning, trend_pages as T, trend_learn as L, llm as LLM
 c = TestClient(main.app)

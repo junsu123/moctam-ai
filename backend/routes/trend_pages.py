@@ -91,7 +91,7 @@ def trends_page_status(pid: int, data: dict):
         raise HTTPException(400, "Trang chưa có link: bấm Tôi đã tạo Trang này")
     db.run("UPDATE fb_pages SET status=? WHERE id=?", (st, pid))
     if st != "active":
-        db.run("UPDATE posts SET status='rejected', error='Sếp dừng Trang' WHERE fb_page_ref=? AND status IN ('need_image','scheduled')", (pid,))
+        db.run("UPDATE posts SET status='rejected', error='Sếp dừng Trang' WHERE fb_page_ref=? AND status IN ('page_review','need_image','scheduled')", (pid,))
     return {"ok": True}
 
 

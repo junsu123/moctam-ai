@@ -6,7 +6,7 @@ from datetime import timedelta
 SP = Path(os.environ.get("MT_WORK") or Path(__file__).resolve().parent / "work")
 import db
 db.DB_PATH = SP / "trendpages.db"; db.DB_PATH.unlink(missing_ok=True)
-db.init(); db.set_setting("anthropic_api_key", "")
+db.init(); db.set_setting("trend_review", "0"); db.set_setting("anthropic_api_key", "")
 from fastapi.testclient import TestClient
 import main, accounts, trend_pages as T, telegram_bot as TG, media_folder, httpx
 c = TestClient(main.app)

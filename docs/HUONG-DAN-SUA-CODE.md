@@ -39,7 +39,7 @@ backend/                 Python (FastAPI + SQLite)
   ceo_orders.py          CEO hiểu lệnh sếp: mẫu câu (_rule_plan), việc được làm (ACTIONS_DOC), thực hiện (execute)
   telegram_bot.py        Bot Telegram chính (báo cáo, khách, CEO)
   telegram_img.py        Bot Telegram riêng cho ảnh + việc của Nhi
-  <tính năng>.py         Mỗi tính năng một file: post_care (up bài), comments, bump_watch, page_grow, trend_pages (Nhi tự học: trend_learn, tự tạo Trang: trend_create),
+  <tính năng>.py         Mỗi tính năng một file: post_care (up bài), comments, bump_watch, page_grow, trend_pages (Nhi tự học: trend_learn, tự tạo Trang: trend_create, từ khóa / duyệt bài / ghi nhớ theo sếp: page_brain),
                          page_inbox, nick_health, replies, group_feed, friends, prospect, website...
 frontend/                Giao diện (HTML + CSS + JS thuần, không cần build)
   app.html               Khuôn trang: các dòng @@include ghép file con lại
@@ -54,7 +54,7 @@ data/                    DỮ LIỆU THẬT (company.db, hồ sơ Chrome các ni
 ```
 
 Tên trang trong giao diện ↔ file: Văn phòng `office`, Bài đăng `posts`, Bình luận `comments`, Nuôi Page `page`,
-Trang xu hướng `trends`, Khách hàng `leads`, Tìm khách sỉ `prospects`, Nhân viên sale `sales`, Hội nhóm `groups`,
+Trang xu hướng `trends`, Các Trang của Nhi `nhipages`, Khách hàng `leads`, Tìm khách sỉ `prospects`, Nhân viên sale `sales`, Hội nhóm `groups`,
 Kết bạn `friends`, Trả lời khách `replies`, Luật Facebook `fbrules`, Cài đặt `setup`.
 
 **Tìm nhanh chỗ cần sửa:** tìm đúng chữ đang thấy trên màn hình trong cả thư mục (VS Code: Ctrl+Shift+F). Chữ hiện trên giao diện
