@@ -176,5 +176,43 @@
     "Switch to",
     "Xem tất cả trang cá nhân",
     "See all profiles"
+  ],
+  "page_create_name": [
+    "Tên Trang (bắt buộc)",
+    "Tên Trang",
+    "Page name (required)",
+    "Page name"
+  ],
+  "page_create_category": [
+    "Hạng mục (bắt buộc)",
+    "Hạng mục",
+    "Category (required)",
+    "Category"
+  ],
+  "page_create_category_fallback": [
+    "Blog cá nhân",
+    "Personal blog",
+    "Cộng đồng",
+    "Community"
+  ],
+  "page_create_bio": [
+    "Tiểu sử (không bắt buộc)",
+    "Tiểu sử",
+    "Bio (optional)",
+    "Bio"
+  ],
+  "page_create_button": [
+    "Tạo Trang",
+    "Create Page"
+  ],
+  "page_create_steps": [
+    "Bỏ qua",
+    "Skip",
+    "Không phải bây giờ",
+    "Not now",
+    "Tiếp",
+    "Next",
+    "Xong",
+    "Done"
   ]
 }

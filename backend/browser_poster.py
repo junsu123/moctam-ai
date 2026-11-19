@@ -1708,7 +1708,13 @@ def due_work(aid: int, stamp: str | None = None) -> dict:
         rep = replies.due(aid)
     except Exception:
         rep = []
-    work = {"posts": posts, "bumps": bumps, "scan": list(_scan_pending.get(aid, [])), "links": links, "replies": rep}
+    try:
+        import trend_create
+        mk = trend_create.due(aid)
+    except Exception as e:
+        print("[trend create]", e)
+        mk = []
+    work = {"posts": posts, "bumps": bumps, "scan": list(_scan_pending.get(aid, [])), "links": links, "replies": rep, "create_pages": mk}
     if any(work.values()):  # đã mở Chrome thì tiện xem lại 1–2 bình luận up bài cũ còn không (không mở Chrome chỉ để xem)
         try:
             import bump_watch
@@ -1740,6 +1746,9 @@ def _job_session(pw, aid: int):
     try:
         if db.get_settings().get("page_acting_aid") == str(aid) and not _switch_back(page, aid):  # ca trước còn đang dưới tên Trang
             raise RuntimeError("Nick đang dùng Facebook dưới tên Trang, chưa chuyển về được: dừng ca để không đăng nhóm dưới tên Trang")
+        if work.get("create_pages"):  # Nhi tự tạo Trang bằng nick này (xong tự chuyển về nick cá nhân)
+            import trend_create
+            trend_create.create(page, aid, work["create_pages"])
         for pid in work["posts"]:
             _do_post(ctx, page, aid, pid, False)
             done["posts"] += 1

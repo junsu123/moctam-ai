@@ -22,6 +22,7 @@ window.showPreviews = (d, files, box) => { if (window.NOPREVIEW) return;
 };
 </script>"""
 MODE = {"graphql": "url", "pending": False}
+NEWPAGES = []      # Trang nick vừa tạo: {name, category, bio}
 PAGE = {"as": False}  # nick đang dùng Facebook dưới tên Trang Mộc Tâm   # graphql: url | id | none
 
 MODERN_COMPOSER = """<div role="button" tabindex="0" id="open"><span>Bạn viết gì đi...</span></div>
@@ -580,6 +581,26 @@ class H(BaseHTTPRequestHandler):
             return self._html(seller_html(path.strip("/")))
         if path == "/me":
             return self._html(COMPOSER % {"label": "Bạn đang nghĩ gì?"} + feed("/me", "/posts/pfbid{id}"))
+        if path == "/pages/creation":  # tạo Trang: tên, hạng mục (gõ rồi chọn gợi ý), tiểu sử, nút Tạo Trang
+            return self._html("""<h2>Tạo Trang mới</h2>
+<label>Tên Trang (bắt buộc)<input id="nm" aria-label="Tên Trang (bắt buộc)"></label>
+<label>Hạng mục (bắt buộc)<input id="ct" role="combobox" aria-label="Hạng mục (bắt buộc)"></label><div id="opts" role="listbox"></div>
+<label>Tiểu sử (không bắt buộc)<textarea id="bio" aria-label="Tiểu sử (không bắt buộc)"></textarea></label>
+<div id="err"></div><div role="button" id="mk">Tạo Trang</div>
+<script>let chosen="";
+ct.oninput=()=>{ chosen=""; opts.innerHTML=ct.value.length>1?["Blog cá nhân","Trang web tin tức & truyền thông"].map(o=>`<div role="option" onclick="chosen=this.textContent;ct.value=chosen;opts.innerHTML=''">${o}</div>`).join(""):""; };
+mk.onclick=()=>{ if(!nm.value||!chosen){ err.textContent="Điền tên Trang và chọn hạng mục"; return; }
+  if(/Lỗi/.test(nm.value)){ err.textContent="Tên Trang không hợp lệ"; return; }
+  fetch("/pagecreate",{method:"POST",body:JSON.stringify({name:nm.value,category:chosen,bio:bio.value})}).then(()=>location.href="/pagesetup?s=1"); };</script>""")
+        if path == "/pagesetup":  # các bước thiết lập sau khi tạo
+            st = int((self.path.split("s=") + ["1"])[1][:1] or 1)
+            nxt = f"/pagesetup?s={st + 1}" if st < 3 else f"/newpage{len(NEWPAGES)}"
+            lb = {1: "Bỏ qua", 2: "Tiếp", 3: "Xong"}[st]
+            return self._html(f'<h2>Hoàn tất thiết lập Trang</h2><div role="button" onclick="location.href=\'{nxt}\'">{lb}</div>')
+        mp = re.match(r"^/newpage(\d+)$", path)
+        if mp and 0 < int(mp.group(1)) <= len(NEWPAGES):
+            return self._html(f"<h1>{html.escape(NEWPAGES[int(mp.group(1)) - 1]['name'])}</h1><div>0 người theo dõi</div>"
+                              '<div role="button" id="go">Chuyển ngay</div>')
         if path == "/moctampage":  # Trang: chưa chuyển thì có nút Chuyển ngay; đã chuyển thì có ô viết bài + menu chuyển về
             top = "<h1>Mộc Tâm - Trà túi lọc</h1><div>1,2K người theo dõi</div>"
             sw = ('<script>const sw=(on)=>fetch("/pageswitch",{method:"POST",body:JSON.stringify({on})}).then(()=>location.href="/moctampage");</script>')
@@ -622,6 +643,8 @@ class H(BaseHTTPRequestHandler):
             MY["on"] = bool(d.get("on", True))
         if self.path == "/leave":
             MY["groups"].pop(d["slug"], None); MY["left"].append(d["slug"])
+        if self.path == "/pagecreate":
+            NEWPAGES.append(d)
         if self.path == "/pageswitch":
             PAGE["as"] = bool(d.get("on"))
         if self.path == "/record":

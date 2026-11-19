@@ -1,7 +1,7 @@
     <section class="view" id="v-trends" hidden>
       <div class="vh"><div><h1>Trang xu hướng · Nhi</h1><p>Mỗi sáng Nhi đọc xu hướng tìm kiếm Google Việt Nam, chấm chủ đề nào nóng bền, đề xuất Trang mới và lên lịch bài cho các Trang đang chạy. Mỗi bài có <b>prompt tạo ảnh gửi lên Telegram</b>: sếp tạo ảnh rồi <b>trả lời (reply) tin đó bằng ảnh</b>, Nhi tự lấy ảnh và xếp đăng. Nick quản trị chuyển sang Trang đăng bài, xong chuyển về.</p></div>
         <div class="row wrap"><button class="btn" type="button" id="trResearch">Nhi đọc xu hướng ngay</button><button class="btn primary" type="button" id="trPlan">Lên lịch bài hôm nay</button></div></div>
-      <p class="fr-note"><b>Trang do sếp tạo tay trên Facebook</b> (khoảng 3 phút, có sẵn tên, mô tả, prompt ảnh đại diện / ảnh bìa Nhi soạn), rồi dán link vào đây. Phần mềm không tự tạo Trang: tạo Trang bằng công cụ tự động dễ bị Facebook coi là tạo tài sản giả và hạn chế luôn nick quản trị. Nhi tránh chủ đề chính trị, người thật cụ thể, tai nạn, cờ bạc, không giật tít sai sự thật, không đặt tên giả làm Trang chính thức của tổ chức nào.</p>
+      <p class="fr-note"><b>Nhi tự tạo Trang</b> từ ý tưởng của mình bằng Chrome của nick quản trị, trong ca làm việc của nick, rồi báo Telegram (link, nick, prompt ảnh đại diện / ảnh bìa). Giữ trần an toàn: tối đa 1 Trang mỗi 7 ngày (sửa được, tối đa 3), mỗi nick 1 Trang mỗi 30 ngày, chỉ dùng nick đã dùng từ 14 ngày và khỏe; Facebook hỏi xác minh thì dừng nick, không giải captcha. Tạo Trang bằng công cụ tự động vẫn có rủi ro Facebook hạn chế nick quản trị. Sếp vẫn tạo tay được rồi dán link. Nhi tránh chủ đề chính trị, người thật cụ thể, tai nạn, cờ bạc, không giật tít sai sự thật, không đặt tên giả làm Trang chính thức của tổ chức nào.</p>
       <p class="fr-note" id="trTg" hidden><b>Chưa kết nối Telegram:</b> prompt ảnh chưa gửi được. Cài bot ảnh riêng ở thẻ bên phải (hoặc bot chính ở Cài đặt → Bot Telegram), hoặc tải ảnh ngay trên trang này.</p>
       <div class="pr-stats fr-stats" id="trStats"></div>
       <div class="fr-grid">
@@ -10,6 +10,7 @@
             <div class="cm-list" id="trWait"></div></section>
           <section class="card" style="margin-top:12px"><div class="card-h"><h3>Lịch đăng và bài 7 ngày</h3></div><div class="cm-list" id="trPosts"></div></section>
           <section class="card" style="margin-top:12px"><div class="card-h"><div><h3>Các Trang</h3><p class="small muted" style="margin:2px 0 0">Ý tưởng Nhi đề xuất và Trang đang chạy.</p></div></div>
+            <div class="row wrap small" id="trAuto" style="gap:8px;align-items:center;margin:0 0 8px"></div>
             <div class="cm-list" id="trPages"></div>
             <details class="small" style="margin-top:10px"><summary>Thêm Trang sếp đã có sẵn</summary>
               <form id="trAdd" class="row wrap" style="gap:8px;margin-top:6px"><input id="trAddName" placeholder="Tên Trang" aria-label="Tên Trang"><input id="trAddNiche" placeholder="Ngách (VD mẹo nấu ăn)" aria-label="Ngách"><button class="btn sm" type="submit">Thêm</button></form></details></section>

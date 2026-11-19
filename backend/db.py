@@ -406,7 +406,7 @@ MIGRATIONS = [
     ("bumps", "gain_leads", "INTEGER"), ("bumps", "measured_at", "TEXT"), ("bumps", "checked_at", "TEXT"),
     ("posts", "fb_page_ref", "INTEGER"), ("posts", "trend_topic", "TEXT"), ("posts", "image_prompt", "TEXT"), ("posts", "image_note", "TEXT"),
     ("posts", "image_path", "TEXT"), ("posts", "img_req_msg", "TEXT"), ("posts", "img_req_at", "TEXT"),
-    ("posts", "page_topic", "TEXT"), ("posts", "reactions", "INTEGER DEFAULT 0"), ("posts", "shares", "INTEGER DEFAULT 0"), ("posts", "trend_kind", "TEXT"),
+    ("posts", "page_topic", "TEXT"), ("posts", "reactions", "INTEGER DEFAULT 0"), ("posts", "shares", "INTEGER DEFAULT 0"), ("posts", "trend_kind", "TEXT"), ("fb_pages", "create_tries", "INTEGER DEFAULT 0"), ("fb_pages", "create_error", "TEXT"), ("fb_pages", "create_at", "TEXT"), ("fb_pages", "auto_created_at", "TEXT"),
     ("bumps", "removed", "INTEGER DEFAULT 0"), ("groups", "no_bump_until", "TEXT"), ("posts", "bump_reset_at", "TEXT"),
     ("leads", "post_id", "INTEGER"),
     ("leads", "phone", "TEXT"), ("leads", "origin", "TEXT DEFAULT 'manual'"), ("leads", "fb_author", "TEXT"),
@@ -467,7 +467,8 @@ DEFAULT_SETTINGS = {
     "bump_check": "1",  # 6 giờ sau nick mở lại bài xem bình luận còn không; nhóm xóa thì ngừng bình luận nhóm đó
     "bump_rest_days": "30",
     "trend_on": "1", "trend_time": "07:40",
-    "trend_learn_min": "8",  # Nhi tự học: mỗi kiểu bài / độ dài / khung giờ cần từng này bài Trang mới so sánh
+    "trend_learn_min": "8",
+    "trend_autocreate": "1", "trend_create_per_week": "1", "trend_create_nick": "", "trend_create_posts": "2", "trend_create_times": "09:00,19:30",  # Nhi tự tạo Trang (trend_create.py)  # Nhi tự học: mỗi kiểu bài / độ dài / khung giờ cần từng này bài Trang mới so sánh
     "tg2_token": "", "tg2_chat_ids": "", "tg2_pair_code": "", "tg2_offset": "0", "tg2_report": "1",  # bot Telegram riêng cho ảnh / Nhi  # Nhi: đọc xu hướng mỗi sáng, đề xuất Trang, lên lịch bài Trang xu hướng (ảnh qua Telegram)
     "page_grow_on": "1",  # nuôi Trang qua Chrome của nick quản trị (không dùng Graph API): Lan viết, nick đăng dưới tên Trang
     "page_url": "", "page_admin_account": "", "page_grow_per_day": "1", "page_grow_times": "08:30,20:30", "page_grow_sale_pct": "20",

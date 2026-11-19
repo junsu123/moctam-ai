@@ -14,6 +14,16 @@ def trends_research():
     return r
 
 
+@app.post("/api/trends/pages/{pid}/autocreate")
+def trends_page_autocreate(pid: int):
+    """Sếp bấm “Nhi tạo Trang này”: đưa đúng ý tưởng này vào hàng tạo (ca làm việc tới của nick quản trị)."""
+    import trend_create
+    r = trend_create.pick(pid)
+    if not r.get("ok"):
+        raise HTTPException(400, r.get("why"))
+    return r
+
+
 @app.post("/api/trends/plan")
 def trends_plan():
     import trend_pages

@@ -39,7 +39,7 @@ backend/                 Python (FastAPI + SQLite)
   ceo_orders.py          CEO hiểu lệnh sếp: mẫu câu (_rule_plan), việc được làm (ACTIONS_DOC), thực hiện (execute)
   telegram_bot.py        Bot Telegram chính (báo cáo, khách, CEO)
   telegram_img.py        Bot Telegram riêng cho ảnh + việc của Nhi
-  <tính năng>.py         Mỗi tính năng một file: post_care (up bài), comments, bump_watch, page_grow, trend_pages (Nhi tự học: trend_learn),
+  <tính năng>.py         Mỗi tính năng một file: post_care (up bài), comments, bump_watch, page_grow, trend_pages (Nhi tự học: trend_learn, tự tạo Trang: trend_create),
                          page_inbox, nick_health, replies, group_feed, friends, prospect, website...
 frontend/                Giao diện (HTML + CSS + JS thuần, không cần build)
   app.html               Khuôn trang: các dòng @@include ghép file con lại
@@ -85,7 +85,7 @@ nằm ở `frontend/views/` hoặc `frontend/js/pages/`; chữ báo lỗi / nh�
 
 ### 4.2. Facebook đổi giao diện, sale báo “không tìm thấy nút …”
 Không cần biết code: mở `backend/fb_selectors.json`, thêm đúng chữ đang thấy trên Facebook vào danh sách tương ứng
-(VD nút Đăng → `post_button`, ô bình luận → `comment_box`, nút chuyển sang Trang → `page_switch`). Lỗi ở màn Lỗi thường ghi sẵn tên
+(VD nút Đăng → `post_button`, ô bình luận → `comment_box`, nút chuyển sang Trang → `page_switch`, trang tạo Trang của Nhi → `page_create_*`). Lỗi ở màn Lỗi thường ghi sẵn tên
 các nút đang thấy. Lưu file là xong (phần mềm đọc lại ở lượt sau).
 
 ### 4.3. Thêm / đổi một cài đặt

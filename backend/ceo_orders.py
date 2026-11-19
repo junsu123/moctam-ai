@@ -31,6 +31,7 @@ def _aliases() -> dict:
 
 
 SETTINGS_OK = {
+    "trend_autocreate": ("bool", 0, 0, "Nhi tự tạo Trang"), "trend_create_per_week": ("int", 1, 3, "số Trang Nhi tự tạo mỗi 7 ngày"),
     "posts_per_day": ("int", 1, 20, "số bài Lan viết mỗi ngày"), "kpi_min": ("int", 1, 50, "KPI tối thiểu khách có SĐT/ngày"),
     "kpi_max": ("int", 1, 100, "KPI phấn đấu"), "scan_times": ("times", 0, 0, "giờ quét bình luận"),
     "discover_time": ("time", 0, 0, "giờ đi tìm nhóm"), "join_per_nick_day": ("int", 0, 5, "số nhóm xin vào/nick/ngày"),

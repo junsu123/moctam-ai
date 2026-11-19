@@ -158,9 +158,19 @@ Agent mới **Nhi** (Xu hướng & Trang mới, bàn riêng trong văn phòng 3D
    ngách) và đề xuất tối đa 3 **Trang mới** cho ngách nóng bền: tên, mô tả, hạng mục, lý do, **prompt ảnh đại diện và ảnh bìa** (tiếng Anh,
    chép một chạm). Có ý tưởng mới thì Telegram báo. Nhi tránh chính trị, tôn giáo, người thật cụ thể, tai nạn / tội phạm, cờ bạc, nội dung
    người lớn, tên giả làm Trang chính thức của tổ chức / báo chí.
-2. **Tạo Trang: sếp làm tay** trên Facebook (khoảng 3 phút, dùng tên, mô tả, ảnh Nhi soạn), rồi dán link, chọn **nick quản trị**, số bài/ngày
-   (1–3) và giờ đăng → **Tôi đã tạo Trang này**. Phần mềm **không tự tạo Trang**: tạo Trang bằng công cụ tự động dễ bị Facebook coi là tạo
-   tài sản giả và hạn chế luôn nick quản trị. Trang sếp đã có sẵn: **Thêm Trang sếp đã có sẵn**.
+2. **Nhi tự tạo Trang** (mặc định bật, ô **Nhi tự tạo Trang** ở thẻ Các Trang; nhắn CEO “tắt Nhi tự tạo Trang” cũng được): sau mỗi lượt
+   đọc xu hướng, Nhi lấy ý tưởng mới nhất và chọn **nick quản trị an toàn** (đang làm việc, đã dùng từ 14 ngày, không nghỉ sau sự cố, sức
+   khỏe nick từ 50 điểm, 30 ngày qua chưa tạo Trang nào; chọn nick cố định được). Ở **ca làm việc tới của nick** (trong giờ làm, cùng
+   Chrome đang mở), sale vào `facebook.com/pages/creation`, điền tên, hạng mục (chọn gợi ý của Facebook, không có thì Blog cá nhân), tiểu
+   sử, bấm **Tạo Trang**, bỏ qua các bước thiết lập (không mời bạn bè), lấy link, **chuyển về nick cá nhân** (xác nhận bằng nút “Chuyển
+   ngay” trên Trang mới). Trang chạy lịch đăng mặc định (2 bài/ngày 09:00, 19:30), Nhi viết bài hôm nay và **báo Telegram**: link Trang,
+   nick quản trị, mô tả, lý do, prompt ảnh đại diện / ảnh bìa (Trang mới chưa có ảnh: sếp đặt ảnh trên Trang). Nút **Nhi tạo Trang này**
+   ở từng ý tưởng để chọn đúng ý tưởng. **Trần an toàn**: 1 Trang mỗi 7 ngày cho cả công ty (sửa 1–3), mỗi nick 1 Trang mỗi 30 ngày.
+   Facebook hỏi xác minh / checkpoint thì dừng nick như mọi việc khác (không giải captcha); tạo lỗi thì ý tưởng quay lại kèm lý do và ảnh
+   chụp ở màn Lỗi, lỗi 2 lần thì thôi tự tạo ý tưởng đó và báo sếp tạo tay. Nick không có ca trong 2 ngày thì trả ý tưởng lại. Lưu ý:
+   tạo Trang bằng công cụ tự động vẫn có rủi ro Facebook hạn chế nick quản trị, nên giữ trần thấp. Facebook đổi chữ trên trang tạo Trang thì
+   sửa `page_create_*` trong `backend/fb_selectors.json`. **Sếp vẫn tạo tay được**: tạo trên Facebook rồi dán link, chọn nick quản trị, số
+   bài/ngày (1–3), giờ đăng → **Tôi đã tạo Trang này**; Trang sếp có sẵn: **Thêm Trang sếp đã có sẵn**.
 3. **Lên lịch bài**: mỗi sáng (hoặc **Lên lịch bài hôm nay**) Nhi viết đủ bài cho các giờ còn lại của từng Trang đang chạy, bám chủ đề nóng
    hợp ngách (không có thì viết bài có ích, bền), 60–160 chữ, kết bằng câu hỏi mở, không giật tít sai sự thật, không bịa số liệu, qua Luật
    Facebook. Mỗi bài kèm **prompt tạo ảnh** (tiếng Anh, tỉ lệ 4:5, không chữ / logo / mặt người thật) và gợi ý tiếng Việt.
@@ -1396,6 +1406,7 @@ docs/
   page_inbox.py  Tin nhắn Fanpage (Messenger): Hà soạn trả lời, sếp duyệt, gửi trong 24 giờ
   nick_health.py Sức khỏe từng nick: điểm rủi ro 30 ngày, tự giảm trần nick yếu, báo Telegram
   telegram_img.py Bot Telegram riêng cho ảnh + việc của Nhi: ghép nối, nhận ảnh, lệnh /anh /trang /xuhuong, báo cáo 21:45
+  trend_create.py Nhi tự tạo Trang: chọn ý tưởng + nick an toàn, tạo trong ca của nick, chuyển về nick cá nhân, báo Telegram
   trend_learn.py Nhi tự học: điểm bài Trang so với mức của Trang, bài học kiểu bài / độ dài / giờ, độ chính xác chọn xu hướng
   trend_pages.py Nhi: Google Trends, đề xuất Trang, lịch bài Trang xu hướng, prompt ảnh gửi Telegram, nhận ảnh sếp trả lời
   page_grow.py   Nuôi Page không API: Lan viết lịch 80/20, nick quản trị chuyển sang Trang đăng bài, đọc tương tác, học chủ đề

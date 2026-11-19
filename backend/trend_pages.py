@@ -3,8 +3,8 @@
 1. Nghiên cứu: mỗi sáng đọc Google Trends Việt Nam (RSS công khai: tìm kiếm tăng mạnh hôm nay, lượt tìm, tin liên quan), lưu lại
    từng ngày. Nhi (Claude) chấm chủ đề nào nóng bền (lặp lại nhiều ngày, có cộng đồng quan tâm lâu) chứ không chỉ một tin chớp nhoáng,
    và đề xuất Trang mới cho ngách đáng làm: tên, mô tả, hạng mục, prompt ảnh đại diện / ảnh bìa, lý do.
-2. Tạo Trang: sếp tạo tay trên Facebook (khoảng 3 phút) rồi dán link + chọn nick quản trị. Phần mềm không tự tạo Trang: tạo Trang
-   bằng công cụ tự động dễ bị Facebook coi là tạo tài khoản / tài sản giả, khóa luôn nick quản trị.
+2. Tạo Trang: Nhi tự tạo bằng Chrome của nick quản trị trong ca làm việc (trend_create.py, sếp chốt 19/11/2026; trần 1 Trang / 7 ngày,
+   mỗi nick 1 Trang / 30 ngày, nick đủ an toàn), tạo xong báo Telegram. Sếp vẫn tạo tay được: dán link + chọn nick quản trị.
 3. Lịch đăng: mỗi Trang đang chạy, mỗi sáng Nhi viết đủ bài cho các giờ đăng hôm nay (bám chủ đề nóng hợp ngách của Trang) kèm
    prompt tạo ảnh. Bài chờ ảnh: gửi prompt lên Telegram; sếp tạo ảnh rồi TRẢ LỜI tin đó bằng ảnh, phần mềm tự lấy ảnh, xếp bài đăng.
    Nick quản trị chuyển sang Trang đăng bài (browser_poster._switch_to_page), đăng xong chuyển về. Bài chờ ảnh quá 24 giờ thì bỏ.
@@ -396,7 +396,8 @@ def overview() -> dict:
             "posts": posts, "telegram": telegram_bot.configured() or telegram_img.configured(), "research_day": st.get("trend_research_day") or "",
             "nicks": db.q("""SELECT a.id, a.name, s.name sale_name FROM fb_accounts a JOIN sales s ON s.id=a.sale_id WHERE a.enabled=1
                              AND COALESCE(s.status,'active')!='fired' ORDER BY a.sale_id, a.id"""),
-            "settings": {k: st.get(k, "") for k in ("trend_on", "trend_time")}}
+            "settings": {k: st.get(k, "") for k in ("trend_on", "trend_time", "trend_autocreate", "trend_create_per_week", "trend_create_nick")},
+            "created_7d": db.one("SELECT COUNT(*) n FROM fb_pages WHERE auto_created_at >= ?", (_ago(days=7),))["n"]}
 
 
 def tick(now):
@@ -410,5 +411,10 @@ def tick(now):
 
         def go():
             research()
+            try:
+                import trend_create
+                trend_create.pick()
+            except Exception as e:
+                print("[trend create]", e)
             plan_today(force=True)
         threading.Thread(target=go, daemon=True).start()
