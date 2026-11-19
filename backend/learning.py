@@ -78,7 +78,7 @@ def perf(dim: str, days: int = 30) -> dict:
     key = {"hour": "substr(posted_at,12,2)"}.get(dim, dim)
     rows = db.q(f"""SELECT {key} k, COUNT(*) n, SUM({score_sql()}) score, SUM({score_sql()} * {score_sql()}) sq, SUM(COALESCE(leads,0)) leads,
                     SUM(COALESCE(comments,0)) comments FROM posts WHERE status='posted' AND posted_at >= ? AND {key} IS NOT NULL
-                    GROUP BY k""", (_ago(days),))
+                    AND fb_page_ref IS NULL GROUP BY k""", (_ago(days),))
     n_all = sum(r["n"] for r in rows)
     mean = (sum(r["score"] or 0 for r in rows) / n_all) if n_all else 0
     k = _cfg("learn_prior", 10)  # làm mượt mạnh: coi như mỗi lựa chọn đã có 10 bài ở mức trung bình, vài bài may mắn không kéo lệch
@@ -316,6 +316,9 @@ def skills(agent_id: str) -> list[dict]:
                           FROM prospects p JOIN leads l ON l.id=p.lead_id WHERE p.created_at BETWEEN ? AND ?""", (a, b))
             return _pct(r["d"] or 0, r["n"] or 0)
         out.append({"label": "Khách Mai tìm đã liên hệ được", "unit": "%", "now_prev": win(conv)})
+    if agent_id == "nhi":
+        import trend_learn
+        out += trend_learn.skills()
     if agent_id in CORE:
         out.append({"label": "Bài học mới", "unit": "", "now_prev": win(lambda a, b: one(
             "SELECT COUNT(*) n FROM lessons WHERE agent_id=? AND created_at BETWEEN ? AND ?", (agent_id, a, b)))})
@@ -446,6 +449,9 @@ def evidence(agent_id: str) -> dict:
         e["quyet_dinh_gan_day"] = [{"loai": r["kind"], "noi_dung": r["title"], "ly_do": (r["reason"] or "")[:200]}
                                    for r in db.q("SELECT kind, title, reason FROM ceo_decisions ORDER BY id DESC LIMIT 5")]
         e["sale_bi_sa_thai"] = db.q("SELECT name, fire_reason FROM sales WHERE status='fired' ORDER BY fired_at DESC LIMIT 3")
+    elif agent_id == "nhi":
+        import trend_learn
+        e = trend_learn.evidence()
     elif agent_id == "mai":
         e["theo_hang"] = db.q("SELECT grade hang, COUNT(*) n FROM prospects GROUP BY grade")
         e["theo_loai_nguoi_ban"] = db.q("SELECT seller_type loai, COUNT(*) n, ROUND(AVG(score)) diem_tb FROM prospects GROUP BY seller_type")
@@ -514,6 +520,9 @@ def rule_lessons(agent_id: str) -> list[dict]:
         if r["n"] >= 4 and _pct(r["d"] or 0, r["n"]) < 50:
             add("data", f"Chỉ {_pct(r['d'] or 0, r['n'])}% bài có số liệu kết quả. Nhắc sếp nhập số khách và gắn khách với bài đăng để cả đội học chính xác hơn.",
                 f"{r['n']} bài trong 14 ngày", 0.8)
+    elif agent_id == "nhi":
+        import trend_learn
+        out += trend_learn.rule_lessons()
     elif agent_id.startswith("sale-"):
         sid = int(agent_id[5:])
         r = db.one("SELECT SUM(status='posted') ok, SUM(status='failed') f FROM posts WHERE sale_id=? AND COALESCE(posted_at, scheduled_for)>=?", (sid, _ago(14)))
@@ -611,6 +620,9 @@ def default_goal(agent_id: str) -> str | None:
         return "Đảm bảo bài đăng hôm qua đều có số bình luận và số khách."
     if agent_id == "minh":
         return "Theo dõi để các việc giao trong cuộc họp được hoàn thành trong ngày."
+    if agent_id == "nhi":
+        import trend_learn
+        return trend_learn.default_goal()
     if agent_id == "mai":
         return "Tìm ít nhất 3 SĐT của người đang bán hàng online (có bằng chứng và link nguồn) để sếp gọi."
     if agent_id == "ceo":

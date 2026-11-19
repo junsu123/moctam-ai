@@ -16,7 +16,12 @@
       if(P==="/tg-img/settings"){ t.report=!!+body.report; return t; }
       if(P==="/tg-img/test") return {ok:true};
       return t; }
-    const view=()=>({img_bot:S.ti,pages:S.tr.pages.filter(p=>p.status!=="dismissed"),posts:S.tr.posts.filter(p=>p.status!=="rejected"),hot:S.tr.hot,trends:S.tr.trends,telegram:true,research_day:td,
+    const view=()=>({learn:{n:34,need:16,min_n:8,kind:[{key:"evergreen",label:"bền (không gắn tin nóng)",n:14,avg:1.32},{key:"trend",label:"bám tin nóng",n:20,avg:0.78}],
+        length:[{key:"mid",label:"vừa (80–120 chữ)",n:15,avg:1.21},{key:"short",label:"ngắn (dưới 80 chữ)",n:12,avg:0.94},{key:"long",label:"dài (trên 120 chữ)",n:7,avg:0.71}],
+        slot:[{key:"evening",label:"tối (18–24h)",n:17,avg:1.18},{key:"morning",label:"sáng (5–11h)",n:17,avg:0.82}],best_slot:["tối (18–24h)"],
+        good:[{topic:"món ngon cuối tuần",x:1.9,n:3},{topic:"canh chua",x:1.4,n:2}],bad:[{topic:"giá vàng",x:0.4,n:2}],calib:{n:18,hit:8,pct:44,flash:["giá vàng","thời tiết hà nội"]},
+        lessons:[{text:"Bài bền (không gắn tin nóng) được hưởng ứng gấp 1.7 lần bài bám tin nóng: ưu tiên bài bền (không gắn tin nóng).",evidence:"14 và 20 bài Trang 30 ngày, z=2.4"},{text:"Bài Trang đăng tối (18–24h) được tương tác gấp 1.4 lần sáng (5–11h): gợi ý sếp dời giờ đăng vào khung này.",evidence:"17 và 17 bài Trang 30 ngày, z=2.1"}]},
+      img_bot:S.ti,pages:S.tr.pages.filter(p=>p.status!=="dismissed"),posts:S.tr.posts.filter(p=>p.status!=="rejected"),hot:S.tr.hot,trends:S.tr.trends,telegram:true,research_day:td,
       nicks:workingNicks().map(a=>({id:a.id,name:a.name,sale_name:(S.sales.find(x=>x.id===a.sale_id)||{}).name})),settings:{trend_on:"1",trend_time:"07:40"}});
     if(method==="GET") return view();
     if(P==="/trends/research") return {ok:true,trends:4,hot:3,ideas:0};

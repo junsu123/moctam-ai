@@ -171,6 +171,14 @@ Agent mới **Nhi** (Xu hướng & Trang mới, bàn riêng trong văn phòng 3D
 5. **Đăng**: đến giờ, trong ca của nick quản trị, sale mở Trang của bài, chuyển sang Trang, đăng bài kèm đúng ảnh sếp gửi, lưu link, chuyển
    về nick cá nhân (như mục Nuôi Page). Mỗi ngày nick đọc người theo dõi và tương tác 4 bài gần nhất của từng Trang (chỉ đọc).
 6. Tạm dừng Trang thì các bài chưa đăng bị bỏ. Không dùng nick khác like / chia sẻ / bình luận Trang.
+7. **Nhi tự học** (thẻ **Nhi tự học** ở mục Trang xu hướng, sổ tay ở trang Đào tạo; thống kê, không tốn Claude): mỗi bài Trang được chấm
+   bằng tương tác (cảm xúc + 2 × bình luận + 3 × chia sẻ) **so với mức thường của chính Trang đó** (1,0× = bình thường), nên Trang nhỏ
+   không bị Trang lớn lấn. Mỗi đêm Nhi so: **bám tin nóng hay bài bền**, **độ dài** (ngắn / vừa / dài), **khung giờ đăng**, chủ đề nào được
+   hưởng ứng, và **tự chấm mắt chọn xu hướng** (chủ đề Nhi chấm từ 70 điểm có còn trong Google Trends 1–3 ngày sau không). Chỉ rút bài học
+   khi mỗi bên đủ `trend_learn_min` bài (mặc định 8) và chênh rõ (z ≥ 1,96); ít mẫu thì bỏ bài học cũ. Áp dụng: khi viết, Nhi theo kiểu bài
+   và độ dài hiệu quả hơn (vẫn chừa 25% lượt thử kiểu còn lại), học giọng từ bài được hưởng ứng nhất của chính Trang; khi đọc xu hướng sáng
+   hôm sau, đề bài có kết quả chủ đề cũ và độ chính xác của Nhi để chấm sát hơn. Khung giờ tốt chỉ **gợi ý** sếp dời giờ đăng, Nhi không tự
+   đổi giờ hay số bài. Bài Trang không còn bị tính vào giờ vàng đăng nhóm của Tuấn.
 
 **Bot Telegram riêng cho ảnh** (thẻ ở mục Trang xu hướng): toàn bộ tin của Nhi đi qua một bot riêng, không lẫn với báo cáo bán hàng của bot
 chính: prompt ảnh, nhận ảnh, ý tưởng Trang mới, lịch bài, bài đã đăng lên Trang (kèm link), báo cáo cuối ngày 21:45 (mỗi Trang: đã đăng,
@@ -1388,6 +1396,7 @@ docs/
   page_inbox.py  Tin nhắn Fanpage (Messenger): Hà soạn trả lời, sếp duyệt, gửi trong 24 giờ
   nick_health.py Sức khỏe từng nick: điểm rủi ro 30 ngày, tự giảm trần nick yếu, báo Telegram
   telegram_img.py Bot Telegram riêng cho ảnh + việc của Nhi: ghép nối, nhận ảnh, lệnh /anh /trang /xuhuong, báo cáo 21:45
+  trend_learn.py Nhi tự học: điểm bài Trang so với mức của Trang, bài học kiểu bài / độ dài / giờ, độ chính xác chọn xu hướng
   trend_pages.py Nhi: Google Trends, đề xuất Trang, lịch bài Trang xu hướng, prompt ảnh gửi Telegram, nhận ảnh sếp trả lời
   page_grow.py   Nuôi Page không API: Lan viết lịch 80/20, nick quản trị chuyển sang Trang đăng bài, đọc tương tác, học chủ đề
   group_feed.py  Lướt bảng tin nhóm: mọi nick đọc >=20 bài, lọc 3 lớp (chữ, Claude, học từ sếp), bình luận người hỏi mua (kèm ảnh)

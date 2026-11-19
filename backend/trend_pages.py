@@ -124,6 +124,14 @@ Việc của bạn:
    Mỗi ý tưởng: name, niche, category (hạng mục Trang trên Facebook), description (≤ 200 ký tự), avatar_prompt và cover_prompt (tiếng Anh,
    cho công cụ tạo ảnh: không chữ, không logo, không mặt người thật), why, trends (các xu hướng làm căn cứ).
 Trả về JSON: {{"hot": [{{"title","score","niche","why"}}], "ideas": [...]}}"""
+        try:  # Nhi tự học: kết quả chủ đề đã viết + độ chính xác chọn xu hướng
+            import trend_learn
+            note = trend_learn.research_note()
+        except Exception as e:
+            print("[trend learn]", e)
+            note = ""
+        if note:
+            ask = ask.replace("\n\nViệc của bạn:", f"\n\nBạn tự học từ kết quả trước (dùng để chấm điểm sát hơn):\n{note}\n\nViệc của bạn:", 1)
         trends = [dict(r) for r in rows]
         d = llm.json(system_prompt("nhi", _s()), ask, mock=lambda: _mock_research(trends, pages), max_tokens=2500, task="posts") or {}
         db.run("DELETE FROM trend_hot WHERE day=?", (db.today(),))
@@ -192,15 +200,23 @@ def write_post(pg: dict, when: str) -> dict:
     hot = db.q("SELECT title, niche, score, why FROM trend_hot WHERE day=? ORDER BY score DESC LIMIT 10", (db.today(),))
     used = {r["topic"] for r in db.q("SELECT trend_topic topic FROM posts WHERE fb_page_ref=? AND created_at >= ?", (pg["id"], _ago(days=3)))}
     fit = [h for h in hot if h["title"] not in used and (pg["niche"] or "").lower() in (h["niche"] + " " + h["title"]).lower()]
+    import trend_learn
+    sty = trend_learn.style(pg)
+    if sty["kind"] == "evergreen":  # số liệu cho thấy bài bền hợp hơn (hoặc lượt thử): không gắn tin nóng
+        fit = []
+    kind = "trend" if fit else "evergreen"
+    learned = ("\nKinh nghiệm từ số liệu Trang: " + "; ".join(sty["notes"]) + "." if sty["notes"] else "") + \
+        (f"\nBài được hưởng ứng nhất của Trang này (học giọng, không chép):\n{sty['example']}" if sty["example"] else "")
     topic = (fit[0]["title"] if fit else pg["niche"]) or pg["name"]
     recent = db.q("SELECT content FROM posts WHERE fb_page_ref=? ORDER BY id DESC LIMIT 6", (pg["id"],))
     ask = f"""Viết 1 bài cho Trang Facebook "{pg['name']}" (ngách: {pg['niche']}; {pg.get('description') or ''}).
 Chủ đề hôm nay: {topic}{(' — đang lên xu hướng: ' + fit[0]['why']) if fit else ' (chưa có xu hướng hợp ngách hôm nay: viết bài có ích, bền, không gắn tin nóng)'}.
-Yêu cầu: 60–160 chữ, mở đầu gây chú ý nhưng không giật tít sai sự thật; thông tin chung, không bịa số liệu / trích dẫn / lời người thật;
+Yêu cầu: {sty['words'] or '60–160 chữ'}, mở đầu gây chú ý nhưng không giật tít sai sự thật; thông tin chung, không bịa số liệu / trích dẫn / lời người thật;
 không nói về người thật cụ thể theo kiểu bôi nhọ hay đồn đoán; không chính trị, không cờ bạc; không kêu gọi like / share / tag để nhận quà;
 kết bằng 1 câu hỏi mở để người đọc bình luận. 1–3 emoji, 2–3 hashtag.
 Kèm "image_prompt" (tiếng Anh, cho công cụ tạo ảnh: mô tả cảnh, phong cách, tỉ lệ 4:5, không chữ, không logo, không mặt người thật / người nổi tiếng)
 và "image_note" (1 câu tiếng Việt: ảnh nên trông thế nào).
+{learned}
 Đừng mở đầu giống các bài gần đây: {' | '.join((r['content'] or '')[:50] for r in recent) or '(chưa có)'}
 JSON: {{"content": "...", "hashtags": "...", "image_prompt": "...", "image_note": "..."}}"""
     d = llm.json(system_prompt("nhi", _s()), ask, mock=lambda: _mock_post(pg, topic), max_tokens=900, task="posts") or {}
@@ -210,8 +226,8 @@ JSON: {{"content": "...", "hashtags": "...", "image_prompt": "...", "image_note"
         text = d["content"]
     acc = db.one("SELECT * FROM fb_accounts WHERE id=?", (pg["admin_account_id"],)) or {}
     pid = db.run("""INSERT INTO posts(agent_id, target_type, title, content, hashtags, status, scheduled_for, account_id, sale_id, fb_page_ref,
-                    trend_topic, image_prompt, image_note, source, created_at) VALUES ('nhi', 'page', ?, ?, ?, 'need_image', ?, ?, ?, ?, ?, ?, ?, 'trend_page', ?)""",
-                 (f"{pg['name']} · {topic}"[:120], text, d.get("hashtags") or "", when, acc.get("id"), acc.get("sale_id"), pg["id"], topic,
+                    trend_topic, trend_kind, image_prompt, image_note, source, created_at) VALUES ('nhi', 'page', ?, ?, ?, 'need_image', ?, ?, ?, ?, ?, ?, ?, ?, 'trend_page', ?)""",
+                 (f"{pg['name']} · {topic}"[:120], text, d.get("hashtags") or "", when, acc.get("id"), acc.get("sale_id"), pg["id"], topic, kind,
                   (d.get("image_prompt") or _mock_post(pg, topic)["image_prompt"])[:900], (d.get("image_note") or "")[:300], db.now()))
     ask_image(pid)
     return db.one("SELECT * FROM posts WHERE id=?", (pid,))
@@ -375,7 +391,8 @@ def overview() -> dict:
                              COALESCE(p.scheduled_for, p.posted_at) LIMIT 60""", (_ago(days=7),))
     import telegram_bot
     import telegram_img
-    return {"pages": pages, "img_bot": telegram_img.status(), "trends": trends, "hot": db.q("SELECT * FROM trend_hot WHERE day=(SELECT MAX(day) FROM trend_hot) ORDER BY score DESC"),
+    import trend_learn
+    return {"learn": trend_learn.overview(), "pages": pages, "img_bot": telegram_img.status(), "trends": trends, "hot": db.q("SELECT * FROM trend_hot WHERE day=(SELECT MAX(day) FROM trend_hot) ORDER BY score DESC"),
             "posts": posts, "telegram": telegram_bot.configured() or telegram_img.configured(), "research_day": st.get("trend_research_day") or "",
             "nicks": db.q("""SELECT a.id, a.name, s.name sale_name FROM fb_accounts a JOIN sales s ON s.id=a.sale_id WHERE a.enabled=1
                              AND COALESCE(s.status,'active')!='fired' ORDER BY a.sale_id, a.id"""),
