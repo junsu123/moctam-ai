@@ -1711,10 +1711,11 @@ def due_work(aid: int, stamp: str | None = None) -> dict:
     try:
         import trend_create
         mk = trend_create.due(aid)
+        pim = trend_create.image_due(aid)
     except Exception as e:
         print("[trend create]", e)
-        mk = []
-    work = {"posts": posts, "bumps": bumps, "scan": list(_scan_pending.get(aid, [])), "links": links, "replies": rep, "create_pages": mk}
+        mk, pim = [], []
+    work = {"posts": posts, "bumps": bumps, "scan": list(_scan_pending.get(aid, [])), "links": links, "replies": rep, "create_pages": mk, "page_images": pim}
     if any(work.values()):  # đã mở Chrome thì tiện xem lại 1–2 bình luận up bài cũ còn không (không mở Chrome chỉ để xem)
         try:
             import bump_watch
@@ -1749,6 +1750,9 @@ def _job_session(pw, aid: int):
         if work.get("create_pages"):  # Nhi tự tạo Trang bằng nick này (xong tự chuyển về nick cá nhân)
             import trend_create
             trend_create.create(page, aid, work["create_pages"])
+        if work.get("page_images"):  # logo / banner sếp gửi: chuyển sang Trang đặt ảnh rồi chuyển về
+            import trend_create
+            trend_create.upload_images(page, aid, work["page_images"])
         for pid in work["posts"]:
             _do_post(ctx, page, aid, pid, False)
             done["posts"] += 1

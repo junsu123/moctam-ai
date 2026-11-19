@@ -307,15 +307,20 @@ def on_telegram_photo(msg: dict, getter=None) -> str | None:
     if not fid:
         return None
     reply_id = (msg.get("reply_to_message") or {}).get("message_id")
+
+    def fetch():
+        if getter:
+            return getter(fid)
+        info = telegram_bot.call("getFile", file_id=fid)
+        return httpx.get(f"{telegram_bot.API}/file/bot{telegram_bot.token()}/{info['file_path']}", timeout=60).content
+    import trend_create
+    hit = trend_create.page_for_reply(reply_id)  # sếp trả lời tin xin logo / banner của Trang
+    if hit:
+        return trend_create.set_page_image(hit[0]["id"], hit[1], fetch(), ext)
     p = _waiting_for(reply_id)
     if not p:
         return ("Tin sếp trả lời không phải tin xin ảnh đang chờ." if reply_id else "Hiện không có bài nào đang chờ ảnh.")
-    if getter:  # ảnh gửi qua bot ảnh riêng
-        data = getter(fid)
-    else:
-        info = telegram_bot.call("getFile", file_id=fid)
-        data = httpx.get(f"{telegram_bot.API}/file/bot{telegram_bot.token()}/{info['file_path']}", timeout=60).content
-    p = set_image(p["id"], data, ext)
+    p = set_image(p["id"], fetch(), ext)
     left = db.one("SELECT COUNT(*) n FROM posts WHERE status='need_image'")["n"]
     return (f"✅ Đã nhận ảnh cho bài #{p['id']}, đăng lúc {p['scheduled_for'][11:16]} {p['scheduled_for'][8:10]}/{p['scheduled_for'][5:7]}."
             + (f" Còn {left} bài chờ ảnh." if left else ""))

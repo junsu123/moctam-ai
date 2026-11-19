@@ -214,5 +214,29 @@
     "Next",
     "Xong",
     "Done"
+  ],
+  "page_avatar_button": [
+    "Cập nhật ảnh đại diện",
+    "Update profile picture",
+    "Chọn ảnh đại diện",
+    "Choose profile picture"
+  ],
+  "page_cover_button": [
+    "Thêm ảnh bìa",
+    "Chỉnh sửa ảnh bìa",
+    "Add cover photo",
+    "Edit cover photo"
+  ],
+  "page_photo_upload": [
+    "Tải ảnh lên",
+    "Upload photo",
+    "Tải lên",
+    "Upload"
+  ],
+  "page_photo_save": [
+    "Lưu thay đổi",
+    "Save changes",
+    "Lưu",
+    "Save"
   ]
 }

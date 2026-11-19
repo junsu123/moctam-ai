@@ -24,6 +24,36 @@ def trends_page_autocreate(pid: int):
     return r
 
 
+@app.post("/api/trends/ideas")
+def trends_boss_idea(data: dict):
+    """Sếp giao tên / ý tưởng Trang: Nhi soạn thông tin + prompt logo, banner, đổi tên nếu trùng, đưa vào hàng tạo."""
+    import trend_create
+    try:
+        return trend_create.boss_idea(data.get("name") or "", data.get("niche") or "", data.get("note") or "")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/trends/pages/{pid}/picture")
+def trends_page_picture(pid: int, data: dict):
+    """Sếp tải logo / banner ngay trên web: data = {"kind": "avatar"|"cover", "data": base64, "ext": "jpg"}."""
+    import trend_create
+    try:
+        raw = base64.b64decode((data.get("data") or "").split(",")[-1])
+        return {"msg": trend_create.set_page_image(pid, data.get("kind") or "", raw, (data.get("ext") or "jpg").lower())}
+    except (ValueError, base64.binascii.Error) as e:
+        raise HTTPException(400, str(e) or "Ảnh không hợp lệ")
+
+
+@app.post("/api/trends/pages/{pid}/ask-pictures")
+def trends_page_ask_pictures(pid: int):
+    import trend_create
+    db.run("UPDATE fb_pages SET img_tries=0 WHERE id=?", (pid,))
+    if not trend_create.request_images(pid):
+        raise HTTPException(400, "Không gửi được lên Telegram (chưa kết nối bot) hoặc Trang đã có đủ logo, banner")
+    return {"ok": True}
+
+
 @app.post("/api/trends/plan")
 def trends_plan():
     import trend_pages

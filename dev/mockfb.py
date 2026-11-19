@@ -569,6 +569,12 @@ class H(BaseHTTPRequestHandler):
                 return self._html('<h1>Phạm Thu Hương</h1><div>Bán hàng online đồ ăn healthy, ship toàn quốc</div><div role="feed">'
                                   '<div role="article"><b>Phạm Thu Hương</b> · <a href="#">1 ngày</a><div>Lên đơn hạt dinh dưỡng cho khách, inbox đặt hàng</div><span>4 bình luận</span></div></div>')
             return self._html(f"<h1>Người dùng {uid}</h1>")
+        from urllib.parse import parse_qs, urlsplit
+        q = (parse_qs(urlsplit(self.path).query).get("q") or [""])[0]
+        names = ["Bếp Nhà Mình", "Mẹo Vặt Mỗi Ngày"] + [x["name"] for x in NEWPAGES]
+        if path == "/search/pages" and q.casefold() in [n.casefold() for n in names]:  # Trang trùng tên đã có (Nhi tạo Trang)
+            hits = [n for n in names if q.casefold() in n.casefold()] + [f"{q} Shop"]
+            return self._html("<h2>Kết quả tìm kiếm</h2>" + "".join(f"<div><a href='#'>{html.escape(n)}</a></div><div>Trang · 1,2K người theo dõi</div>" for n in hits))
         if path.startswith("/search/pages") or path.startswith("/search/posts"):
             return self._html(search_pages_html("posts" if "posts" in path else "pages"))
         mab = re.match(r"^/([\w.]+)/(about|about_contact_and_basic_info)$", path)
@@ -598,9 +604,17 @@ mk.onclick=()=>{ if(!nm.value||!chosen){ err.textContent="Điền tên Trang và
             lb = {1: "Bỏ qua", 2: "Tiếp", 3: "Xong"}[st]
             return self._html(f'<h2>Hoàn tất thiết lập Trang</h2><div role="button" onclick="location.href=\'{nxt}\'">{lb}</div>')
         mp = re.match(r"^/newpage(\d+)$", path)
-        if mp and 0 < int(mp.group(1)) <= len(NEWPAGES):
-            return self._html(f"<h1>{html.escape(NEWPAGES[int(mp.group(1)) - 1]['name'])}</h1><div>0 người theo dõi</div>"
-                              '<div role="button" id="go">Chuyển ngay</div>')
+        if mp and 0 < int(mp.group(1)) <= len(NEWPAGES):  # Trang mới: chưa chuyển thì có nút Chuyển ngay; đã chuyển thì đặt được logo / banner
+            top = f"<h1>{html.escape(NEWPAGES[int(mp.group(1)) - 1]['name'])}</h1><div>0 người theo dõi</div>"
+            sw = '<script>const sw2=(on)=>fetch("/pageswitch",{method:"POST",body:JSON.stringify({on})}).then(()=>location.reload());</script>'
+            if not PAGE["as"]:
+                return self._html(sw + top + '<div role="button" id="go" onclick="sw2(1)">Chuyển ngay</div>')
+            return self._html(sw + top + """<div role="button" aria-label="Trang cá nhân của bạn" id="acct">Trang</div><div id="menu" hidden><div role="button" id="back">Chuyển sang Linh Nguyễn</div></div>
+<div role="button" aria-label="Cập nhật ảnh đại diện" id="av">📷</div><div role="button" id="cv">Thêm ảnh bìa</div>
+<div id="dlg" hidden><div role="button" id="up">Tải ảnh lên</div><input type="file" id="f" style="display:none"><div id="pv"></div><div role="button" id="sv">Lưu</div></div>
+<script>let kind=""; acct.onclick=()=>{menu.hidden=false}; back.onclick=()=>sw2(0);
+av.onclick=()=>{kind="avatar";dlg.hidden=false}; cv.onclick=()=>{kind="cover";dlg.hidden=false}; up.onclick=()=>f.click(); f.onchange=()=>{pv.textContent=f.files[0].name};
+sv.onclick=()=>{ if(!f.files.length) return; fetch("/pageimage",{method:"POST",body:JSON.stringify({kind,file:f.files[0].name,size:f.files[0].size})}).then(()=>{dlg.hidden=true;f.value="";pv.textContent=""}); };</script>""")
         if path == "/moctampage":  # Trang: chưa chuyển thì có nút Chuyển ngay; đã chuyển thì có ô viết bài + menu chuyển về
             top = "<h1>Mộc Tâm - Trà túi lọc</h1><div>1,2K người theo dõi</div>"
             sw = ('<script>const sw=(on)=>fetch("/pageswitch",{method:"POST",body:JSON.stringify({on})}).then(()=>location.href="/moctampage");</script>')

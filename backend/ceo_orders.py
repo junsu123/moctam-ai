@@ -305,6 +305,16 @@ def execute(act: dict) -> str:
         if act.get("check"):
             return "Em đang mở sitemap trên tên miền như Google đọc, có lỗi sửa được thì em sửa luôn, xong em báo sếp"
         return "Em đang kiểm tra kết nối hosting, xong em báo sếp" if act.get("test") else "Em đang dựng lại website và đẩy lên hosting, xong em báo sếp"
+    if t == "trend_page_idea":
+        import trend_create
+        try:
+            r = trend_create.boss_idea(act.get("name") or "", act.get("niche") or "", act.get("note") or "")
+        except ValueError as e:
+            return str(e)
+        pg = r["page"]
+        return (f"Nhi nhận Trang “{pg['name']}”" + (f" (tên “{pg['requested_name']}” đã có nên Nhi đổi tên)" if r["renamed"] else "")
+                + (f", sẽ tạo bằng nick {r['nick']} ở ca làm việc tới. Tạo xong Nhi gửi link và 2 tin xin logo, banner kèm prompt; sếp trả lời tin bằng ảnh là xong."
+                   if r["queued"] else f". Chưa tạo được ngay: {r['why']}"))
     if t == "dept_review":
         import departments
         ks = [act["dept"]] if act.get("dept") in ("sales", "groups", "pages", "website") else ["sales", "groups", "pages", "website"]
@@ -698,6 +708,7 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - plan {}: giao Tuấn xếp lịch đăng các bài đã duyệt
 - feed_style {style: invite|natural}: sếp muốn bình luận MỜI SỈ vào cả bài không liên quan (invite) hoặc chỉ bình luận tự nhiên (natural)
 - site_deploy {test?: true, check?: true}: check true khi sếp nói sitemap / Google không đọc được website. Sếp bảo đẩy / đăng / cập nhật website lên hosting (tin tức, sản phẩm lên online); test true khi sếp hỏi kiểm tra kết nối hosting
+- trend_page_idea {name, niche?, note?}: sếp giao Nhi mở / tạo Trang Facebook có tên (hoặc ý tưởng) cụ thể; Nhi tự đổi tên nếu trùng
 - dept_review {dept?: sales|groups|pages|website}: sếp bảo các trưởng phòng (hoặc một phòng) đánh giá phòng, xem phòng nào thiếu người / đề xuất tuyển
 - coach_now {}: cho các agent đủ kết quả thật mới gửi việc cho Claude kèm cặp ngay (theo lô, giảm 50%)
 - cleanup_data {run: true|false}: sếp hỏi dung lượng dữ liệu (run false) hoặc bảo dọn dẹp / dọn dữ liệu / dữ liệu phình to (run true)
@@ -835,6 +846,10 @@ def _rule_plan(text: str) -> dict:
         return {"reply": "Dạ.", "actions": [{"type": "feed_style", "style": "natural"}]}
     if re.search(r"(bình luận|comment|cmt).{0,40}mời (nhập )?sỉ|mời (nhập )?sỉ.{0,30}(bình luận|comment|cmt|bài không liên quan|mọi bài)", low):
         return {"reply": "Dạ.", "actions": [{"type": "feed_style", "style": "invite"}]}
+    m = re.search(r"(?:tạo|lập|mở)\s+(?:một\s+|1\s+)?(?:trang|page|fanpage)(?:\s+facebook)?\s+(?:tên\s+(?:là\s+)?)?[“\"']?([^“”\"'\n]{3,75}?)[”\"']?"
+                  r"(?:\s+(?:về|chủ đề|ngách)\s+([^\n]{2,60}))?\s*$", t, re.I)
+    if m and (agent == "nhi" or "xu hướng" in low):
+        return {"reply": "Dạ.", "actions": [{"type": "trend_page_idea", "name": m.group(1).strip(), "niche": (m.group(2) or "").strip()}]}
     if re.search(r"trưởng phòng.{0,30}(đánh giá|xem lại|báo cáo|đề xuất)|(đánh giá|rà soát|xem lại) (các )?phòng( ban)?|phòng nào thiếu người", low):
         return {"reply": "Dạ.", "actions": [{"type": "dept_review"}]}
     if re.search(r"sitemap|site ?map|search console|google (không|chưa) (đọc|tìm|index)", low):

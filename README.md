@@ -202,7 +202,17 @@ Agent mới **Nhi** (Xu hướng & Trang mới, bàn riêng trong văn phòng 3D
    sử, bấm **Tạo Trang**, bỏ qua các bước thiết lập (không mời bạn bè), lấy link, **chuyển về nick cá nhân** (xác nhận bằng nút “Chuyển
    ngay” trên Trang mới). Trang chạy lịch đăng mặc định (2 bài/ngày 09:00, 19:30), Nhi viết bài hôm nay và **báo Telegram**: link Trang,
    nick quản trị, mô tả, lý do, prompt ảnh đại diện / ảnh bìa (Trang mới chưa có ảnh: sếp đặt ảnh trên Trang). Nút **Nhi tạo Trang này**
-   ở từng ý tưởng để chọn đúng ý tưởng. **Trần an toàn**: 1 Trang mỗi 7 ngày cho cả công ty (sửa 1–3), mỗi nick 1 Trang mỗi 30 ngày.
+   ở từng ý tưởng để chọn đúng ý tưởng.
+   **Sếp giao Trang theo ý mình**: ô **Giao Trang cho Nhi tạo** (tên, chủ đề, dặn thêm) hoặc nhắn CEO “Nhi tạo trang Bếp Nhà Mình về nấu ăn”.
+   Nhi soạn ngách, hạng mục, mô tả, prompt logo và banner, 3 tên dự phòng gần nghĩa, rồi đưa vào hàng tạo ngay (không tính trần tuần, vẫn giữ
+   luật nick an toàn). **Tên trùng**: trùng Trang đã có trong phần mềm thì Nhi đổi tên ngay khi nhận; lúc tạo, nick tìm tên trên Facebook (chỉ
+   đọc), đã có Trang trùng đúng tên thì dùng tên dự phòng; Facebook không nhận tên thì thử tên tiếp theo ngay trong lượt đó. Thẻ Trang có chip
+   **Đổi tên** và lý do; tin Telegram báo rõ tên cũ, tên mới. Tên giả Trang chính thức (Facebook, cơ quan, báo đài, “chính thức”) bị từ chối.
+   **Logo và banner**: Nhi chỉ soạn prompt; tạo Trang xong, bot gửi 2 tin “Cần logo / Cần banner” kèm prompt và kích thước. Sếp tạo ảnh rồi
+   **trả lời đúng tin đó bằng ảnh** (hoặc bấm **Tải logo / Tải banner** trên thẻ Trang, gửi trước khi Trang tạo xong cũng được). Ca làm việc tới,
+   nick quản trị chuyển sang Trang, đặt ảnh đại diện và ảnh bìa, chuyển về nick cá nhân, báo “Đã đặt”. Lỗi 2 lần thì báo sếp đặt tay; nút
+   **Gửi lại tin xin logo, banner**. Facebook đổi chữ nút thì sửa `page_avatar_button`, `page_cover_button`, `page_photo_upload`,
+   `page_photo_save` trong `backend/fb_selectors.json`. **Trần an toàn**: 1 Trang mỗi 7 ngày cho cả công ty (sửa 1–3), mỗi nick 1 Trang mỗi 30 ngày.
    Facebook hỏi xác minh / checkpoint thì dừng nick như mọi việc khác (không giải captcha); tạo lỗi thì ý tưởng quay lại kèm lý do và ảnh
    chụp ở màn Lỗi, lỗi 2 lần thì thôi tự tạo ý tưởng đó và báo sếp tạo tay. Nick không có ca trong 2 ngày thì trả ý tưởng lại. Lưu ý:
    tạo Trang bằng công cụ tự động vẫn có rủi ro Facebook hạn chế nick quản trị, nên giữ trần thấp. Facebook đổi chữ trên trang tạo Trang thì
