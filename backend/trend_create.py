@@ -117,10 +117,12 @@ def due(aid: int) -> list[int]:
     return [r["id"] for r in db.q("SELECT id FROM fb_pages WHERE status='creating' AND admin_account_id=?", (aid,))]
 
 
-def _fail(pid: int, why: str, notify: bool = True, shot: str | None = None):
+def _fail(pid: int, why: str, notify: bool = True, shot: str | None = None, keep: bool = False):
+    """keep = đã bấm Tạo Trang (Trang có thể đã có): giữ hàng chờ cùng nick để ca sau tìm Trang trong “Trang của bạn”, không tạo trùng."""
     p = db.one("SELECT * FROM fb_pages WHERE id=?", (pid,)) or {}
     tries = (p.get("create_tries") or 0) + 1
-    db.run("UPDATE fb_pages SET status='idea', create_tries=?, create_error=? WHERE id=?", (tries, why[:300], pid))
+    st = "creating" if keep and tries < MAX_TRIES else "idea"
+    db.run("UPDATE fb_pages SET status=?, create_tries=?, create_error=?, create_at=? WHERE id=?", (st, tries, why[:300], db.now(), pid))
     db.log("nhi", "Tạo Trang chưa được", f"{p.get('name')}: {why[:200]}")
     if notify:
         import errors
@@ -218,11 +220,64 @@ def _fb_taken(page, name: str) -> bool:
     return any(_norm(line) == key for line in body.split("\n"))
 
 
+def _click_step(page, labels: list[str]) -> bool:
+    """Bấm nút bước thiết lập; Facebook hay có thông báo (role=alert) đè lên nút: Esc rồi bấm lại, cuối cùng gửi click thẳng vào nút."""
+    import browser_poster as B
+    el = B._visible_first(page, labels)
+    if not el:
+        return False
+    for how in ("click", "esc", "dispatch"):
+        try:
+            if how == "esc":
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(800)
+                el = B._visible_first(page, labels) or el
+            if how == "dispatch":
+                el.dispatch_event("click")
+            else:
+                el.click(timeout=6000)
+            return True
+        except Exception as e:
+            print("[trend create step]", how, str(e)[:120])
+    return False
+
+
+def _find_my_page(page, names: list[str]) -> tuple[str, str] | None:
+    """Tìm trong “Trang của bạn” của nick: Trang đúng tên (lần trước đã tạo xong mà chưa kịp nhận) → (tên, link)."""
+    import browser_poster as B
+    want = {_norm(n): n for n in names if n}
+    for path in ("/pages/?category=your_pages", "/bookmarks/pages"):
+        try:
+            page.goto(B.FB_BASE + path, wait_until="domcontentloaded", timeout=60000)
+            page.wait_for_timeout(3500)
+            B._check_blocked(page)
+            links = page.eval_on_selector_all("a[href]", "els=>els.map(e=>[(e.innerText||e.getAttribute('aria-label')||''),e.href])")
+        except B.Blocked:
+            raise
+        except Exception as e:
+            print("[trend create my pages]", e)
+            continue
+        for txt, href in links:
+            key = _norm((txt or "").split("\n")[0])
+            if key in want and href and "/pages/?" not in href and "/bookmarks" not in href and "/search" not in href:
+                u = clean_url(href)
+                if u:
+                    return want[key], u
+    return None
+
+
 def _create_one(page, aid: int, p: dict) -> str:
     import browser_poster as B
     s = B.selectors()
     g = lambda k, d: s.get(k) or d
     names = variants(p["name"], p.get("niche") or "", json.loads(p.get("alt_names") or "[]"))[:5]
+    got = _find_my_page(page, names)  # nick đã quản lý Trang đúng tên (lần trước tạo xong nhưng lỗi ở bước sau): nhận luôn, không tạo trùng
+    if got:
+        if got[0] != p["name"]:
+            db.run("UPDATE fb_pages SET name=? WHERE id=?", (got[0], p["id"]))
+            p["name"] = got[0]
+        db.log("nhi", "Tìm thấy Trang đã tạo", f"{got[0]} đã có trong Trang của nick, Nhi nhận luôn, không tạo trùng")
+        return got[1]
     free, notes = [], []
     for nm in names:  # Facebook đã có Trang trùng đúng tên thì Nhi dùng tên khác
         if _fb_taken(page, nm):
@@ -275,10 +330,12 @@ def _create_one(page, aid: int, p: dict) -> str:
         p["name"] = chosen
     steps = g("page_create_steps", ["Bỏ qua", "Skip", "Không phải bây giờ", "Not now", "Tiếp", "Next", "Xong", "Done"])
     for _ in range(8):  # các bước thiết lập sau khi tạo (ảnh, WhatsApp, mời bạn bè...): ưu tiên Bỏ qua, không mời ai
-        if not B._wait_click(page, steps, timeout=6):
+        if not _click_step(page, steps):
             break
         page.wait_for_timeout(2500)
-    url = clean_url(page.url) if "/pages/creation" not in page.url else ""
+    here = clean_url(page.url) if "/pages/creation" not in page.url else ""
+    got = _find_my_page(page, [chosen])  # link chắc chắn nhất: Trang mới trong “Trang của bạn”
+    url = got[1] if got else here
     if not url:
         raise RuntimeError(f"Đã bấm Tạo Trang nhưng Facebook chưa mở Trang mới (tên có thể bị từ chối). Đang thấy: {B._labels_on(page)}")
     return url
@@ -294,6 +351,7 @@ def create(page, aid: int, ids: list[int]):
             continue
         import workflows
         workflows.set_status("nhi", "working", f"Tạo Trang {p['name']}")
+        url = ""
         try:
             url = _create_one(page, aid, p)
         except B.Blocked as e:
@@ -306,13 +364,23 @@ def create(page, aid: int, ids: list[int]):
                 page.screenshot(path=shot)
             except Exception:
                 shot = None
-            _fail(pid, str(e), shot=shot)
-            if p.get("_clicked"):  # đã bấm Tạo: lỡ Facebook đã chuyển sang Trang thì chuyển về nick cá nhân
+            if p.get("_clicked"):  # đã bấm Tạo Trang: xem Trang đã có chưa trước khi coi là lỗi
+                try:
+                    got = _find_my_page(page, [p["name"]])
+                except B.Blocked:
+                    got = None
+                if got:
+                    url = got[1]
+                    db.log("nhi", "Tạo Trang xong dù bước sau lỗi", f"{p['name']}: {str(e)[:150]}")
+            if not url:
+                _fail(pid, str(e), shot=shot, keep=bool(p.get("_clicked")))
+            if not url and p.get("_clicked"):  # đã bấm Tạo: lỡ Facebook đã chuyển sang Trang thì chuyển về nick cá nhân
                 db.set_setting("page_acting_url", "")
                 B._switch_back(page, aid, "")
-            elif db.get_settings().get("page_acting_aid") == str(aid):
+            elif not url and db.get_settings().get("page_acting_aid") == str(aid):
                 db.set_setting("page_acting_aid", "")
-            continue
+            if not url:
+                continue
         finally:
             workflows.set_status("nhi", "idle", "Đang sẵn sàng")
         db.run("UPDATE fb_pages SET auto_created_at=?, create_error=NULL WHERE id=?", (db.now(), pid))

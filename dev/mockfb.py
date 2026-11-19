@@ -598,11 +598,14 @@ ct.oninput=()=>{ chosen=""; opts.innerHTML=ct.value.length>1?["Blog cá nhân","
 mk.onclick=()=>{ if(!nm.value||!chosen){ err.textContent="Điền tên Trang và chọn hạng mục"; return; }
   if(/Lỗi/.test(nm.value)){ err.textContent="Tên Trang không hợp lệ"; return; }
   fetch("/pagecreate",{method:"POST",body:JSON.stringify({name:nm.value,category:chosen,bio:bio.value})}).then(()=>location.href="/pagesetup?s=1"); };</script>""")
-        if path == "/pagesetup":  # các bước thiết lập sau khi tạo
+        if path == "/pagesetup":  # các bước thiết lập sau khi tạo; bước 2 có thông báo (role=alert) đè lên nút Tiếp như Facebook thật
             st = int((self.path.split("s=") + ["1"])[1][:1] or 1)
             nxt = f"/pagesetup?s={st + 1}" if st < 3 else f"/newpage{len(NEWPAGES)}"
             lb = {1: "Bỏ qua", 2: "Tiếp", 3: "Xong"}[st]
-            return self._html(f'<h2>Hoàn tất thiết lập Trang</h2><div role="button" onclick="location.href=\'{nxt}\'">{lb}</div>')
+            cover = ('<div role="alert" style="position:fixed;inset:0;background:rgba(0,0,0,.05);z-index:9">Trang của bạn đã được tạo</div>' if st == 2 else "")
+            return self._html(f'<h2>Hoàn tất thiết lập Trang</h2><div role="button" aria-label="{lb}" onclick="location.href=\'{nxt}\'">{lb}</div>{cover}')
+        if path in ("/pages", "/bookmarks/pages"):  # Trang của bạn (nick quản trị)
+            return self._html("<h2>Trang của bạn</h2>" + "".join(f'<div><a href="/newpage{i + 1}">{html.escape(x["name"])}</a></div>' for i, x in enumerate(NEWPAGES)))
         mp = re.match(r"^/newpage(\d+)$", path)
         if mp and 0 < int(mp.group(1)) <= len(NEWPAGES):  # Trang mới: chưa chuyển thì có nút Chuyển ngay; đã chuyển thì đặt được logo / banner
             top = f"<h1>{html.escape(NEWPAGES[int(mp.group(1)) - 1]['name'])}</h1><div>0 người theo dõi</div>"

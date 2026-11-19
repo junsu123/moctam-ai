@@ -213,6 +213,9 @@ Agent mới **Nhi** (Xu hướng & Trang mới, bàn riêng trong văn phòng 3D
    nick quản trị chuyển sang Trang, đặt ảnh đại diện và ảnh bìa, chuyển về nick cá nhân, báo “Đã đặt”. Lỗi 2 lần thì báo sếp đặt tay; nút
    **Gửi lại tin xin logo, banner**. Facebook đổi chữ nút thì sửa `page_avatar_button`, `page_cover_button`, `page_photo_upload`,
    `page_photo_save` trong `backend/fb_selectors.json`. **Trần an toàn**: 1 Trang mỗi 7 ngày cho cả công ty (sửa 1–3), mỗi nick 1 Trang mỗi 30 ngày.
+   **Không tạo trùng**: trước khi tạo, nick mở “Trang của bạn” xem đã quản lý Trang đúng tên chưa (lần trước tạo xong nhưng lỗi ở bước sau),
+   có thì nhận luôn. Bước thiết lập bị thông báo của Facebook đè lên nút (lỗi “Locator.click: Timeout … role=alert”) thì nick bấm Esc rồi bấm
+   lại; đã bấm Tạo Trang mà bước sau lỗi thì Trang giữ ở hàng chờ cùng nick, ca sau tìm lại trong “Trang của bạn” trước.
    Facebook hỏi xác minh / checkpoint thì dừng nick như mọi việc khác (không giải captcha); tạo lỗi thì ý tưởng quay lại kèm lý do và ảnh
    chụp ở màn Lỗi, lỗi 2 lần thì thôi tự tạo ý tưởng đó và báo sếp tạo tay. Nick không có ca trong 2 ngày thì trả ý tưởng lại. Lưu ý:
    tạo Trang bằng công cụ tự động vẫn có rủi ro Facebook hạn chế nick quản trị, nên giữ trần thấp. Facebook đổi chữ trên trang tạo Trang thì

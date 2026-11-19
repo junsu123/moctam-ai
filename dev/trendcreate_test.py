@@ -44,6 +44,7 @@ chk("chọn ý tưởng + nick an toàn → chờ ca làm việc của nick", r[
 session()
 p = db.one("SELECT * FROM fb_pages WHERE id=?", (p1,))
 log = [json.loads(l) for l in open(SP / "mockfb_log.jsonl", encoding="utf-8") if '"path": "/pagecreate"' in l][-1:]
+chk("bước thiết lập bị thông báo đè lên nút Tiếp: vẫn qua được", p["status"] == "active" and "/newpage" in (p["url"] or ""), p["create_error"])
 chk("tạo Trang trên Facebook: tên, hạng mục gợi ý, tiểu sử", log and log[0]["name"] == "Góc Mèo Cưng" and log[0]["category"] == "Blog cá nhân"
     and "Mẹo chăm mèo" in log[0]["bio"], log)
 chk("bỏ qua bước thiết lập, lấy link, Trang chạy lịch đăng", p["status"] == "active" and "/newpage" in (p["url"] or "") and p["admin_account_id"] == aid and p["auto_created_at"], (p["status"], p["url"], p["create_error"]))
@@ -59,9 +60,10 @@ chk("API: cài đặt tự tạo + số Trang đã tạo 7 ngày", d["settings"]
 # lỗi: Facebook từ chối tên → trả về ý tưởng, ghi lỗi, lần 2 báo sếp
 db.run("UPDATE fb_pages SET auto_created_at=? WHERE id=?", ((db.clock() - timedelta(days=40)).strftime("%Y-%m-%d %H:%M:%S"), p1))
 p3 = add("Trang Lỗi Tên")
-for i in range(2):
-    r = C.pick(p3)
-    session()
+r = C.pick(p3)
+session()
+chk("lỗi sau khi bấm Tạo: giữ hàng chờ cùng nick để ca sau kiểm tra, không coi là xong", db.one("SELECT status FROM fb_pages WHERE id=?", (p3,))["status"] == "creating")
+session()
 p = db.one("SELECT * FROM fb_pages WHERE id=?", (p3,))
 chk("Facebook từ chối tên: về ý tưởng, ghi lỗi, 2 lần thì báo sếp tạo tay", r["ok"] and p["status"] == "idea" and p["create_tries"] == 2 and "chưa mở Trang mới" in (p["create_error"] or "")
     and any("lỗi 2 lần" in t for t in sent) and db.get_settings().get("page_acting_aid") == "", (p["status"], p["create_tries"], p["create_error"]))
@@ -104,4 +106,14 @@ p = db.one("SELECT * FROM fb_pages WHERE id=?", (p["id"],))
 up = [json.loads(l) for l in open(SP / "mockfb_log.jsonl", encoding="utf-8") if '"path": "/pageimage"' in l][-2:]
 chk("nick chuyển sang Trang đặt logo + banner rồi chuyển về", p["avatar_done"] == 1 and p["cover_done"] == 1 and {u["kind"] for u in up} == {"avatar", "cover"}
     and db.get_settings().get("page_acting_aid") == "" and any("Đã đặt" in t for t in sent[-3:]), (p["img_error"], up))
+# Trang đã tạo xong ở lần trước (lỗi ở bước sau): lần sau tìm thấy trong “Trang của bạn”, nhận luôn, không tạo trùng
+db.run("UPDATE fb_pages SET status='dismissed' WHERE status IN ('creating','idea')")
+db.run("UPDATE fb_pages SET auto_created_at=? WHERE auto_created_at IS NOT NULL", ((db.clock() - timedelta(days=40)).strftime("%Y-%m-%d %H:%M:%S"),))
+urllib.request.urlopen(urllib.request.Request("http://localhost:8098/pagecreate", data=json.dumps({"name": "Trà Mộc Tâm Việt", "category": "Blog cá nhân"}).encode(), method="POST")).read()
+p4 = db.run("INSERT INTO fb_pages(name, niche, status, create_tries, create_error, created_at) VALUES ('Trà Mộc Tâm Việt', 'trà', 'idea', 1, 'Locator.click: Timeout', ?)", (db.now(),))
+n_create = sum(1 for l in open(SP / "mockfb_log.jsonl", encoding="utf-8") if '"path": "/pagecreate"' in l)
+r = C.pick(p4); session()
+p = db.one("SELECT * FROM fb_pages WHERE id=?", (p4,))
+chk("Trang đã có trong “Trang của bạn”: nhận luôn, không tạo trùng", r["ok"] and p["status"] == "active" and "/newpage" in (p["url"] or "")
+    and sum(1 for l in open(SP / "mockfb_log.jsonl", encoding="utf-8") if '"path": "/pagecreate"' in l) == n_create, (p["status"], p["url"], p["create_error"]))
 print(f"XONG {sum(ok)}/{len(ok)}")
