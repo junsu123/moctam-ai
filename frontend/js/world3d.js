@@ -342,7 +342,7 @@ const World = (() => {
     for(const a of agents){ const c=chars[a.id]; if(!c) continue; const st=a.status||{}; c.state=st.state||"idle"; c.statusText=st.text||"";
       if(st.state==="meeting"||st.state==="talking"||meetingRunning) goMeeting(a.id); else if(c.mode!=="toVisit"&&c.mode!=="visiting") goDesk(a.id); }
   }
-  function mount(slot){ if(stage.parentNode!==slot){ slot.appendChild(stage); resize(); } }
+  function mount(slot){ stage.style.display=""; if(stage.parentNode!==slot){ slot.appendChild(stage); resize(); } }  // văn phòng 3D chỉ hiện trong trang Văn phòng / Phòng họp
   return {setCam,sync,say,setBoard,mount,visit,summon};
 })();
 
