@@ -775,7 +775,9 @@ def _block(aid: int, reason: str):
 
 
 def _page_url() -> str:
-    u = (db.get_settings().get("page_url") or "").strip()
+    """Trang mặc định cho bài Trang không gắn Trang nào (Trang nuôi đầu tiên; bản cũ: cài đặt page_url)."""
+    r = db.one("SELECT url FROM fb_pages WHERE COALESCE(kind,'trend')='grow' AND status='active' AND url IS NOT NULL ORDER BY id LIMIT 1")
+    u = (r or {}).get("url") or (db.get_settings().get("page_url") or "").strip()
     return fb_url(u) if u else ""
 
 

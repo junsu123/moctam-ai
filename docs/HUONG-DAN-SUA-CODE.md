@@ -126,7 +126,7 @@ Trong file tính năng viết `def tick(now): ...` (kiểm tra giờ + cờ “�
 ### 4.8. Sửa cách agent viết / nói (prompt)
 - Tính cách, vai trò: `backend/agents.py` (mục của agent đó).
 - Lời dặn chung mọi lần làm việc: `system_prompt()` trong `agents.py`.
-- Đề bài từng việc: tìm `llm.json(` trong file tính năng (VD viết bài nhóm `workflows.py`, bài Trang `page_grow.py`,
+- Đề bài từng việc: tìm `llm.json(` trong file tính năng (VD viết bài nhóm `workflows.py`, bài Trang nuôi `page_grow.py` (nhiều Trang: bảng `fb_pages` cột `kind`='grow'),
   bài Trang xu hướng `trend_pages.py`, câu up bài `post_care.py`). Sửa phần chữ trong đề bài; giữ nguyên dòng “Trả về JSON …”.
 - Cách nhanh hơn không cần sửa code: nhắn CEO “Từ nay …” (chỉ đạo lâu dài) hoặc “Lan viết dài quá …” (bài học ghim).
 

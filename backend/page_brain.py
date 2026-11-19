@@ -79,7 +79,7 @@ def choose(pg: dict, allow_trend: bool = True, rnd=None) -> dict:
     taken = {plain(r["t"]) for r in db.q("""SELECT trend_topic t FROM posts WHERE fb_page_ref IS NOT NULL AND trend_kind='trend'
                                            AND created_at >= ?""", (db.today(),))}
     taken |= {plain(r["t"]) for r in db.q("SELECT trend_topic t FROM posts WHERE fb_page_ref=? AND created_at >= date('now','-3 day')", (pg["id"],))}
-    others = [p for p in db.q("SELECT * FROM fb_pages WHERE status='active' AND id != ?", (pg["id"],))]
+    others = [p for p in db.q("SELECT * FROM fb_pages WHERE status='active' AND id != ? AND COALESCE(kind,'trend')='trend'", (pg["id"],))]
     for h in hot:
         t = h["title"]
         if plain(t) in taken or _avoid(t, pg):
@@ -184,12 +184,18 @@ def review(post_id: int, action: str, content: str | None = None, reason: str = 
     if bad:
         raise ValueError("Bài phạm Luật Facebook: " + "; ".join(i.get("msg") or i.get("rule") or "" for i in bad)[:200])
     edited = " ".join(new.split()) != " ".join((p["content"] or "").split())
-    db.run("UPDATE posts SET content=?, status='need_image', review_result=?, reviewed_at=? WHERE id=?",
-           (new, "edit" if edited else "ok", db.now(), post_id))
+    grow = p.get("source") == "page_grow"  # bài nuôi Trang: ảnh lấy từ thư mục sản phẩm, duyệt xong xếp đăng luôn
+    db.run("UPDATE posts SET content=?, status=?, review_result=?, reviewed_at=? WHERE id=?",
+           (new, "scheduled" if grow else "need_image", "edit" if edited else "ok", db.now(), post_id))
+    if grow and (p["scheduled_for"] or "") < db.clock().strftime("%Y-%m-%d %H:%M"):
+        import page_grow
+        pg = db.one("SELECT * FROM fb_pages WHERE id=?", (p["fb_page_ref"],))
+        db.run("UPDATE posts SET scheduled_for=? WHERE id=?", (page_grow.next_slot(pg), post_id))
     if edited:
         learn_edit(p["fb_page_ref"], p["content"] or "", new, p["page_kw"], wait=wait)
-    db.log("nhi", "Sếp duyệt bài Trang", f"Bài #{post_id}" + (" (sếp đã sửa, Nhi ghi nhớ)" if edited else "") + ": đã gửi prompt ảnh")
-    trend_pages.ask_image(post_id)
+    db.log("nhi", "Sếp duyệt bài Trang", f"Bài #{post_id}" + (" (sếp đã sửa, Nhi ghi nhớ)" if edited else "") + (": xếp đăng" if grow else ": đã gửi prompt ảnh"))
+    if not grow:
+        trend_pages.ask_image(post_id)
     return db.one("SELECT * FROM posts WHERE id=?", (post_id,))
 
 
@@ -264,13 +270,13 @@ def update_page(pid: int, data: dict) -> dict:
 def overview() -> dict:
     pages = db.q("""SELECT f.*, a.name admin_name FROM fb_pages f LEFT JOIN fb_accounts a ON a.id=f.admin_account_id
                     WHERE f.status IN ('active','paused','creating') ORDER BY CASE f.status WHEN 'active' THEN 0 ELSE 1 END, f.name""")
-    today = db.q("""SELECT fb_page_ref pid, id, status, trend_topic, page_kw, trend_kind, scheduled_for FROM posts
+    today = db.q("""SELECT fb_page_ref pid, id, status, COALESCE(trend_topic, angle) trend_topic, page_kw, trend_kind, scheduled_for FROM posts
                     WHERE fb_page_ref IS NOT NULL AND substr(scheduled_for,1,10)=? AND status != 'rejected' ORDER BY scheduled_for""", (db.today(),))
     for p in pages:
         p["kw"] = kw_stats(p)
         p["memory"] = memory(p["id"], 15)
         p["smart"] = smartness(p["id"])
         p["today"] = [t for t in today if t["pid"] == p["id"]]
-    queue = db.q("""SELECT p.id, p.content, p.scheduled_for, p.trend_topic, p.trend_kind, p.page_kw, p.created_at, p.agent_id, f.name page_name, f.niche
+    queue = db.q("""SELECT p.id, p.content, p.scheduled_for, COALESCE(p.trend_topic, p.angle) trend_topic, p.trend_kind, p.page_kw, p.source, p.created_at, p.agent_id, f.name page_name, f.niche
                     FROM posts p JOIN fb_pages f ON f.id=p.fb_page_ref WHERE p.status='page_review' ORDER BY p.scheduled_for""")
     return {"pages": pages, "queue": queue, "smart": smartness(), "review": review_on(), "reasons": REASONS}

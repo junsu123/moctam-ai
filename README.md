@@ -279,21 +279,26 @@ Mục **Các Trang của Nhi** (thanh bên, dưới Trang xu hướng): danh sá
 
 ## Nuôi Page (không dùng Graph API)
 
-Mục **Nuôi Page** (thanh bên, dưới Bình luận). Trang lớn lên bằng bài có ích, đăng đều, đúng giờ; phần mềm làm như sau:
-- **Lan viết lịch nội dung**: mỗi sáng 07:30 Lan viết đủ số bài cho các giờ còn lại hôm nay (mặc định 1 bài/ngày, tối đa 3, giờ
-  08:30 và 20:30, sửa được). Tỉ lệ **80/20**: phần lớn là bài có ích (kiến thức nguyên liệu, cách pha / công thức, hậu trường xưởng,
+Mục **Nuôi Page** (thanh bên, dưới Bình luận). **Nhi nuôi nhiều Trang cùng lúc**: bấm **+ Thêm Trang**, điền tên, link Trang, nick
+quản trị, số bài/ngày (1–3), giờ đăng, ngành nghề, từ khóa (không bắt buộc). Mỗi Trang một thẻ: nick, lịch đăng, người theo dõi (+7 ngày),
+từ khóa, nút **Sửa Trang**, **Viết 1 bài ngay**, **Tạm dừng / Nuôi lại** (dừng thì bỏ bài chưa đăng của Trang đó). Bản cũ chỉ có 1 Trang
+(link + nick trong cài đặt): Trang đó tự vào danh sách, giữ bài cũ và số người theo dõi. Trang lớn lên bằng bài có ích, đăng đều, đúng giờ:
+- **Nhi viết lịch nội dung cho từng Trang**: mỗi sáng 07:30 Nhi (hoặc Biên tập Trang phụ trách) viết đủ số bài cho các giờ còn lại hôm nay
+  của từng Trang, theo tên Trang, ngành nghề, từ khóa và điều Nhi ghi nhớ theo sếp (như mục Các Trang của Nhi). Tỉ lệ **80/20**: phần lớn là bài có ích (kiến thức nguyên liệu, cách pha / công thức, hậu trường xưởng,
   mẹo bán hàng online cho người bán lại, hỏi đáp khách sỉ từ sổ kiến thức, câu hỏi ý kiến), khoảng 20% (sửa được) giới thiệu sản phẩm
   kèm lời mời nhắn Trang / Zalo. Bài có ích không chèn quảng cáo, không ghi giá, không hứa công dụng chữa bệnh, không bịa lời khách,
-  không kêu gọi like / share / tag; câu mở đầu khác các bài gần đây; qua Luật Facebook. Nút **Lan viết 1 bài ngay**. Bật ô **Sếp duyệt
-  từng bài** thì bài nằm ở cột Chờ duyệt của mục Bài đăng.
-- **Nick quản trị đăng dưới tên Trang**: chọn một nick sale là quản trị viên / biên tập viên của Trang và điền link Trang. Đến giờ, trong
+  không kêu gọi like / share / tag; câu mở đầu khác các bài gần đây; qua Luật Facebook. Bài chờ sếp duyệt ở mục **Các Trang của Nhi** (cùng hàng chờ với
+  Trang xu hướng; duyệt xong xếp đăng luôn, ảnh lấy từ thư mục sản phẩm, không xin ảnh Telegram); tắt duyệt thì bài xếp đăng ngay. Tỉ lệ
+  bài bán hàng tính riêng từng Trang.
+- **Nick quản trị đăng dưới tên Trang**: mỗi Trang chọn một nick sale là quản trị viên / biên tập viên của Trang (một nick quản trị được
+  nhiều Trang). Đến giờ, trong
   ca làm việc của nick đó, sale mở Trang, bấm **Chuyển ngay** (dùng Facebook dưới tên Trang), đăng bài kèm ảnh như đăng trang cá nhân,
   lưu link bài, rồi **chuyển về nick cá nhân** (mở lại Trang thấy nút Chuyển ngay là đã về). Chưa chuyển về được thì màn Lỗi báo; ca sau
   sale chuyển về trước khi làm bất cứ việc gì, không được thì dừng ca, để **không bao giờ đăng bài nhóm / bình luận dưới tên Trang**.
   Bài Trang tính vào trần bài/ngày của nick (Luật Facebook). Facebook đổi chữ nút thì sửa `page_switch`, `account_menu`, `switch_back`,
   `page_composer` trong `backend/fb_selectors.json`.
 - **Học từ tương tác thật**: mỗi ngày một lần, trong ca làm việc sẵn có của nick quản trị (không mở Chrome riêng), sale đọc số người theo
-  dõi Trang và cảm xúc / bình luận / chia sẻ của 6 bài Trang gần nhất (14 ngày). Thẻ **Chủ đề nào được tương tác** cho biết số bài,
+  dõi từng Trang nick đó quản trị và cảm xúc / bình luận / chia sẻ của 4 bài gần nhất mỗi Trang. Thẻ **Chủ đề nào được tương tác** cho biết số bài,
   tương tác trung bình (cảm xúc + 2 × bình luận + 3 × chia sẻ), số khách của từng chủ đề; Lan viết chủ đề tương tác cao nhiều hơn (vẫn
   chừa 30% thử đều, không lặp chủ đề bài trước). Bỏ tích chủ đề để không viết chủ đề đó.
 - Bình luận dưới bài Trang được sale quét để lấy khách như mọi bài khác (chỉ đọc). Nick **không** tự trả lời dưới bài Trang bằng tên
@@ -1494,7 +1499,7 @@ docs/
   trend_learn.py Nhi tự học: điểm bài Trang so với mức của Trang, bài học kiểu bài / độ dài / giờ, độ chính xác chọn xu hướng
   page_brain.py  Các Trang của Nhi: từ khóa sếp đặt, chia chủ đề cho các Trang, sếp duyệt / sửa / loại, Nhi ghi nhớ theo sếp
   trend_pages.py Nhi: Google Trends, đề xuất Trang, lịch bài Trang xu hướng, prompt ảnh gửi Telegram, nhận ảnh sếp trả lời
-  page_grow.py   Nuôi Page không API: Lan viết lịch 80/20, nick quản trị chuyển sang Trang đăng bài, đọc tương tác, học chủ đề
+  page_grow.py   Nuôi nhiều Page không API (fb_pages kind='grow'): Nhi viết lịch 80/20 cho từng Trang, nick quản trị chuyển sang Trang đăng bài, đọc tương tác, học chủ đề
   group_feed.py  Lướt bảng tin nhóm: mọi nick đọc >=20 bài, lọc 3 lớp (chữ, Claude, học từ sếp), bình luận người hỏi mua (kèm ảnh)
                  và chào người bán online (chỉ chữ, trần riêng), nhịp lướt theo luật nick, ngừng chào ở nhóm xóa bình luận
   friends.py     Kết bạn trong nhóm: điểm sôi nổi của nhóm, đọc bảng tin tìm người hợp tệp khách, trần lời mời, mở hồ sơ cho sale

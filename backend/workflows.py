@@ -512,9 +512,10 @@ def plan_distribution(keywords: list[str] | None = None, limit: int | None = Non
         when = f"{db.today()} {page_slots[i]}"
         import facebook
         import page_grow
-        adm = None if facebook.configured() else page_grow.admin_account()  # không có API: nick quản trị đăng qua Chrome
-        db.run("UPDATE posts SET scheduled_for=?, status='scheduled', account_id=?, sale_id=? WHERE id=?",
-               (when, (adm or {}).get("id"), (adm or {}).get("sale_id"), post["id"]))
+        pg = None if facebook.configured() else page_grow._page(None)  # không có API: nick quản trị Trang nuôi đầu tiên đăng qua Chrome
+        adm = page_grow.admin_account(pg) if pg else None
+        db.run("UPDATE posts SET scheduled_for=?, status='scheduled', account_id=?, sale_id=?, fb_page_ref=COALESCE(fb_page_ref, ?) WHERE id=?",
+               (when, (adm or {}).get("id"), (adm or {}).get("sale_id"), (pg or {}).get("id"), post["id"]))
         plan.append({"post_id": post["id"], "group": "Fanpage", "time": when})
     adm = sum(x["count"] for x in admin_plan)
     db.log("tuan", "Xếp lịch", (f"Đã xếp {len(plan)} bài cho hôm nay" + (f", cộng {adm} bài cho nhóm mình quản lý" if adm else "")) if plan or adm

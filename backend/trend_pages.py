@@ -339,7 +339,7 @@ def plan_today(force: bool = False) -> int:
     import page_brain
     page_brain.cleanup()
     now, n = db.clock().strftime("%H:%M"), 0
-    for pg in db.q("SELECT * FROM fb_pages WHERE status='active' AND admin_account_id IS NOT NULL"):
+    for pg in db.q("SELECT * FROM fb_pages WHERE status='active' AND admin_account_id IS NOT NULL AND COALESCE(kind,'trend')='trend'"):
         have = db.one("SELECT COUNT(*) n FROM posts WHERE fb_page_ref=? AND substr(scheduled_for,1,10)=?", (pg["id"], db.today()))["n"]
         slots = [t for t in (pg["times"] or "09:00,19:30").split(",")[:pg["posts_per_day"] or 1] if t > now]
         for t in slots[:max(0, (pg["posts_per_day"] or 1) - have)]:
@@ -370,6 +370,7 @@ def read_stats(page, pages: list[dict]):
             m = G.FOLLOW_RX.search(page.inner_text("body"))
             if m:
                 db.run("UPDATE fb_pages SET followers=? WHERE id=?", (G.num(m.group(1)), pg["id"]))
+                db.run("INSERT OR REPLACE INTO page_followers(page_id, day, followers) VALUES (?,?,?)", (pg["id"], db.today(), G.num(m.group(1))))
             for p in db.q("""SELECT id, posted_url FROM posts WHERE fb_page_ref=? AND status='posted' AND posted_url LIKE 'http%'
                              ORDER BY posted_at DESC LIMIT 4""", (pg["id"],)):
                 page.goto(B.fb_url(p["posted_url"]), wait_until="domcontentloaded", timeout=60000)
@@ -389,7 +390,7 @@ def overview() -> dict:
     import json
     st = _s()
     pages = db.q("""SELECT f.*, a.name admin_name FROM fb_pages f LEFT JOIN fb_accounts a ON a.id=f.admin_account_id
-                    WHERE f.status != 'dismissed' ORDER BY CASE f.status WHEN 'active' THEN 0 WHEN 'idea' THEN 1 ELSE 2 END, f.id DESC""")
+                    WHERE f.status != 'dismissed' AND COALESCE(f.kind,'trend')='trend' ORDER BY CASE f.status WHEN 'active' THEN 0 WHEN 'idea' THEN 1 ELSE 2 END, f.id DESC""")
     for p in pages:
         if p["status"] == "active":
             r = db.one("""SELECT COUNT(*) n, AVG(COALESCE(reactions,0)+2*COALESCE(comments,0)+3*COALESCE(shares,0)) eng FROM posts

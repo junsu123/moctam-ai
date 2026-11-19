@@ -9,7 +9,7 @@ import db
 db.DB_PATH = SP / "pagegrow.db"; db.DB_PATH.unlink(missing_ok=True)
 db.PROFILES_DIR = SP / "pagegrow_profiles"; shutil.rmtree(db.PROFILES_DIR, ignore_errors=True); db.PROFILES_DIR.mkdir()
 db.SHOTS_DIR = SP / "multi_shots"; db.SHOTS_DIR.mkdir(exist_ok=True)
-db.init(); db.set_setting("browser_headless", "1"); db.set_setting("bump_folder", str(SP / "pubimg")); db.set_setting("anthropic_api_key", "")
+db.init(); db.set_setting("trend_review", "0"); db.set_setting("browser_headless", "1"); db.set_setting("bump_folder", str(SP / "pubimg")); db.set_setting("anthropic_api_key", "")
 mock = lambda path, d=None: urllib.request.urlopen(urllib.request.Request("http://localhost:8098" + path, data=json.dumps(d).encode() if d is not None else None,
                                                                           method="POST" if d is not None else "GET")).read().decode()
 mock("/pageswitch", {"on": 0})
@@ -28,10 +28,10 @@ with sync_playwright() as pw:
     ctx = B._launch(pw, aid, headless=True); pg = ctx.new_page(); pg.goto("http://localhost:8098/setlogin"); ctx.close()
 c.post(f"/api/accounts/{aid}/check"); time.sleep(1)
 while B.busy(sid) or B.queued(sid): time.sleep(0.3)
-chk("chưa cài thì báo thiếu link Trang", c.post("/api/page-grow/write").status_code == 400)
-e = c.put("/api/page-grow/settings", json={"page_url": "trang mộc tâm"})
+chk("chưa có Trang thì báo thêm Trang", c.post("/api/page-grow/write").status_code == 400)
+e = c.post("/api/page-grow/pages", json={"name": "Mộc Tâm", "url": "trang mộc tâm", "admin_account_id": aid})
 chk("link Trang sai bị từ chối", e.status_code == 400)
-d = c.put("/api/page-grow/settings", json={"page_url": "http://localhost:8098/moctampage", "page_admin_account": aid}).json()
+d = c.post("/api/page-grow/pages", json={"name": "Mộc Tâm", "url": "http://localhost:8098/moctampage", "admin_account_id": aid}).json()
 chk("đủ link Trang + nick quản trị: sẵn sàng", d["ready"] is None and d["nicks"], d["ready"])
 p1 = c.post("/api/page-grow/write").json()
 chk("bài đầu là giới thiệu sản phẩm (tỉ lệ 20% bán hàng), có Zalo, không có giá", p1["page_topic"] == "product" and "Zalo" in p1["content"]
@@ -47,7 +47,7 @@ chk("nick chuyển sang Trang, đăng dưới tên Trang", po["status"] == "post
     and rec[0].get("as_page") is True, (po["status"], po["error"], rec))
 chk("lưu được link bài Trang", "/moctampage/posts/pfbid" in (po["posted_url"] or ""), po["posted_url"])
 chk("đăng xong chuyển về nick cá nhân", "Chuyển ngay" in mock("/moctampage") and not db.get_settings()["page_acting_aid"])
-st = db.one("SELECT * FROM page_stats WHERE day=?", (db.today(),))
+st = db.one("SELECT * FROM page_followers WHERE day=?", (db.today(),))
 po = db.one("SELECT reactions, comments, shares FROM posts WHERE id=?", (p1["id"],))
 chk("đọc được 1,2K người theo dõi và tương tác bài (12 cảm xúc, 3 bình luận, 2 chia sẻ)", st and st["followers"] == 1200
     and (po["reactions"], po["comments"], po["shares"]) == (12, 3, 2), (st, po))
