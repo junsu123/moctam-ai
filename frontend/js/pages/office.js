@@ -1,8 +1,33 @@
 /* --------------------------------------------- văn phòng */
+/* agent tự đi sang bàn đồng nghiệp khi việc cần trao đổi (theo nhật ký việc vừa xong), thỉnh thoảng báo cáo trưởng phòng */
+const DEPT_OF={ceo:"director",khoa:"director",minh:"sales",lan:"sales",ha:"sales",mai:"sales",tuan:"groups",bao:"groups",nhi:"pages",vy:"website"};
+const DEPT_HEAD={director:"ceo",sales:"minh",groups:"tuan",pages:"nhi",website:"vy"};
+const VISIT={lastId:null,lastChat:Date.now()};
+function visitTarget(x,agents){ const a=x.agent_id||"", act=x.action||"", det=x.detail||"";
+  if(a.startsWith("st-")) return DEPT_HEAD[(agents.find(g=>g.id===a)||{}).dept]||null;
+  if(/Đánh giá phòng|Đề xuất tuyển/.test(act)) return "ceo";
+  if(a==="ceo"&&/Tuyển nhân viên/.test(act)){ const st=agents.find(g=>g.kind==="staff"&&det.startsWith(g.name)); return st?st.id:null; }
+  if(a==="ceo"&&/[Dd]uyệt/.test(act)) return "tuan";
+  if(a==="lan") return "ceo";
+  if(a==="tuan"&&/Xếp lịch|lịch/.test(act)){ const sl=agents.find(g=>g.kind==="sale"); return sl?sl.id:null; }
+  if(a==="mai"&&/[Kk]hách|SĐT/.test(act+det)) return "ha";
+  if(a==="ha"||a==="khoa") return a==="ha"?"minh":"ceo";
+  if(a==="bao") return "tuan";
+  if(a==="nhi"&&/Đã tạo Trang|Nghiên cứu/.test(act)) return "ceo";
+  if(a.startsWith("sale-")&&/Xong ca|Đăng bài/.test(act)) return "tuan";
+  return null; }
+function officeVisits(agents,acts){ if(ST.view!=="office"||!window.World||!World.visit) return;
+  const top=acts.length?acts[0].id:0; if(VISIT.lastId===null){ VISIT.lastId=top; return; }
+  const fresh=acts.filter(x=>x.id>VISIT.lastId).reverse().slice(-3); VISIT.lastId=Math.max(VISIT.lastId,top);
+  fresh.forEach((x,i)=>{ const to=visitTarget(x,agents); if(to) setTimeout(()=>World.visit(x.agent_id,to,`${x.action}: ${(x.detail||"").slice(0,70)}`),i*2500); });
+  if(!fresh.length&&Date.now()-VISIT.lastChat>150000){ VISIT.lastChat=Date.now(); // lâu không có việc chung: một người sang báo cáo trưởng phòng
+    const pool=agents.filter(g=>{ const d=g.kind==="staff"?g.dept:DEPT_OF[g.id]; return d&&DEPT_HEAD[d]!==g.id&&(g.status||{}).state==="working"; });
+    const g=pool[Math.floor(Math.random()*pool.length)]; if(g){ const d=g.kind==="staff"?g.dept:DEPT_OF[g.id]; World.visit(g.id,DEPT_HEAD[d],`Báo cáo: ${((g.status||{}).text||"việc đang làm").slice(0,70)}`); } } }
 async function refresh(){
   try{
     const [agents,dash]=await Promise.all([api("/agents"),api("/dashboard")]); ST.agents=agents; ST.dash=dash;
     World.sync(agents, !!dash.meeting_running);
+    if(!dash.meeting_running) officeVisits(agents, dash.activity||[]);
     const s=dash.stats;
     $("#kpis").innerHTML=[["Bài chờ duyệt",s.drafts,s.drafts>0],["Bài đã duyệt / lên lịch",s.approved],["Bài đã đăng",s.posted_total],["Khách nóng",s.leads_hot,s.leads_hot>0],["Khách mới chưa liên hệ",s.leads_new,s.leads_new>0],["Nick đang chạy",s.nicks_total!=null?`${s.nicks_ok||0}/${s.nicks_total||0}`:`${s.sales_ok||0}/${s.sales_total||0}`,!!(s.nicks_problem??s.sales_problem)]]
       .map(([l,v,w])=>`<div class="kpi${w?" warn":""}"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");

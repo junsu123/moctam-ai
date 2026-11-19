@@ -88,16 +88,35 @@ const World = (() => {
     [-6.8,13.4],[-4.4,13.4], // 18-19: nhân viên tuyển thêm Phòng Hội nhóm
     [0.8,13.4],[3.2,13.4], // 20-21: nhân viên Phòng Website
     [8.6,13.4],[11,13.4]]; // 22-23: nhân viên Phòng Trang Facebook
-  DESKS[2]=[-11.6,13.4]; // bàn Tuấn chuyển sang khu Phòng Hội nhóm
-  // khu phòng ban: thảm màu + tên phòng trên sàn
-  function zone(x0,x1,z0,z1,color,label){ mesh(box(x1-x0,0.02,z1-z0),color,{x:(x0+x1)/2,y:0.012,z:(z0+z1)/2,shadow:false});
-    const t=new THREE.Mesh(new THREE.PlaneGeometry(3.4,0.62),new THREE.MeshBasicMaterial({map:textTex([label],{w:512,h:96,bg:"#fffaf0",fg:"#1b2620",font:"700 46px 'Baloo 2', sans-serif"}),transparent:true}));
-    t.rotation.x=-Math.PI/2; t.position.set((x0+x1)/2,0.03,z1-0.45); scene.add(t); }
-  zone(-7.2,0.6,1.7,4.6,"#efe1b5","Phòng Giám đốc");
-  zone(-12.8,0.6,-3.6,-0.3,"#cfe0cf","Phòng Kinh doanh");
-  zone(-12.8,-3.2,12.6,16.6,"#f6d7b6","Phòng Hội nhóm");
-  zone(-2.8,4.4,12.6,16.6,"#cfdcf6","Phòng Website");
-  zone(5,12.6,12.6,16.6,"#f6d0e3","Phòng Trang Facebook");
+  // phòng ban có vách ngăn và cửa: Giám đốc, Kinh doanh (bàn trưởng phòng + chuyên viên), khu Sale, Hội nhóm, Website, Trang Facebook
+  Object.assign(DESKS,{0:[-3.8,-6.4],1:[-0.8,-6.4],3:[-3.8,-3.6],14:[-0.8,-3.6],4:[-8,-4.6],13:[-10.6,-4.6],2:[-11.6,13.4]});
+  const ROOMS=[
+    {k:"gd",name:"Phòng Giám đốc",x0:-13,x1:-6.3,z0:-8,z1:-1.6,door:["s",-9.4],node:"A",rug:"#efe1b5",walls:"es"},
+    {k:"kd",name:"Phòng Kinh doanh",x0:-6.3,x1:2.95,z0:-8,z1:-1.6,door:["s",-2.3],node:"B",rug:"#cfe0cf",walls:"s"},
+    {k:"sale",name:"Phòng Kinh doanh · Sale",x0:-13,x1:-0.4,z0:4.8,z1:11.4,door:["e",8],node:"E",rug:"#e3ecd9",walls:"nes"},
+    {k:"hn",name:"Phòng Hội nhóm",x0:-13,x1:-3.1,z0:12.6,z1:17,door:["n",-8],node:"G",rug:"#f6d7b6",walls:"ne"},
+    {k:"web",name:"Phòng Website",x0:-3.1,x1:4.7,z0:12.6,z1:17,door:["n",0.8],node:"H",rug:"#cfdcf6",walls:"ne"},
+    {k:"tf",name:"Phòng Trang Facebook",x0:4.7,x1:13,z0:12.6,z1:17,door:["n",8.8],node:"I",rug:"#f6d0e3",walls:"n"}];
+  const partGlass=new THREE.MeshPhysicalMaterial({color:0xdfeee6,transparent:true,opacity:0.28,roughness:0.15});
+  function wallRun(x0,z0,x1,z1){ const len=Math.hypot(x1-x0,z1-z0); if(len<0.05) return; const g=new THREE.Group(); g.position.set((x0+x1)/2,0,(z0+z1)/2); g.rotation.y=-Math.atan2(z1-z0,x1-x0); scene.add(g);
+    const pane=new THREE.Mesh(box(len,1.9,0.05),partGlass); pane.position.y=1.2; g.add(pane);
+    mesh(box(len,0.25,0.1),"#a7835c",{parent:g,y:0.125}); mesh(box(len,0.07,0.08),"#6c7f74",{parent:g,y:2.18,shadow:false}); }
+  function doorFrame(x,z,alongX){ const g=new THREE.Group(); g.position.set(x,0,z); if(!alongX) g.rotation.y=Math.PI/2; scene.add(g);
+    for(const dx of [-0.82,0.82]) mesh(box(0.1,2.2,0.12),"#6c4f33",{parent:g,x:dx,y:1.1});
+    mesh(box(1.74,0.12,0.12),"#6c4f33",{parent:g,y:2.2}); const leaf=new THREE.Group(); leaf.position.set(-0.78,0,0); leaf.rotation.y=-1.25; g.add(leaf); // cửa mở hé
+    mesh(box(1.5,2.05,0.05),"#b98a5a",{parent:leaf,x:0.75,y:1.05}); mesh(new THREE.SphereGeometry(0.05,8,6),"#d4af37",{parent:leaf,x:1.35,y:1.05,z:0.05}); }
+  function side(r,sd){ const D=r.door[0]===sd?r.door[1]:null, W=0.85; // một cạnh phòng, chừa lỗ cửa
+    const seg=(a0,a1,f)=>{ if(D===null){ f(a0,a1); return; } f(a0,D-W); f(D+W,a1); };
+    if(sd==="n") seg(r.x0,r.x1,(a,b)=>wallRun(a,r.z0,b,r.z0)); if(sd==="s") seg(r.x0,r.x1,(a,b)=>wallRun(a,r.z1,b,r.z1));
+    if(sd==="e") seg(r.z0,r.z1,(a,b)=>wallRun(r.x1,a,r.x1,b));
+    if(D!==null) doorFrame(sd==="e"?r.x1:D, sd==="n"?r.z0:sd==="s"?r.z1:D, sd!=="e"); }
+  for(const r of ROOMS){ mesh(box(r.x1-r.x0,0.02,r.z1-r.z0),r.rug,{x:(r.x0+r.x1)/2,y:0.012,z:(r.z0+r.z1)/2,shadow:false}); [...r.walls].forEach(sd=>side(r,sd));
+    const t=new THREE.Mesh(new THREE.PlaneGeometry(3.8,0.62),new THREE.MeshBasicMaterial({map:textTex([r.name],{w:576,h:96,bg:"#fffaf0",fg:"#1b2620",font:"700 44px 'Baloo 2', sans-serif"}),transparent:true}));
+    t.rotation.x=-Math.PI/2; t.position.set((r.x0+r.x1)/2,0.03,Math.min(r.z1,16.6)-0.45); scene.add(t);
+    const [sd,at]=r.door; r.in=sd==="e"?[r.x1-0.7,at]:sd==="s"?[at,r.z1-0.7]:[at,r.z0+0.7]; r.out=sd==="e"?[r.x1+0.8,at]:sd==="s"?[at,r.z1+0.7]:[at,r.z0-0.6]; }
+  // lối đi chung giữa các phòng (đồ thị điểm), D = trước cửa phòng họp
+  const NAV={A:[-9.4,0.3],B:[-2.3,0.3],D:[1.4,0.3],E:[1.4,8],F:[1.4,12],G:[-8,12],H:[0.8,12],I:[8.8,12]};
+  const EDGES=[["A","B"],["B","D"],["D","E"],["E","F"],["F","H"],["H","G"],["F","I"]];
   const deskObjs={};
   function buildDesk(i,color,isSale){ const [x,z]=DESKS[i]; const g=new THREE.Group(); scene.add(g); const P={parent:g};
     mesh(box(2,0.1,0.95),"#d8b48a",{...P,x,y:0.76,z:z+0.95}); for(const dx of [-0.9,0.9]) mesh(box(0.08,0.74,0.85),"#a7835c",{...P,x:x+dx,y:0.37,z:z+0.95});
@@ -194,13 +213,26 @@ const World = (() => {
 
   // đường đi: lách cạnh bàn -> lối đi giữa -> cửa kính -> vòng quanh bàn họp -> ghế
   const V=(x,z)=>new THREE.Vector3(x,0,z);
-  function deskLeg(id){ const d=deskSpot(id); if(d.z<5) return [V(d.x+1.5,d.z),V(d.x+1.5,0.4)];
-    if(d.z>12) return [V(d.x+1.5,d.z),V(d.x+1.5,12),V(1.6,12),V(1.6,8.4)];   // khu phòng ban phía trước: ra lối đi rồi vào phòng họp
-    const aisle=d.z<8?4.9:8.4; return [V(d.x+1.5,d.z),V(d.x+1.5,aisle),V(1.6,aisle)]; }   // dãy sale đi vòng lối trước
+  const roomAt=(x,z)=>ROOMS.find(r=>x>r.x0&&x<r.x1&&z>r.z0&&z<r.z1);
+  const nearNode=(x,z)=>Object.keys(NAV).reduce((m,k)=>Math.hypot(NAV[k][0]-x,NAV[k][1]-z)<Math.hypot(NAV[m][0]-x,NAV[m][1]-z)?k:m,"D");
+  function navPath(a,b){ if(a===b) return [a]; const prev={[a]:null}, q=[a]; while(q.length){ const n=q.shift(); if(n===b) break;
+      for(const [u,v] of EDGES){ const m=u===n?v:v===n?u:null; if(m&&!(m in prev)){ prev[m]=n; q.push(m); } } }
+    const out=[]; for(let n=b;n!==null&&n!==undefined;n=prev[n]) out.unshift(n); return out; }
+  function route(x0,z0,x1,z1){ // đi từ điểm này sang điểm khác: ra cửa phòng mình → lối đi chung → vào cửa phòng kia
+    const ra=roomAt(x0,z0), rb=roomAt(x1,z1); if(ra&&ra===rb) return [V(x1,z1)];
+    const pts=[]; if(ra) pts.push(V(...ra.in),V(...ra.out)); const na=ra?ra.node:nearNode(x0,z0), nb=rb?rb.node:nearNode(x1,z1);
+    navPath(na,nb).forEach(k=>pts.push(V(...NAV[k]))); if(rb) pts.push(V(...rb.out),V(...rb.in)); pts.push(V(x1,z1)); return pts; }
+  const beside=id=>{ const d=deskSpot(id); return [d.x+1.15,d.z]; };
+  function deskLeg(id){ const [bx,bz]=beside(id); return [V(bx,bz),...route(bx,bz,...NAV.D)]; }
   function seatLeg(id){ const s=SEATS[id]; const r=[DOOR_O.clone(),DOOR_I.clone()];
     if(s.x>MC.x+0.5) r.push(V(MC.x,(s.z>=0?1:-1)*(Math.hypot(s.x-MC.x,s.z-MC.z)+0.7))); r.push(V(s.x,s.z)); return r; }
-  function goMeeting(id){ const c=chars[id]; if(!SEATS[id]||c.mode==="meeting"||c.mode==="toMeeting") return;
-    c.path=c.mode==="toDesk"? [V(c.root.position.x,c.root.position.z),...seatLeg(id)] : [...deskLeg(id),...seatLeg(id)]; c.final=SEATS[id]; c.mode="toMeeting"; }
+  function goMeeting(id){ const c=chars[id]; if(!SEATS[id]||c.mode==="meeting"||c.mode==="toMeeting") return; const p=c.root.position;
+    c.path=c.mode==="desk"? [...deskLeg(id),...seatLeg(id)] : [...route(p.x,p.z,...NAV.D),...seatLeg(id)]; c.final=SEATS[id]; c.mode="toMeeting"; }
+  // sang bàn đồng nghiệp trao đổi công việc rồi về chỗ
+  function visit(from,to,text){ const c=chars[from], o=chars[to]; if(!c||!o||from===to||c.mode!=="desk"||o.mode==="meeting"||o.mode==="toMeeting") return false;
+    const d=deskSpot(to), sx=d.x-1.1, sz=d.z-0.2, [bx,bz]=beside(from);
+    c.path=[V(bx,bz),...route(bx,bz,sx,sz)]; c.visit={text,back:[...route(sx,sz,bx,bz),V(deskSpot(from).x,deskSpot(from).z)],ry:Math.atan2(d.x-sx,d.z-sz),to};
+    c.final={x:sx,z:sz,ry:c.visit.ry}; c.mode="toVisit"; return true; }
   function goDesk(id){ const c=chars[id]; if(c.mode==="desk"||c.mode==="toDesk") return; const d=deskSpot(id);
     const back=[...deskLeg(id)].reverse();
     c.path = c.mode==="toMeeting"&&c.root.position.x<3 ? [...back,V(d.x,d.z)] : [...[...seatLeg(id)].reverse().slice(1),...back,V(d.x,d.z)]; c.final=d; c.mode="toDesk"; }
@@ -231,10 +263,11 @@ const World = (() => {
     if(camGoal){ camera.position.lerp(camGoal.pos,0.06); controls.target.lerp(camGoal.tgt,0.06); if(camera.position.distanceTo(camGoal.pos)<0.05) camGoal=null; }
     controls.update();
     for(const c of Object.values(chars)){
+      if(c.mode==="visiting"&&performance.now()>c.visitEnd){ c.path=c.visit.back; c.final=deskSpot(c.id); c.mode="toDesk"; }
       const talking = speech.id===c.id && performance.now()<speech.until;
       if(c.path.length){
         const p=c.root.position, tgt=c.path[0], dx=tgt.x-p.x, dz=tgt.z-p.z, dist=Math.hypot(dx,dz);
-        if(dist<0.08){ c.path.shift(); if(!c.path.length){ c.mode=c.mode==="toMeeting"?"meeting":"desk"; } }
+        if(dist<0.08){ c.path.shift(); if(!c.path.length){ if(c.mode==="toVisit"){ c.mode="visiting"; c.visitEnd=performance.now()+6500; say(c.id,c.visit.text,6200); } else c.mode=c.mode==="toMeeting"?"meeting":"desk"; } }
         else { const sp=2.4*dt; p.x+=dx/dist*Math.min(sp,dist); p.z+=dz/dist*Math.min(sp,dist); c.root.rotation.y=lerpA(c.root.rotation.y,Math.atan2(dx,dz),0.2); }
         const sw=Math.sin(t*11); c.legs[0].rotation.x=sw*0.6; c.legs[1].rotation.x=-sw*0.6; c.arms[0].rotation.x=-sw*0.5; c.arms[1].rotation.x=sw*0.5;
         c.body.position.y=Math.abs(Math.sin(t*11))*0.06;
@@ -286,9 +319,9 @@ const World = (() => {
     for(const a of agents){ const label=(a.level?`${a.name} · Cấp ${a.level}`:a.name)+(a.status?.state==="learning"?" · đang học":""); if(chars[a.id] && tags[a.id] && tags[a.id].textContent!==label){ tags[a.id].textContent=label; AGENT[a.id]={...AGENT[a.id],...a}; } }
     if(changed){ layoutSeats(agents.map(a=>a.id)); for(const c of Object.values(chars)) if(c.mode==="meeting"){ const s=SEATS[c.id]; c.root.position.set(s.x,0,s.z); c.final=s; } }
     for(const a of agents){ const c=chars[a.id]; if(!c) continue; const st=a.status||{}; c.state=st.state||"idle"; c.statusText=st.text||"";
-      if(st.state==="meeting"||st.state==="talking"||meetingRunning) goMeeting(a.id); else goDesk(a.id); }
+      if(st.state==="meeting"||st.state==="talking"||meetingRunning) goMeeting(a.id); else if(c.mode!=="toVisit"&&c.mode!=="visiting") goDesk(a.id); }
   }
   function mount(slot){ if(stage.parentNode!==slot){ slot.appendChild(stage); resize(); } }
-  return {setCam,sync,say,setBoard,mount};
+  return {setCam,sync,say,setBoard,mount,visit};
 })();
 

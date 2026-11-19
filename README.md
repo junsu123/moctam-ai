@@ -60,6 +60,12 @@ Mục **Phòng ban** (nhóm Điều hành ở thanh bên). Công ty chia 5 phòn
   thì tuyển luôn và báo Telegram; *Chờ sếp duyệt* thì sếp bấm **Duyệt tuyển / Không** ở mục Phòng ban. Không đạt thì ghi lý do CEO không tuyển.
 - **Nhân viên mới** có tên, ngoại hình màu của phòng, bàn trống trong khu của phòng (mỗi phòng 2 bàn), lời dặn theo vị trí, lên cấp như
   agent khác. Sếp bấm **Cho nghỉ** để bỏ bớt người (việc của vị trí trở về trưởng phòng).
+- **Văn phòng 3D có phòng thật**: mỗi phòng có vách kính thấp và cửa ra vào (Giám đốc, Kinh doanh, khu Sale, Hội nhóm, Website, Trang
+  Facebook), lối đi chung nối các cửa với phòng họp. Agent **tự đi sang bàn đồng nghiệp khi việc cần trao đổi**, ra đúng cửa phòng mình,
+  theo lối đi, vào cửa phòng kia, nói nội dung việc (bong bóng thoại) rồi về chỗ: Lan viết bài → sang CEO; CEO duyệt bài → sang Tuấn; Tuấn
+  xếp lịch → sang sale; Mai có khách → sang Hà; Hà → Minh; Khoa → CEO; Bảo, sale xong ca → Tuấn; Nhi tạo Trang → CEO; trưởng phòng
+  đánh giá / đề xuất tuyển → CEO; CEO tuyển người → sang chào nhân viên mới; nhân viên tuyển thêm → trưởng phòng của mình. Lâu không có
+  việc chung thì thỉnh thoảng một người sang báo cáo trưởng phòng. Có họp thì mọi người đi thẳng từ chỗ đang đứng tới phòng họp.
 - Tắt việc tự đánh giá hằng tuần: cài đặt `dept_on=0` (hoặc nhắn CEO); đổi ngày / giờ: `dept_review_weekday`, `dept_review_time`.
 
 ## Một ngày làm việc
