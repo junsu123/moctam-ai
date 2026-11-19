@@ -2,7 +2,7 @@
       <div class="vh"><div><h1>Trang xu hướng · Nhi</h1><p>Mỗi sáng Nhi đọc xu hướng tìm kiếm Google Việt Nam, chấm chủ đề nào nóng bền, đề xuất Trang mới và lên lịch bài cho các Trang đang chạy. Mỗi bài có <b>prompt tạo ảnh gửi lên Telegram</b>: sếp tạo ảnh rồi <b>trả lời (reply) tin đó bằng ảnh</b>, Nhi tự lấy ảnh và xếp đăng. Nick quản trị chuyển sang Trang đăng bài, xong chuyển về.</p></div>
         <div class="row wrap"><button class="btn" type="button" id="trResearch">Nhi đọc xu hướng ngay</button><button class="btn primary" type="button" id="trPlan">Lên lịch bài hôm nay</button></div></div>
       <p class="fr-note"><b>Trang do sếp tạo tay trên Facebook</b> (khoảng 3 phút, có sẵn tên, mô tả, prompt ảnh đại diện / ảnh bìa Nhi soạn), rồi dán link vào đây. Phần mềm không tự tạo Trang: tạo Trang bằng công cụ tự động dễ bị Facebook coi là tạo tài sản giả và hạn chế luôn nick quản trị. Nhi tránh chủ đề chính trị, người thật cụ thể, tai nạn, cờ bạc, không giật tít sai sự thật, không đặt tên giả làm Trang chính thức của tổ chức nào.</p>
-      <p class="fr-note" id="trTg" hidden><b>Chưa kết nối Telegram:</b> prompt ảnh chưa gửi được. Kết nối ở Cài đặt → Bot Telegram, hoặc tải ảnh ngay trên trang này.</p>
+      <p class="fr-note" id="trTg" hidden><b>Chưa kết nối Telegram:</b> prompt ảnh chưa gửi được. Cài bot ảnh riêng ở thẻ bên phải (hoặc bot chính ở Cài đặt → Bot Telegram), hoặc tải ảnh ngay trên trang này.</p>
       <div class="pr-stats fr-stats" id="trStats"></div>
       <div class="fr-grid">
         <div>
@@ -15,6 +15,8 @@
               <form id="trAdd" class="row wrap" style="gap:8px;margin-top:6px"><input id="trAddName" placeholder="Tên Trang" aria-label="Tên Trang"><input id="trAddNiche" placeholder="Ngách (VD mẹo nấu ăn)" aria-label="Ngách"><button class="btn sm" type="submit">Thêm</button></form></details></section>
         </div>
         <div>
+          <section class="card" id="tiCard" style="margin-bottom:12px"><div class="card-h"><div><h3>Bot Telegram riêng cho ảnh</h3><p class="small muted" style="margin:2px 0 0">Prompt ảnh, nhận ảnh, ý tưởng Trang, bài đã đăng và báo cáo 21:45 của Nhi đi qua bot này, không lẫn với tin bán hàng của bot chính.</p></div></div>
+            <div id="tiBody"></div></section>
           <section class="card"><div class="card-h"><div><h3>Chủ đề Nhi chọn</h3><p class="small muted" style="margin:2px 0 0" id="trDay"></p></div></div><ul class="cm-top" id="trHot"></ul></section>
           <section class="card" style="margin-top:12px"><div class="card-h"><div><h3>Xu hướng tìm kiếm</h3><p class="small muted" style="margin:2px 0 0">Google Trends Việt Nam, lượt tìm ước tính.</p></div></div><ul class="cm-top" id="trTrends"></ul></section>
         </div>

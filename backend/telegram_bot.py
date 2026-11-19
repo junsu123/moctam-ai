@@ -163,6 +163,10 @@ def _on_log(agent_id: str, action: str, detail: str):
         return  # bài sale tự đăng đã có tin của sale; bài sếp tự đánh dấu thì sếp đã biết
     if not report_enabled():
         return
+    if agent_id == "nhi":
+        import telegram_img
+        if telegram_img.configured():
+            return  # việc của Nhi đi qua bot ảnh riêng
     with _done_lock:
         _done_buf.append((time.time(), str(agent_id), action, detail or ""))
 

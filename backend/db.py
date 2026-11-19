@@ -462,7 +462,8 @@ DEFAULT_SETTINGS = {
     "bump_stop_after": "3",  # bài N lượt bình luận gần nhất không thêm bình luận/khách nào: thôi bình luận bài đó (0 = không ngừng)
     "bump_check": "1",  # 6 giờ sau nick mở lại bài xem bình luận còn không; nhóm xóa thì ngừng bình luận nhóm đó
     "bump_rest_days": "30",
-    "trend_on": "1", "trend_time": "07:40",  # Nhi: đọc xu hướng mỗi sáng, đề xuất Trang, lên lịch bài Trang xu hướng (ảnh qua Telegram)
+    "trend_on": "1", "trend_time": "07:40",
+    "tg2_token": "", "tg2_chat_ids": "", "tg2_pair_code": "", "tg2_offset": "0", "tg2_report": "1",  # bot Telegram riêng cho ảnh / Nhi  # Nhi: đọc xu hướng mỗi sáng, đề xuất Trang, lên lịch bài Trang xu hướng (ảnh qua Telegram)
     "page_grow_on": "1",  # nuôi Trang qua Chrome của nick quản trị (không dùng Graph API): Lan viết, nick đăng dưới tên Trang
     "page_url": "", "page_admin_account": "", "page_grow_per_day": "1", "page_grow_times": "08:30,20:30", "page_grow_sale_pct": "20",
     "page_grow_review": "0", "page_grow_off": "", "page_grow_plan_time": "07:30", "page_acting_aid": "",

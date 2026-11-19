@@ -56,6 +56,8 @@ def startup():
     llm.reload()  # khóa API nhập trong phần mềm (nếu có) được ưu tiên hơn file .env
     scheduler.start()
     telegram_bot.start()
+    import telegram_img
+    telegram_img.start()  # bot Telegram riêng cho ảnh + việc của Nhi (nếu sếp đã cài)
     threading.Thread(target=_update_watcher, daemon=True).start()
     import updater
     updater.idle_hook = _idle
@@ -212,7 +214,7 @@ def dashboard():
 # ------------------------------------------------------------------ các nhóm API: backend/routes/*.py
 # Mỗi file routes/xxx.py là một đoạn của main.py, chạy chung không gian tên với main.py (dùng chung app, db, helper),
 # đúng thứ tự dưới đây (thứ tự đăng ký đường dẫn giữ nguyên như khi còn là một file). Thêm nhóm mới: tạo file rồi thêm tên vào ROUTES.
-ROUTES = ["products", "groups", "templates", "my_groups", "prospects", "posts", "leads", "meeting", "settings", "sales", "company", "errors", "ceo", "system", "kpi", "learning", "comments", "post_target", "friends", "replies", "fb_rules", "website", "page_inbox", "nick_health", "page_grow", "trend_pages"]
+ROUTES = ["products", "groups", "templates", "my_groups", "prospects", "posts", "leads", "meeting", "settings", "sales", "company", "errors", "ceo", "system", "kpi", "learning", "comments", "post_target", "friends", "replies", "fb_rules", "website", "page_inbox", "nick_health", "page_grow", "trend_pages", "telegram_img"]
 
 
 def _include(name: str):

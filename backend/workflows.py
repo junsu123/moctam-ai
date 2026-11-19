@@ -530,6 +530,9 @@ def mark_posted(post_id: int, posted_url: str = "", poster: str = "", fb_post_id
     if post and post.get("group_id"):
         db.run("UPDATE groups SET last_posted_at=? WHERE id=?", (db.now(), post["group_id"]))
     db.log("tuan", "Đã đăng", f"Bài #{post_id} được đánh dấu đã đăng {('bởi ' + poster) if poster else ''}")
+    if post and post.get("fb_page_ref"):  # bài Trang xu hướng: báo qua bot ảnh của Nhi
+        import telegram_img
+        telegram_img.posted(post, posted_url)
     import learning
     learning.award("tuan", 3, "Bài được đăng đúng lịch")
     if post and post.get("sale_id"):

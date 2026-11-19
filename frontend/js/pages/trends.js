@@ -2,7 +2,7 @@
 async function loadTr(){ try{ ST.tr=await api("/trends"); }catch(e){ toast(e.message); return; } renderTr(); }
 const trCopy=async t=>{ try{ await navigator.clipboard.writeText(t); toast("Đã chép"); }catch(e){ toast("Không chép được, bôi đen để chép"); } };
 function renderTr(){ const d=ST.tr, hm=t=>t?`${t.slice(11,16)} ${t.slice(8,10)}/${t.slice(5,7)}`:"";
-  $("#trTg").hidden=!!d.telegram;
+  $("#trTg").hidden=!!d.telegram; renderTi(d.img_bot);
   const act=d.pages.filter(p=>p.status==="active"), wait=d.posts.filter(p=>p.status==="need_image");
   $("#trStats").innerHTML=[[act.length,"Trang đang chạy"],[d.pages.filter(p=>p.status==="idea").length,"Ý tưởng Trang mới"],[wait.length,"Bài chờ ảnh"],[d.posts.filter(p=>p.status==="scheduled").length,"Bài đã có ảnh, chờ đăng"]]
     .map(([v,l])=>`<div class="pr-stat"><b>${v}</b><span>${l}</span></div>`).join("");
@@ -44,3 +44,21 @@ $("#v-trends").addEventListener("click",async e=>{
 $("#v-trends").addEventListener("change",e=>{ const inp=e.target.closest("[data-tra=file]"); if(!inp||!inp.files[0]) return; const id=inp.closest("[data-trp]").dataset.trp, f=inp.files[0], rd=new FileReader();
   rd.onload=async()=>{ try{ await api(`/trends/posts/${id}/image`,"POST",{data:rd.result,ext:(f.type.split("/")[1]||"jpg")}); toast("Đã nhận ảnh, bài đã xếp đăng"); loadTr(); }catch(err){ toast(err.message); } }; rd.readAsDataURL(f); });
 
+/* bot Telegram riêng cho ảnh của Nhi */
+function renderTi(b){ const box=$("#tiBody"); if(!b){ box.innerHTML=""; return; }
+  const err=b.error?`<p class="er" style="margin:6px 0 0">${esc(b.error)}</p>`:"";
+  if(!b.has_token){ box.innerHTML=`<ol class="small" style="margin:4px 0 8px;padding-left:18px"><li>Trên Telegram nhắn <b>@BotFather</b> → <code>/newbot</code>, đặt tên (VD “Nhi Ảnh Mộc Tâm”), nhận token.</li><li>Dán token vào ô dưới → <b>Kiểm tra và lưu</b>.</li><li>Mở bot vừa tạo, gửi <b>mã 6 số</b> phần mềm hiện ra.</li></ol>
+      <div class="row wrap" style="gap:6px"><input id="tiToken" placeholder="123456789:AAH…" aria-label="Token bot ảnh" style="flex:1 1 200px" autocomplete="off"><button type="button" class="btn sm primary" data-ti="save">Kiểm tra và lưu</button></div>${err}`; return; }
+  if(!b.chats){ box.innerHTML=`<p class="small" style="margin:4px 0">Bot <b>@${esc(b.bot||"")}</b> (${esc(b.token_masked)}) đã lưu. Mở bot trên Telegram và gửi mã:</p>
+      <p style="font:800 28px var(--f-display);letter-spacing:4px;margin:4px 0">${esc(b.pair_code||"——")}</p><div class="row wrap" style="gap:6px"><button type="button" class="btn sm" data-ti="pair">Tạo mã mới</button><button type="button" class="btn sm ghost" data-ti="clear">Gỡ bot</button></div>${err}`; return; }
+  box.innerHTML=`<p class="small" style="margin:4px 0"><span class="chip ok">Đã kết nối</span> <b>@${esc(b.bot||"")}</b> · ${b.chats} người nhận</p>
+    <label class="row small"><input type="checkbox" id="tiReport" ${b.report?"checked":""}> Báo việc của Nhi và báo cáo 21:45 qua bot này</label>
+    <p class="small muted" style="margin:4px 0">Lệnh trên bot: /anh (bài chờ ảnh), /trang, /xuhuong, /baocao.</p>
+    <div class="row wrap" style="gap:6px"><button type="button" class="btn sm" data-ti="test">Gửi tin thử</button><button type="button" class="btn sm" data-ti="pair">Thêm người nhận</button><button type="button" class="btn sm ghost" data-ti="clear">Gỡ bot</button></div>${err}`; }
+$("#tiCard").addEventListener("click",async e=>{ const b=e.target.closest("[data-ti]"); if(!b) return; const a=b.dataset.ti; b.disabled=true;
+  try{ if(a==="save"){ await api("/tg-img/token","POST",{token:$("#tiToken").value.trim()}); toast("Token đúng. Mở bot và gửi mã 6 số"); }
+    else if(a==="pair"){ await api("/tg-img/pair","POST"); toast("Đã tạo mã mới, gửi mã này cho bot"); }
+    else if(a==="test"){ await api("/tg-img/test","POST"); toast("Đã gửi tin thử"); }
+    else if(a==="clear"){ if(!b.dataset.sure){ b.dataset.sure="1"; b.textContent="Bấm lần nữa để gỡ"; b.disabled=false; return; } await api("/tg-img/token","DELETE"); toast("Đã gỡ bot ảnh: Nhi dùng bot chính"); }
+    loadTr(); }catch(err){ toast(err.message); b.disabled=false; } });
+$("#tiCard").addEventListener("change",async e=>{ if(e.target.id!=="tiReport") return; try{ await api("/tg-img/settings","PUT",{report:e.target.checked?1:0}); toast(e.target.checked?"Nhi báo việc qua bot ảnh":"Đã tắt báo việc (prompt ảnh vẫn gửi)"); }catch(err){ toast(err.message); } });

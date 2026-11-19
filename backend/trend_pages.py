@@ -218,7 +218,11 @@ JSON: {{"content": "...", "hashtags": "...", "image_prompt": "...", "image_note"
 
 
 def _tg(text: str) -> list:
+    """Tin của Nhi đi qua bot ảnh riêng (telegram_img) nếu sếp đã cài, không thì qua bot chính."""
     try:
+        import telegram_img
+        if telegram_img.configured():
+            return telegram_img.send(text)
         import telegram_bot
         if telegram_bot.configured():
             return telegram_bot.send(text)
@@ -273,7 +277,7 @@ def set_image(post_id: int, data: bytes, ext: str = "jpg") -> dict:
     return db.one("SELECT * FROM posts WHERE id=?", (post_id,))
 
 
-def on_telegram_photo(msg: dict) -> str | None:
+def on_telegram_photo(msg: dict, getter=None) -> str | None:
     """Bot Telegram nhận ảnh: tìm bài đang chờ (ưu tiên tin sếp trả lời), tải ảnh lớn nhất, gắn vào bài. Trả về câu báo lại."""
     import httpx
     import telegram_bot
@@ -288,8 +292,11 @@ def on_telegram_photo(msg: dict) -> str | None:
     p = _waiting_for(reply_id)
     if not p:
         return ("Tin sếp trả lời không phải tin xin ảnh đang chờ." if reply_id else "Hiện không có bài nào đang chờ ảnh.")
-    info = telegram_bot.call("getFile", file_id=fid)
-    data = httpx.get(f"{telegram_bot.API}/file/bot{telegram_bot.token()}/{info['file_path']}", timeout=60).content
+    if getter:  # ảnh gửi qua bot ảnh riêng
+        data = getter(fid)
+    else:
+        info = telegram_bot.call("getFile", file_id=fid)
+        data = httpx.get(f"{telegram_bot.API}/file/bot{telegram_bot.token()}/{info['file_path']}", timeout=60).content
     p = set_image(p["id"], data, ext)
     left = db.one("SELECT COUNT(*) n FROM posts WHERE status='need_image'")["n"]
     return (f"✅ Đã nhận ảnh cho bài #{p['id']}, đăng lúc {p['scheduled_for'][11:16]} {p['scheduled_for'][8:10]}/{p['scheduled_for'][5:7]}."
@@ -367,8 +374,9 @@ def overview() -> dict:
                     ORDER BY CASE p.status WHEN 'need_image' THEN 0 WHEN 'scheduled' THEN 1 WHEN 'failed' THEN 2 ELSE 3 END,
                              COALESCE(p.scheduled_for, p.posted_at) LIMIT 60""", (_ago(days=7),))
     import telegram_bot
-    return {"pages": pages, "trends": trends, "hot": db.q("SELECT * FROM trend_hot WHERE day=(SELECT MAX(day) FROM trend_hot) ORDER BY score DESC"),
-            "posts": posts, "telegram": telegram_bot.configured(), "research_day": st.get("trend_research_day") or "",
+    import telegram_img
+    return {"pages": pages, "img_bot": telegram_img.status(), "trends": trends, "hot": db.q("SELECT * FROM trend_hot WHERE day=(SELECT MAX(day) FROM trend_hot) ORDER BY score DESC"),
+            "posts": posts, "telegram": telegram_bot.configured() or telegram_img.configured(), "research_day": st.get("trend_research_day") or "",
             "nicks": db.q("""SELECT a.id, a.name, s.name sale_name FROM fb_accounts a JOIN sales s ON s.id=a.sale_id WHERE a.enabled=1
                              AND COALESCE(s.status,'active')!='fired' ORDER BY a.sale_id, a.id"""),
             "settings": {k: st.get(k, "") for k in ("trend_on", "trend_time")}}

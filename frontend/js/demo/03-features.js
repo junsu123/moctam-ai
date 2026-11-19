@@ -8,7 +8,15 @@
         {id:903,status:"posted",page_name:"Bếp Nhà Mình Mỗi Ngày",posted_at:hm(td,"07:30"),content:"🍳 Mẹo chiên trứng không dính chảo",reactions:84,comments:17,shares:9,posted_url:"https://facebook.com/bepnhaminh/posts/1"}],
       hot:[["món ngon cuối tuần",86,"mẹo nấu ăn","Lượt tìm tăng mạnh 3 ngày liên tiếp"],["mẹo nuôi mèo",78,"nuôi chó mèo","Lặp lại 5/7 ngày"],["thời tiết hà nội",55,"thời tiết","Tin ngắn hạn, khó làm Trang"]].map((h,i)=>({id:i,title:h[0],score:h[1],niche:h[2],why:h[3]})),
       trends:[["món ngon cuối tuần","200K+","10 món ngon cuối tuần dễ làm"],["thời tiết hà nội","100K+","Hà Nội trở lạnh"],["mẹo nuôi mèo","50K+","Cách chọn hạt cho mèo"],["giá vàng","500K+","Giá vàng hôm nay"]].map(t=>({title:t[0],traffic:t[1],news:[{title:t[2]}]}))}; }
-    const view=()=>({pages:S.tr.pages.filter(p=>p.status!=="dismissed"),posts:S.tr.posts.filter(p=>p.status!=="rejected"),hot:S.tr.hot,trends:S.tr.trends,telegram:true,research_day:td,
+    S.ti=S.ti||{has_token:false,token_masked:"",bot:null,chats:0,pair_code:"",error:null,report:true};
+    if(P.startsWith("/tg-img")){ const t=S.ti;
+      if(P==="/tg-img/token"&&method==="POST"){ if(!/^\d{5,12}:[A-Za-z0-9_-]{30,}$/.test(body.token||"")) throw new Error("Token không đúng dạng. Token do @BotFather gửi có dạng 123456789:AAH…, copy đủ cả dãy"); Object.assign(t,{has_token:true,token_masked:body.token.split(":")[0]+":…"+body.token.slice(-4),bot:"nhi_anh_mt_bot",pair_code:String(Math.floor(1e5+Math.random()*9e5))}); setTimeout(()=>{ t.chats=1; },6000); return t; }
+      if(P==="/tg-img/token"&&method==="DELETE"){ Object.assign(t,{has_token:false,token_masked:"",bot:null,chats:0,pair_code:""}); return t; }
+      if(P==="/tg-img/pair"){ t.pair_code=String(Math.floor(1e5+Math.random()*9e5)); return t; }
+      if(P==="/tg-img/settings"){ t.report=!!+body.report; return t; }
+      if(P==="/tg-img/test") return {ok:true};
+      return t; }
+    const view=()=>({img_bot:S.ti,pages:S.tr.pages.filter(p=>p.status!=="dismissed"),posts:S.tr.posts.filter(p=>p.status!=="rejected"),hot:S.tr.hot,trends:S.tr.trends,telegram:true,research_day:td,
       nicks:workingNicks().map(a=>({id:a.id,name:a.name,sale_name:(S.sales.find(x=>x.id===a.sale_id)||{}).name})),settings:{trend_on:"1",trend_time:"07:40"}});
     if(method==="GET") return view();
     if(P==="/trends/research") return {ok:true,trends:4,hot:3,ideas:0};

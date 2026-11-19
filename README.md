@@ -172,6 +172,17 @@ Agent mới **Nhi** (Xu hướng & Trang mới, bàn riêng trong văn phòng 3D
    về nick cá nhân (như mục Nuôi Page). Mỗi ngày nick đọc người theo dõi và tương tác 4 bài gần nhất của từng Trang (chỉ đọc).
 6. Tạm dừng Trang thì các bài chưa đăng bị bỏ. Không dùng nick khác like / chia sẻ / bình luận Trang.
 
+**Bot Telegram riêng cho ảnh** (thẻ ở mục Trang xu hướng): toàn bộ tin của Nhi đi qua một bot riêng, không lẫn với báo cáo bán hàng của bot
+chính: prompt ảnh, nhận ảnh, ý tưởng Trang mới, lịch bài, bài đã đăng lên Trang (kèm link), báo cáo cuối ngày 21:45 (mỗi Trang: đã đăng,
+chờ ảnh, chờ giờ đăng, người theo dõi). Cài đặt:
+1. Telegram → **@BotFather** → `/newbot`, đặt tên (VD “Nhi Ảnh Mộc Tâm”), nhận token. Phải là bot **khác** bot chính.
+2. Dán token vào thẻ → **Kiểm tra và lưu** (phần mềm hỏi Telegram trước khi lưu).
+3. Mở bot vừa tạo, gửi **mã 6 số** hiện trên thẻ. Thêm người nhận (VD người làm ảnh): **Thêm người nhận** rồi người đó gửi mã mới.
+
+Lệnh trên bot ảnh: `/anh` (bài đang chờ ảnh, gửi lại prompt từng bài), `/trang` hoặc `/baocao` (việc hôm nay theo Trang), `/xuhuong`
+(chủ đề Nhi chọn). Gửi ảnh: trả lời đúng tin xin ảnh; gửi ảnh không trả lời thì gắn vào bài chờ ảnh lâu nhất. Bỏ ô **Báo việc của Nhi** thì
+bot chỉ gửi prompt ảnh. **Gỡ bot** thì Nhi quay về dùng bot chính. Chưa cài bot ảnh thì mọi thứ chạy qua bot chính như trước.
+
 ## Nuôi Page (không dùng Graph API)
 
 Mục **Nuôi Page** (thanh bên, dưới Bình luận). Trang lớn lên bằng bài có ích, đăng đều, đúng giờ; phần mềm làm như sau:
@@ -1351,6 +1362,7 @@ backend/
   bump_watch.py  Bình luận có ích không: đo từng lượt, thôi bài không ra gì, nhóm xóa bình luận thì ngừng
   page_inbox.py  Tin nhắn Fanpage (Messenger): Hà soạn trả lời, sếp duyệt, gửi trong 24 giờ
   nick_health.py Sức khỏe từng nick: điểm rủi ro 30 ngày, tự giảm trần nick yếu, báo Telegram
+  telegram_img.py Bot Telegram riêng cho ảnh + việc của Nhi: ghép nối, nhận ảnh, lệnh /anh /trang /xuhuong, báo cáo 21:45
   trend_pages.py Nhi: Google Trends, đề xuất Trang, lịch bài Trang xu hướng, prompt ảnh gửi Telegram, nhận ảnh sếp trả lời
   page_grow.py   Nuôi Page không API: Lan viết lịch 80/20, nick quản trị chuyển sang Trang đăng bài, đọc tương tác, học chủ đề
   group_feed.py  Lướt bảng tin nhóm: mọi nick đọc >=20 bài, lọc 3 lớp (chữ, Claude, học từ sếp), bình luận người hỏi mua (kèm ảnh)
