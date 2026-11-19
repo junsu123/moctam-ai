@@ -2,7 +2,7 @@
 const World = (() => {
   const stage=$("#stage"), canvas=$("#cv"), overlay=$("#overlay");
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5)); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.outputEncoding = THREE.sRGBEncoding;
   const scene=new THREE.Scene();
   const camera=new THREE.PerspectiveCamera(38,1,0.1,200);
@@ -203,7 +203,15 @@ const World = (() => {
   function resize(){ const w=stage.clientWidth,h=stage.clientHeight; if(!w||!h) return; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
   new ResizeObserver(resize).observe(stage);
   const lerpA=(a,b,t)=>{ let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI; return a+d*t; };
-  function tick(){
+  let lastF=0, lastIn=performance.now(), nF=0;
+  ["pointerdown","pointermove","wheel"].forEach(ev=>stage.addEventListener(ev,()=>{ lastIn=performance.now(); },{passive:true}));
+  renderer.shadowMap.autoUpdate=false;
+  function tick(now){
+    if(document.hidden||!stage.offsetParent){ clock.getDelta(); setTimeout(()=>requestAnimationFrame(tick),600); return; }  // không ai xem: không vẽ
+    // có người đi lại / nói / sếp đang xoay cảnh: ~30 hình/giây; còn lại mọi người ngồi làm việc: ~10 hình/giây cho đỡ tốn máy
+    const lively=camGoal||performance.now()<speech.until||now-lastIn<15000||Object.values(chars).some(c=>c.mode!=="desk"&&c.mode!=="meeting"||c.mode==="meeting");
+    if(now-lastF<(lively?32:95)){ requestAnimationFrame(tick); return; } lastF=now||0;
+    if(lively||++nF%3===0) renderer.shadowMap.needsUpdate=true;  // bóng đổ: vẽ lại thưa hơn khi cảnh đứng yên
     const dt=Math.min(clock.getDelta(),0.2), t=clock.elapsedTime;
     if(camGoal){ camera.position.lerp(camGoal.pos,0.06); controls.target.lerp(camGoal.tgt,0.06); if(camera.position.distanceTo(camGoal.pos)<0.05) camGoal=null; }
     controls.update();

@@ -18,6 +18,10 @@ Trả lời sếp bằng tiếng Việt, ngắn. Sếp trả tiền theo lượt
   `backend/ui.py` ghép lại thành một trang khi chạy (mọi JS vẫn trong một `<script>`, như bản một file cũ). Không còn `frontend/index.html`.
   Đổi giao diện = sửa đúng file của trang đó, theo khuôn trang Kết bạn (`fr-*`: `views/friends.html`, `js/pages/friends.js`).
 
+- Hiệu suất: `db.get_settings()` có bộ nhớ đệm 5 giây (ghi qua `set_setting`/`run` câu có `settings` là xóa đệm); giao diện tự cập nhật thì
+  dùng `if(UX.idle()) return;` (`js/ux.js`); 3D chỉ vẽ khi đang xem. Đo bằng `python3 dev/perf.py`. Hướng dẫn cho sếp: `docs/HUONG-DAN-SUA-CODE.md`
+  (cập nhật khi đổi cấu trúc code).
+
 ## Cách làm tiết kiệm token (bắt buộc)
 1. Tìm bằng `grep -n` rồi đọc đúng đoạn (`sed -n a,bp`), không Read cả file lớn. Không đọc lại file vừa sửa.
 2. Sửa nhiều chỗ: một lệnh `python3 - <<EOF` thay chuỗi (assert chuỗi cũ có), thay vì nhiều lần Edit.

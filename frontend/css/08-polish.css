@@ -1,0 +1,45 @@
+/* ================================================================ Hoàn thiện kiểu bản thương mại (11/2026)
+   Thanh tiến trình khi đang tải, bảng tìm nhanh (Ctrl/⌘ K), mô tả trang gọn 2 dòng, ghi chú ẩn được, thông báo có biểu tượng,
+   chuyển động nhẹ (tắt khi máy đặt giảm chuyển động), số canh thẳng cột. */
+body.busy::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--honey),var(--accent),transparent);background-size:50% 100%;background-repeat:no-repeat;
+  animation:mt-load 1s ease-in-out infinite}
+@keyframes mt-load{0%{background-position:-50% 0}100%{background-position:150% 0}}
+.pr-stat b,.kpi .v,.cm-eff b,.nh-list .sc,.badge,time{font-variant-numeric:tabular-nums}
+.card,.cm-item,.pr-stat,.kpi{transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease}
+.cm-item:hover{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+.btn{transition:background .15s ease,box-shadow .15s ease,transform .08s ease,opacity .15s}
+.btn:active:not(:disabled){transform:translateY(1px) scale(.99)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.side .nav{overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--side-2) transparent}
+/* mô tả đầu trang: 2 dòng, bấm Xem thêm */
+.vh p.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vh p.clamp.open{display:block}
+.vh .more{background:none;border:0;padding:0;margin-top:2px;color:var(--accent);font:600 13px var(--f-body,inherit);cursor:pointer}
+.vh .more:hover{text-decoration:underline}
+/* ghi chú ẩn được */
+.fr-note{position:relative;padding-right:34px}
+.fr-note .x{position:absolute;top:6px;right:6px;width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;font-size:16px;line-height:1}
+.fr-note .x:hover{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink)}
+/* thông báo */
+.toast{display:flex;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);animation:mt-pop .18s ease}
+.toast::before{content:"✓";display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:800;flex:none}
+.toast.err::before{content:"!";background:var(--danger)}
+@keyframes mt-pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* tìm nhanh */
+.qk-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;margin:0 0 4px;border-radius:9px;border:1px solid var(--side-2);
+  background:transparent;color:var(--side-muted);font:inherit;font-size:13px;cursor:pointer}
+.qk-btn:hover{background:var(--side-2);color:var(--side-ink)}
+.qk-btn kbd{margin-left:auto;font:600 11px ui-monospace,monospace;padding:1px 6px;border-radius:5px;border:1px solid var(--side-2);color:var(--side-muted)}
+.qk{position:fixed;inset:0;z-index:9000;background:rgba(15,20,18,.42);display:flex;align-items:flex-start;justify-content:center;padding:12vh 14px 14px}
+.qk[hidden]{display:none}
+.qk-box{width:min(560px,100%);background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.28);overflow:hidden;animation:mt-pop .15s ease}
+.qk-box input{width:100%;border:0;border-bottom:1px solid var(--line);padding:14px 16px;font-size:16px;background:transparent;color:var(--ink);outline:none}
+.qk-list{max-height:52vh;overflow:auto;margin:0;padding:6px;list-style:none}
+.qk-list li{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;cursor:pointer;color:var(--ink)}
+.qk-list li svg{width:18px;height:18px;flex:none;color:var(--muted)}
+.qk-list li small{margin-left:auto;color:var(--muted);font-size:12px}
+.qk-list li.on{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.qk-list li.on svg{color:var(--accent)}
+.qk-foot{display:flex;gap:14px;padding:8px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}

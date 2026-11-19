@@ -66,5 +66,5 @@ $("#v-replies").addEventListener("click",async e=>{
   try{ const r=await api(`/replies/${rid}`,"PUT",{action:a,reply:ta?ta.value:null});
     toast(a==="approve"?(r.later?"Đã duyệt. Nick hết lượt hôm nay nên gửi sáng mai":`Đã duyệt. Nick gửi lúc ${rpTime(r.scheduled_for)}`):a==="junk"?"Đã bỏ và ghi nhớ đây là data rác":"Đã bỏ qua"); loadRp(true); }catch(err){ toast(err.message); } });
 $("#rpSetF").addEventListener("submit",async e=>{ e.preventDefault(); try{ ST.rp=await api("/replies-settings","PUT",{replies_enabled:$("#rpsOn").checked?"1":"0",replies_time:$("#rpsTime").value,replies_per_nick_day:$("#rpsDay").value,replies_groups_per_run:$("#rpsG").value,replies_per_group:$("#rpsP").value,reply_contact:$("#rpsC").value}); loadRp(true); toast("Đã lưu cài đặt trả lời khách"); }catch(err){ toast(err.message); } });
-setInterval(()=>{ if(ST.view==="replies"&&!document.querySelector("#v-replies :focus")) loadRp(true); },15000);
+setInterval(()=>{ if(!UX.idle()&&ST.view==="replies"&&!document.querySelector("#v-replies :focus")) loadRp(true); },15000);
 

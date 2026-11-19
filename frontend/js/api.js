@@ -17,7 +17,11 @@ async function flushErr(){
     catch(x){ break; } }
   errBadge();
 }
-async function api(path, method="GET", body){
+async function api(path, method="GET", body){  // thanh tiến trình khi thao tác lâu hơn 0,25 giây (trừ các lần tự cập nhật nền)
+  const bg=method==="GET"&&/^\/(agents|dashboard|health|meetings|errors|ceo\/chat)/.test(path);
+  if(!bg&&typeof UX!=="undefined") UX.busy(1);
+  try{ return await _api(path,method,body); } finally{ if(!bg&&typeof UX!=="undefined") UX.busy(-1); } }
+async function _api(path, method="GET", body){
   const act=`${method} ${path}`;
   if(DEMO){ try{ return await Demo.handle(method, "/api"+path, body||{}); }
     catch(e){ if(!path.startsWith("/errors")) reportUi(`Thao tác lỗi ở màn hình ${VIEW_NAME[ST.view]||ST.view}`,e.message,"",act); throw e; } }

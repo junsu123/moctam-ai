@@ -109,6 +109,8 @@ def many(sql: str, rows) -> int:
     with _lock:
         conn().executemany(sql, rows)
         conn().commit()
+        if "settings" in sql:
+            _SET["data"] = None
     return len(rows)
 
 
@@ -121,6 +123,8 @@ def run(sql: str, params=()) -> int:
     with _lock:
         cur = conn().execute(sql, params)
         conn().commit()
+        if "settings" in sql:
+            _SET["data"] = None  # cài đặt vừa đổi: lần đọc sau lấy lại từ cơ sở dữ liệu
         return cur.lastrowid
 
 
@@ -793,6 +797,7 @@ def reset_test_data(products: bool = False, groups: bool = False) -> dict:
         c.execute("DELETE FROM sqlite_sequence WHERE name IN (%s)" % ",".join("?" * len(tables)), tables)
         c.commit()
         c.execute("VACUUM")
+    _SET["data"] = None  # cài đặt vừa đổi bằng kết nối riêng
     shots = 0
     for f in SHOTS_DIR.glob("*.png"):
         f.unlink(missing_ok=True)
@@ -822,8 +827,17 @@ def clear_samples(tables=("sales", "leads", "groups", "products")) -> dict:
     return done
 
 
+_SET = {"data": None, "path": None, "at": 0.0}
+SETTINGS_TTL = 5.0  # giây: lịch tự động đọc cài đặt hàng nghìn lần mỗi lượt, giữ bản đọc gần nhất thay vì hỏi SQLite mỗi lần
+
+
 def get_settings() -> dict:
-    return {r["key"]: r["value"] for r in q("SELECT key, value FROM settings")}
+    """Toàn bộ cài đặt (bản sao). Đọc lại từ SQLite khi có ghi vào bảng settings, đổi file dữ liệu, hoặc sau 5 giây."""
+    c = _SET
+    if c["data"] is None or c["path"] != str(DB_PATH) or time.monotonic() - c["at"] > SETTINGS_TTL:
+        data = {r["key"]: r["value"] for r in q("SELECT key, value FROM settings")}
+        c.update(data=data, path=str(DB_PATH), at=time.monotonic())
+    return dict(c["data"])
 
 
 def set_setting(key: str, value: str):

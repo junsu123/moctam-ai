@@ -10,7 +10,7 @@ const setTz=t=>{ if(t&&t.tz){ TZ.name=t.tz; TZ.label=t.label||t.tz; if(t.choices
 const fmtTime = s => s ? s.slice(11, 16) : "";
 const fmtDate = s => s ? `${s.slice(8,10)}/${s.slice(5,7)}` : "—";
 function toast(t){ const el=$("#toast"); const isErr=Date.now()-(ERR.lastAt||0)<2500&&ST.view!=="errors";
-  el.textContent=t; if(isErr){ const a=document.createElement("a"); a.href="#errors"; a.textContent="Xem lỗi"; el.appendChild(a); }
+  el.textContent=t; el.classList.toggle("err",isErr||/lỗi|thất bại|không hợp lệ|không được|không gửi|không lưu|không kết nối|chưa điền|chưa chọn|chưa nhập|sai /i.test(t)); if(isErr){ const a=document.createElement("a"); a.href="#errors"; a.textContent="Xem lỗi"; el.appendChild(a); }
   el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,isErr?6000:2600); }
 async function copyText(t){ try{ await navigator.clipboard.writeText(t); toast("Đã sao chép nội dung"); }catch(e){ toast("Không sao chép được, hãy bôi đen và sao chép thủ công"); } }
 const STATUS_TXT = {idle:"Rảnh", working:"Đang làm", meeting:"Đang họp", talking:"Đang nói", learning:"Đang học"};

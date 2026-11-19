@@ -1237,6 +1237,29 @@ Sau khi thử nghiệm xong: **Cài đặt → Bắt đầu chạy thật** → 
 Từ bản này, phần mềm không còn tạo khách hàng giả khi cài mới. Khi trang mở từ phần mềm trên máy mà phần mềm bị tắt,
 giao diện báo "Mất kết nối" và tự kết nối lại, không bao giờ hiển thị dữ liệu mẫu thay cho dữ liệu thật.
 
+## Nhẹ máy và dễ dùng hơn (bản 19/11/2026)
+
+**Đỡ tốn CPU** (đo bằng `python3 dev/perf.py` trên dữ liệu giả lập 1 năm, 25 nick):
+| | Trước | Sau |
+|---|---|---|
+| Một lượt lịch tự động (30 giây / lần) | 2.000 ms, đọc bảng cài đặt ~5.500 lần | 27 ms |
+| `/api/agents` (giao diện gọi 3 giây / lần) | 86 ms | 18 ms |
+| Mở trang Bình luận | 490 ms | 48 ms |
+| Văn phòng 3D khi sếp đang ở trang khác | vẽ ngầm ~60 hình/giây | không vẽ |
+| Văn phòng 3D khi mọi người ngồi làm việc | 60 hình/giây | ~10 hình/giây (30 khi có người đi lại, nói, hoặc sếp xoay cảnh) |
+| Giao diện khi cửa sổ thu nhỏ / để tab khác | vẫn tải số liệu 3 giây / lần | dừng, mở lại thì cập nhật ngay |
+| Giao diện ở trang không phải Văn phòng | tải số liệu văn phòng 3 giây / lần | 12 giây / lần (vẫn đủ để chấm đỏ trên thanh bên cập nhật) |
+
+Cách làm: cài đặt đọc một lần rồi giữ 5 giây (ghi là đọc lại ngay), vẽ 3D chỉ khi đang xem và tự giảm nhịp khi cảnh đứng yên, bóng đổ vẽ
+thưa hơn, độ nét màn hình tối đa 1,5×.
+
+**Giao diện kiểu bản thương mại**:
+- **Tìm nhanh** (nút đầu thanh bên, hoặc **Ctrl K** / **⌘ K**): gõ vài chữ không dấu (VD “khach”, “binh luan”) để nhảy tới trang, ↑↓ Enter.
+- **Mô tả đầu trang gọn 2 dòng**, bấm **Xem thêm** để đọc hết.
+- **Ghi chú ẩn được**: các khung lưu ý có nút ×, ẩn rồi thì nhớ trên máy đó; hiện lại bằng Tìm nhanh → “Hiện lại các ghi chú đã ẩn”.
+- **Thanh tải mỏng** trên cùng khi một thao tác lâu hơn 0,25 giây; thông báo có biểu tượng ✓ / ! (đỏ khi lỗi).
+- Nút có phản hồi khi bấm, số canh thẳng cột, thẻ nổi nhẹ khi rê chuột; máy đặt **giảm chuyển động** thì tắt hiệu ứng.
+
 ## Dung lượng dữ liệu: tự dọn mỗi đêm, không phình to
 
 Thẻ **Dung lượng dữ liệu** ở trang **Cài đặt** cho biết cơ sở dữ liệu, ảnh chụp màn hình, bản sao lưu và hồ sơ Chrome các nick đang
@@ -1339,6 +1362,8 @@ backend/
   main.py        Tạo app web (FastAPI), tự khởi động lại khi có bản mới, trả giao diện
   routes/        Các nhóm API /api/... (mỗi file một nhóm: posts, comments, sales, prospects, website...)
   ui.py          Ghép giao diện từ frontend/app.html + css/ views/ js/
+docs/
+  HUONG-DAN-SUA-CODE.md  Hướng dẫn sửa code cho sếp: bản đồ, công thức theo việc, kiểm tra, giữ phần mềm nhẹ, gỡ rối
   agents.py      Hồ sơ 5 agent: vai trò, tính cách, ngoại hình 3D
   workflows.py   Việc của từng agent: viết bài, xếp lịch nhóm, chăm khách, số liệu
   meeting.py     Phòng họp: báo cáo → tranh luận → chốt việc
@@ -1444,7 +1469,7 @@ Thư mục `dev/`: Facebook giả lập (`mockfb.py`, cổng 8098), TikTok/Shope
 `dev/run.sh` tự bật giả lập, chạy test rồi tắt; mỗi test in một dòng kết quả, log đầy đủ ở `dev/work/`.
 Chạy một vài test: `dev/run.sh reply_test care_test`. Nhóm test nhanh (không mở Chrome): `dev/run.sh quick`. Chạy hết: `dev/run.sh`.
 Cuối mỗi lần chạy in `TỔNG: n/m đạt`; có test hỏng thì thoát mã 1. Kiểm tra cú pháp: `dev/check.sh`. Thư viện cho test: `pip install -r dev/requirements-dev.txt`.
-File `CLAUDE.md` ghi bản đồ code và cách làm tiết kiệm token.
+File `CLAUDE.md` ghi bản đồ code và cách làm tiết kiệm token. **Hướng dẫn sửa code cho sếp:** `docs/HUONG-DAN-SUA-CODE.md` (bản đồ code, công thức theo việc, kiểm tra, gỡ rối).
 
 **GitHub tự kiểm tra** (tab **Actions** trên GitHub, file `.github/workflows/test.yml`): mỗi lần đẩy code lên `main` (hoặc mở PR),
 GitHub kiểm tra cú pháp và chạy nhóm test nhanh (khoảng 3–5 phút); hỏng thì có dấu ✗ đỏ cạnh commit và GitHub gửi mail, log test
