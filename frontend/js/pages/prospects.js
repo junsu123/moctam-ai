@@ -17,7 +17,7 @@ function prCard(x,d){
   return `<article class="pr-card${man?" manual":""}" data-pr="${x.id}">
     <div class="pr-grade"><span class="g g-${g}">${man?"?":esc(x.grade||"–")}</span><small>${man?"xem tay":`${x.score||0} điểm`}</small></div>
     <div class="pr-head"><a class="nm" href="${esc(x.account_url)}" target="_blank" rel="noopener">${esc(x.shop_name||x.account_name||x.account_url)} ↗</a>
-      ${x.phone?`<a class="pr-tel" href="tel:${esc(x.phone)}">📞 ${esc(x.phone)}</a><button class="btn sm ghost" type="button" data-prcopyph="${esc(x.phone)}">Chép số</button>`:man?"":`<span class="pr-nophone">Chưa có SĐT</span>`}
+      ${x.phone?`<a class="pr-tel" href="${esc(zaloUrl(x.phone)||"tel:"+x.phone)}" target="_blank" rel="noopener" title="Mở Zalo với số này">💬 ${esc(x.phone)} · Zalo</a><a class="btn sm ghost" href="tel:${esc(x.phone)}" title="Gọi điện">Gọi</a><button class="btn sm ghost" type="button" data-prcopyph="${esc(x.phone)}">Chép số</button>`:man?"":`<span class="pr-nophone">Chưa có SĐT</span>`}
       ${x.seller_type&&!man?`<span class="chip ${x.seller_type==="affiliate"||x.seller_type==="koc"||x.seller_type==="store"?"warn":"ok"}">${esc(d.types[x.seller_type]||x.seller_type)}</span>`:""}${tags}
       <div class="pr-meta" style="flex-basis:100%">${meta}</div></div>
     <div class="pr-body">

@@ -12,6 +12,8 @@ const fmtDate = s => s ? `${s.slice(8,10)}/${s.slice(5,7)}` : "—";
 function toast(t){ const el=$("#toast"); const isErr=Date.now()-(ERR.lastAt||0)<2500&&ST.view!=="errors";
   el.textContent=t; el.classList.toggle("err",isErr||/lỗi|thất bại|không hợp lệ|không được|không gửi|không lưu|không kết nối|chưa điền|chưa chọn|chưa nhập|sai /i.test(t)); if(isErr){ const a=document.createElement("a"); a.href="#errors"; a.textContent="Xem lỗi"; el.appendChild(a); }
   el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,isErr?6000:2600); }
+// Link mở Zalo của số điện thoại (zalo.me mở ứng dụng Zalo trên điện thoại / Zalo PC, không có thì mở Zalo web): +84 / 84 → 0
+function zaloUrl(p){ let d=String(p||"").replace(/\D/g,""); if(d.startsWith("84")&&d.length>=11) d="0"+d.slice(2); return d.length>=9?`https://zalo.me/${d}`:""; }
 async function copyText(t){ try{ await navigator.clipboard.writeText(t); toast("Đã sao chép nội dung"); }catch(e){ toast("Không sao chép được, hãy bôi đen và sao chép thủ công"); } }
 const STATUS_TXT = {idle:"Rảnh", working:"Đang làm", meeting:"Đang họp", talking:"Đang nói", learning:"Đang học"};
 const LOST_R = {no_answer:"Không nghe máy / sai số",wrong_fit:"Sai tệp (không bán online, chỉ mua lẻ)",has_supplier:"Đã có nguồn hàng",moq:"Chê số lượng nhập tối thiểu",price:"Chê giá",product:"Không hợp sản phẩm",later:"Hẹn để sau",other:"Lý do khác"};

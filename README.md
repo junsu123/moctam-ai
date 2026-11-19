@@ -603,7 +603,7 @@ Mục **Bán hàng → Tìm khách sỉ**. **Mục tiêu số 1 của Mai: tìm 
 
 **Cách Mai tìm SĐT**: đọc phần giới thiệu và các bài gần nhất của Trang (hotline, “Zalo 09...”, “liên hệ 09...”, nút gọi điện, link zalo.me); chưa thấy thì đọc thêm bài và mở **Giới thiệu → Thông tin liên hệ**; vẫn chưa có thì 3 ngày sau quay lại tìm (tối đa 3 lần). Số tìm được từ bài đăng công khai của chính họ trong kết quả tìm kiếm cũng được tính. Chỉ lấy SĐT kinh doanh do shop tự công khai.
 
-**Có SĐT và đang bán hàng (hạng A/B/C, không phải affiliate)** → tự vào mục **Khách hàng** (tính vào KPI khách có SĐT) và **chuyển sếp qua Telegram ngay** bằng thẻ khách (SĐT, link trang, kịch bản tiếp cận, nút Đã gọi / Nhắc lại). Trang Tìm khách sỉ đưa khách có SĐT lên đầu, có bộ lọc “Chỉ khách có SĐT” và nút chép số.
+**Có SĐT và đang bán hàng (hạng A/B/C, không phải affiliate)** → tự vào mục **Khách hàng** (tính vào KPI khách có SĐT) và **chuyển sếp qua Telegram ngay** bằng thẻ khách (SĐT, link trang, kịch bản tiếp cận, nút Đã gọi / Nhắc lại). Trang Tìm khách sỉ đưa khách có SĐT lên đầu, có bộ lọc “Chỉ khách có SĐT”. **Bấm vào số điện thoại là mở Zalo** với số đó (`zalo.me/<số>`: điện thoại mở ứng dụng Zalo, máy tính mở Zalo PC hoặc Zalo web; số +84 tự đổi về 0); cạnh số có nút **Gọi** và **Chép số**.
 
 Mai tìm người **đang bán hàng thật** có thể nhập trà túi lọc, ngũ cốc về bán lại: người livestream bán hàng, bán qua Facebook, TikTok, TikTok Shop, Shopee, bán đa nền tảng, đang tìm nguồn hàng hay tuyển đại lý. Cửa hàng truyền thống không thấy bán online thì xếp cuối. **Chất lượng quan trọng hơn số lượng**: mỗi người có link nguồn, bằng chứng, điểm và việc nên làm tiếp.
 
