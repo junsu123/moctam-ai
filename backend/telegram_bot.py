@@ -452,6 +452,15 @@ def handle_message(msg: dict):
         else:
             _reply(chat_id, "Xin chào! Để nhận báo cáo, hãy gửi <b>mã ghép nối 6 số</b> hiển thị trong phần mềm (trang KPI & Báo cáo).")
         return
+    if msg.get("photo") or (msg.get("document") or {}).get("mime_type", "").startswith("image/"):  # ảnh cho bài Trang xu hướng
+        import trend_pages
+        try:
+            r = trend_pages.on_telegram_photo(msg)
+        except Exception as ex:
+            r = f"Chưa lấy được ảnh: {ex}"
+        if r:
+            _reply(chat_id, e(r))
+        return
     if chat_id in _pending_order and not text.startswith("/"):
         import company
         amount = company.parse_vnd(text)

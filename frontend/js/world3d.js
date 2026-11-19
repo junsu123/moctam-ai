@@ -83,7 +83,8 @@ const World = (() => {
     [-1.4,2.6], // 13: bàn CEO
     [0.9,6.2], // 14: bàn Mai (tìm khách sỉ)
     [0.9,9.6], // 15: bàn Vy (website & SEO)
-    [4.4,9.6]]; // 16: bàn Bảo (chăm bài đã đăng)
+    [4.4,9.6], // 16: bàn Bảo (chăm bài đã đăng)
+    [4.4,6.2]]; // 17: bàn Nhi (xu hướng & Trang mới)
   const deskObjs={};
   function buildDesk(i,color,isSale){ const [x,z]=DESKS[i]; const g=new THREE.Group(); scene.add(g); const P={parent:g};
     mesh(box(2,0.1,0.95),"#d8b48a",{...P,x,y:0.76,z:z+0.95}); for(const dx of [-0.9,0.9]) mesh(box(0.08,0.74,0.85),"#a7835c",{...P,x:x+dx,y:0.37,z:z+0.95});
@@ -96,6 +97,7 @@ const World = (() => {
   for(let i=0;i<5;i++) buildDesk(i,["#2f4b8f","#e2557a","#2e9e6b","#f08a24","#7a4fc9"][i]);
   { const g=buildDesk(15,"#3c6fd8"); const [x,z]=DESKS[15]; mesh(new THREE.SphereGeometry(0.12,14,10),"#3c6fd8",{parent:g,x:x-0.7,y:0.95,z:z+0.75}); } // quả địa cầu trên bàn Vy
   { const g=buildDesk(16,"#2f9e6a"); const [x,z]=DESKS[16]; mesh(box(0.28,0.2,0.04),"#f4efe2",{parent:g,x:x-0.7,y:0.92,z:z+0.75}); mesh(box(0.2,0.12,0.045),"#2f9e6a",{parent:g,x:x-0.7,y:0.93,z:z+0.75}); } // khung ảnh trên bàn Bảo
+  { const g=buildDesk(17,"#e0559b"); const [x,z]=DESKS[17]; [0.12,0.2,0.3].forEach((h,i)=>mesh(box(0.06,h,0.06),"#e0559b",{parent:g,x:x-0.82+i*0.09,y:0.82+h/2,z:z+0.75})); } // biểu đồ xu hướng trên bàn Nhi
   { const g=buildDesk(14,"#0f8b8d"); const [x,z]=DESKS[14]; mesh(new THREE.TorusGeometry(0.13,0.03,8,18),"#0f8b8d",{parent:g,x:x-0.7,y:1.02,z:z+0.75}); } // kính lúp trên bàn Mai
   { const g=buildDesk(13,"#d4af37"); const [x,z]=DESKS[13]; // bàn CEO: biển tên mạ vàng + cờ nhỏ
     mesh(box(0.7,0.18,0.05),"#d4af37",{parent:g,x:x-0.55,y:0.9,z:z+0.5}); mesh(box(0.66,0.12,0.02),"#1f2a3a",{parent:g,x:x-0.55,y:0.9,z:z+0.47,shadow:false});

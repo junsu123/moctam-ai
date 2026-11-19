@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 
 import db
 
-CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy", "bao"]
+CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy", "bao", "nhi"]
 _lock = threading.Lock()
 _busy: set[str] = set()      # agent đang chạy một buổi học có gọi Claude
 _session: dict[str, dict] = {}  # agent -> {"until": datetime, "kind": ...}

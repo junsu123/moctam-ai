@@ -166,6 +166,8 @@ def missing(post: dict) -> str | None:
 
 def pick_for_post(post: dict, sale_id: int | None = None) -> tuple[list[Path], str | None]:
     """Chọn ảnh cho một bài đăng. Trả về (danh sách ảnh, cảnh báo nếu phải dùng lại ảnh)."""
+    if post.get("image_path") and Path(post["image_path"]).is_file():  # ảnh sếp tạo riêng cho bài (Trang xu hướng, gửi qua Telegram)
+        return [Path(post["image_path"])], None
     s = db.get_settings()
     if s.get("attach_images") != "1" and not required():
         return [], None

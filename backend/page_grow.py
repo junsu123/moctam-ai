@@ -43,7 +43,7 @@ def engagement(p: dict) -> int:
 def topic_stats(days: int = 60) -> list[dict]:
     since = (db.clock() - timedelta(days=days)).strftime("%Y-%m-%d")
     rows = db.q("""SELECT page_topic t, COUNT(*) n, AVG(COALESCE(reactions,0) + 2*COALESCE(comments,0) + 3*COALESCE(shares,0)) eng,
-                          SUM(COALESCE(leads,0)) leads FROM posts WHERE target_type='page' AND status='posted' AND page_topic IS NOT NULL
+                          SUM(COALESCE(leads,0)) leads FROM posts WHERE target_type='page' AND fb_page_ref IS NULL AND status='posted' AND page_topic IS NOT NULL
                           AND posted_at >= ? GROUP BY page_topic""", (since,))
     by = {r["t"]: r for r in rows}
     return [{"topic": k, "label": TOPICS[k][0], "n": (by.get(k) or {}).get("n") or 0, "eng": round((by.get(k) or {}).get("eng") or 0, 1),
@@ -54,7 +54,7 @@ def choose_topic(rnd: random.Random | None = None) -> str:
     """Bài bán hàng theo tỉ lệ (mặc định 20%); còn lại chọn chủ đề tương tác cao hơn, chừa 30% thử đều, không lặp chủ đề bài trước."""
     rnd = rnd or random.Random()
     on = enabled_topics()
-    recent = [r["page_topic"] for r in db.q("""SELECT page_topic FROM posts WHERE target_type='page' AND page_topic IS NOT NULL
+    recent = [r["page_topic"] for r in db.q("""SELECT page_topic FROM posts WHERE target_type='page' AND fb_page_ref IS NULL AND page_topic IS NOT NULL
                                                ORDER BY id DESC LIMIT 10""")]
     pct = int(_s().get("page_grow_sale_pct") or 20) / 100
     if SALE in on and (recent.count(SALE) / max(1, len(recent)) < pct or on == [SALE]):
@@ -92,7 +92,7 @@ def _mock(topic: str, p: dict | None, st: dict) -> dict:
 
 def _prompt(topic: str, p: dict | None, st: dict) -> str:
     label, guide = TOPICS[topic]
-    recent = db.q("SELECT content FROM posts WHERE target_type='page' ORDER BY id DESC LIMIT 8")
+    recent = db.q("SELECT content FROM posts WHERE target_type='page' AND fb_page_ref IS NULL ORDER BY id DESC LIMIT 8")
     import knowledge
     facts = ""
     try:
@@ -149,7 +149,7 @@ def slots() -> list[str]:
 def next_slot() -> str:
     """Giờ đăng trống gần nhất (mỗi giờ một bài, chỉ giờ còn ở phía trước)."""
     now = db.clock()
-    taken = {r["scheduled_for"][:16] for r in db.q("""SELECT scheduled_for FROM posts WHERE target_type='page' AND scheduled_for IS NOT NULL
+    taken = {r["scheduled_for"][:16] for r in db.q("""SELECT scheduled_for FROM posts WHERE target_type='page' AND fb_page_ref IS NULL AND scheduled_for IS NOT NULL
                                                       AND status IN ('scheduled','posted') AND scheduled_for >= ?""", (now.strftime("%Y-%m-%d"),))}
     for d in range(0, 8):
         day = (now + timedelta(days=d)).strftime("%Y-%m-%d")
@@ -168,7 +168,7 @@ def plan_today(force: bool = False) -> int:
     db.set_setting("page_grow_planned", db.today())
     per_day = max(0, min(3, int(st.get("page_grow_per_day") or 1)))
     today = db.today()
-    have = db.one("""SELECT COUNT(*) n FROM posts WHERE target_type='page' AND page_topic IS NOT NULL
+    have = db.one("""SELECT COUNT(*) n FROM posts WHERE target_type='page' AND fb_page_ref IS NULL AND page_topic IS NOT NULL
                      AND (substr(scheduled_for,1,10)=? OR (status='draft' AND substr(created_at,1,10)=?))""", (today, today))["n"]
     now = db.clock().strftime("%H:%M")
     free = [t for t in slots()[:per_day] if t > now]
@@ -240,7 +240,7 @@ def read_stats(page) -> dict:
         db.run("""INSERT INTO page_stats(day, followers, created_at) VALUES (?,?,?)
                   ON CONFLICT(day) DO UPDATE SET followers=excluded.followers""", (db.today(), out["followers"], db.now()))
     since = (db.clock() - timedelta(days=14)).strftime("%Y-%m-%d")
-    for p in db.q("""SELECT id, posted_url FROM posts WHERE target_type='page' AND status='posted' AND COALESCE(posted_url,'') LIKE 'http%'
+    for p in db.q("""SELECT id, posted_url FROM posts WHERE target_type='page' AND fb_page_ref IS NULL AND status='posted' AND COALESCE(posted_url,'') LIKE 'http%'
                      AND posted_at >= ? ORDER BY posted_at DESC LIMIT 6""", (since,)):
         try:
             page.goto(B.fb_url(p["posted_url"]), wait_until="domcontentloaded", timeout=60000)
@@ -265,11 +265,11 @@ def overview() -> dict:
     trend = db.q("SELECT day, followers, fans FROM page_stats ORDER BY day DESC LIMIT 30")[::-1]
     f_now = trend[-1]["followers"] if trend else None
     wk = [t for t in trend if t["day"] <= (db.clock() - timedelta(days=7)).strftime("%Y-%m-%d")]
-    upcoming = db.q("""SELECT id, title, content, page_topic, status, scheduled_for FROM posts WHERE target_type='page'
+    upcoming = db.q("""SELECT id, title, content, page_topic, status, scheduled_for FROM posts WHERE target_type='page' AND fb_page_ref IS NULL
                        AND status IN ('scheduled','draft','approved') ORDER BY COALESCE(scheduled_for,'9'), id LIMIT 12""")
     since = (db.clock() - timedelta(days=30)).strftime("%Y-%m-%d")
     posted = db.q("""SELECT id, title, content, page_topic, posted_at, posted_url, reactions, comments, shares, leads FROM posts
-                     WHERE target_type='page' AND status='posted' AND posted_at >= ? ORDER BY posted_at DESC LIMIT 40""", (since,))
+                     WHERE target_type='page' AND fb_page_ref IS NULL AND status='posted' AND posted_at >= ? ORDER BY posted_at DESC LIMIT 40""", (since,))
     for p in posted:
         p["eng"] = engagement(p)
     return {"ready": ready(), "followers": f_now, "nicks": db.q("""SELECT a.id, a.name, s.name sale_name FROM fb_accounts a
@@ -282,7 +282,7 @@ def overview() -> dict:
 
 
 def skip(pid: int):
-    db.run("UPDATE posts SET status='rejected', scheduled_for=NULL WHERE id=? AND target_type='page' AND status IN ('scheduled','draft','approved')", (pid,))
+    db.run("UPDATE posts SET status='rejected', scheduled_for=NULL WHERE id=? AND target_type='page' AND fb_page_ref IS NULL AND status IN ('scheduled','draft','approved')", (pid,))
 
 
 def tick(now: datetime):

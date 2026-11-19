@@ -181,6 +181,14 @@ CREATE TABLE IF NOT EXISTS ai_fallback (
 CREATE TABLE IF NOT EXISTS ai_batches (
   id TEXT PRIMARY KEY, task TEXT, meta TEXT, status TEXT DEFAULT 'in_progress', created_at TEXT, ended_at TEXT
 );
+CREATE TABLE IF NOT EXISTS fb_pages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, niche TEXT, category TEXT, description TEXT, url TEXT, admin_account_id INTEGER,
+  status TEXT DEFAULT 'idea', posts_per_day INTEGER DEFAULT 2, times TEXT DEFAULT '09:00,19:30', avatar_prompt TEXT, cover_prompt TEXT,
+  reason TEXT, trends TEXT, followers INTEGER, stats_at TEXT, created_at TEXT, activated_at TEXT
+);
+CREATE TABLE IF NOT EXISTS trends (id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT, title TEXT, traffic TEXT, traffic_n INTEGER, news TEXT, created_at TEXT);
+CREATE INDEX IF NOT EXISTS idx_trends_day ON trends(day);
+CREATE TABLE IF NOT EXISTS trend_hot (id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT, title TEXT, score INTEGER, niche TEXT, why TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS page_stats (day TEXT PRIMARY KEY, followers INTEGER, fans INTEGER, created_at TEXT);
 CREATE TABLE IF NOT EXISTS page_threads (
   id INTEGER PRIMARY KEY AUTOINCREMENT, conv_id TEXT UNIQUE, psid TEXT, name TEXT, last_text TEXT, last_at TEXT, page_last_at TEXT,
@@ -392,6 +400,8 @@ MIGRATIONS = [
     ("posts", "bump_count", "INTEGER DEFAULT 0"), ("posts", "last_bump_at", "TEXT"),
     ("bumps", "comments_before", "INTEGER"), ("bumps", "leads_before", "INTEGER"), ("bumps", "gain_comments", "INTEGER"),
     ("bumps", "gain_leads", "INTEGER"), ("bumps", "measured_at", "TEXT"), ("bumps", "checked_at", "TEXT"),
+    ("posts", "fb_page_ref", "INTEGER"), ("posts", "trend_topic", "TEXT"), ("posts", "image_prompt", "TEXT"), ("posts", "image_note", "TEXT"),
+    ("posts", "image_path", "TEXT"), ("posts", "img_req_msg", "TEXT"), ("posts", "img_req_at", "TEXT"),
     ("posts", "page_topic", "TEXT"), ("posts", "reactions", "INTEGER DEFAULT 0"), ("posts", "shares", "INTEGER DEFAULT 0"),
     ("bumps", "removed", "INTEGER DEFAULT 0"), ("groups", "no_bump_until", "TEXT"), ("posts", "bump_reset_at", "TEXT"),
     ("leads", "post_id", "INTEGER"),
@@ -452,6 +462,7 @@ DEFAULT_SETTINGS = {
     "bump_stop_after": "3",  # bài N lượt bình luận gần nhất không thêm bình luận/khách nào: thôi bình luận bài đó (0 = không ngừng)
     "bump_check": "1",  # 6 giờ sau nick mở lại bài xem bình luận còn không; nhóm xóa thì ngừng bình luận nhóm đó
     "bump_rest_days": "30",
+    "trend_on": "1", "trend_time": "07:40",  # Nhi: đọc xu hướng mỗi sáng, đề xuất Trang, lên lịch bài Trang xu hướng (ảnh qua Telegram)
     "page_grow_on": "1",  # nuôi Trang qua Chrome của nick quản trị (không dùng Graph API): Lan viết, nick đăng dưới tên Trang
     "page_url": "", "page_admin_account": "", "page_grow_per_day": "1", "page_grow_times": "08:30,20:30", "page_grow_sale_pct": "20",
     "page_grow_review": "0", "page_grow_off": "", "page_grow_plan_time": "07:30", "page_acting_aid": "",
@@ -714,7 +725,7 @@ def sample_counts() -> dict:
 
 # ---------------------------------------------------------------- bắt đầu chạy thật
 RESET_TABLES = {  # bảng: mô tả cho sếp
-    "posts": "bài đăng", "prospects": "khách sỉ Mai tìm", "bumps": "lượt up bài", "page_threads": "tin nhắn Fanpage", "page_stats": "số liệu Trang", "image_usage": "lịch sử dùng ảnh", "leads": "khách hàng",
+    "posts": "bài đăng", "prospects": "khách sỉ Mai tìm", "bumps": "lượt up bài", "page_threads": "tin nhắn Fanpage", "page_stats": "số liệu Trang", "trends": "xu hướng đã đọc", "trend_hot": "chủ đề nóng", "image_usage": "lịch sử dùng ảnh", "leads": "khách hàng",
     "replies": "tin nhắn Hà soạn", "comment_seen": "bình luận đã quét", "meetings": "cuộc họp",
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",

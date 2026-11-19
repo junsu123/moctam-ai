@@ -89,6 +89,8 @@ def _tick():
     replies.tick(now)  # Bảo tìm bài đang hỏi mua, viết sẵn câu trả lời chờ sếp duyệt
     import group_feed
     group_feed.tick(now)  # mọi nick lướt bảng tin nhóm theo nhịp luật Facebook, Bảo viết sẵn bình luận chờ duyệt
+    import trend_pages
+    trend_pages.tick(now)  # Nhi: đọc xu hướng, đề xuất Trang, viết bài Trang xu hướng (ảnh qua Telegram)
     import page_grow
     page_grow.tick(now)  # nuôi Trang: mỗi sáng Lan viết bài cho Trang, nick quản trị đăng trong ca
     import nick_health

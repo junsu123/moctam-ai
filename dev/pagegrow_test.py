@@ -65,6 +65,19 @@ d = c.get("/api/page-grow").json()
 chk("màn Nuôi Page: người theo dõi, bài đã đăng, chủ đề", d["followers"] == 1200 and d["posted"] and d["posted"][0]["eng"] == 12 + 6 + 6
     and next(t for t in d["topics"] if t["topic"] == "product")["n"] == 1, (d["followers"], d["avg_eng"]))
 chk("bỏ bài sắp đăng", not any(x["id"] == p2["id"] for x in c.post(f"/api/page-grow/{p2['id']}/skip").json()["upcoming"]))
+# Trang xu hướng (Nhi): bài có ảnh sếp gửi qua Telegram, đăng lên đúng Trang của bài
+db.run("UPDATE posts SET posted_at=? WHERE status='posted'", (two_h,)); db.run("UPDATE fb_accounts SET last_post_at=? WHERE id=?", (two_h, aid))
+fp = db.run("INSERT INTO fb_pages(name, niche, url, admin_account_id, status, created_at) VALUES ('Góc nấu ăn', 'nấu ăn', 'http://localhost:8098/moctampage', ?, 'active', ?)", (aid, db.now()))
+img = sorted((SP / "pubimg").glob("*.png"))[0]
+tp = db.run("""INSERT INTO posts(agent_id, target_type, content, status, scheduled_for, account_id, sale_id, fb_page_ref, image_path, source, created_at)
+               VALUES ('nhi', 'page', 'Bài Trang xu hướng thử nghiệm', 'scheduled', ?, ?, ?, ?, ?, 'trend_page', ?)""",
+            (db.clock().strftime("%Y-%m-%d %H:%M"), aid, sid, fp, str(img), db.now()))
+B.submit(sid, {"kind": "session", "account": aid}); time.sleep(1)
+while B.busy(sid) or B.queued(sid): time.sleep(0.5)
+rec = [json.loads(l) for l in open(SP / "mockfb_log.jsonl", encoding="utf-8") if '"path": "/record"' in l][-1:]
+chk("bài Trang xu hướng: đăng dưới tên Trang của bài, đúng 1 ảnh sếp gửi", rec and rec[0].get("as_page") is True and rec[0].get("files") == 1
+    and "xu hướng thử" in rec[0].get("text", "") and db.one("SELECT status FROM posts WHERE id=?", (tp,))["status"] == "posted"
+    and "Chuyển ngay" in mock("/moctampage"), (rec, db.one("SELECT status, error FROM posts WHERE id=?", (tp,))))
 import workflows
 workflows.plan_bumps(force=True)
 chk("không up bài Trang bằng nick cá nhân", not db.one("SELECT 1 FROM bumps WHERE post_id=?", (p1["id"],)))

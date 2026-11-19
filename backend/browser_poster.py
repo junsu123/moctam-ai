@@ -779,15 +779,24 @@ def _page_url() -> str:
     return fb_url(u) if u else ""
 
 
-def _switch_to_page(page, aid: int):
+def _post_page_url(post: dict) -> str:
+    """Link Trang của bài: Trang xu hướng (fb_pages) hoặc Trang chính của xưởng (Nuôi Page)."""
+    if post.get("fb_page_ref"):
+        r = db.one("SELECT url FROM fb_pages WHERE id=?", (post["fb_page_ref"],))
+        return fb_url(r["url"]) if r and r.get("url") else ""
+    return _page_url()
+
+
+def _switch_to_page(page, aid: int, url: str | None = None):
     """Nick quản trị chuyển sang dùng Facebook dưới tên Trang (nút “Chuyển ngay” trên Trang)."""
-    s, url = selectors(), _page_url()
+    s, url = selectors(), url or _page_url()
     if not url:
         raise RuntimeError("Chưa điền link Trang (mục Nuôi Page → Cài đặt)")
     page.goto(url, wait_until="domcontentloaded", timeout=60000)
     page.wait_for_timeout(3000)
     _check_blocked(page)
     if _visible_first(page, s["page_switch"]):
+        db.set_setting("page_acting_url", url)
         db.set_setting("page_acting_aid", str(aid))  # ghi trước: lỡ đứt giữa chừng thì ca sau chuyển về trước khi làm việc nhóm
         _wait_click(page, s["page_switch"], timeout=10)
         page.wait_for_timeout(3500)
@@ -800,9 +809,10 @@ def _switch_to_page(page, aid: int):
                            "nút “Chuyển ngay” (thêm chữ đang thấy vào page_switch trong backend/fb_selectors.json)")
 
 
-def _switch_back(page, aid: int) -> bool:
+def _switch_back(page, aid: int, url: str | None = None) -> bool:
     """Chuyển về nick cá nhân. Xác nhận bằng cách mở lại Trang: lại thấy nút “Chuyển ngay” là đã về."""
-    s, url, acc = selectors(), _page_url(), accounts.get(aid) or {}
+    s, acc = selectors(), accounts.get(aid) or {}
+    url = url or db.get_settings().get("page_acting_url") or _page_url()
     for _ in range(2):
         try:
             if _wait_click(page, s["account_menu"], timeout=8):
@@ -844,8 +854,9 @@ def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
                                    "rồi bấm Đăng lại")
             url, labels = fb_url(post["group_url"]), selectors()["group_composer"]
         elif post["target_type"] == "page":  # nuôi Trang không qua API: chuyển sang Trang rồi đăng như trang cá nhân
-            _switch_to_page(page, aid)
-            url, labels = _page_url(), selectors()["page_composer"] + selectors()["profile_composer"]
+            url = _post_page_url(post)
+            _switch_to_page(page, aid, url)
+            labels = selectors()["page_composer"] + selectors()["profile_composer"]
         else:
             url, labels = f"{FB_BASE}/me", selectors()["profile_composer"]
         imgs, warn = media_folder.pick_for_post(post, acc["sale_id"])
@@ -1100,8 +1111,8 @@ def _find_permalink(page, post: dict) -> tuple[str | None, str]:
     if post["target_type"] == "group" and post.get("group_url"):
         base = fb_url(post["group_url"]).rstrip("/")
         pages = [base + p for p in s.get("my_posts_paths", ["/my_posted_content", ""])]
-    elif post["target_type"] == "page" and _page_url():
-        pages = [_page_url()]
+    elif post["target_type"] == "page" and _post_page_url(post):
+        pages = [_post_page_url(post)]
     else:
         pages = [f"{FB_BASE}/me"]
     for u in pages:
@@ -1705,6 +1716,10 @@ def due_work(aid: int, stamp: str | None = None) -> dict:
             import page_grow
             if page_grow.stats_due(aid):
                 work["page_stats"] = True
+            import trend_pages
+            tp = trend_pages.due_stats(aid)
+            if tp:
+                work["trend_stats"] = tp
         except Exception as e:
             print("[bump check]", e)
     return work
@@ -1745,6 +1760,9 @@ def _job_session(pw, aid: int):
         if work.get("page_stats"):  # nick quản trị Trang: mỗi ngày đọc số người theo dõi và tương tác bài Trang (chỉ đọc)
             import page_grow
             page_grow.read_stats(page)
+        if work.get("trend_stats"):  # Trang xu hướng do nick này quản trị: người theo dõi + tương tác (chỉ đọc)
+            import trend_pages
+            trend_pages.read_stats(page, work["trend_stats"])
         if work.get("checks"):  # bình luận up bài trên 6 giờ còn không, nhóm xóa thì ngừng bình luận nhóm đó
             import bump_watch
             bump_watch.check(page, aid, work["checks"])

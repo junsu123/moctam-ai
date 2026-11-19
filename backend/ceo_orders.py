@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 
 import db
 
-AGENT_ALIASES = {"minh": "minh", "lan": "lan", "tuan": "tuan", "tuấn": "tuan", "ha": "ha", "hà": "ha", "khoa": "khoa", "mai": "mai", "vy": "vy", "bao": "bao",
+AGENT_ALIASES = {"minh": "minh", "lan": "lan", "tuan": "tuan", "tuấn": "tuan", "ha": "ha", "hà": "ha", "khoa": "khoa", "mai": "mai", "vy": "vy", "bao": "bao", "nhi": "nhi",
                  "đức": "ceo", "duc": "ceo", "ceo": "ceo", "trưởng phòng": "minh"}
 def _aliases() -> dict:
     """Tên gọi agent: tên mặc định + tên sếp đã đổi (CEO hiểu “Ngọc viết dài quá” là nói Lan nếu sếp đổi tên Lan thành Ngọc)."""
@@ -668,7 +668,8 @@ def _context() -> str:
             "minh": "trưởng phòng, chủ trì họp", "lan": "viết bài", "tuan": "chọn nhóm và xếp lịch đăng", "ha": "chăm sóc khách, soạn tin",
             "khoa": "số liệu", "mai": "tìm khách sỉ (người bán online, livestream) trên Facebook, TikTok, Shopee",
             "vy": "quản lý website công ty và viết bài chuẩn SEO",
-            "bao": "rà soát bài đã đăng, cho nick bình luận ảnh kèm câu ngắn và Zalo liên hệ (up bài)"}.items()},
+            "bao": "rà soát bài đã đăng, cho nick bình luận ảnh kèm câu ngắn và Zalo liên hệ (up bài)",
+            "nhi": "đọc xu hướng, đề xuất Trang mới, lên lịch bài cho Trang xu hướng (ảnh sếp tạo, gửi qua Telegram)"}.items()},
         "sales": [{"id": r["id"], "ten": r["name"], "nick": r["fb_name"], "dang_nhap": r["login_status"] == "ok",
                    "tu_dang": bool(r["auto_post"])} for r in sales],
         "san_pham": [{"id": p["id"], "ten": p["name"], "dang_ban_chay": bool(p["hot"])} for p in prods],

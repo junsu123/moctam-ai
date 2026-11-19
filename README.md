@@ -149,6 +149,29 @@ luật nghỉ / nửa trần như cũ. Nick rơi xuống Nguy hiểm thì nhật
 Đăng nhập nick, nút **Mở Chrome** và **Mở hồ sơ** (kết bạn) luôn hiện cửa sổ trên màn hình vì cần người thao tác. Đổi chế độ
 áp dụng từ lượt việc tiếp theo. Máy vẫn phải bật, không ngủ và còn mạng thì sale mới làm việc được.
 
+## Nhi: Trang xu hướng (nghiên cứu xu hướng, Trang mới, ảnh qua Telegram)
+
+Agent mới **Nhi** (Xu hướng & Trang mới, bàn riêng trong văn phòng 3D), mục **Trang xu hướng** ở thanh bên.
+
+1. **Nghiên cứu mỗi sáng 07:40** (hoặc bấm **Nhi đọc xu hướng ngay**): đọc **Google Trends Việt Nam** (tìm kiếm tăng mạnh hôm nay, lượt
+   tìm, tin liên quan), lưu theo ngày. Nhi chấm tối đa 10 **chủ đề đáng viết** (điểm 0–100, nóng mà còn được quan tâm vài ngày, gán vào
+   ngách) và đề xuất tối đa 3 **Trang mới** cho ngách nóng bền: tên, mô tả, hạng mục, lý do, **prompt ảnh đại diện và ảnh bìa** (tiếng Anh,
+   chép một chạm). Có ý tưởng mới thì Telegram báo. Nhi tránh chính trị, tôn giáo, người thật cụ thể, tai nạn / tội phạm, cờ bạc, nội dung
+   người lớn, tên giả làm Trang chính thức của tổ chức / báo chí.
+2. **Tạo Trang: sếp làm tay** trên Facebook (khoảng 3 phút, dùng tên, mô tả, ảnh Nhi soạn), rồi dán link, chọn **nick quản trị**, số bài/ngày
+   (1–3) và giờ đăng → **Tôi đã tạo Trang này**. Phần mềm **không tự tạo Trang**: tạo Trang bằng công cụ tự động dễ bị Facebook coi là tạo
+   tài sản giả và hạn chế luôn nick quản trị. Trang sếp đã có sẵn: **Thêm Trang sếp đã có sẵn**.
+3. **Lên lịch bài**: mỗi sáng (hoặc **Lên lịch bài hôm nay**) Nhi viết đủ bài cho các giờ còn lại của từng Trang đang chạy, bám chủ đề nóng
+   hợp ngách (không có thì viết bài có ích, bền), 60–160 chữ, kết bằng câu hỏi mở, không giật tít sai sự thật, không bịa số liệu, qua Luật
+   Facebook. Mỗi bài kèm **prompt tạo ảnh** (tiếng Anh, tỉ lệ 4:5, không chữ / logo / mặt người thật) và gợi ý tiếng Việt.
+4. **Ảnh qua Telegram**: mỗi bài chờ ảnh, bot gửi tin “🖼 Cần ảnh cho bài #…” kèm nội dung, prompt (chạm để chép), giờ đăng. Sếp tạo ảnh
+   bằng công cụ của mình rồi **trả lời (reply) đúng tin đó bằng ảnh** (gửi dạng ảnh hoặc tệp ảnh đều được): bot tải ảnh gốc, gắn vào đúng
+   bài, xếp đăng (giờ đã qua thì đăng sau 10 phút) và báo lại. Gửi ảnh không trả lời tin nào thì gắn vào bài chờ ảnh lâu nhất. Chưa dùng
+   Telegram thì bấm **Tải ảnh lên** ngay trên trang. Bài chờ ảnh quá 24 giờ thì bỏ.
+5. **Đăng**: đến giờ, trong ca của nick quản trị, sale mở Trang của bài, chuyển sang Trang, đăng bài kèm đúng ảnh sếp gửi, lưu link, chuyển
+   về nick cá nhân (như mục Nuôi Page). Mỗi ngày nick đọc người theo dõi và tương tác 4 bài gần nhất của từng Trang (chỉ đọc).
+6. Tạm dừng Trang thì các bài chưa đăng bị bỏ. Không dùng nick khác like / chia sẻ / bình luận Trang.
+
 ## Nuôi Page (không dùng Graph API)
 
 Mục **Nuôi Page** (thanh bên, dưới Bình luận). Trang lớn lên bằng bài có ích, đăng đều, đúng giờ; phần mềm làm như sau:
@@ -1328,6 +1351,7 @@ backend/
   bump_watch.py  Bình luận có ích không: đo từng lượt, thôi bài không ra gì, nhóm xóa bình luận thì ngừng
   page_inbox.py  Tin nhắn Fanpage (Messenger): Hà soạn trả lời, sếp duyệt, gửi trong 24 giờ
   nick_health.py Sức khỏe từng nick: điểm rủi ro 30 ngày, tự giảm trần nick yếu, báo Telegram
+  trend_pages.py Nhi: Google Trends, đề xuất Trang, lịch bài Trang xu hướng, prompt ảnh gửi Telegram, nhận ảnh sếp trả lời
   page_grow.py   Nuôi Page không API: Lan viết lịch 80/20, nick quản trị chuyển sang Trang đăng bài, đọc tương tác, học chủ đề
   group_feed.py  Lướt bảng tin nhóm: mọi nick đọc >=20 bài, lọc 3 lớp (chữ, Claude, học từ sếp), bình luận người hỏi mua (kèm ảnh)
                  và chào người bán online (chỉ chữ, trần riêng), nhịp lướt theo luật nick, ngừng chào ở nhóm xóa bình luận

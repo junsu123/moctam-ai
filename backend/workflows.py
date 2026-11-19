@@ -11,7 +11,7 @@ from agents import system_prompt
 from llm import llm, month_spent, parse_json
 
 # Trạng thái hiện tại của từng agent (hiển thị trên văn phòng 3D)
-STATUS = {a: {"state": "idle", "text": "Đang sẵn sàng"} for a in ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy", "bao"]}
+STATUS = {a: {"state": "idle", "text": "Đang sẵn sàng"} for a in ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy", "bao", "nhi"]}
 
 
 TARGET_NAME = {"group": "Hội nhóm", "profile": "Trang cá nhân", "page": "Fanpage"}

@@ -97,9 +97,21 @@ AGENTS = {
                  "hairStyle": "short", "accessory": "none", "accent": "#c9f0da"},
         "desk": 16,
     },
+    "nhi": {
+        "id": "nhi",
+        "name": "Nhi",
+        "role": "Xu hướng & Trang mới",
+        "short": "Mỗi sáng đọc xu hướng tìm kiếm, đề xuất Trang mới cho ngách đang lên, lên lịch bài cho các Trang theo chủ đề nóng, "
+                 "gửi prompt tạo ảnh lên Telegram cho sếp và tự lấy ảnh sếp gửi về để đăng",
+        "personality": "Nhanh nhạy với tin nóng nhưng tỉnh táo: chỉ chọn chủ đề còn được quan tâm vài ngày, không giật tít sai sự thật, "
+                       "không bịa số liệu, tránh chính trị, người thật, tai nạn, cờ bạc.",
+        "look": {"skin": "#f3c9a6", "shirt": "#e0559b", "pants": "#2c2433", "hair": "#120c0a",
+                 "hairStyle": "long", "accessory": "none", "accent": "#ffd1e8"},
+        "desk": 17,
+    },
 }
 
-ORDER = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy", "bao"]
+ORDER = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy", "bao", "nhi"]
 
 COMPANY_CONTEXT = """Bạn là nhân viên của một xưởng sản xuất thực phẩm thường tại Việt Nam
 (trà túi lọc, bột ngũ cốc, bột thiên nhiên sấy lạnh, cà phê hòa tan...).
