@@ -336,7 +336,7 @@ def _ai_article(kw: str, fix: list[str] | None = None, prev: dict | None = None)
     if fix and prev:
         ask += "\n\nBản trước chưa đạt, sửa các điểm sau và giữ phần tốt: " + "; ".join(fix) + \
                f"\nBản trước:\n{json.dumps({k: prev.get(k) for k in ('title', 'meta_title', 'meta_desc', 'body')}, ensure_ascii=False)[:6000]}"
-    d = llm.json(system_prompt("vy", s()), ask, mock=None, max_tokens=4000, task="posts")
+    d = llm.json(system_prompt(_writer["id"], s()), ask, mock=None, max_tokens=4000, task="posts")
     if not isinstance(d, dict) or not d.get("body"):
         return None
     d["product_ids"] = [p["id"] for p in prods[:3]]
@@ -372,7 +372,10 @@ def _cover_for(product_ids: list[int], slug: str) -> str | None:
         return None
 
 
-def write(keyword: str | None = None, kid: int | None = None) -> dict:
+_writer = {"id": "vy"}  # ai đang viết: Vy hoặc Biên tập viên SEO của Phòng Website
+
+
+def write(keyword: str | None = None, kid: int | None = None, agent: str = "vy") -> dict:
     """Vy viết 1 bài cho từ khóa (hoặc từ khóa ưu tiên kế tiếp), tự chấm SEO, sửa tối đa 2 lần."""
     import workflows
     seed()
@@ -387,7 +390,8 @@ def write(keyword: str | None = None, kid: int | None = None) -> dict:
     if not k:
         raise ValueError("Hết từ khóa trong kế hoạch. Thêm từ khóa mới ở mục Website")
     kw = k["keyword"]
-    workflows.set_status("vy", "working", f"Viết bài SEO: {kw}")
+    _writer["id"] = agent
+    workflows.set_status(agent, "working", f"Viết bài SEO: {kw}")
     try:
         d = _ai_article(kw) or _offline_article(kw)
         slug = _unique_slug(slugify(d.get("slug") or kw))
@@ -407,14 +411,14 @@ def write(keyword: str | None = None, kid: int | None = None) -> dict:
             r = seo_check(d)
         pid = db.run("""INSERT INTO site_posts(keyword, title, slug, meta_title, meta_desc, excerpt, body, faq, product_ids, cover, cover_alt,
                         status, seo_score, seo_report, policy_note, words, author, created_at, updated_at)
-                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'vy',?,?)""",
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                      (kw, d["title"], slug, d["meta_title"], d["meta_desc"], d.get("excerpt") or "", d["body"],
                       json.dumps(d.get("faq") or [], ensure_ascii=False), json.dumps(d.get("product_ids") or []), d.get("cover"),
                       d["cover_alt"], "review", r["score"], json.dumps(r, ensure_ascii=False),
-                      "; ".join(x["msg"] for x in r["policy"]) or None, r["words"], db.now(), db.now()))
+                      "; ".join(x["msg"] for x in r["policy"]) or None, r["words"], agent, db.now(), db.now()))
         db.run("UPDATE site_keywords SET status='written', post_id=? WHERE id=?", (pid, k["id"]))
         db.set_setting("site_last_write", db.now())
-        db.log("vy", "Viết bài website", f"“{d['title']}” (từ khóa: {kw}), {r['words']} chữ, điểm SEO {r['score']}/100"
+        db.log(agent, "Viết bài website", f"“{d['title']}” (từ khóa: {kw}), {r['words']} chữ, điểm SEO {r['score']}/100"
                + ("" if r["ok"] else ". Chưa đạt, chờ sếp xem") + ".")
         live = False
         if s().get("site_auto_publish") == "1" and r["ok"]:
@@ -422,7 +426,7 @@ def write(keyword: str | None = None, kid: int | None = None) -> dict:
             live = _push_now()
         return {"id": pid, "score": r["score"], "ok": r["ok"], "published": s().get("site_auto_publish") == "1" and r["ok"], "pushing": live}
     finally:
-        workflows.set_status("vy", "idle", "Chờ lịch viết bài tiếp theo")
+        workflows.set_status(agent, "idle", "Chờ lịch viết bài tiếp theo")
 
 
 def _fix_basic(d: dict, r: dict) -> dict:
@@ -1068,15 +1072,19 @@ def tick(now):
         return
     if (st.get("site_last_write") or "")[:10] == now.strftime("%Y-%m-%d") or _busy["on"]:
         return
-    per = max(1, math.ceil(_i("site_posts_week", 3) / len(days)))
+    import departments  # mỗi Biên tập viên SEO viết thêm 1 bài / tuần, bài chia lần lượt cho Vy và các biên tập viên
+    who = departments.writers("seo_writer", "vy")
+    per = max(1, math.ceil((_i("site_posts_week", 3) + len(who) - 1) / len(days)))
 
     def run():
         _busy["on"] = True
         try:
-            for _ in range(per):
+            rr = int(s().get("site_writer_rr") or 0)
+            for i in range(per):
                 if not db.one("SELECT 1 x FROM site_keywords WHERE status='planned'"):
                     plan_more()
-                write()
+                write(agent=who[(rr + i) % len(who)])
+            db.set_setting("site_writer_rr", str(rr + per))
         except Exception as e:
             import errors
             errors.report_exc("website", "Vy viết bài website bị lỗi", e, screen="website")

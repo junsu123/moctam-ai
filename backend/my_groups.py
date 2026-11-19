@@ -274,7 +274,8 @@ def job_sync(pw, aid: int, notify: str | None = None, only_leave: list[int] | No
             rows = list_groups(page)
             if rows:
                 res["list"] = upsert(aid, rows)
-            n = int(s().get("mygroups_review_per_run") or 8)
+            import departments  # Chuyên viên rà soát nhóm của Phòng Hội nhóm: mỗi người thêm 6 nhóm mỗi lượt
+            n = int(s().get("mygroups_review_per_run") or 8) + 6 * departments.count("group_scout")
             todo = db.q("""SELECT g.*, j.role FROM account_groups j JOIN groups g ON g.id=j.group_id
                            WHERE j.account_id=? AND j.status='joined' AND (g.reviewed_at IS NULL OR g.reviewed_at < ?)
                            ORDER BY (j.role='admin') DESC, g.reviewed_at IS NOT NULL, COALESCE(g.reviewed_at,'') LIMIT ?""",

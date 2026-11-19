@@ -20,16 +20,47 @@ Trang **Tìm khách sỉ** có dòng số SĐT tìm được theo từng kênh t
 
 | Agent | Vị trí | Việc làm hằng ngày |
 |---|---|---|
-| **Đức** | CEO | Điều hành nhân sự: thực hiện sa thải theo luật KPI, quyết định tuyển người thay vào nick cũ, tăng sale khi doanh thu chạm mốc hoặc khi tìm khách trên Facebook có tiềm năng; chỉ đạo đầu mỗi cuộc họp |
+| **Đức** | Giám đốc (CEO), Phòng Giám đốc | Điều hành nhân sự: thực hiện sa thải theo luật KPI, quyết định tuyển người thay vào nick cũ, tăng sale khi doanh thu chạm mốc hoặc khi tìm khách trên Facebook có tiềm năng; chỉ đạo đầu mỗi cuộc họp |
 | **Minh** | Trưởng phòng | Chủ trì họp giao ban, chốt quyết định, giao việc cho từng người |
 | **Lan** | Content | Viết bài đăng theo sản phẩm, góc tiếp cận, nơi đăng; gợi ý ảnh/video cần chụp |
-| **Tuấn** | Hội nhóm | Ghép bài đã duyệt với nhóm phù hợp, tôn trọng luật nhóm và số ngày giãn cách, xếp giờ đăng |
+| **Tuấn** | Trưởng phòng Hội nhóm | Ghép bài đã duyệt với nhóm phù hợp, tôn trọng luật nhóm và số ngày giãn cách, xếp giờ đăng |
 | **Hà** | Chăm sóc khách | Chấm điểm khách, soạn tin nhắn trả lời, nhắc bám khách sau 2 ngày |
 | **Khoa** | Phân tích | Đo số bài, số khách, nhóm hiệu quả nhất; đưa số liệu vào cuộc họp |
 | **Mai** | Tìm khách sỉ | Tìm người đang bán hàng online (livestream, Facebook, TikTok Shop, Shopee, đa nền tảng), chấm điểm 100 có bằng chứng, đưa khách hạng A/B vào mục Khách hàng; không tự nhắn tin |
-| **Vy** | Website & SEO | Quản lý website công ty, lên kế hoạch từ khóa, viết bài chuẩn SEO (tự chấm theo bảng kiểm), dựng website và đăng lên hosting |
+| **Vy** | Trưởng phòng Website & SEO | Quản lý website công ty, lên kế hoạch từ khóa, viết bài chuẩn SEO (tự chấm theo bảng kiểm), dựng website và đăng lên hosting |
 | **Bảo** | Chăm sóc bài đã đăng, bình luận khách | Mỗi ngày rà soát các bài đã đăng còn hiển thị, giao đúng nick đã đăng bình luận 1 ảnh sản phẩm kèm câu ngắn tự viết và dòng liên hệ Zalo của sếp; đọc bảng tin nhóm của mọi nick, viết sẵn bình luận cho người hỏi mua và người bán online (sếp duyệt) |
 | **Sale 1…8** | Nhân viên sale | Mỗi sale giữ **3–5 tài khoản Facebook**, mỗi nick một hồ sơ Chrome riêng; làm theo ca từng nick: đăng bài vào nhóm và trang cá nhân, up bài, quét bình luận, rồi chuyển nick kế tiếp |
+
+## Phòng ban: trưởng phòng tự đánh giá, đề xuất tuyển người
+
+Mục **Phòng ban** (nhóm Điều hành ở thanh bên). Công ty chia 5 phòng, mỗi phòng một khu riêng trong văn phòng 3D (thảm màu, tên phòng trên sàn):
+
+| Phòng | Trưởng phòng | Người trong phòng | Cách trưởng phòng nghĩ |
+|---|---|---|---|
+| **Phòng Giám đốc** | CEO Đức | Khoa (phân tích số liệu) | Nhìn cả công ty: vốn, doanh thu, chi phí AI; xét đề xuất tuyển của các phòng |
+| Phòng Kinh doanh | Minh | Lan, Hà, Mai, các sale | Phễu: SĐT → sếp gọi → chốt đơn, nút thắt ở bước nào dồn sức vào đó |
+| Phòng Hội nhóm | Tuấn | Bảo | An toàn và chất lượng nhóm quan trọng hơn số bài |
+| Phòng Trang Facebook | Nhi | | Xu hướng bền và tương tác thật; Trang chậm thì đổi cách viết trước khi mở Trang mới |
+| Phòng Website | Vy | | Từ khóa và chất lượng SEO, viết đều, đạt chuẩn |
+
+- **Trưởng phòng tự đánh giá mỗi tuần** (mặc định thứ Hai 08:40; nút **Đánh giá ngay** ở từng phòng, **Các trưởng phòng đánh giá ngay**,
+  hoặc nhắn CEO “cho các trưởng phòng đánh giá phòng”): đọc chỉ số thật của phòng, viết tình hình bằng số, nút thắt lớn nhất, 3 việc tuần
+  này. Có khóa Claude thì trưởng phòng tự suy nghĩ theo vai của mình (1 lần gọi Haiku mỗi phòng mỗi tuần); chưa có thì theo luật số liệu.
+  Lời dặn của mọi agent ghi rõ thuộc phòng nào, trưởng phòng là ai; trưởng phòng có thêm cách nghĩ riêng.
+- **Đề xuất tuyển** khi số liệu chứng minh phòng thiếu sức làm (không phải thiếu nick, thiếu ảnh hay vướng luật Facebook):
+
+  | Vị trí | Phòng | Khi nào đề xuất | Làm việc thật |
+  |---|---|---|---|
+  | Biên tập viên SEO (tối đa 2) | Website | Từ khóa chờ viết cần từ 4 tuần mới viết hết, bài đang đạt SEO TB từ 75, chờ duyệt không quá 3 | Mỗi người thêm 1 bài website / tuần, bài chia lần lượt cho Vy và các biên tập viên, ghi tên người viết |
+  | Biên tập Trang (tối đa 2) | Trang Facebook | Mỗi người viết phải lo hơn 3 Trang | Viết bài + prompt ảnh cho các Trang được chia; phòng được tự tạo thêm 1 Trang / 7 ngày (tối đa 3) |
+  | Chuyên viên rà soát nhóm (tối đa 2) | Hội nhóm | Từ 20 nhóm trong nick chưa đánh giá 7 ngày, cần từ 3 lượt mới xem hết | Mỗi lượt rà soát đánh giá thêm 6 nhóm (thoát nhóm kém sớm hơn) |
+  | Nhân viên sale | Kinh doanh | Tiềm năng Facebook đủ (như luật CEO tuyển sale) | Như sale hiện nay; sếp cần thêm nick cho người mới |
+
+- **CEO xét**: vị trí chưa đủ người, số liệu đúng là thiếu người, vốn còn đủ nuôi agent từ 60 ngày. Theo **quyền CEO**: *CEO tự quyết*
+  thì tuyển luôn và báo Telegram; *Chờ sếp duyệt* thì sếp bấm **Duyệt tuyển / Không** ở mục Phòng ban. Không đạt thì ghi lý do CEO không tuyển.
+- **Nhân viên mới** có tên, ngoại hình màu của phòng, bàn trống trong khu của phòng (mỗi phòng 2 bàn), lời dặn theo vị trí, lên cấp như
+  agent khác. Sếp bấm **Cho nghỉ** để bỏ bớt người (việc của vị trí trở về trưởng phòng).
+- Tắt việc tự đánh giá hằng tuần: cài đặt `dept_on=0` (hoặc nhắn CEO); đổi ngày / giờ: `dept_review_weekday`, `dept_review_time`.
 
 ## Một ngày làm việc
 
@@ -1406,6 +1437,7 @@ docs/
   page_inbox.py  Tin nhắn Fanpage (Messenger): Hà soạn trả lời, sếp duyệt, gửi trong 24 giờ
   nick_health.py Sức khỏe từng nick: điểm rủi ro 30 ngày, tự giảm trần nick yếu, báo Telegram
   telegram_img.py Bot Telegram riêng cho ảnh + việc của Nhi: ghép nối, nhận ảnh, lệnh /anh /trang /xuhuong, báo cáo 21:45
+  departments.py Phòng ban: trưởng phòng tự đánh giá, đề xuất tuyển, CEO xét, nhân viên mới làm việc thật theo vị trí
   trend_create.py Nhi tự tạo Trang: chọn ý tưởng + nick an toàn, tạo trong ca của nick, chuyển về nick cá nhân, báo Telegram
   trend_learn.py Nhi tự học: điểm bài Trang so với mức của Trang, bài học kiểu bài / độ dài / giờ, độ chính xác chọn xu hướng
   trend_pages.py Nhi: Google Trends, đề xuất Trang, lịch bài Trang xu hướng, prompt ảnh gửi Telegram, nhận ảnh sếp trả lời

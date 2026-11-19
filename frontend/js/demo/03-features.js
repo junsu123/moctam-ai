@@ -234,3 +234,39 @@
   }
   function reply(l,msg){ const n=l.name; return `Chào ${n} ạ! Cảm ơn ${n} đã quan tâm hàng bên xưởng 🌿\nMình gửi ${n} ảnh thật nhé; giá sỉ ${n} nhắn Zalo ${ZALO()} để được báo trực tiếp. Với nhu cầu "${l.need||msg}", mình gợi ý ${n} nhập thử combo nhỏ trước để test thị trường, xưởng gửi kèm mẫu thử + bộ ảnh/video để ${n} đăng bán luôn.\n${n} đang bán chủ yếu kênh nào (live, ads hay sàn) để mình tư vấn sản phẩm hợp nhất ạ?`; }
   const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+  /* Phòng ban (bản xem trước) */
+  const DP_LOOK={skin:"#f2c9a0",pants:"#2c2236",hair:"#3b2414",hairStyle:"bun",accessory:"glasses"};
+  function dpState(){ if(S.dp) return S.dp; const td=today();
+    S.dp={id:3,staff:[{id:1,dept:"website",position:"seo_writer",name:"Thảo",desk:20}],
+      reviews:{website:{summary:"Viết 6 bài trong 14 ngày, SEO trung bình 84/100; còn 18 từ khóa chờ viết (4,5 tuần).",bottleneck:"Từ khóa chờ viết nhiều hơn sức viết",plan:["Vy viết 3 bài, Thảo viết 1 bài, đo điểm SEO từng bài","Ưu tiên từ khóa gia công trà túi lọc","Duyệt hết bài chờ trước thứ Sáu"],created_at:td+" 08:41:00"},
+        pages:{summary:"2 Trang đang chạy, 11 bài đã đăng 7 ngày, 1 bài bỏ vì thiếu ảnh.",bottleneck:"Ảnh về chậm làm bỏ bài",plan:["Nhi gửi prompt ảnh sớm hơn 2 giờ","Trang Bếp viết bài bền nhiều hơn","Theo dõi Trang mới tạo"],created_at:td+" 08:42:00"},
+        groups:{summary:"64 nhóm trong nick, 28 nhóm chưa đánh giá 7 ngày, mỗi lượt xem 8 nhóm.",bottleneck:"Nhóm chưa được rà soát kịp",plan:["Tuấn rà soát 8 nhóm mỗi lượt","Bảo theo dõi nhóm xóa bình luận","Thoát nhóm chợ spam"],created_at:td+" 08:43:00"},
+        sales:{summary:"21 khách có SĐT 14 ngày, 3 đơn; 5 khách chờ sếp gọi.",bottleneck:"Khách có SĐT chưa được gọi kịp",plan:["Hà soạn kịch bản gọi 5 khách chờ","Mai tìm thêm 3 SĐT livestream","Lan viết bài nhắm người bán online"],created_at:td+" 08:44:00"}},
+      props:[{id:1,dept:"website",position:"seo_writer",reason:"Còn 18 từ khóa chờ viết, với 3 bài/tuần phải mất 6 tuần; SEO trung bình 84/100",status:"done",ceo_note:"CEO tuyển",created_at:td+" 08:41:00"},
+        {id:2,dept:"groups",position:"group_scout",reason:"28 nhóm trong nick chưa được đánh giá 7 ngày qua, mỗi lượt chỉ xem 8 nhóm (3,5 lượt mới xem hết)",status:"pending",ceo_note:"CEO đồng ý, chờ sếp duyệt",created_at:td+" 08:43:00"}]};
+    return S.dp; }
+  const DP_DEPTS=[["director","Phòng Giám đốc","ceo",["ceo","khoa"],"#d4af37","Điều hành toàn công ty: vốn, doanh thu, nhân sự, xét đề xuất của các phòng"],
+    ["sales","Phòng Kinh doanh","minh",["minh","lan","ha","mai"],"#2f5d3a","Khách sỉ có số điện thoại và đơn hàng"],
+    ["groups","Phòng Hội nhóm","tuan",["tuan","bao"],"#f08a24","Nhóm đăng được, nhóm tương tác cao, bình luận có ích, không để nick bị chặn"],
+    ["pages","Phòng Trang Facebook","nhi",["nhi"],"#e0559b","Trang mới theo xu hướng bền, người theo dõi và tương tác bài Trang tăng đều"],
+    ["website","Phòng Website","vy",["vy"],"#3c6fd8","Bài website chuẩn SEO đúng hạn, website luôn lên đúng hosting"]];
+  const DP_POS={seo_writer:["website","Biên tập viên SEO",2,"Viết thêm 1 bài website chuẩn SEO mỗi tuần, bài ghi tên người viết"],
+    page_editor:["pages","Biên tập Trang",2,"Viết bài (kèm prompt ảnh) cho một phần các Trang đang chạy; phòng được tự tạo thêm 1 Trang mỗi 7 ngày"],
+    group_scout:["groups","Chuyên viên rà soát nhóm",2,"Mỗi lượt rà soát đánh giá thêm 6 nhóm trong các nick"],
+    sale:["sales","Nhân viên sale",null,"Giữ 3–5 nick Facebook: đăng bài, up bài, quét bình luận (sếp cần thêm nick)"]};
+  function demoStaff(){ const d=dpState(); return d.staff.map(s=>({id:"st-"+s.id,kind:"staff",name:s.name,role:`${DP_POS[s.position][1]} · ${DP_DEPTS.find(x=>x[0]===s.dept)[1]}`,
+    short:DP_POS[s.position][3],personality:"Chăm chỉ",look:{...DP_LOOK,shirt:DP_DEPTS.find(x=>x[0]===s.dept)[4]},desk:s.desk,dept:s.dept,face:""})); }
+  function demoDp(method,P,body){ const d=dpState(); let m; const nm=id=>(AGENT[id]||{}).name||id;
+    if(method==="GET") return {ceo_mode:"auto",settings:{dept_on:"1",dept_review_weekday:"1",dept_review_time:"08:40"},depts:DP_DEPTS.map(([k,name,head,core,color,goal])=>({key:k,name,goal,color,head,head_name:nm(head),
+      members:core.map(i=>({id:i,name:nm(i),role:(AGENT[i]||{}).role||"",head:i===head})).concat(d.staff.filter(s=>s.dept===k).map(s=>({id:"st-"+s.id,name:s.name,role:DP_POS[s.position][1],staff_id:s.id,head:false})))
+        .concat(k==="sales"?saleAgents().map(a=>({id:a.id,name:a.name,role:a.role,head:false})):[]),
+      review:d.reviews[k]||null,positions:Object.entries(DP_POS).filter(([p,v])=>v[0]===k).map(([p,v])=>({key:p,title:v[1],max:v[2],does:v[3],have:d.staff.filter(s=>s.position===p).length})),
+      proposals:d.props.filter(x=>x.dept===k).slice().reverse()}))};
+    if((m=P.match(/^\/departments\/(\w+)\/review$/))){ const r=d.reviews[m[1]]; if(r) r.created_at=today()+" "+new Date().toTimeString().slice(0,8); log(DP_DEPTS.find(x=>x[0]===m[1])[2],"Đánh giá phòng",(r||{}).summary||""); return {...(r||{}),decisions:[]}; }
+    if((m=P.match(/^\/departments\/proposals\/(\d+)\/(approve|reject)$/))){ const p=d.props.find(x=>x.id==m[1]); if(!p||p.status!=="pending") throw new Error("Đề xuất này đã được xử lý");
+      if(m[2]==="reject"){ p.status="rejected"; p.ceo_note="Sếp không duyệt"; return {status:"rejected"}; }
+      const desk={groups:[18,19],website:[20,21],pages:[22,23]}[p.dept].find(x=>!d.staff.some(s=>s.desk===x)); const name=["Quân","Ngân","Phúc","Trâm"].find(n=>!d.staff.some(s=>s.name===n));
+      d.staff.push({id:++d.id,dept:p.dept,position:p.position,name,desk}); p.status="done"; p.ceo_note="Sếp duyệt"; log("ceo","Tuyển nhân viên",`${name} vào làm ${DP_POS[p.position][1]}`); return {status:"done",name}; }
+    if((m=P.match(/^\/departments\/staff\/(\d+)\/leave$/))){ d.staff=d.staff.filter(s=>s.id!=m[1]); return {ok:true}; }
+    return {}; }

@@ -134,6 +134,9 @@ Trong file tính năng viết `def tick(now): ...` (kiểm tra giờ + cờ “�
 `backend/ceo_orders.py`: thêm dòng mô tả vào `ACTIONS_DOC`, mẫu câu (regex) vào `_rule_plan`, và nhánh `if t == "ten_viec":` trong `execute()`.
 
 ### 4.10. Thêm agent mới (khuôn: Nhi)
+Phòng ban ở `backend/departments.py`: agent thuộc phòng nào (`DEPTS[...]["core"]`), cách nghĩ của trưởng phòng (`MINDSET`), vị trí tuyển
+được (`POSITIONS` + luật thiếu người ở `need()`), bàn cho nhân viên tuyển thêm (`DESKS`, khớp `DESKS` trong `js/world3d.js`). Vị trí mới
+cần chỗ dùng thật trong code (VD `departments.count("seo_writer")` ở `website.tick`).
 `agents.py` (mục mới + `ORDER`), các danh sách `CORE` / `STATUS` (`workflows.py`, `learning.py`, `growth.py`), `knowledge.py`
 (`ROLE_NAME`, giáo trình, `STUDY_AGENTS`), `ceo_orders.py` (`AGENT_ALIASES`, mô tả), `fb_policy.py` (`TEACH`); giao diện: bàn trong
 `DESKS` (`js/world3d.js`), danh sách agent mẫu `js/demo/01-state.js`, tên ở `js/pages/ceo.js`.

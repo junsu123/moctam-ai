@@ -231,3 +231,10 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:
 .post .acts{display:flex;gap:6px;flex-wrap:wrap}
 .inline-form{display:flex;flex-direction:column;gap:6px;background:var(--panel-2);padding:8px;border-radius:9px}
 
+/* Phòng ban */
+.dp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:12px;align-items:start}
+.dp-mem{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:3px}
+.dp-mem li{font-size:13px;overflow-wrap:anywhere}
+.dp-mem li.hd{font-size:14px}
+.dp-pos{margin:0;padding-left:18px}
+.dp-prop{border-top:1px dashed var(--line,#e5e0d4);padding:6px 0;margin-top:4px}

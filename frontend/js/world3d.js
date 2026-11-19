@@ -7,11 +7,11 @@ const World = (() => {
   const scene=new THREE.Scene();
   const camera=new THREE.PerspectiveCamera(38,1,0.1,200);
   const controls=new THREE.OrbitControls(camera,canvas);
-  controls.enableDamping=true; controls.maxPolarAngle=Math.PI*0.44; controls.minDistance=6; controls.maxDistance=34; controls.enablePan=false;
-  const VIEWS={office:{pos:[-5,17,21],tgt:[-4,0.5,3]},meeting:{pos:[7.4,9,11.5],tgt:[7.4,0.9,-0.4]}};
+  controls.enableDamping=true; controls.maxPolarAngle=Math.PI*0.44; controls.minDistance=6; controls.maxDistance=46; controls.enablePan=false;
+  const VIEWS={office:{pos:[-2.5,28,33],tgt:[-1.5,0.5,4.5]},meeting:{pos:[7.4,9,11.5],tgt:[7.4,0.9,-0.4]}};
   let camGoal=null;
   function setCam(v){ camGoal={pos:new THREE.Vector3(...VIEWS[v].pos),tgt:new THREE.Vector3(...VIEWS[v].tgt)}; }
-  camera.position.set(...VIEWS.office.pos); controls.target.set(...VIEWS.office.tgt); controls.maxDistance=38;
+  camera.position.set(...VIEWS.office.pos); controls.target.set(...VIEWS.office.tgt); controls.maxDistance=46;
   controls.addEventListener("start",()=>camGoal=null);
 
   function applyTheme(){ const c=getComputedStyle(document.documentElement).getPropertyValue("--stage").trim()||"#dbe5d3"; scene.background=new THREE.Color(c); scene.fog=new THREE.Fog(c,30,60); }
@@ -40,10 +40,10 @@ const World = (() => {
   function wrap(g,text,x,y,maxW,lh){ const words=text.split(" "); let line="",lines=[]; for(const w of words){ const tl=line?line+" "+w:w; if(g.measureText(tl).width>maxW&&line){lines.push(line);line=w;}else line=tl; } lines.push(line); lines=lines.slice(0,3); lines.forEach((l,i)=>g.fillText(l,x,y+(i-(lines.length-1)/2)*lh)); }
 
   // sàn, tường
-  mesh(box(26,0.3,20),"#c9a679",{y:-0.15,z:2});
-  for(let i=-12;i<=12;i+=2){ mesh(box(0.04,0.01,20),"#b8946a",{x:i,y:0.005,z:2,shadow:false}); }
+  mesh(box(26,0.3,25),"#c9a679",{y:-0.15,z:4.5});
+  for(let i=-12;i<=12;i+=2){ mesh(box(0.04,0.01,25),"#b8946a",{x:i,y:0.005,z:4.5,shadow:false}); }
   mesh(box(9,0.02,10),"#9fc4a7",{x:7.2,y:0.01,shadow:false}); // thảm phòng họp
-  mesh(box(26,4,0.3),"#e9e4d6",{y:2,z:-8}); mesh(box(0.3,4,20),"#e3ddcd",{x:-13,y:2,z:2});
+  mesh(box(26,4,0.3),"#e9e4d6",{y:2,z:-8}); mesh(box(0.3,4,25),"#e3ddcd",{x:-13,y:2,z:4.5});
   // cửa sổ
   for(const x of [-9,-4,1]){ mesh(box(3,1.8,0.1),"#a8d4e8",{x,y:2.3,z:-7.82,shadow:false}); mesh(box(3.2,0.12,0.2),"#f7f3e8",{x,y:1.35,z:-7.8}); }
   // biển công ty
@@ -80,11 +80,24 @@ const World = (() => {
   // 5 bàn của đội lõi + 8 bàn cho nhân viên sale (2 dãy phía trước)
   const DESKS=[[-1.4,-2.8],[-9.4,-2.8],[-5.4,-2.8],[-9.4,2.6],[-5.4,2.6],
     [-11,6.2],[-8,6.2],[-5,6.2],[-2,6.2],[-11,9.6],[-8,9.6],[-5,9.6],[-2,9.6],
-    [-1.4,2.6], // 13: bàn CEO
+    [-1.4,2.6], // 13: bàn CEO (Phòng Giám đốc, cạnh bàn Khoa)
     [0.9,6.2], // 14: bàn Mai (tìm khách sỉ)
-    [0.9,9.6], // 15: bàn Vy (website & SEO)
-    [4.4,9.6], // 16: bàn Bảo (chăm bài đã đăng)
-    [4.4,6.2]]; // 17: bàn Nhi (xu hướng & Trang mới)
+    [-1.6,13.4], // 15: bàn Vy (trưởng phòng Website)
+    [-9.2,13.4], // 16: bàn Bảo (Phòng Hội nhóm)
+    [6.2,13.4], // 17: bàn Nhi (trưởng phòng Trang Facebook)
+    [-6.8,13.4],[-4.4,13.4], // 18-19: nhân viên tuyển thêm Phòng Hội nhóm
+    [0.8,13.4],[3.2,13.4], // 20-21: nhân viên Phòng Website
+    [8.6,13.4],[11,13.4]]; // 22-23: nhân viên Phòng Trang Facebook
+  DESKS[2]=[-11.6,13.4]; // bàn Tuấn chuyển sang khu Phòng Hội nhóm
+  // khu phòng ban: thảm màu + tên phòng trên sàn
+  function zone(x0,x1,z0,z1,color,label){ mesh(box(x1-x0,0.02,z1-z0),color,{x:(x0+x1)/2,y:0.012,z:(z0+z1)/2,shadow:false});
+    const t=new THREE.Mesh(new THREE.PlaneGeometry(3.4,0.62),new THREE.MeshBasicMaterial({map:textTex([label],{w:512,h:96,bg:"#fffaf0",fg:"#1b2620",font:"700 46px 'Baloo 2', sans-serif"}),transparent:true}));
+    t.rotation.x=-Math.PI/2; t.position.set((x0+x1)/2,0.03,z1-0.45); scene.add(t); }
+  zone(-7.2,0.6,1.7,4.6,"#efe1b5","Phòng Giám đốc");
+  zone(-12.8,0.6,-3.6,-0.3,"#cfe0cf","Phòng Kinh doanh");
+  zone(-12.8,-3.2,12.6,16.6,"#f6d7b6","Phòng Hội nhóm");
+  zone(-2.8,4.4,12.6,16.6,"#cfdcf6","Phòng Website");
+  zone(5,12.6,12.6,16.6,"#f6d0e3","Phòng Trang Facebook");
   const deskObjs={};
   function buildDesk(i,color,isSale){ const [x,z]=DESKS[i]; const g=new THREE.Group(); scene.add(g); const P={parent:g};
     mesh(box(2,0.1,0.95),"#d8b48a",{...P,x,y:0.76,z:z+0.95}); for(const dx of [-0.9,0.9]) mesh(box(0.08,0.74,0.85),"#a7835c",{...P,x:x+dx,y:0.37,z:z+0.95});
@@ -174,13 +187,15 @@ const World = (() => {
   const DOOR_O=new THREE.Vector3(2.0,0,0), DOOR_I=new THREE.Vector3(4.0,0,0);
   const deskSpot=id=>{ const [x,z]=DESKS[AGENT[id].desk]; return {x,z,ry:0}; };
   function addAgent(a){ AGENT[a.id]=a; const c=makeChar(a); chars[a.id]=c; const d=deskSpot(a.id); c.root.position.set(d.x,0,d.z);
-    if(a.kind==="sale") deskObjs[a.id]=buildDesk(a.desk,a.look.shirt,true); addTag(a.id,a.name); }
+    if(a.kind==="sale") deskObjs[a.id]=buildDesk(a.desk,a.look.shirt,true);
+    if(a.kind==="staff"&&DESKS[a.desk]) deskObjs[a.id]=buildDesk(a.desk,a.look.shirt,false); addTag(a.id,a.name); }
   function removeAgent(id){ const c=chars[id]; if(!c) return; scene.remove(c.root); if(deskObjs[id]) scene.remove(deskObjs[id]);
     delete chars[id]; delete deskObjs[id]; tags[id]?.remove(); bubbles[id]?.remove(); delete tags[id]; delete bubbles[id]; }
 
   // đường đi: lách cạnh bàn -> lối đi giữa -> cửa kính -> vòng quanh bàn họp -> ghế
   const V=(x,z)=>new THREE.Vector3(x,0,z);
   function deskLeg(id){ const d=deskSpot(id); if(d.z<5) return [V(d.x+1.5,d.z),V(d.x+1.5,0.4)];
+    if(d.z>12) return [V(d.x+1.5,d.z),V(d.x+1.5,12),V(1.6,12),V(1.6,8.4)];   // khu phòng ban phía trước: ra lối đi rồi vào phòng họp
     const aisle=d.z<8?4.9:8.4; return [V(d.x+1.5,d.z),V(d.x+1.5,aisle),V(1.6,aisle)]; }   // dãy sale đi vòng lối trước
   function seatLeg(id){ const s=SEATS[id]; const r=[DOOR_O.clone(),DOOR_I.clone()];
     if(s.x>MC.x+0.5) r.push(V(MC.x,(s.z>=0?1:-1)*(Math.hypot(s.x-MC.x,s.z-MC.z)+0.7))); r.push(V(s.x,s.z)); return r; }

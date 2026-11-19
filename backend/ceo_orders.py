@@ -31,7 +31,7 @@ def _aliases() -> dict:
 
 
 SETTINGS_OK = {
-    "trend_autocreate": ("bool", 0, 0, "Nhi tự tạo Trang"), "trend_create_per_week": ("int", 1, 3, "số Trang Nhi tự tạo mỗi 7 ngày"),
+    "dept_on": ("bool", 0, 0, "trưởng phòng tự đánh giá phòng mỗi tuần"), "trend_autocreate": ("bool", 0, 0, "Nhi tự tạo Trang"), "trend_create_per_week": ("int", 1, 3, "số Trang Nhi tự tạo mỗi 7 ngày"),
     "posts_per_day": ("int", 1, 20, "số bài Lan viết mỗi ngày"), "kpi_min": ("int", 1, 50, "KPI tối thiểu khách có SĐT/ngày"),
     "kpi_max": ("int", 1, 100, "KPI phấn đấu"), "scan_times": ("times", 0, 0, "giờ quét bình luận"),
     "discover_time": ("time", 0, 0, "giờ đi tìm nhóm"), "join_per_nick_day": ("int", 0, 5, "số nhóm xin vào/nick/ngày"),
@@ -305,6 +305,18 @@ def execute(act: dict) -> str:
         if act.get("check"):
             return "Em đang mở sitemap trên tên miền như Google đọc, có lỗi sửa được thì em sửa luôn, xong em báo sếp"
         return "Em đang kiểm tra kết nối hosting, xong em báo sếp" if act.get("test") else "Em đang dựng lại website và đẩy lên hosting, xong em báo sếp"
+    if t == "dept_review":
+        import departments
+        ks = [act["dept"]] if act.get("dept") in ("sales", "groups", "pages", "website") else ["sales", "groups", "pages", "website"]
+        out = []
+        for k in ks:
+            r = departments.review(k)
+            line = f"{departments.DEPTS[k]['name']}: {r['summary'][:160]}"
+            for dn in r.get("decisions") or []:
+                line += {"done": f" → em đã tuyển {dn.get('name') or ''}", "pending": " → em đồng ý tuyển, chờ sếp duyệt ở mục Phòng ban",
+                         "rejected": f" → em chưa tuyển: {dn.get('why') or ''}"}.get(dn.get("status"), "")
+            out.append(line)
+        return "\n".join(out)
     if t == "coach_now":
         import coach
         return coach.run(force=True)["msg"]
@@ -666,11 +678,11 @@ def _context() -> str:
     return json.dumps({
         "hom_nay": db.today(),
         "agents": {k: f"{__import__('agents').name_of(k)}, {v}" for k, v in {
-            "minh": "trưởng phòng, chủ trì họp", "lan": "viết bài", "tuan": "chọn nhóm và xếp lịch đăng", "ha": "chăm sóc khách, soạn tin",
+            "minh": "trưởng phòng Kinh doanh, chủ trì họp", "lan": "viết bài", "tuan": "trưởng phòng Hội nhóm: chọn nhóm và xếp lịch đăng", "ha": "chăm sóc khách, soạn tin",
             "khoa": "số liệu", "mai": "tìm khách sỉ (người bán online, livestream) trên Facebook, TikTok, Shopee",
-            "vy": "quản lý website công ty và viết bài chuẩn SEO",
+            "vy": "trưởng phòng Website: quản lý website công ty và viết bài chuẩn SEO",
             "bao": "rà soát bài đã đăng, cho nick bình luận ảnh kèm câu ngắn và Zalo liên hệ (up bài)",
-            "nhi": "đọc xu hướng, đề xuất Trang mới, lên lịch bài cho Trang xu hướng (ảnh sếp tạo, gửi qua Telegram)"}.items()},
+            "nhi": "trưởng phòng Trang Facebook: đọc xu hướng, tự tạo Trang mới, lên lịch bài cho Trang xu hướng (ảnh sếp tạo, gửi qua Telegram)"}.items()},
         "sales": [{"id": r["id"], "ten": r["name"], "nick": r["fb_name"], "dang_nhap": r["login_status"] == "ok",
                    "tu_dang": bool(r["auto_post"])} for r in sales],
         "san_pham": [{"id": p["id"], "ten": p["name"], "dang_ban_chay": bool(p["hot"])} for p in prods],
@@ -686,6 +698,7 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - plan {}: giao Tuấn xếp lịch đăng các bài đã duyệt
 - feed_style {style: invite|natural}: sếp muốn bình luận MỜI SỈ vào cả bài không liên quan (invite) hoặc chỉ bình luận tự nhiên (natural)
 - site_deploy {test?: true, check?: true}: check true khi sếp nói sitemap / Google không đọc được website. Sếp bảo đẩy / đăng / cập nhật website lên hosting (tin tức, sản phẩm lên online); test true khi sếp hỏi kiểm tra kết nối hosting
+- dept_review {dept?: sales|groups|pages|website}: sếp bảo các trưởng phòng (hoặc một phòng) đánh giá phòng, xem phòng nào thiếu người / đề xuất tuyển
 - coach_now {}: cho các agent đủ kết quả thật mới gửi việc cho Claude kèm cặp ngay (theo lô, giảm 50%)
 - cleanup_data {run: true|false}: sếp hỏi dung lượng dữ liệu (run false) hoặc bảo dọn dẹp / dọn dữ liệu / dữ liệu phình to (run true)
 - update_app {}: sếp bảo cập nhật / nâng cấp phần mềm, tải bản mới (git pull) rồi tự khởi động lại khi sale rảnh
@@ -822,6 +835,8 @@ def _rule_plan(text: str) -> dict:
         return {"reply": "Dạ.", "actions": [{"type": "feed_style", "style": "natural"}]}
     if re.search(r"(bình luận|comment|cmt).{0,40}mời (nhập )?sỉ|mời (nhập )?sỉ.{0,30}(bình luận|comment|cmt|bài không liên quan|mọi bài)", low):
         return {"reply": "Dạ.", "actions": [{"type": "feed_style", "style": "invite"}]}
+    if re.search(r"trưởng phòng.{0,30}(đánh giá|xem lại|báo cáo|đề xuất)|(đánh giá|rà soát|xem lại) (các )?phòng( ban)?|phòng nào thiếu người", low):
+        return {"reply": "Dạ.", "actions": [{"type": "dept_review"}]}
     if re.search(r"sitemap|site ?map|search console|google (không|chưa) (đọc|tìm|index)", low):
         return {"reply": "Dạ.", "actions": [{"type": "site_deploy", "check": True}]}
     if re.search(r"(kiểm tra|test|thử).{0,15}(kết nối )?(hosting|ftp)|(hosting|ftp).{0,20}(lỗi|không (kết nối|vào|đăng))", low):

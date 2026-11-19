@@ -28,7 +28,8 @@ def on() -> bool:
 
 def per_week() -> int:
     try:
-        return max(1, min(3, int(_s().get("trend_create_per_week") or 1)))
+        import departments  # mỗi Biên tập Trang: phòng được tạo thêm 1 Trang / 7 ngày (tối đa 3)
+        return max(1, min(3, int(_s().get("trend_create_per_week") or 1) + departments.count("page_editor")))
     except ValueError:
         return 1
 

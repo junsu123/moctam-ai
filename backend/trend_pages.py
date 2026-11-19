@@ -219,15 +219,17 @@ và "image_note" (1 câu tiếng Việt: ảnh nên trông thế nào).
 {learned}
 Đừng mở đầu giống các bài gần đây: {' | '.join((r['content'] or '')[:50] for r in recent) or '(chưa có)'}
 JSON: {{"content": "...", "hashtags": "...", "image_prompt": "...", "image_note": "..."}}"""
-    d = llm.json(system_prompt("nhi", _s()), ask, mock=lambda: _mock_post(pg, topic), max_tokens=900, task="posts") or {}
+    import departments
+    writer = departments.writer_for_page(pg["id"])  # Nhi hoặc Biên tập Trang phụ trách Trang này
+    d = llm.json(system_prompt(writer, _s()), ask, mock=lambda: _mock_post(pg, topic), max_tokens=900, task="posts") or {}
     text = pricing.sanitize((d.get("content") or "").strip(), add_contact=False)
     if not text or [i for i in fb_policy.check_text(text) if i["level"] == "high"]:
         d = _mock_post(pg, topic)
         text = d["content"]
     acc = db.one("SELECT * FROM fb_accounts WHERE id=?", (pg["admin_account_id"],)) or {}
     pid = db.run("""INSERT INTO posts(agent_id, target_type, title, content, hashtags, status, scheduled_for, account_id, sale_id, fb_page_ref,
-                    trend_topic, trend_kind, image_prompt, image_note, source, created_at) VALUES ('nhi', 'page', ?, ?, ?, 'need_image', ?, ?, ?, ?, ?, ?, ?, ?, 'trend_page', ?)""",
-                 (f"{pg['name']} · {topic}"[:120], text, d.get("hashtags") or "", when, acc.get("id"), acc.get("sale_id"), pg["id"], topic, kind,
+                    trend_topic, trend_kind, image_prompt, image_note, source, created_at) VALUES (?, 'page', ?, ?, ?, 'need_image', ?, ?, ?, ?, ?, ?, ?, ?, 'trend_page', ?)""",
+                 (writer, f"{pg['name']} · {topic}"[:120], text, d.get("hashtags") or "", when, acc.get("id"), acc.get("sale_id"), pg["id"], topic, kind,
                   (d.get("image_prompt") or _mock_post(pg, topic)["image_prompt"])[:900], (d.get("image_note") or "")[:300], db.now()))
     ask_image(pid)
     return db.one("SELECT * FROM posts WHERE id=?", (pid,))

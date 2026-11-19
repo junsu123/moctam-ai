@@ -11,7 +11,7 @@ function show(v){
   if(v==="office"){ World.mount($("#slot-office")); World.setCam("office"); }
   if(v==="ceo") loadCeoChat(true);
   if(v==="meeting"){ World.mount($("#slot-meeting")); World.setCam("meeting"); loadMeetingPage(); }
-  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="comments") loadCm(); if(v==="page") loadPg(); if(v==="trends") loadTr(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="samples"){ loadPostSamples(); loadCeoReview(); } if(v==="fbrules") loadFbp(); if(v==="friends") loadFr(); if(v==="replies") loadRp(); if(v==="website") loadWs(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
+  if(v==="errors") loadErrors(); if(v==="posts") loadPosts(); if(v==="comments") loadCm(); if(v==="page") loadPg(); if(v==="trends") loadTr(); if(v==="depts") loadDp(); if(v==="company") loadCompany(); if(v==="kpi") loadKpi(); if(v==="learn") loadLearn(); if(v==="sales") loadSales(); if(v==="groups") loadGroups(); if(v==="leads") loadLeads(); if(v==="prospects") loadProspects(); if(v==="samples"){ loadPostSamples(); loadCeoReview(); } if(v==="fbrules") loadFbp(); if(v==="friends") loadFr(); if(v==="replies") loadRp(); if(v==="website") loadWs(); if(v==="products") loadProducts(); if(v==="setup") loadSettings();
   $(".main").scrollTop=0;
 }
 $("#nav").addEventListener("click",e=>{ if(e.target.closest("#navMore")){ const o=!document.body.classList.contains("nav-open"); document.body.classList.toggle("nav-open",o); $("#navMore").setAttribute("aria-expanded",o); return; }

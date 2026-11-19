@@ -192,6 +192,12 @@ CREATE TABLE IF NOT EXISTS fb_pages (
 );
 CREATE TABLE IF NOT EXISTS trends (id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT, title TEXT, traffic TEXT, traffic_n INTEGER, news TEXT, created_at TEXT);
 CREATE INDEX IF NOT EXISTS idx_trends_day ON trends(day);
+CREATE TABLE IF NOT EXISTS staff (id INTEGER PRIMARY KEY AUTOINCREMENT, dept TEXT, position TEXT, name TEXT, look TEXT, desk INTEGER,
+  status TEXT DEFAULT 'active', hired_at TEXT, left_at TEXT, proposal_id INTEGER, reason TEXT);
+CREATE TABLE IF NOT EXISTS dept_proposals (id INTEGER PRIMARY KEY AUTOINCREMENT, dept TEXT, head TEXT, position TEXT, reason TEXT, expected TEXT,
+  status TEXT DEFAULT 'pending', ceo_note TEXT, staff_id INTEGER, created_at TEXT, decided_at TEXT);
+CREATE TABLE IF NOT EXISTS dept_reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, dept TEXT, head TEXT, summary TEXT, bottleneck TEXT, plan TEXT,
+  metrics TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS trend_hot (id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT, title TEXT, score INTEGER, niche TEXT, why TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS page_stats (day TEXT PRIMARY KEY, followers INTEGER, fans INTEGER, created_at TEXT);
 CREATE TABLE IF NOT EXISTS page_threads (
@@ -468,6 +474,7 @@ DEFAULT_SETTINGS = {
     "bump_rest_days": "30",
     "trend_on": "1", "trend_time": "07:40",
     "trend_learn_min": "8",
+    "dept_on": "1", "dept_review_weekday": "1", "dept_review_time": "08:40",  # trưởng phòng tự đánh giá phòng mỗi tuần (departments.py)
     "trend_autocreate": "1", "trend_create_per_week": "1", "trend_create_nick": "", "trend_create_posts": "2", "trend_create_times": "09:00,19:30",  # Nhi tự tạo Trang (trend_create.py)  # Nhi tự học: mỗi kiểu bài / độ dài / khung giờ cần từng này bài Trang mới so sánh
     "tg2_token": "", "tg2_chat_ids": "", "tg2_pair_code": "", "tg2_offset": "0", "tg2_report": "1",  # bot Telegram riêng cho ảnh / Nhi  # Nhi: đọc xu hướng mỗi sáng, đề xuất Trang, lên lịch bài Trang xu hướng (ảnh qua Telegram)
     "page_grow_on": "1",  # nuôi Trang qua Chrome của nick quản trị (không dùng Graph API): Lan viết, nick đăng dưới tên Trang
@@ -737,6 +744,7 @@ RESET_TABLES = {  # bảng: mô tả cho sếp
     "meeting_messages": "lời thoại trong họp", "tasks": "việc được giao", "activity": "nhật ký hoạt động",
     "lessons": "bài học của agent", "feedback": "phản hồi duyệt bài", "agent_progress": "cấp độ, kinh nghiệm agent",
     "kpi_daily": "lịch sử KPI", "ai_batches": "lô viết bài đang chờ",
+    "staff": "nhân viên phòng ban tuyển thêm", "dept_proposals": "đề xuất tuyển của trưởng phòng", "dept_reviews": "đánh giá phòng ban",
     "orders": "doanh thu đã nhập", "ceo_decisions": "quyết định của CEO", "errors": "sổ lỗi", "ceo_messages": "trao đổi sếp – CEO", "group_candidates": "nhóm tìm được chưa thêm", "group_searches": "lượt tìm nhóm", "group_joins": "trạng thái xin vào nhóm (bản cũ)", "expenses": "chi phí ghi tay (bản cũ)", "sale_days": "ngày công của sale",
 }
 RUN_STATE_KEYS = ["bump_planned_date", "learn_last_date", "scan_last", "tg_sent_log", "company_founded_at", "company_founded_ts",

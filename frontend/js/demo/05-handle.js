@@ -11,6 +11,7 @@
     if(P.startsWith("/nick-health")) return demoNh(method,P,qs,body||{});
     if(P.startsWith("/page-grow")) return demoPg(method,P,qs,body||{});
     if(P.startsWith("/trends")||P.startsWith("/tg-img")) return demoTr(method,P,qs,body||{});
+    if(P.startsWith("/departments")) return demoDp(method,P,body||{});
     if(P.startsWith("/replies")||P.startsWith("/feed")) return demoRp(method,P,qs,body||{});
       if(P.startsWith("/agents/")&&(method==="PUT"||method==="DELETE")){ S.prof=S.prof||{}; const aid=P.split("/")[2], cur=S.prof[aid]=S.prof[aid]||{};
        if(method==="DELETE"){ delete S.prof[aid]; return {id:aid}; }
@@ -31,7 +32,8 @@
         S.prof=S.prof||{}; const pf=a=>({default_name:a.default_name||a.name,...a,...(S.prof[a.id]||{})});
         return AGENT_DEFS.map(a=>pf({...a,default_name:a.name,kind:"core",level:lvl(S.xp[a.id]||0),progress:prog(a.id),recent:rec(a.id),learned_today:(a.id.length%3)+1,status:learnSt(a.id),tasks:S.tasks.filter(t=>t.agent_id===a.id&&t.status!=="done")}))
 .map(x=>({...x,...(S.prof[x.id]||{})}))
-          .concat(saleAgents().map(a=>({...a,level:lvl(S.xp[a.id]||0),progress:prog(a.id),recent:rec(a.id),learned_today:1,status:learnSt(a.id),tasks:[],...(S.prof[a.id]||{})}))); }
+          .concat(saleAgents().map(a=>({...a,level:lvl(S.xp[a.id]||0),progress:prog(a.id),recent:rec(a.id),learned_today:1,status:learnSt(a.id),tasks:[],...(S.prof[a.id]||{})})))
+          .concat(demoStaff().map(a=>({...a,level:1,progress:prog(a.id),recent:rec(a.id),learned_today:0,status:S.status[a.id]||{state:"idle",text:"Đang sẵn sàng"},tasks:[]}))); }
       if(P==="/sales") return S.sales.map(saleOut);
       if(P==="/dashboard") return {stats:stats(),activity:S.activity.slice(0,30),meeting_running:S.running};
       if(P==="/products") return S.products.slice().sort((a,b)=>(b.is_general||0)-(a.is_general||0)||(b.hot||0)-(a.hot||0)||a.id-b.id).map(p=>({...p,folder:demoFolder(p)})); if(P==="/groups") return S.groups.map(g=>({...g,ready:ready(g),joins:g.joins||{},today:gfToday(g)}));

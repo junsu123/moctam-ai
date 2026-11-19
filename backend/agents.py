@@ -4,7 +4,7 @@ AGENTS = {
     "ceo": {
         "id": "ceo",
         "name": "Đức",
-        "role": "CEO",
+        "role": "Giám đốc (CEO)",
         "short": "Điều hành công ty: sa thải, tuyển dụng, tăng người theo doanh thu và tiềm năng",
         "personality": "Nhìn xa, kỷ luật, công bằng. Chỉ tăng người khi doanh thu hoặc số liệu chứng minh được; "
                        "sa thải đúng luật nhưng luôn hỏi nick hay người mới là vấn đề.",
@@ -35,7 +35,7 @@ AGENTS = {
     "tuan": {
         "id": "tuan",
         "name": "Tuấn",
-        "role": "Chuyên viên Hội nhóm",
+        "role": "Trưởng phòng Hội nhóm",
         "short": "Rà soát nhóm trong các nick, chọn nhóm đăng, thoát nhóm kém, chăm sóc nhóm mình quản lý, lên lịch đăng",
         "personality": "Thực tế, cẩn thận, thuộc luật từng nhóm, ghét spam vì sợ bị chặn nick. Hay phản biện ý tưởng đăng dồn dập.",
         "look": {"skin": "#e8b88f", "shirt": "#2e9e6b", "pants": "#2c3a33", "hair": "#1d1d1d",
@@ -77,7 +77,7 @@ AGENTS = {
     "vy": {
         "id": "vy",
         "name": "Vy",
-        "role": "Biên tập Website & SEO",
+        "role": "Trưởng phòng Website & SEO",
         "short": "Quản lý website công ty, lên kế hoạch từ khóa, viết bài chuẩn SEO để khách sỉ tự tìm thấy xưởng trên Google",
         "personality": "Kỹ tính với từng thẻ tiêu đề, từng đường link; viết dài nhưng dễ đọc, có số liệu thật của nhà máy. "
                        "Không viết bài câu khách, không hứa công dụng, không nhồi từ khóa.",
@@ -100,7 +100,7 @@ AGENTS = {
     "nhi": {
         "id": "nhi",
         "name": "Nhi",
-        "role": "Xu hướng & Trang mới",
+        "role": "Trưởng phòng Trang Facebook",
         "short": "Mỗi sáng đọc xu hướng tìm kiếm, đề xuất Trang mới cho ngách đang lên, lên lịch bài cho các Trang theo chủ đề nóng, "
                  "gửi prompt tạo ảnh lên Telegram cho sếp và tự lấy ảnh sếp gửi về để đăng",
         "personality": "Nhanh nhạy với tin nóng nhưng tỉnh táo: chỉ chọn chủ đề còn được quan tâm vài ngày, không giật tít sai sự thật, "
@@ -166,6 +166,10 @@ def system_prompt(agent_id: str, settings: dict | None = None, with_learning: bo
                 a = sale_agent(r)
         except Exception:
             pass
+    elif agent_id.startswith("st-"):
+        import departments
+        a = next((x for x in departments.staff_agents() if x["id"] == agent_id), None) or \
+            {"name": agent_id, "role": "Nhân viên", "short": "", "personality": "chăm chỉ, ngắn gọn"}
     else:
         a = AGENTS[agent_id]
     s = settings or {}
@@ -175,7 +179,7 @@ def system_prompt(agent_id: str, settings: dict | None = None, with_learning: bo
             f"Giọng thương hiệu: {s.get('brand_voice', '')}\n\n"
             f"Bạn tên là {a['name']}, vị trí: {a['role']} ({a['short']}).\n"
             f"Tính cách: {a['personality']}\n"
-            "Luôn trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, đúng vai." + (_learned(agent_id) if with_learning else "")
+            "Luôn trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, đúng vai." + _dept(agent_id) + (_learned(agent_id) if with_learning else "")
             + _orders(agent_id) + _hot_products() + _mai_rules(agent_id) + _price_rule() + _fb_rules() + _vy_rules(agent_id) + _target_rule(agent_id) + _funnel(agent_id))
 
 
@@ -258,6 +262,15 @@ def _orders(agent_id: str) -> str:
         return ""
 
 
+def _dept(agent_id: str) -> str:
+    try:
+        import departments
+        return departments.prompt_block(agent_id)
+    except Exception as e:
+        print("[dept]", e)
+        return ""
+
+
 def _learned(agent_id: str) -> str:
     try:
         import learning
@@ -279,7 +292,13 @@ def public_list() -> list[dict]:
     apply_profiles()
     core = [{**{k: AGENTS[i][k] for k in ("id", "name", "role", "short", "personality", "look", "desk")}, "kind": "core",
              "face": face_of(i), "default_name": DEFAULT_NAMES[i]} for i in ORDER]
-    return core + [sale_agent(r) for r in sales_rows()]
+    try:
+        import departments
+        extra = departments.staff_agents()
+    except Exception as e:
+        print("[dept]", e)
+        extra = []
+    return core + [sale_agent(r) for r in sales_rows()] + extra
 
 
 def name_of(agent_id: str) -> str:
