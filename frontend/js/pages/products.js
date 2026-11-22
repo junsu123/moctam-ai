@@ -44,6 +44,9 @@ async function loadProducts(){
    <label class="gen-tick"><input type="checkbox" data-pgen="${p.id}" ${p.is_general?"checked":""}> <span><b>Ảnh tổng hợp nhà máy</b>: mọi bài đăng chỉ lấy ảnh ngẫu nhiên trong mục này</span></label>
    ${folderBox(p)}${gen&&!p.is_general?`<span class="small muted">Đang dùng ảnh tổng hợp “${esc(gen.name)}” khi đăng, ảnh của sản phẩm này tạm không dùng.</span>`:""}
    ${JSON.parse(p.images||"[]").length?`<div><span class="small muted">Ảnh tải lên (chỉ dùng khi chưa có thư mục ảnh)</span><div class="thumbs" style="margin-top:4px">${JSON.parse(p.images||"[]").map(src=>`<figure><img src="${src.startsWith("data:")?src:"/"+esc(src)}" alt="Ảnh ${esc(p.name)}"><button type="button" data-delimg="${esc(src)}" data-p="${p.id}" aria-label="Xóa ảnh">×</button></figure>`).join("")}</div></div>`:""}
+   <div class="p3d"><span class="small"><b>Ảnh 3D sản phẩm</b> <span class="muted">(Nhi ghép vào ảnh bài Trang; PNG nền trong suốt là đẹp nhất)</span></span>
+     ${JSON.parse(p.images3d||"[]").length?`<div class="thumbs" style="margin-top:4px">${JSON.parse(p.images3d||"[]").map(src=>`<figure class="t3d"><img src="${src.startsWith("data:")?src:"/"+esc(src)}" alt="Ảnh 3D ${esc(p.name)}"><button type="button" data-del3d="${esc(src)}" data-p="${p.id}" aria-label="Xóa ảnh 3D">×</button></figure>`).join("")}</div>`:'<div class="small muted">Chưa có. Tải lên ở đây, hoặc gửi bot Telegram ảnh kèm chú thích “ảnh 3D '+esc(p.name)+'”.</div>'}
+     <label class="btn sm ghost" for="up3d-${p.id}" style="margin-top:4px">Tải ảnh 3D</label><input type="file" id="up3d-${p.id}" data-up3d="${p.id}" accept="image/png,image/jpeg,image/webp" multiple hidden></div>
    <div class="row"><label class="btn sm ghost" for="up-${p.id}">Tải ảnh lên</label><input type="file" id="up-${p.id}" data-up="${p.id}" accept="image/png,image/jpeg,image/webp" multiple hidden>${ST.editProd===p.id?"":`<button class="btn sm" type="button" data-pedit-open="${p.id}">Sửa thông tin</button>`}<button class="btn sm ghost danger" data-pr="${p.id}">Xóa sản phẩm</button></div></div>`).join("");
 }
 $("#prodGrid").addEventListener("change",async e=>{
@@ -51,6 +54,8 @@ $("#prodGrid").addEventListener("change",async e=>{
     try{ const r=await api(`/products/${g}`,"PATCH",{is_general:on});
       toast(on?(r.folder&&r.folder.exists?`Từ giờ mọi bài đăng lấy ngẫu nhiên ${r.folder.count} ảnh trong “${p.name}”`:`Đã tích “${p.name}”. Điền thư mục ảnh cho mục này, chưa có ảnh thì bài sẽ không đăng`):"Bài đăng lấy ảnh theo đúng sản phẩm của bài"); }
     catch(err){ toast(err.message); } return loadProducts(); }
+  const p3=e.target.dataset.up3d; if(p3){ for(const f of e.target.files){ const data=await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(f); });
+      try{ await api(`/products/${p3}/images3d`,"POST",{filename:f.name,data}); }catch(err){ toast(err.message); } } toast("Đã thêm ảnh 3D, Nhi dùng để ghép ảnh bài Trang"); return loadProducts(); }
   const pid=e.target.dataset.up; if(!pid) return;
   for(const f of e.target.files){ const data=await new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(f); });
     try{ await api(`/products/${pid}/images`,"POST",{filename:f.name,data}); }catch(err){ toast(err.message); } }
@@ -62,6 +67,7 @@ $("#prodGrid").addEventListener("click",async e=>{ const fs=e.target.closest("[d
     try{ await api(`/products/${p.id}`,"PATCH",{hot:!p.hot}); toast(!p.hot?`Đã đánh dấu ${p.name} đang bán chạy. Cả đội sẽ tập trung chào sản phẩm này.`:`Thôi ưu tiên ${p.name}`); }catch(err){ toast(err.message); } return loadProducts(); }
   const eo=e.target.closest("[data-pedit-open]"); if(eo){ ST.editProd=+eo.dataset.peditOpen; loadProducts(); setTimeout(()=>{ const i=$(`#en-${ST.editProd}`); i&&i.focus(); },50); return; }
   if(e.target.closest("[data-pcancel]")){ ST.editProd=null; return loadProducts(); }
+  const d3=e.target.closest("[data-del3d]"); if(d3){ await api(`/products/${d3.dataset.p}/images3d?path=${encodeURIComponent(d3.dataset.del3d)}`,"DELETE"); return loadProducts(); }
   const d=e.target.closest("[data-delimg]"); if(d){ await api(`/products/${d.dataset.p}/images?path=${encodeURIComponent(d.dataset.delimg)}`,"DELETE"); return loadProducts(); }
   const b=e.target.closest("[data-pr]"); if(!b) return; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } const r=await api(`/products/${b.dataset.pr}`,"DELETE"); toast(r.drafts_removed?`Đã xóa sản phẩm và ${r.drafts_removed} bài nháp/chờ đăng của nó`:"Đã xóa sản phẩm"); loadProducts(); });
 $("#prodGrid").addEventListener("submit",async e=>{ const f=e.target.closest("[data-pedit]"); if(!f) return; e.preventDefault(); const id=+f.dataset.pedit;

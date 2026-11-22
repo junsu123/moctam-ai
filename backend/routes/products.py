@@ -137,3 +137,22 @@ def del_product(pid: int):
     media_folder._count_cache.clear()
     db.log("minh", "Xóa sản phẩm", f"{p['name']}" + (f", bỏ {drafts} bài nháp/chờ đăng của sản phẩm này" if drafts else ""))
     return {"ok": True, "drafts_removed": drafts}
+
+
+# ------------------------------------------------------------------ ảnh 3D sản phẩm (Nhi ghép vào ảnh bài Trang)
+@app.post("/api/products/{pid}/images3d")
+def add_image3d(pid: int, data: dict):
+    import base64 as b64
+    import os as _os
+    import image_gen
+    try:
+        raw = b64.b64decode((data.get("data") or "").split(",", 1)[-1])
+        return {"images3d": image_gen.add_3d(pid, raw, _os.path.splitext(data.get("filename") or "a.png")[1] or ".png")}
+    except (ValueError, b64.binascii.Error) as e:
+        raise HTTPException(400, str(e) or "Ảnh hỏng")
+
+
+@app.delete("/api/products/{pid}/images3d")
+def del_image3d(pid: int, path: str):
+    import image_gen
+    return {"images3d": image_gen.del_3d(pid, path)}

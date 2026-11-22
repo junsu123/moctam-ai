@@ -293,7 +293,7 @@ def ask_image_manual(post_id: int) -> bool:
 
 def _waiting_for(reply_id: int | None) -> dict | None:
     if reply_id:
-        for p in db.q("SELECT * FROM posts WHERE status IN ('need_image','scheduled') AND img_req_msg IS NOT NULL ORDER BY id DESC LIMIT 200"):  # cả bài Nhi đã tự làm ảnh: sếp đổi ảnh
+        for p in db.q("SELECT * FROM posts WHERE status IN ('need_image','scheduled','page_review') AND img_req_msg IS NOT NULL ORDER BY id DESC LIMIT 200"):  # cả bài Nhi đã tự làm ảnh: sếp đổi ảnh
             if str(reply_id) in (p["img_req_msg"] or "").split(","):
                 return p
         return None
@@ -305,12 +305,15 @@ def set_image(post_id: int, data: bytes, ext: str = "jpg", by_boss: bool = True)
     if len(data) < 1000:
         raise ValueError("Ảnh hỏng hoặc quá nhỏ")
     p = db.one("SELECT * FROM posts WHERE id=?", (post_id,))
-    if not p or p["status"] not in ("need_image", "scheduled"):
+    if not p or p["status"] not in ("need_image", "scheduled", "page_review"):
         raise ValueError("Bài này không còn chờ ảnh")
     d = img_dir()
     d.mkdir(parents=True, exist_ok=True)
     f = d / f"post_{post_id}.{ext if ext in ('jpg', 'jpeg', 'png', 'webp') else 'jpg'}"
     f.write_bytes(data)
+    if p["status"] == "page_review":  # bài đang chờ sếp duyệt: chỉ đổi ảnh
+        db.run("UPDATE posts SET image_path=?, text_only=NULL" + (", image_src='boss'" if by_boss else "") + " WHERE id=?", (str(f), post_id))
+        return db.one("SELECT * FROM posts WHERE id=?", (post_id,))
     when = p["scheduled_for"] or ""
     if when < db.clock().strftime("%Y-%m-%d %H:%M"):
         when = (db.clock() + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M")

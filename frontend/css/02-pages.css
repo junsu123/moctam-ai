@@ -93,6 +93,7 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:
 .fr-note{display:block;background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:var(--r-s);padding:9px 12px;font-size:13px;margin:0 0 12px}
 .pr-stats.fr-stats{grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 12px}
 .fr-stats .pr-stat{cursor:default}
+.p3d{border-top:1px dashed var(--line,#ddd);padding-top:6px;margin-top:4px}.t3d img{background:repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/12px 12px}
 .np-pages{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}.np-pages label{display:grid;gap:2px}.np-pages details summary{cursor:pointer;font-weight:600;margin-top:4px}
 .fr-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:12px;align-items:start;margin-bottom:12px}
 .fr-rank{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}

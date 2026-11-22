@@ -308,6 +308,16 @@ Cài một lần: Cloudflare (dash.cloudflare.com → AI → Workers AI → Use 
 (đăng ký, mở pixabay.com/api/docs, chép key). Dán vào thẻ rồi bấm **Kiểm tra**, hoặc nhắn bot của Nhi `cloudflare <Account ID> <Token>`,
 `pixabay <key>` (Nhi lưu rồi tự xóa tin chứa khóa). Khóa không hiện lại trên giao diện. Nhắn “tắt / bật tự làm ảnh” để tắt / bật.
 
+**Ảnh 3D sản phẩm**: mỗi thẻ ở trang **Sản phẩm** có mục **Ảnh 3D sản phẩm** (tải nhiều ảnh, xóa được; PNG nền trong suốt là đẹp
+nhất, ảnh nền trắng / đồng màu Nhi tự xóa nền). Hoặc gửi bot Telegram ảnh kèm chú thích “ảnh 3D Trà gừng” (gửi dạng tệp để giữ nền trong
+suốt). Bài nuôi Trang có sản phẩm đã có ảnh 3D: Nhi tự ghép ảnh cho bài, gửi Telegram cho sếp xem:
+- **Bài giới thiệu sản phẩm → ghép chính xác**: AI (hoặc Pixabay) chỉ làm nền cảnh theo chủ đề bài, Nhi dán **nguyên ảnh 3D** lên, thêm bóng
+  đổ, khung 4:5: nhãn, logo, chữ trên bao bì giữ đúng 100%.
+- **Bài khác → AI hòa trộn**: FLUX.2 [klein] 4B trên Cloudflare vẽ cả cảnh với ảnh 3D làm ảnh tham chiếu (tự nhiên hơn, nhãn có thể không
+  chuẩn từng chữ); lỗi thì chuyển sang ghép chính xác.
+- Nhắn “ghép ảnh 3D chính xác / hòa trộn / tự chọn” để đổi kiểu; “đổi ảnh #12” để ghép lại. Sản phẩm chưa có ảnh 3D thì bài lấy ảnh thư mục
+  sản phẩm như cũ.
+
 ## Nuôi Page (không dùng Graph API)
 
 Mục **Nuôi Page** (thanh bên, dưới Bình luận). **Nhi nuôi nhiều Trang cùng lúc**: bấm **+ Thêm Trang**, điền tên, link Trang, nick

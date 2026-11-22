@@ -1,6 +1,6 @@
 """Nhi tự làm ảnh: Cloudflare Workers AI tạo ảnh, dự phòng Pixabay, không được thì xin sếp; logo/banner Trang; đổi ảnh qua Telegram
 (giả lập Cloudflare, Pixabay, Telegram; không cần mạng, không cần Chrome)."""
-import os, sys, io, base64
+import os, sys, io, base64, json
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "backend"))
 from pathlib import Path
 from datetime import timedelta
@@ -80,4 +80,48 @@ ia, ic = Image.open(f["avatar_path"]), Image.open(f["cover_path"])
 chk("Trang mới: Nhi tự làm logo vuông và banner ngang, gửi Telegram để sếp xem", n == 2 and ia.size[0] == ia.size[1] and ic.size == (1640, 624)
     and f["avatar_msg"] and f["cover_msg"], (ia.size, ic.size))
 chk("hàng xin ảnh Telegram không xin lại logo/banner đã làm", TC.request_images(np_) == 0)
+# ---- ảnh 3D sản phẩm
+import page_grow as G, media_folder as MF
+def fpost2(url, **kw):
+    if "flux-2-klein" in url:
+        net["blend"] = net.get("blend", 0) + 1
+        if net.get("blend_fail"): return R(500, {"success": False, "errors": [{"message": "capacity"}]})
+        assert "input_image_0" in kw.get("files", {})
+        return R(200, {"success": True, "result": {"image": base64.b64encode(jpg(832, 1040, (90, 60, 200))).decode()}})
+    return fpost(url, **kw)
+IG.httpx.post = fpost2
+b = io.BytesIO(); im3 = Image.new("RGB", (600, 900), (255, 255, 255)); im3.paste((220, 30, 30), (150, 150, 450, 750)); im3.save(b, "PNG")
+prods = db.q("SELECT id, name FROM products")
+for pr in prods:
+    r = c.post(f"/api/products/{pr['id']}/images3d", json={"filename": "hop-tra-3d.png", "data": "data:image/png;base64," + base64.b64encode(b.getvalue()).decode()}).json()
+chk("trang Sản phẩm: lưu ảnh 3D cho sản phẩm", len(r["images3d"]) == 1 and IG.product_3d(prods[-1]["id"]), r)
+gp = db.run("INSERT INTO fb_pages(name, niche, status, kind, url, admin_account_id, posts_per_day, times, created_at) VALUES ('Mộc Tâm','trà','active','grow','https://facebook.com/mt',?,2,'09:00,20:00',?)", (aid, db.now()))
+db.run("UPDATE fb_accounts SET login_status='ok'")
+w = G.write(gp, topic="product")
+q = db.one("SELECT * FROM posts WHERE id=?", (w["id"],))
+out = Image.open(q["image_path"]).convert("RGB") if q["image_path"] else None
+chk("bài bán hàng: ghép chính xác ảnh 3D lên nền AI (giữ nguyên màu nhãn), khung 4:5, gửi Telegram", q["image_src"] == "p3d-exact" and out.size == (1080, 1350)
+    and out.getpixel((540, 1000))[0] > 180 and out.getpixel((540, 1000))[1] < 80 and "ghép chính xác" in photos[-1][1], (q["image_src"], out and out.getpixel((540, 1000))))
+chk("ảnh nền trắng của sản phẩm được xóa (góc ảnh là nền cảnh, không phải trắng)", out.getpixel((40, 40)) != (255, 255, 255))
+w2 = G.write(gp, topic="recipe")
+q2 = db.one("SELECT * FROM posts WHERE id=?", (w2["id"],))
+chk("bài khác: AI hòa trộn ảnh 3D vào cảnh (FLUX.2 klein, ảnh sản phẩm làm tham chiếu)", q2["image_src"] == "p3d-blend" and net["blend"] == 1, q2["image_src"])
+net["blend_fail"] = True
+w3 = G.write(gp, topic="recipe")
+chk("AI hòa trộn lỗi: tự chuyển sang ghép chính xác", db.one("SELECT image_src FROM posts WHERE id=?", (w3["id"],))["image_src"] == "p3d-exact")
+chk("lúc đăng, sale dùng đúng ảnh Nhi ghép", MF.pick_for_post(db.one("SELECT * FROM posts WHERE id=?", (w["id"],)))[0][0] == Path(q["image_path"]))
+r = N.handle_text("ghép ảnh 3D chính xác")
+chk("đổi kiểu ghép ảnh 3D bằng lời", db.get_settings()["img3d_mode"] == "exact", r)
+class Bot:
+    API = "http://tg"
+    @staticmethod
+    def token(): return "t"
+    @staticmethod
+    def call(m, **kw): return {"file_path": "x.png"}
+pn = prods[0]["name"]
+r = N.on_photo_3d({"caption": f"ảnh 3D {pn}", "document": {"file_id": "d1", "mime_type": "image/png"}}, Bot)
+chk("gửi ảnh qua Telegram kèm chú thích “ảnh 3D <tên>”: lưu đúng sản phẩm", "Đã lưu ảnh 3D" in r and len(IG.product_3d(prods[0]["id"])) == 2, r)
+chk("ảnh không có chú thích 3D thì xử lý như ảnh bài bình thường", N.on_photo_3d({"caption": "", "photo": [{"file_id": "p"}]}, Bot) is None)
+r = c.delete(f"/api/products/{prods[0]['id']}/images3d", params={"path": json.loads(db.one("SELECT images3d FROM products WHERE id=?", (prods[0]["id"],))["images3d"])[0]}).json()
+chk("xóa ảnh 3D", len(r["images3d"]) == 1)
 print(f"XONG {sum(ok)}/{len(ok)}" if all(ok) else f"CÓ LỖI {sum(ok)}/{len(ok)}")

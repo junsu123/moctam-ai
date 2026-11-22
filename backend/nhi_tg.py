@@ -261,6 +261,7 @@ HELP = ("Sếp nhắn Nhi bằng lời, ví dụ:\n"
         "• <code>viết bài cho Bếp Nhà Mình</code> · <code>tạo trang Góc Thú Cưng về nuôi chó mèo</code>\n"
         "• <code>Bếp Nhà Mình nhớ: luôn xưng mình, kết bằng câu hỏi</code> · <code>gợi ý từ khóa Bếp Nhà Mình</code>\n"
         "• <code>tắt duyệt</code> / <code>bật duyệt</code> · <code>luôn chờ ảnh</code> / <code>đăng chữ khi thiếu ảnh</code>\n"
+        "• Ảnh 3D sản phẩm: gửi ảnh kèm chú thích <code>ảnh 3D Trà gừng</code> · <code>ghép ảnh 3D chính xác / hòa trộn / tự chọn</code>\n"
         "• Ảnh: <code>đổi ảnh #12</code> · <code>tắt tự làm ảnh</code> / <code>bật tự làm ảnh</code> · cài khóa: <code>cloudflare &lt;Account ID&gt; &lt;API Token&gt;</code>, <code>pixabay &lt;key&gt;</code>\n"
         "Bài chờ duyệt: bấm nút, hoặc trả lời tin bài bằng bản sửa. Ảnh: trả lời tin xin ảnh bằng ảnh.")
 
@@ -336,6 +337,9 @@ def _rule(text: str) -> list[dict]:
     m = re.search(r"(?:đổi|làm lại|tạo lại)\s+ảnh\s*(?:bài)?\s*#?(\d+)", t, re.I)
     if m:
         return [{"type": "regen", "post": int(m.group(1))}]
+    m = re.search(r"ghep anh 3d\s+(chinh xac|hoa tron|tu chon)", low)
+    if m:
+        return [{"type": "img3d_mode", "mode": {"chinh xac": "exact", "hoa tron": "blend", "tu chon": "auto"}[m.group(1)]}]
     if re.search(r"\b(tat|dung) (tu )?lam anh\b", low):
         return [{"type": "img_auto", "on": False}]
     if re.search(r"\b(bat|cho nhi) (tu )?lam anh\b", low):
@@ -423,14 +427,22 @@ def execute(a: dict) -> str:
         r = image_gen.test()
         return ("🔑 Đã lưu khóa (Nhi đã xóa tin chứa khóa khỏi cuộc trò chuyện).\n"
                 f"Cloudflare: {e(r['cloudflare'])}\nPixabay: {e(r['pixabay'])}")
+    if t == "img3d_mode":
+        db.set_setting("img3d_mode", a.get("mode") or "auto")
+        return {"exact": "🖼 Ảnh 3D: luôn ghép chính xác (giữ nguyên nhãn sản phẩm).", "blend": "🖼 Ảnh 3D: luôn để AI hòa trộn vào cảnh.",
+                "auto": "🖼 Ảnh 3D: bài bán hàng ghép chính xác, bài khác AI hòa trộn."}.get(a.get("mode"), "Đã đổi.")
     if t == "img_auto":
         db.set_setting("img_auto", "1" if a.get("on") else "0")
         return "🖼 Nhi tự làm ảnh cho bài và logo, banner Trang." if a.get("on") else "Nhi thôi tự làm ảnh, gửi prompt để sếp làm."
     if t == "regen":
         import image_gen
         p = db.one("SELECT * FROM posts WHERE id=?", (a.get("post"),))
-        if not p or p["status"] not in ("need_image", "scheduled") or not p.get("fb_page_ref"):
+        if not p or p["status"] not in ("need_image", "scheduled", "page_review") or not p.get("fb_page_ref"):
             return "Bài này không còn chờ đăng nên không đổi ảnh được."
+        if p.get("source") == "page_grow":
+            if image_gen.for_product_post(p["id"]):
+                return f"🖼 Nhi đã ghép ảnh 3D mới cho bài #{p['id']} (gửi ngay bên dưới)."
+            return "Sản phẩm của bài chưa có ảnh 3D (thêm ở trang Sản phẩm, hoặc gửi ảnh kèm chú thích “ảnh 3D tên sản phẩm”)."
         db.run("UPDATE posts SET status='need_image' WHERE id=?", (p["id"],))
         if image_gen.for_post(p["id"]):
             return f"🖼 Nhi đã làm ảnh mới cho bài #{p['id']} (gửi ngay bên dưới)."
@@ -525,6 +537,35 @@ def execute(a: dict) -> str:
         p = page_brain.update_page(pg["id"], {"posts_per_day": a.get("per_day"), "times": a.get("times")})
         return f"🗓 {e(pg['name'])}: {p['posts_per_day']} bài/ngày lúc {e(p['times'])}."
     return "Nhi chưa làm được việc này."
+
+
+def on_photo_3d(msg: dict, bot) -> str | None:
+    """Ảnh gửi kèm chú thích “ảnh 3D <tên sản phẩm>”: lưu vào mục Ảnh 3D của sản phẩm. None nếu không phải ảnh 3D."""
+    import httpx
+    cap = msg.get("caption") or ""
+    if not re.search(r"\b3\s*d\b", plain(cap)):
+        return None
+    t = " " + plain(re.sub(r"(?i)ảnh|anh|hình|3\s*d", " ", cap)) + " "
+    prods = sorted(db.q("SELECT id, name FROM products"), key=lambda p: -len(p["name"] or ""))
+    pr = next((p for p in prods if plain(p["name"]).strip() and plain(p["name"]).strip() in t), None)
+    if not pr:
+        return "Nhi chưa biết ảnh 3D này của sản phẩm nào. Gửi lại kèm chú thích đúng tên sản phẩm, VD “ảnh 3D " + e(prods[0]["name"] if prods else "Trà gừng") + "”."
+    fid, ext = None, "jpg"
+    if (msg.get("document") or {}).get("mime_type", "").startswith("image/"):  # gửi dạng tệp: giữ nền trong suốt của PNG
+        fid, ext = msg["document"]["file_id"], msg["document"]["mime_type"].split("/")[-1]
+    elif msg.get("photo"):
+        fid = sorted(msg["photo"], key=lambda x: x.get("file_size") or x.get("width", 0))[-1]["file_id"]
+    if not fid:
+        return None
+    try:
+        info = bot.call("getFile", file_id=fid)
+        data = httpx.get(f"{getattr(bot, 'API', 'https://api.telegram.org')}/file/bot{bot.token()}/{info['file_path']}", timeout=60).content
+        import image_gen
+        n = len(image_gen.add_3d(pr["id"], data, ext))
+    except Exception as ex:
+        return f"Chưa lưu được ảnh 3D: {e(ex)}"
+    return (f"✅ Đã lưu ảnh 3D cho <b>{e(pr['name'])}</b> ({n} ảnh). Nhi dùng ảnh này để ghép vào ảnh bài Trang."
+            + ("" if ext == "png" else "\nMẹo: gửi PNG nền trong suốt <b>dạng tệp</b> (không nén) để ghép đẹp nhất."))
 
 
 def has_secret(text: str) -> bool:

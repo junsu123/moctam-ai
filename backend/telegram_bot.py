@@ -458,6 +458,12 @@ def handle_message(msg: dict):
             _reply(chat_id, "Xin chào! Để nhận báo cáo, hãy gửi <b>mã ghép nối 6 số</b> hiển thị trong phần mềm (trang KPI & Báo cáo).")
         return
     if msg.get("photo") or (msg.get("document") or {}).get("mime_type", "").startswith("image/"):  # ảnh cho bài Trang xu hướng
+        import nhi_tg
+        import sys
+        r3 = nhi_tg.on_photo_3d(msg, sys.modules[__name__])  # “ảnh 3D <sản phẩm>”: lưu ảnh 3D cho sản phẩm
+        if r3:
+            _reply(chat_id, r3)
+            return
         import trend_pages
         try:
             r = trend_pages.on_telegram_photo(msg)

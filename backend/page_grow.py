@@ -209,6 +209,14 @@ def write(pg=None, topic: str | None = None, when: str | None = None) -> dict:
                  (writer, p["id"] if p else None, f"Nuôi Trang: {TOPICS[topic][0]}", f"{pg['name']} · {TOPICS[topic][0]}"[:120],
                   text, (data or {}).get("hashtags") or "", "page_review" if review else "scheduled", sched, topic, adm.get("id"), adm.get("sale_id"),
                   pg["id"], kw, text, db.now()))
+    import image_gen
+    if image_gen.product_3d(p["id"] if p else None):
+        def img():
+            try:
+                image_gen.for_product_post(pid)
+            except Exception as ex:
+                print("[ảnh 3D]", ex)
+        img() if image_gen.SYNC else __import__("threading").Thread(target=img, daemon=True).start()
     if review:
         import nhi_tg
         nhi_tg.send_review(pid)

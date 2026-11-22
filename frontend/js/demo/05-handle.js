@@ -130,6 +130,7 @@
         return {ok:true}; }
       if(P==="/bump/plan-now") return {scheduled:demoBumpPlan()};
       if((m=P.match(/^\/posts\/(\d+)\/retry$/))){ const po=S.posts.find(x=>x.id==m[1]); Object.assign(po,{status:"approved",error:null,sale_id:null,sale_name:null,scheduled_for:null}); return po; }
+      if((m=P.match(/^\/products\/(\d+)\/images3d$/))){ const pr=S.products.find(x=>x.id==m[1]); const im=JSON.parse(pr.images3d||"[]"); im.push(body.data); pr.images3d=JSON.stringify(im); return {images3d:im}; }
       if((m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const im=JSON.parse(pr.images||"[]"); im.push(body.data); pr.images=JSON.stringify(im); return {images:im}; }
       if((m=P.match(/^\/posts\/(\d+)\/publish-page$/))) return {ok:false,error:"Bản xem trước không kết nối Facebook. Chạy backend và nhập Page Access Token trong Cài đặt."};
       if((m=P.match(/^\/leads\/(\d+)\/reply$/))){ S.status.ha={state:"working",text:"Đang soạn tin nhắn"}; await wait(900); S.status.ha={state:"idle",text:"Chờ duyệt tin"}; return {reply:reply(S.leads.find(l=>l.id==m[1]),body.message)}; }
@@ -178,6 +179,7 @@
     if(method==="PUT"&&P==="/telegram/report"){ S.settings.tg_report_done=body.report_done?"1":"0"; return demoTg(); }
     if(method==="DELETE"&&P==="/telegram/token"){ S.settings.tg_token=""; S.tgChats=0; S.pairCode=""; return demoTg(); }
     if(method==="PUT"&&P==="/settings"){ if(body.tg_token==="••••••") delete body.tg_token; Object.assign(S.settings,body); return S.settings; }
+    if(method==="DELETE"&&(m=P.match(/^\/products\/(\d+)\/images3d$/))){ const pr=S.products.find(x=>x.id==m[1]); const path=new URLSearchParams(qs).get("path"); pr.images3d=JSON.stringify(JSON.parse(pr.images3d||"[]").filter(x=>x!==path)); return {images3d:JSON.parse(pr.images3d)}; }
     if(method==="DELETE"&&(m=P.match(/^\/products\/(\d+)\/images$/))){ const pr=S.products.find(x=>x.id==m[1]); const path=new URLSearchParams(qs).get("path"); pr.images=JSON.stringify(JSON.parse(pr.images||"[]").filter(x=>x!==path)); return {ok:true}; }
     if(method==="POST"&&P==="/company/found"){ Object.assign(S.co,{status:"active",day:1,capital:body.capital,orders:[],founded_at:today()}); log("minh","Thành lập công ty",`Vốn ${body.capital}`); return demoCompany(); }
     if(method==="POST"&&P==="/company/capital"){ S.co.capital+=body.amount; return demoCompany(); }

@@ -181,6 +181,12 @@ def handle_message(msg: dict):
         return
     import trend_pages
     if msg.get("photo") or (msg.get("document") or {}).get("mime_type", "").startswith("image/"):
+        import nhi_tg
+        import sys
+        r3 = nhi_tg.on_photo_3d(msg, sys.modules[__name__])
+        if r3:
+            _reply(chat_id, r3)
+            return
         try:
             r = trend_pages.on_telegram_photo(msg, getter=file_bytes)
         except Exception as ex:

@@ -235,3 +235,193 @@ def status() -> dict:
     return {"on": s.get("img_auto", "1") == "1", "cf_account_id": s.get("cf_account_id") or "",
             "cf_token": (tok[:4] + "…" + tok[-4:]) if tok else "", "pixabay_key": (key[:4] + "…" + key[-4:]) if key else "",
             "cf_ready": cf_ready(), "pixabay_ready": pixabay_ready(), "made_cf": made.get("cf") or 0, "made_px": made.get("px") or 0}
+
+
+# ---------------------------------------------------------------- ảnh 3D sản phẩm (mục Ảnh 3D ở trang Sản phẩm)
+SCENES = {  # cảnh nền theo chủ đề bài nuôi Trang
+    "knowledge": "natural tea ingredients and dried herbs on a rustic wooden table, soft daylight",
+    "recipe": "a glass cup of tea with ice and fresh fruit on a cozy cafe table, warm afternoon light",
+    "factory": "clean bright food packing workspace with neat stacks of boxes, soft light",
+    "seller": "online seller desk with a smartphone on a tripod, parcels and a ring light, tidy",
+    "faq": "cozy kitchen counter with a teapot and cups, morning sunlight",
+    "poll": "breakfast table with tea cups and cereal bowl, morning sunlight",
+    "product": "elegant wooden table with tea cups, fresh ginger and herbs, soft morning window light",
+}
+
+
+def product_3d(pid) -> list:
+    from pathlib import Path
+    import json
+    p = db.one("SELECT images3d FROM products WHERE id=?", (pid,)) if pid else None
+    out = []
+    for rel in json.loads((p or {}).get("images3d") or "[]"):
+        f = db.MEDIA_DIR.parent / rel if not Path(rel).is_absolute() else Path(rel)
+        if f.is_file():
+            out.append(f)
+    return out
+
+
+def _cutout(path):
+    """Ảnh sản phẩm thành ảnh nền trong suốt: PNG có sẵn nền trong thì giữ; nền trắng / đồng màu thì xóa từ 4 góc vào."""
+    from PIL import Image, ImageDraw, ImageFilter
+    im = Image.open(path).convert("RGBA")
+    im.thumbnail((1600, 1600))
+    a = im.getchannel("A")
+    if a.getextrema()[0] < 250:  # đã có vùng trong suốt
+        return im.crop(im.getbbox() or (0, 0, *im.size))
+    rgb = im.convert("RGB")
+    key = (255, 0, 255)
+    w, h = rgb.size
+    for xy in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
+        if rgb.getpixel(xy) != key:
+            ImageDraw.floodfill(rgb, xy, key, thresh=40)
+    from PIL import ImageChops
+    diff = ImageChops.difference(rgb, Image.new("RGB", (w, h), key)).convert("L")
+    mask = diff.point(lambda v: 0 if v == 0 else 255).filter(ImageFilter.GaussianBlur(1))
+    im.putalpha(mask)
+    return im.crop(mask.getbbox() or (0, 0, w, h))
+
+
+def compose_exact(bg: bytes, prod_path) -> bytes:
+    """Dán nguyên ảnh sản phẩm (giữ đúng nhãn, logo) lên nền, có bóng đổ; khung 4:5."""
+    from PIL import Image, ImageDraw, ImageFilter
+    base = Image.open(io.BytesIO(_crop(bg, "post"))).convert("RGB").resize((1080, 1350))
+    prod = _cutout(prod_path)
+    pw, ph = prod.size
+    s = min(1080 * 0.66 / pw, 1350 * 0.56 / ph)
+    prod = prod.resize((max(1, int(pw * s)), max(1, int(ph * s))), Image.LANCZOS)
+    pw, ph = prod.size
+    x, y = (1080 - pw) // 2, int(1350 * 0.90) - ph
+    sh = Image.new("L", base.size, 0)
+    ImageDraw.Draw(sh).ellipse((x + pw * 0.08, y + ph - ph * 0.05, x + pw * 0.92, y + ph + ph * 0.07), fill=110)
+    sh = sh.filter(ImageFilter.GaussianBlur(18))
+    base.paste((20, 20, 20), (0, 0), sh)
+    base.paste(prod, (x, y), prod)
+    out = io.BytesIO()
+    base.save(out, "JPEG", quality=90)
+    return out.getvalue()
+
+
+def cf_blend(prompt: str, prod_path) -> bytes:
+    """FLUX.2 [klein] 4B với ảnh sản phẩm làm tham chiếu (ảnh vào phải nhỏ hơn 512×512)."""
+    from PIL import Image
+    s = _s()
+    acc, tok = (s.get("cf_account_id") or "").strip(), (s.get("cf_api_token") or "").strip()
+    if not (acc and tok):
+        raise RuntimeError("Chưa cài Cloudflare")
+    im = Image.open(prod_path).convert("RGB")
+    im.thumbnail((500, 500))
+    buf = io.BytesIO()
+    im.save(buf, "PNG")
+    r = httpx.post(f"https://api.cloudflare.com/client/v4/accounts/{acc}/ai/run/@cf/black-forest-labs/flux-2-klein-4b",
+                   headers={"Authorization": f"Bearer {tok}"}, data={"prompt": prompt[:2000], "width": "832", "height": "1040"},
+                   files={"input_image_0": ("product.png", buf.getvalue(), "image/png")}, timeout=120)
+    try:
+        d = r.json()
+    except Exception:
+        raise RuntimeError(f"Cloudflare trả lỗi {r.status_code}")
+    img = (d.get("result") or {}).get("image") if isinstance(d.get("result"), dict) else None
+    if not img:
+        msg = "; ".join(str(x.get("message") or x) for x in (d.get("errors") or [])) or f"HTTP {r.status_code}"
+        raise RuntimeError(f"Cloudflare (ghép ảnh) lỗi: {msg[:200]}")
+    return base64.b64decode(img)
+
+
+def _background(scene: str, query: str) -> bytes:
+    why = []
+    if cf_ready():
+        try:
+            with _lock:
+                return cf_generate(scene + ", empty space in the center foreground for a product, no product, no packaging, no bottles, no boxes in center")
+        except Exception as ex:
+            why.append(str(ex))
+    if pixabay_ready():
+        r = pixabay_pick(query, "post")
+        if r:
+            return r[0]
+        why.append("Pixabay không có ảnh nền")
+    raise RuntimeError("; ".join(why) or "chưa cài Cloudflare hoặc Pixabay")
+
+
+def for_product_post(post_id: int, notify: bool = True) -> bool:
+    """Bài nuôi Trang có sản phẩm đã có ảnh 3D: Nhi ghép ảnh 3D vào cảnh. Bài bán hàng ghép chính xác (giữ nhãn),
+    bài khác AI hòa trộn (lỗi thì ghép chính xác). Không làm được thì bài lấy ảnh thư mục sản phẩm như cũ."""
+    import trend_pages
+    p = db.one("""SELECT p.*, f.name page_name, pr.name product_name, pr.category FROM posts p LEFT JOIN fb_pages f ON f.id=p.fb_page_ref
+                  LEFT JOIN products pr ON pr.id=p.product_id WHERE p.id=?""", (post_id,))
+    if not p or not p.get("product_id") or _s().get("img_auto", "1") != "1" or not (cf_ready() or pixabay_ready()):
+        return False
+    files = product_3d(p["product_id"])
+    if not files:
+        return False
+    prod = random.choice(files)
+    topic = p.get("page_topic") or "product"
+    mode = _s().get("img3d_mode", "auto")
+    if mode == "auto":
+        mode = "exact" if topic == "product" else "blend"
+    scene = SCENES.get(topic, SCENES["product"])
+    data, how = None, ""
+    try:
+        if mode == "blend" and cf_ready():
+            try:
+                with _lock:
+                    data = _crop(cf_blend(f"Place the product from image 0 naturally in this scene: {scene}. Keep the exact packaging shape, "
+                                          "colors and label of the product. Photorealistic, no extra text.", prod), "post")
+                how = "Ảnh 3D hòa trộn bằng AI"
+            except Exception as ex:
+                print("[ảnh 3D hòa trộn]", ex)
+        if data is None:
+            data = compose_exact(_background(scene, f"{p.get('category') or ''} {topic}|tea table"), prod)
+            how = "Ảnh 3D ghép chính xác"
+    except Exception as ex:
+        db.log("nhi", "Chưa ghép được ảnh 3D", f"Bài #{post_id}: {str(ex)[:160]}, dùng ảnh thư mục sản phẩm")
+        return False
+    d = trend_pages.img_dir()
+    d.mkdir(parents=True, exist_ok=True)
+    f = d / f"post_{post_id}.jpg"
+    f.write_bytes(data)
+    db.run("UPDATE posts SET image_path=?, image_src=? WHERE id=?", (str(f), "p3d-" + ("blend" if how.endswith("AI") else "exact"), post_id))
+    db.log("nhi", "Ghép ảnh 3D sản phẩm", f"Bài #{post_id} ({p['page_name']}): {how} · {p['product_name']}")
+    if notify:
+        import nhi_tg
+        mid = nhi_tg.send_photo(str(f), f"🖼 {nhi_tg.e(how)} cho bài #{post_id} · Trang <b>{nhi_tg.e(p['page_name'])}</b> · {nhi_tg.e(p['product_name'])}\n"
+                                "Muốn đổi: <b>trả lời tin này bằng ảnh khác</b>, hoặc nhắn “đổi ảnh #" + str(post_id) + "”.")
+        if mid:
+            db.run("UPDATE posts SET img_req_msg=? WHERE id=?", (mid, post_id))
+    return True
+
+
+def add_3d(pid: int, data: bytes, ext: str = "png") -> list:
+    """Lưu ảnh 3D cho sản phẩm (từ trang Sản phẩm hoặc Telegram)."""
+    import json
+    import time
+    p = db.one("SELECT images3d FROM products WHERE id=?", (pid,))
+    if not p:
+        raise ValueError("Không có sản phẩm này")
+    if len(data) < 1000:
+        raise ValueError("Ảnh hỏng hoặc quá nhỏ")
+    if len(data) > 15 * 1024 * 1024:
+        raise ValueError("Ảnh tối đa 15MB")
+    ext = ext.lower().lstrip(".")
+    if ext not in ("png", "jpg", "jpeg", "webp"):
+        raise ValueError("Chỉ nhận ảnh PNG, JPG, WEBP (PNG nền trong suốt là tốt nhất)")
+    folder = db.MEDIA_DIR / f"product3d-{pid}"
+    folder.mkdir(parents=True, exist_ok=True)
+    name = f"{int(time.time() * 1000)}.{ext}"
+    (folder / name).write_bytes(data)
+    imgs = json.loads(p["images3d"] or "[]") + [f"media/product3d-{pid}/{name}"]
+    db.run("UPDATE products SET images3d=? WHERE id=?", (json.dumps(imgs), pid))
+    return imgs
+
+
+def del_3d(pid: int, path: str) -> list:
+    import json
+    p = db.one("SELECT images3d FROM products WHERE id=?", (pid,))
+    imgs = json.loads((p or {}).get("images3d") or "[]")
+    if path in imgs:
+        imgs.remove(path)
+        f = db.MEDIA_DIR.parent / path
+        if f.is_file() and f.parent.name == f"product3d-{pid}":
+            f.unlink()
+    db.run("UPDATE products SET images3d=? WHERE id=?", (json.dumps(imgs), pid))
+    return imgs

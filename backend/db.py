@@ -408,7 +408,7 @@ MIGRATIONS = [
     ("sales", "hired_by", "TEXT"), ("sales", "hire_reason", "TEXT"), ("sales", "ceo_reminded_at", "TEXT"),
     ("sales", "ceo_handled", "INTEGER"), ("sales", "fire_review", "TEXT"),
     ("posts", "sale_id", "INTEGER"), ("posts", "error", "TEXT"), ("posts", "screenshot", "TEXT"),
-    ("groups", "member_sale_ids", "TEXT DEFAULT ''"), ("products", "images", "TEXT DEFAULT '[]'"),
+    ("groups", "member_sale_ids", "TEXT DEFAULT ''"), ("products", "images", "TEXT DEFAULT '[]'"), ("products", "images3d", "TEXT DEFAULT '[]'"),
     ("posts", "permalink_status", "TEXT"), ("posts", "bump_enabled", "INTEGER DEFAULT 1"),
     ("posts", "bump_count", "INTEGER DEFAULT 0"), ("posts", "last_bump_at", "TEXT"),
     ("bumps", "comments_before", "INTEGER"), ("bumps", "leads_before", "INTEGER"), ("bumps", "gain_comments", "INTEGER"),
@@ -480,7 +480,8 @@ DEFAULT_SETTINGS = {
     "bump_check": "1",  # 6 giờ sau nick mở lại bài xem bình luận còn không; nhóm xóa thì ngừng bình luận nhóm đó
     "bump_rest_days": "30",
     "trend_on": "1", "trend_time": "07:40",
-    "img_auto": "1",  # Nhi tự làm ảnh (Cloudflare Workers AI tạo ảnh, dự phòng Pixabay) khi đã cài khóa
+    "img_auto": "1",
+    "img3d_mode": "auto",  # ghép ảnh 3D sản phẩm: auto (bài bán hàng ghép chính xác, bài khác AI hòa trộn) / exact / blend  # Nhi tự làm ảnh (Cloudflare Workers AI tạo ảnh, dự phòng Pixabay) khi đã cài khóa
     "cf_account_id": "", "cf_api_token": "", "pixabay_key": "",
     "trend_noimg_post": "1",  # tới giờ đăng mà sếp chưa gửi ảnh: Nhi đăng bài Trang chỉ có chữ (0 = chờ ảnh, quá 24 giờ thì bỏ)
     "nhi_auto_kw": "1",  # Trang chưa có từ khóa: Nhi tự đặt từ khóa rồi báo sếp
