@@ -64,6 +64,8 @@ def settings():
     s = db.get_settings()
     s["fb_page_token"] = "••••••" if s.get("fb_page_token") else ""
     s["tg_token"] = "••••••" if s.get("tg_token") else ""
+    for k in ("tg2_token", "cf_api_token", "pixabay_key"):  # khóa bí mật: không trả về giao diện
+        s[k] = "••••••" if s.get(k) else ""
     key, src = llm.current_key()
     s["anthropic_api_key"] = ""
     s["ai_key_masked"] = llm_mod.mask_key(key)

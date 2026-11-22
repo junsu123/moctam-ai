@@ -195,6 +195,11 @@ def handle_message(msg: dict):
     cmd = text.split()[0].lower().split("@")[0] if text.startswith("/") else ""
     if text and not cmd:
         _reply(chat_id, nhi_tg.handle_text(text))
+        if nhi_tg.has_secret(text):
+            try:
+                call("deleteMessage", chat_id=chat_id, message_id=msg.get("message_id"))
+            except Exception:
+                pass
         return
     if cmd == "/anh":
         _reply(chat_id, waiting_text())

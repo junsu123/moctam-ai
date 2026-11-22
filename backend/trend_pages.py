@@ -10,6 +10,7 @@
    Nick quản trị chuyển sang Trang đăng bài (browser_poster._switch_to_page), đăng xong chuyển về. Bài chờ ảnh quá 24 giờ thì bỏ.
 """
 import random
+import threading
 import re
 import xml.etree.ElementTree as ET
 from datetime import timedelta
@@ -256,6 +257,22 @@ def _tg(text: str) -> list:
 
 
 def ask_image(post_id: int) -> bool:
+    """Bài cần ảnh: Nhi tự làm ảnh (Cloudflare / Pixabay, chạy nền); không làm được thì gửi prompt lên Telegram, sếp trả lời bằng ảnh."""
+    import image_gen
+    if image_gen.on():
+        def go():
+            try:
+                if not image_gen.for_post(post_id):
+                    ask_image_manual(post_id)
+            except Exception as ex:
+                print("[ảnh]", ex)
+                ask_image_manual(post_id)
+        go() if image_gen.SYNC else threading.Thread(target=go, daemon=True).start()
+        return True
+    return ask_image_manual(post_id)
+
+
+def ask_image_manual(post_id: int) -> bool:
     """Gửi prompt tạo ảnh của bài lên Telegram; sếp trả lời tin đó bằng ảnh."""
     import telegram_bot
     p = db.one("SELECT p.*, f.name page_name FROM posts p LEFT JOIN fb_pages f ON f.id=p.fb_page_ref WHERE p.id=?", (post_id,))
@@ -276,14 +293,14 @@ def ask_image(post_id: int) -> bool:
 
 def _waiting_for(reply_id: int | None) -> dict | None:
     if reply_id:
-        for p in db.q("SELECT * FROM posts WHERE status='need_image' AND img_req_msg IS NOT NULL ORDER BY id DESC LIMIT 200"):
+        for p in db.q("SELECT * FROM posts WHERE status IN ('need_image','scheduled') AND img_req_msg IS NOT NULL ORDER BY id DESC LIMIT 200"):  # cả bài Nhi đã tự làm ảnh: sếp đổi ảnh
             if str(reply_id) in (p["img_req_msg"] or "").split(","):
                 return p
         return None
     return db.one("SELECT * FROM posts WHERE status='need_image' ORDER BY COALESCE(scheduled_for, created_at), id LIMIT 1")
 
 
-def set_image(post_id: int, data: bytes, ext: str = "jpg") -> dict:
+def set_image(post_id: int, data: bytes, ext: str = "jpg", by_boss: bool = True) -> dict:
     """Gắn ảnh sếp gửi vào bài và xếp đăng (giờ đã qua thì xếp giờ trống gần nhất)."""
     if len(data) < 1000:
         raise ValueError("Ảnh hỏng hoặc quá nhỏ")
@@ -297,8 +314,9 @@ def set_image(post_id: int, data: bytes, ext: str = "jpg") -> dict:
     when = p["scheduled_for"] or ""
     if when < db.clock().strftime("%Y-%m-%d %H:%M"):
         when = (db.clock() + timedelta(minutes=10)).strftime("%Y-%m-%d %H:%M")
-    db.run("UPDATE posts SET image_path=?, status='scheduled', scheduled_for=? WHERE id=?", (str(f), when, post_id))
-    db.log("nhi", "Nhận ảnh từ sếp", f"Bài #{post_id}: đã có ảnh, đăng lúc {when[11:16]} {when[8:10]}/{when[5:7]}")
+    db.run("UPDATE posts SET image_path=?, status='scheduled', scheduled_for=?, text_only=NULL" + (", image_src='boss'" if by_boss else "") + " WHERE id=?", (str(f), when, post_id))
+    if by_boss:
+        db.log("nhi", "Nhận ảnh từ sếp", f"Bài #{post_id}: đã có ảnh, đăng lúc {when[11:16]} {when[8:10]}/{when[5:7]}")
     return db.one("SELECT * FROM posts WHERE id=?", (post_id,))
 
 

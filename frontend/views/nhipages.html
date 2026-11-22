@@ -3,6 +3,16 @@
         <div class="row wrap"><button class="btn primary" type="button" id="npPlan">Nhi lên lịch bài hôm nay</button></div></div>
       <div class="pr-stats fr-stats" id="npStats"></div>
       <section class="card" id="npRev" style="margin-bottom:12px"></section>
+      <details class="card" id="npImg" style="margin-bottom:12px"><summary><b>🖼 Nhi tự làm ảnh</b> <span class="small muted" id="npImgSum"></span></summary>
+        <p class="small muted" style="margin:6px 0">Bài cần ảnh: Nhi <b>tạo ảnh AI</b> theo prompt đã viết bằng <b>Cloudflare Workers AI</b> (miễn phí 10.000 neurons/ngày, khoảng 150 ảnh), lỗi hoặc hết lượt thì <b>lấy ảnh thật trên Pixabay</b> theo chủ đề bài (miễn phí). Logo, banner Trang Nhi mới tạo cũng tự làm. Ảnh gửi lên Telegram để sếp xem; trả lời tin ảnh bằng ảnh khác là đổi, hoặc nhắn “đổi ảnh #12”. Không làm được thì Nhi xin ảnh sếp như cũ.</p>
+        <ol class="small" style="margin:4px 0 8px;padding-left:18px">
+          <li><b>Cloudflare</b>: đăng ký miễn phí tại dash.cloudflare.com → menu <b>AI → Workers AI</b> → <b>Use REST API</b>: chép <b>Account ID</b>, bấm <b>Create a Workers AI API Token</b> rồi chép token.</li>
+          <li><b>Pixabay</b>: đăng ký tại pixabay.com, mở pixabay.com/api/docs, chép khóa ở mục <b>Parameters → key</b>.</li>
+          <li>Dán vào đây (hoặc nhắn bot của Nhi: <code>cloudflare &lt;Account ID&gt; &lt;Token&gt;</code>, <code>pixabay &lt;key&gt;</code>, Nhi lưu rồi tự xóa tin).</li></ol>
+        <form id="npImgForm" style="display:grid;gap:6px;max-width:640px">
+          <label class="row small"><input type="checkbox" id="npImgOn"> Nhi tự làm ảnh</label>
+          <div class="grid3"><label class="f">Cloudflare Account ID<input id="npCfAcc" autocomplete="off"></label><label class="f">Cloudflare API Token<input id="npCfTok" type="password" autocomplete="off"></label><label class="f">Pixabay key<input id="npPxKey" type="password" autocomplete="off"></label></div>
+          <div class="row wrap"><button class="btn primary sm" type="submit">Lưu</button><button class="btn sm" type="button" id="npImgTest">Kiểm tra</button><span class="small" id="npImgRes"></span></div></form></details>
       <section class="card" style="margin-bottom:12px"><div class="card-h"><div><h3>Danh sách Trang</h3><p class="small muted" style="margin:2px 0 0">Bấm <b>Ngành nghề và từ khóa</b> để đặt nội dung cho từng Trang. Trang mới tạo ở mục Trang xu hướng.</p></div></div>
         <div id="npPages" class="np-pages"></div></section>
       <section class="card"><div class="card-h"><div><h3>Bài chờ sếp duyệt</h3><p class="small muted" style="margin:2px 0 0">Sửa thẳng trong ô rồi bấm duyệt: Nhi ghi nhớ điều sếp sửa. Loại thì chọn lý do để Nhi rút kinh nghiệm. Duyệt xong Nhi gửi prompt ảnh lên Telegram như cũ. Chờ quá 48 giờ thì bài bị bỏ.</p></div>

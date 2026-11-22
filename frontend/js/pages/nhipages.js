@@ -1,5 +1,9 @@
 /* --------------------------------------------- Các Trang của Nhi: từ khóa sếp đặt, duyệt bài, Nhi ghi nhớ theo sếp */
-async function loadNp(){ try{ ST.np=await api("/nhi-pages"); }catch(e){ toast(e.message); return; } renderNp(); }
+async function loadNp(){ try{ ST.np=await api("/nhi-pages"); ST.npi=await api("/nhi-images"); }catch(e){ toast(e.message); return; } renderNp(); renderNpImg(); }
+function renderNpImg(){ const s=ST.npi; if(!s) return; $("#npImgOn").checked=s.on; $("#npCfAcc").value=s.cf_account_id; $("#npCfTok").placeholder=s.cf_token||"dán token"; $("#npPxKey").placeholder=s.pixabay_key||"dán key";
+  $("#npImgSum").textContent=!s.on?"· đang tắt":(s.cf_ready||s.pixabay_ready)?`· ${[s.cf_ready&&"Cloudflare",s.pixabay_ready&&"Pixabay"].filter(Boolean).join(" + ")} · 30 ngày: ${s.made_cf} ảnh AI, ${s.made_px} ảnh Pixabay`:"· chưa cài khóa"; }
+$("#npImgForm").onsubmit=async e=>{ e.preventDefault(); try{ ST.npi=await api("/nhi-images","PUT",{on:$("#npImgOn").checked,cf_account_id:$("#npCfAcc").value.trim(),cf_api_token:$("#npCfTok").value.trim(),pixabay_key:$("#npPxKey").value.trim()}); $("#npCfTok").value=""; $("#npPxKey").value=""; renderNpImg(); toast("Đã lưu, bấm Kiểm tra để thử"); }catch(err){ toast(err.message); } };
+$("#npImgTest").onclick=async e=>{ e.target.disabled=true; $("#npImgRes").textContent="Đang thử…"; try{ const r=await api("/nhi-images/test","POST"); $("#npImgRes").textContent=`Cloudflare: ${r.cloudflare} · Pixabay: ${r.pixabay}`; }catch(err){ $("#npImgRes").textContent=err.message; } e.target.disabled=false; };
 function npSmart(s){ return s.n?`${s.pct}% <span class="muted">(${s.ok}/${s.n} bài duyệt ngay)</span>`:'<span class="muted">chưa có lần duyệt nào</span>'; }
 function renderNp(){ const d=ST.np, S=d.smart, hm=t=>t?`${t.slice(11,16)} ${t.slice(8,10)}/${t.slice(5,7)}`:"", act=d.pages.filter(p=>p.status==="active");
   $("#npStats").innerHTML=[[act.length,"Trang đang chạy"],[d.queue.length,"Bài chờ sếp duyệt"],[act.reduce((a,p)=>a+p.today.length,0),"Bài hôm nay"],[S.n?S.pct+"%":"–","Nhi hiểu ý sếp"]]

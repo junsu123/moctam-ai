@@ -10,6 +10,11 @@
     if(P.startsWith("/page-inbox")) return demoIb(method,P,qs,body||{});
     if(P.startsWith("/nick-health")) return demoNh(method,P,qs,body||{});
     if(P.startsWith("/page-grow")) return demoPg(method,P,qs,body||{});
+    if(P.startsWith("/nhi-images")){ S.npi=S.npi||{on:true,cf_account_id:"",cf_token:"",pixabay_key:"",cf_ready:false,pixabay_ready:false,made_cf:0,made_px:0};
+      if(method==="PUT"){ if(body.cf_account_id) S.npi.cf_account_id=body.cf_account_id; if(body.cf_api_token){ S.npi.cf_token=body.cf_api_token.slice(0,4)+"…"+body.cf_api_token.slice(-4); } if(body.pixabay_key) S.npi.pixabay_key=body.pixabay_key.slice(0,4)+"…"+body.pixabay_key.slice(-4);
+        S.npi.on=!!body.on; S.npi.cf_ready=!!(S.npi.cf_account_id&&S.npi.cf_token); S.npi.pixabay_ready=!!S.npi.pixabay_key; }
+      if(P==="/nhi-images/test") return {cloudflare:S.npi.cf_ready?"OK, tạo được ảnh (bản xem trước)":"Chưa cài",pixabay:S.npi.pixabay_ready?"OK, tìm thấy 30 ảnh (bản xem trước)":"Chưa cài"};
+      return S.npi; }
     if(P.startsWith("/nhi-pages")) return demoNp(method,P,qs,body||{});
     if(P.startsWith("/trends")||P.startsWith("/tg-img")) return demoTr(method,P,qs,body||{});
     if(P.startsWith("/departments")) return demoDp(method,P,body||{});

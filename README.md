@@ -293,6 +293,21 @@ thường là lệnh cho Nhi) hoặc **bot chính** (tin bắt đầu bằng “
   Vẫn duyệt** (tối đa 1 lần/tuần); **tới giờ đăng mà sếp chưa gửi ảnh thì Nhi đăng bài chỉ có chữ** (không lấy ảnh sản phẩm khác) và báo lại.
   Tắt từng việc ở mục Các Trang của Nhi hoặc nhắn Nhi.
 
+### Nhi tự làm ảnh (miễn phí)
+
+Thẻ **🖼 Nhi tự làm ảnh** ở mục Các Trang của Nhi. Bài Trang cần ảnh (sau khi sếp duyệt, hoặc ngay khi viết nếu tắt duyệt):
+1. **Cloudflare Workers AI** tạo ảnh AI theo prompt Nhi đã viết (mô hình FLUX.1 schnell, miễn phí 10.000 neurons/ngày, khoảng 150 ảnh),
+   thêm yêu cầu không chữ, không logo thương hiệu thật, không mặt người thật; cắt về 4:5.
+2. Cloudflare lỗi / hết lượt trong ngày thì lấy **ảnh thật trên Pixabay** theo chủ đề bài (miễn phí, cho dùng thương mại, tải về máy,
+   không dùng lại ảnh đã đăng trong 120 ngày; ghi nguồn trong tin Telegram).
+3. Cả hai không được thì xin ảnh sếp như cũ (tới giờ chưa có thì đăng chữ).
+
+Ảnh vừa làm gửi lên Telegram cho sếp xem: **trả lời tin ảnh bằng ảnh khác** là đổi, hoặc nhắn “đổi ảnh #12” để Nhi làm lại. Trang Nhi mới tạo:
+Nhi tự làm **logo** (vuông) và **banner** (1640×624) rồi đặt lên Trang ở ca làm việc tới; phần nào chưa làm được thì xin sếp.
+Cài một lần: Cloudflare (dash.cloudflare.com → AI → Workers AI → Use REST API: Account ID + Create a Workers AI API Token) và Pixabay
+(đăng ký, mở pixabay.com/api/docs, chép key). Dán vào thẻ rồi bấm **Kiểm tra**, hoặc nhắn bot của Nhi `cloudflare <Account ID> <Token>`,
+`pixabay <key>` (Nhi lưu rồi tự xóa tin chứa khóa). Khóa không hiện lại trên giao diện. Nhắn “tắt / bật tự làm ảnh” để tắt / bật.
+
 ## Nuôi Page (không dùng Graph API)
 
 Mục **Nuôi Page** (thanh bên, dưới Bình luận). **Nhi nuôi nhiều Trang cùng lúc**: bấm **+ Thêm Trang**, điền tên, link Trang, nick
@@ -1513,6 +1528,7 @@ docs/
   departments.py Phòng ban: trưởng phòng tự đánh giá, đề xuất tuyển, CEO xét, nhân viên mới làm việc thật theo vị trí
   trend_create.py Nhi tự tạo Trang: chọn ý tưởng + nick an toàn, tạo trong ca của nick, chuyển về nick cá nhân, báo Telegram
   trend_learn.py Nhi tự học: điểm bài Trang so với mức của Trang, bài học kiểu bài / độ dài / giờ, độ chính xác chọn xu hướng
+  image_gen.py   Nhi tự làm ảnh: Cloudflare Workers AI tạo ảnh, dự phòng Pixabay; ảnh bài, logo, banner Trang
   nhi_tg.py      Sếp điều khiển Nhi qua Telegram: nút duyệt / loại, trả lời bằng bản sửa, lệnh bằng lời, Nhi tự đặt từ khóa, đăng chữ khi thiếu ảnh
   page_brain.py  Các Trang của Nhi: từ khóa sếp đặt, chia chủ đề cho các Trang, sếp duyệt / sửa / loại, Nhi ghi nhớ theo sếp
   trend_pages.py Nhi: Google Trends, đề xuất Trang, lịch bài Trang xu hướng, prompt ảnh gửi Telegram, nhận ảnh sếp trả lời

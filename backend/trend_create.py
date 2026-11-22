@@ -409,9 +409,19 @@ def report(pid: int, back: bool = True):
         + (f"Mô tả: {_e(p['description'])}\n" if p.get("description") else "")
         + (f"Vì sao làm Trang này: {_e(p['reason'])}\n" if p.get("reason") else "")
         + f"Lịch đăng: {p['posts_per_day']} bài/ngày lúc {_e(p['times'])}. Nhi đang viết bài hôm nay, prompt ảnh từng bài sẽ gửi sau.\n"
-        + "Nhi gửi riêng 2 tin xin logo và banner: anh tạo ảnh rồi trả lời đúng tin đó bằng ảnh, Nhi tự đặt lên Trang."
+        + ("Nhi đang tự làm logo và banner, xong gửi anh xem (muốn đổi thì trả lời tin ảnh bằng ảnh khác)." if __import__("image_gen").on()
+           else "Nhi gửi riêng 2 tin xin logo và banner: anh tạo ảnh rồi trả lời đúng tin đó bằng ảnh, Nhi tự đặt lên Trang.")
         + ("" if back else "\n⚠️ Nick chưa chuyển về tên cá nhân được: ca sau sale chuyển về trước khi làm việc nhóm."))
-    request_images(pid)
+    import image_gen
+
+    def imgs():
+        try:
+            if image_gen.on():
+                image_gen.for_page(pid)  # Nhi tự làm logo, banner; phần nào chưa làm được thì xin sếp
+        except Exception as ex:
+            print("[ảnh Trang]", ex)
+        request_images(pid)
+    imgs() if image_gen.SYNC else threading.Thread(target=imgs, daemon=True).start()
 
 
 # ---------------------------------------------------------------- sếp giao ý tưởng Trang

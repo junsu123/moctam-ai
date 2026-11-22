@@ -38,6 +38,25 @@ def send(text: str, buttons=None) -> list:
         return []
 
 
+def send_photo(path: str, caption: str) -> str:
+    """Gửi ảnh Nhi vừa làm lên Telegram; trả về mã tin (để sếp trả lời bằng ảnh khác là đổi)."""
+    import httpx
+    b = _bot()
+    if not b or not path:
+        return ""
+    ids = []
+    for c in b.chats():
+        try:
+            with open(path, "rb") as f:
+                r = httpx.post(f"{getattr(b, 'API', 'https://api.telegram.org')}/bot{b.token()}/sendPhoto", data={"chat_id": c, "caption": caption[:1000], "parse_mode": "HTML"},
+                               files={"photo": ("anh.jpg", f, "image/jpeg")}, timeout=60).json()
+            if r.get("ok"):
+                ids.append(str(r["result"]["message_id"]))
+        except Exception as ex:
+            print("[nhi ảnh tg]", ex)
+    return ",".join(ids)
+
+
 def _hm(t: str) -> str:
     return f"{t[11:16]} {t[8:10]}/{t[5:7]}" if t and len(t) >= 16 else ""
 
@@ -242,6 +261,7 @@ HELP = ("Sếp nhắn Nhi bằng lời, ví dụ:\n"
         "• <code>viết bài cho Bếp Nhà Mình</code> · <code>tạo trang Góc Thú Cưng về nuôi chó mèo</code>\n"
         "• <code>Bếp Nhà Mình nhớ: luôn xưng mình, kết bằng câu hỏi</code> · <code>gợi ý từ khóa Bếp Nhà Mình</code>\n"
         "• <code>tắt duyệt</code> / <code>bật duyệt</code> · <code>luôn chờ ảnh</code> / <code>đăng chữ khi thiếu ảnh</code>\n"
+        "• Ảnh: <code>đổi ảnh #12</code> · <code>tắt tự làm ảnh</code> / <code>bật tự làm ảnh</code> · cài khóa: <code>cloudflare &lt;Account ID&gt; &lt;API Token&gt;</code>, <code>pixabay &lt;key&gt;</code>\n"
         "Bài chờ duyệt: bấm nút, hoặc trả lời tin bài bằng bản sửa. Ảnh: trả lời tin xin ảnh bằng ảnh.")
 
 ACTIONS_DOC = """- list: danh sách Trang + tình hình
@@ -307,6 +327,19 @@ def _rule(text: str) -> list[dict]:
     name = pg["name"] if pg else None
     url = re.search(r"https?://\S+", t)
     after = lambda key: re.split(key, t, maxsplit=1, flags=re.I)[-1].strip(" :,-.") if re.search(key, t, re.I) else ""
+    m = re.match(r"^\s*cloudflare\s+([0-9a-fA-F]{32})\s+(\S{20,})\s*$", t)
+    if m:
+        return [{"type": "img_keys", "cf_account_id": m.group(1), "cf_api_token": m.group(2)}]
+    m = re.match(r"^\s*pixabay\s+(\S{10,})\s*$", t, re.I)
+    if m:
+        return [{"type": "img_keys", "pixabay_key": m.group(1)}]
+    m = re.search(r"(?:đổi|làm lại|tạo lại)\s+ảnh\s*(?:bài)?\s*#?(\d+)", t, re.I)
+    if m:
+        return [{"type": "regen", "post": int(m.group(1))}]
+    if re.search(r"\b(tat|dung) (tu )?lam anh\b", low):
+        return [{"type": "img_auto", "on": False}]
+    if re.search(r"\b(bat|cho nhi) (tu )?lam anh\b", low):
+        return [{"type": "img_auto", "on": True}]
     if re.search(r"^(cac trang|danh sach trang|bao cao|tinh hinh|trang)$", low.strip()):
         return [{"type": "list"}]
     if "cho duyet" in low and "duyet tat ca" not in low:
@@ -382,6 +415,27 @@ def execute(a: dict) -> str:
         return e(a.get("text"))
     if t == "list":
         return report()
+    if t == "img_keys":
+        import image_gen
+        for k in ("cf_account_id", "cf_api_token", "pixabay_key"):
+            if a.get(k):
+                db.set_setting(k, a[k])
+        r = image_gen.test()
+        return ("🔑 Đã lưu khóa (Nhi đã xóa tin chứa khóa khỏi cuộc trò chuyện).\n"
+                f"Cloudflare: {e(r['cloudflare'])}\nPixabay: {e(r['pixabay'])}")
+    if t == "img_auto":
+        db.set_setting("img_auto", "1" if a.get("on") else "0")
+        return "🖼 Nhi tự làm ảnh cho bài và logo, banner Trang." if a.get("on") else "Nhi thôi tự làm ảnh, gửi prompt để sếp làm."
+    if t == "regen":
+        import image_gen
+        p = db.one("SELECT * FROM posts WHERE id=?", (a.get("post"),))
+        if not p or p["status"] not in ("need_image", "scheduled") or not p.get("fb_page_ref"):
+            return "Bài này không còn chờ đăng nên không đổi ảnh được."
+        db.run("UPDATE posts SET status='need_image' WHERE id=?", (p["id"],))
+        if image_gen.for_post(p["id"]):
+            return f"🖼 Nhi đã làm ảnh mới cho bài #{p['id']} (gửi ngay bên dưới)."
+        db.run("UPDATE posts SET status=? WHERE id=?", (p["status"], p["id"]))
+        return "Nhi chưa làm được ảnh mới (xem lý do ở màn Lỗi); bài giữ ảnh cũ."
     if t == "pending":
         n = pending_reviews(resend=True)
         return f"Đã gửi lại {n} bài chờ duyệt." if n else "Không có bài nào chờ duyệt."
@@ -471,6 +525,10 @@ def execute(a: dict) -> str:
         p = page_brain.update_page(pg["id"], {"posts_per_day": a.get("per_day"), "times": a.get("times")})
         return f"🗓 {e(pg['name'])}: {p['posts_per_day']} bài/ngày lúc {e(p['times'])}."
     return "Nhi chưa làm được việc này."
+
+
+def has_secret(text: str) -> bool:
+    return bool(re.match(r"^\s*(nhi\s*(ơi)?[\s,:]*)?(cloudflare|pixabay)\s+\S", text or "", re.I))
 
 
 def handle_text(text: str) -> str:

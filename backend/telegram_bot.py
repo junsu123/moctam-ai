@@ -473,6 +473,11 @@ def handle_message(msg: dict):
         return
     if re.match(r"^\s*nhi\b", text, re.I):  # “Nhi ơi …”: lệnh cho Nhi (các Trang Facebook)
         _reply(chat_id, nhi_tg.handle_text(text))
+        if nhi_tg.has_secret(text):
+            try:
+                call("deleteMessage", chat_id=chat_id, message_id=msg.get("message_id"))
+            except Exception:
+                pass
         return
     if chat_id in _pending_order and not text.startswith("/"):
         import company

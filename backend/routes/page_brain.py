@@ -56,3 +56,30 @@ def nhi_pages_review(post_id: int, data: dict):
 def nhi_pages_approve_all():
     import page_brain
     return {"approved": page_brain.approve_all()}
+
+
+# ------------------------------------------------------------------ Nhi tự làm ảnh (Cloudflare Workers AI + Pixabay)
+@app.get("/api/nhi-images")
+def nhi_images_get():
+    import image_gen
+    return image_gen.status()
+
+
+@app.put("/api/nhi-images")
+def nhi_images_put(data: dict):
+    import image_gen
+    for k in ("cf_account_id", "cf_api_token", "pixabay_key"):
+        v = (data.get(k) or "").strip()
+        if v and "…" not in v and "•" not in v:
+            db.set_setting(k, v)
+        elif data.get(k) == "" and data.get("clear"):
+            db.set_setting(k, "")
+    if "on" in data:
+        db.set_setting("img_auto", "1" if data["on"] else "0")
+    return image_gen.status()
+
+
+@app.post("/api/nhi-images/test")
+def nhi_images_test():
+    import image_gen
+    return image_gen.test()
