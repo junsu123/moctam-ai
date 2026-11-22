@@ -163,6 +163,8 @@ def for_post(post_id: int, notify: bool = True) -> bool:
     p = db.one("SELECT p.*, f.name page_name, f.niche FROM posts p LEFT JOIN fb_pages f ON f.id=p.fb_page_ref WHERE p.id=?", (post_id,))
     if not p or p["status"] != "need_image":
         return False
+    if p.get("product_id") and product_3d(p["product_id"]) and for_product_post(post_id, notify=notify):  # Nhi chọn sản phẩm cho bài: ghép ảnh 3D
+        return True
     try:
         data, src, note = make(p.get("image_prompt") or "", f"{p.get('trend_topic') or p.get('page_kw') or ''}|{p.get('niche') or ''}|{p.get('image_prompt') or ''}")
         p2 = trend_pages.set_image(post_id, data, "jpg", by_boss=False)
@@ -359,7 +361,7 @@ def for_product_post(post_id: int, notify: bool = True) -> bool:
     mode = _s().get("img3d_mode", "auto")
     if mode == "auto":
         mode = "exact" if topic == "product" else "blend"
-    scene = SCENES.get(topic, SCENES["product"])
+    scene = p.get("image_scene") or (p.get("image_prompt") if p.get("source") == "trend_page" else "") or SCENES.get(topic, SCENES["product"])
     data, how = None, ""
     try:
         if mode == "blend" and cf_ready():
@@ -376,11 +378,16 @@ def for_product_post(post_id: int, notify: bool = True) -> bool:
     except Exception as ex:
         db.log("nhi", "Chưa ghép được ảnh 3D", f"Bài #{post_id}: {str(ex)[:160]}, dùng ảnh thư mục sản phẩm")
         return False
-    d = trend_pages.img_dir()
-    d.mkdir(parents=True, exist_ok=True)
-    f = d / f"post_{post_id}.jpg"
-    f.write_bytes(data)
-    db.run("UPDATE posts SET image_path=?, image_src=? WHERE id=?", (str(f), "p3d-" + ("blend" if how.endswith("AI") else "exact"), post_id))
+    src = "p3d-" + ("blend" if how.endswith("AI") else "exact")
+    if p["status"] == "need_image":  # bài Trang xu hướng chờ ảnh: gắn ảnh và xếp đăng
+        f = trend_pages.set_image(post_id, data, "jpg", by_boss=False)["image_path"]
+        db.run("UPDATE posts SET image_src=? WHERE id=?", (src, post_id))
+    else:
+        d = trend_pages.img_dir()
+        d.mkdir(parents=True, exist_ok=True)
+        f = d / f"post_{post_id}.jpg"
+        f.write_bytes(data)
+        db.run("UPDATE posts SET image_path=?, image_src=? WHERE id=?", (str(f), src, post_id))
     db.log("nhi", "Ghép ảnh 3D sản phẩm", f"Bài #{post_id} ({p['page_name']}): {how} · {p['product_name']}")
     if notify:
         import nhi_tg
@@ -425,3 +432,45 @@ def del_3d(pid: int, path: str) -> list:
             f.unlink()
     db.run("UPDATE products SET images3d=? WHERE id=?", (json.dumps(imgs), pid))
     return imgs
+
+
+# ---------------------------------------------------------------- Nhi chọn sản phẩm hợp nội dung (theo công dụng sếp ghi)
+def catalog(limit: int = 15) -> list[dict]:
+    rows = db.q("""SELECT id, name, category, description, uses, images3d, hot FROM products WHERE COALESCE(is_general,0)=0
+                   ORDER BY hot DESC, COALESCE(is_sample,0), id LIMIT ?""", (limit,))
+    for r in rows:
+        r["has3d"] = bool(product_3d(r["id"]))
+    return rows
+
+
+def catalog_text(limit: int = 15) -> str:
+    return "\n".join(f"- {r['name']}{' (đang bán chạy)' if r['hot'] else ''}: công dụng: {(r.get('uses') or r.get('description') or '').strip()[:220] or '(chưa ghi)'}"
+                     for r in catalog(limit))
+
+
+def resolve_product(name: str | None) -> dict | None:
+    from knowledge import plain
+    n = plain(name or "").strip()
+    if not n:
+        return None
+    rows = db.q("SELECT * FROM products")
+    return next((r for r in rows if plain(r["name"]).strip() == n), None) or \
+        next((r for r in sorted(rows, key=lambda r: -len(r["name"] or "")) if plain(r["name"]).strip() and
+              (plain(r["name"]).strip() in n or n in plain(r["name"]))), None)
+
+
+def match_product(text: str) -> dict | None:
+    """Không có Claude: chọn sản phẩm theo chữ trùng giữa bài và tên / công dụng / mô tả (tên sản phẩm có trong bài là chắc nhất)."""
+    from knowledge import plain, tokens
+    t = " " + plain(text or "") + " "
+    rows = catalog(50)
+    named = [r for r in rows if plain(r["name"]).strip() and f" {plain(r['name']).strip()} " in t]
+    if named:
+        return db.one("SELECT * FROM products WHERE id=?", (max(named, key=lambda r: len(r["name"]))["id"],))
+    words = set(tokens(text or ""))
+    best, score = None, 0
+    for r in rows:
+        s = len(words & set(tokens(f"{r['name']} {r.get('uses') or ''}")))
+        if s > score:
+            best, score = r, s
+    return db.one("SELECT * FROM products WHERE id=?", (best["id"],)) if best and score >= 3 else None

@@ -210,6 +210,11 @@ def write_post(pg: dict, when: str) -> dict:
         (f"\nBài được hưởng ứng nhất của Trang này (học giọng, không chép):\n{sty['example']}" if sty["example"] else "")
     topic = ch["topic"]
     recent = db.q("SELECT content FROM posts WHERE fb_page_ref=? ORDER BY id DESC LIMIT 6", (pg["id"],))
+    import image_gen
+    cat = image_gen.catalog_text()
+    prods = ("Sản phẩm của xưởng (công dụng sếp ghi). CHỈ khi chủ đề bài thật sự hợp công dụng một sản phẩm VÀ hợp ngành nghề của Trang thì "
+             "nhắc nhẹ sản phẩm đó (1 câu, đúng công dụng đã ghi, không hứa chữa bệnh) và ghi tên vào \"product\"; Trang khác ngành hoặc không hợp thì để rỗng:\n"
+             + cat) if cat else ""
     ask = f"""Viết 1 bài cho Trang Facebook "{pg['name']}" (ngách: {pg['niche']}; {pg.get('description') or ''}).
 Chủ đề hôm nay: {topic}{(' — đang lên xu hướng: ' + fit[0]['why']) if fit else ' (chưa có xu hướng hợp ngách hôm nay: viết bài có ích, bền, không gắn tin nóng)'}.
 {page_brain.brief(pg, ch["kw"])}
@@ -220,7 +225,8 @@ Kèm "image_prompt" (tiếng Anh, cho công cụ tạo ảnh: mô tả cảnh, p
 và "image_note" (1 câu tiếng Việt: ảnh nên trông thế nào).
 {learned}
 Đừng mở đầu giống các bài gần đây: {' | '.join((r['content'] or '')[:50] for r in recent) or '(chưa có)'}
-JSON: {{"content": "...", "hashtags": "...", "image_prompt": "...", "image_note": "..."}}"""
+{prods}
+JSON: {{"content": "...", "hashtags": "...", "image_prompt": "...", "image_note": "...", "product": "tên sản phẩm hoặc rỗng"}}"""
     import departments
     writer = departments.writer_for_page(pg["id"])  # Nhi hoặc Biên tập Trang phụ trách Trang này
     d = llm.json(system_prompt(writer, _s()), ask, mock=lambda: _mock_post(pg, topic), max_tokens=900, task="posts") or {}
@@ -230,10 +236,10 @@ JSON: {{"content": "...", "hashtags": "...", "image_prompt": "...", "image_note"
         text = d["content"]
     acc = db.one("SELECT * FROM fb_accounts WHERE id=?", (pg["admin_account_id"],)) or {}
     pid = db.run("""INSERT INTO posts(agent_id, target_type, title, content, hashtags, status, scheduled_for, account_id, sale_id, fb_page_ref,
-                    trend_topic, trend_kind, image_prompt, image_note, source, created_at, page_kw, nhi_draft)
-                    VALUES (?, 'page', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'trend_page', ?, ?, ?)""",
+                    trend_topic, trend_kind, image_prompt, image_note, source, created_at, page_kw, nhi_draft, product_id)
+                    VALUES (?, 'page', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'trend_page', ?, ?, ?, ?)""",
                  (writer, f"{pg['name']} · {topic}"[:120], text, d.get("hashtags") or "", "page_review" if review else "need_image", when, acc.get("id"), acc.get("sale_id"), pg["id"], topic, kind,
-                  (d.get("image_prompt") or _mock_post(pg, topic)["image_prompt"])[:900], (d.get("image_note") or "")[:300], db.now(), ch["kw"], text))
+                  (d.get("image_prompt") or _mock_post(pg, topic)["image_prompt"])[:900], (d.get("image_note") or "")[:300], db.now(), ch["kw"], text, (image_gen.resolve_product(d.get("product")) or {}).get("id")))
     if review:
         import nhi_tg
         nhi_tg.send_review(pid)

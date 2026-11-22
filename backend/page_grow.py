@@ -156,14 +156,20 @@ def _prompt(pg: dict, topic: str, p: dict | None, st: dict) -> str:
         pass
     return f"""Viết 1 bài cho FANPAGE "{pg['name']}" của xưởng (nuôi Trang: bài có ích để người theo dõi đọc, bình luận, quay lại; không phải bài rao sỉ trong nhóm).
 Chủ đề: {label}. {guide}
-Sản phẩm liên quan: {(p or {}).get('name') or 'các sản phẩm của xưởng'}. {(p or {}).get('description') or ''} {(p or {}).get('selling_points') or ''}
+Sản phẩm gợi ý: {(p or {}).get('name') or 'các sản phẩm của xưởng'}. {(p or {}).get('description') or ''} {(p or {}).get('selling_points') or ''}
 {('Thông tin thật được dùng:' + chr(10) + facts) if facts else ''}
 Yêu cầu: 60–150 chữ, giọng gần gũi, mở đầu bằng 1 câu gây chú ý, xuống dòng cho dễ đọc, 1–3 emoji.
 Không ghi giá, không hứa chữa bệnh / giảm cân / công dụng như thuốc, không bịa số liệu hay lời khách, không kêu gọi like / share / tag để nhận quà.
 {'Kết bằng lời mời nhắn Trang hoặc Zalo ' + (st.get('price_zalo') or '') + ' để nhận báo giá sỉ.' if topic == SALE else 'Không chèn quảng cáo bán sỉ; có thể kết bằng 1 câu hỏi mở để người đọc bình luận.'}
 Đừng mở đầu giống các bài gần đây:
 {chr(10).join('- ' + (r['content'] or '')[:70] for r in recent) or '(chưa có)'}
-Trả về JSON: {{"content": "...", "hashtags": "2-3 hashtag"}}"""
+Sản phẩm của xưởng và công dụng sếp ghi:
+{__import__("image_gen").catalog_text() or '(chưa có)'}
+Em tự chọn MỘT sản phẩm hợp nhất với nội dung bài ({'bài giới thiệu sản phẩm: bắt buộc chọn' if topic == SALE else 'bài không cần sản phẩm thì để trống'}),
+viết dựa đúng công dụng đã ghi, nói nhẹ nhàng (giúp, hợp với, cảm giác ấm bụng...), không thêm công dụng không có trong danh sách,
+không hứa chữa bệnh / giảm cân / công dụng như thuốc.
+Kèm "image_scene": cảnh chụp ảnh cho bài (tiếng Anh, 1 câu: bối cảnh, đồ vật, ánh sáng hợp nội dung và công dụng; không chữ, không người).
+Trả về JSON: {{"content": "...", "hashtags": "2-3 hashtag", "product": "đúng tên sản phẩm đã chọn hoặc rỗng", "image_scene": "..."}}"""
 
 
 def _page(pg) -> dict | None:
@@ -201,15 +207,17 @@ def write(pg=None, topic: str | None = None, when: str | None = None) -> dict:
         text = ""
     if not text:
         text = _mock(topic, p, st)["content"]
+    import image_gen
+    chosen = image_gen.resolve_product((data or {}).get("product")) or image_gen.match_product(text) or (p if topic == SALE else None)
+    p = chosen
     review = page_brain.review_on()
     sched = when or next_slot(pg)
     adm = admin_account(pg) or {}
     pid = db.run("""INSERT INTO posts(agent_id, product_id, target_type, angle, title, content, hashtags, status, scheduled_for, page_topic,
-                    source, account_id, sale_id, fb_page_ref, page_kw, nhi_draft, created_at) VALUES (?, ?, 'page', ?, ?, ?, ?, ?, ?, ?, 'page_grow', ?, ?, ?, ?, ?, ?)""",
+                    source, account_id, sale_id, fb_page_ref, page_kw, nhi_draft, image_scene, created_at) VALUES (?, ?, 'page', ?, ?, ?, ?, ?, ?, ?, 'page_grow', ?, ?, ?, ?, ?, ?, ?)""",
                  (writer, p["id"] if p else None, f"Nuôi Trang: {TOPICS[topic][0]}", f"{pg['name']} · {TOPICS[topic][0]}"[:120],
                   text, (data or {}).get("hashtags") or "", "page_review" if review else "scheduled", sched, topic, adm.get("id"), adm.get("sale_id"),
-                  pg["id"], kw, text, db.now()))
-    import image_gen
+                  pg["id"], kw, text, ((data or {}).get("image_scene") or "")[:400] or None, db.now()))
     if image_gen.product_3d(p["id"] if p else None):
         def img():
             try:

@@ -21,6 +21,7 @@ function prodEdit(p){
 </div>
     <label class="f" for="ed-${p.id}">Mô tả<textarea id="ed-${p.id}" rows="2">${esc(p.description||"")}</textarea></label>
     <label class="f" for="es-${p.id}">Điểm mạnh khi bán<textarea id="es-${p.id}" rows="2">${esc(p.selling_points||"")}</textarea></label>
+    <label class="f" for="eu-${p.id}">Công dụng <span class="muted">(Nhi chọn sản phẩm, viết bài, tạo ảnh theo mục này; không ghi chữa bệnh)</span><textarea id="eu-${p.id}" rows="2">${esc(p.uses||"")}</textarea></label>
     <label class="row small"><input type="checkbox" id="eh-${p.id}" ${p.hot?"checked":""}> 🔥 Đang bán chạy: cả đội tập trung chào mời</label>
     <label class="f" for="eo-${p.id}">Lưu ý khi chào (không bắt buộc)<input type="text" id="eo-${p.id}" value="${esc(p.hot_note||"")}" placeholder="VD: đang vào mùa, có quà cho đơn đầu"></label>
     <div class="actions"><button class="btn sm primary" type="submit">Lưu thay đổi</button><button class="btn sm ghost" type="button" data-pcancel>Hủy</button></div></form>`;
@@ -40,7 +41,7 @@ async function loadProducts(){
   $("#prodGrid").innerHTML=ST.products.map(p=>`<div class="card prod${p.hot?" hot":""}${p.is_general?" gen":""}" data-prod="${p.id}"><div class="prod-h"><div class="cat">${esc(p.category)}${p.is_sample?' · <span class="chip warn">Mẫu</span>':""}</div>
      <button type="button" class="hot-btn" data-phot="${p.id}" aria-pressed="${p.hot?"true":"false"}" title="Tích để cả đội tập trung chào mời sản phẩm này">🔥 ${p.hot?"Đang bán chạy":"Đánh dấu bán chạy"}</button></div>
    ${ST.editProd===p.id?prodEdit(p):`<h3>${esc(p.name)}</h3>${p.hot&&p.hot_note?`<div class="hot-note">${esc(p.hot_note)}</div>`:""}<p class="small muted">${esc(p.description)}</p>
-   <dl class="kv"><dt>Giá</dt><dd>Liên hệ Zalo ${esc(ZALO())}</dd><dt>Nhập tối thiểu</dt><dd>${esc(p.moq)}</dd><dt>Điểm mạnh</dt><dd>${esc(p.selling_points)}</dd></dl>`}
+   <dl class="kv"><dt>Giá</dt><dd>Liên hệ Zalo ${esc(ZALO())}</dd><dt>Nhập tối thiểu</dt><dd>${esc(p.moq)}</dd><dt>Điểm mạnh</dt><dd>${esc(p.selling_points)}</dd><dt>Công dụng</dt><dd>${p.uses?esc(p.uses):'<span class="muted">Chưa ghi: bấm Sửa thông tin để Nhi biết sản phẩm hợp bài nào</span>'}</dd></dl>`}
    <label class="gen-tick"><input type="checkbox" data-pgen="${p.id}" ${p.is_general?"checked":""}> <span><b>Ảnh tổng hợp nhà máy</b>: mọi bài đăng chỉ lấy ảnh ngẫu nhiên trong mục này</span></label>
    ${folderBox(p)}${gen&&!p.is_general?`<span class="small muted">Đang dùng ảnh tổng hợp “${esc(gen.name)}” khi đăng, ảnh của sản phẩm này tạm không dùng.</span>`:""}
    ${JSON.parse(p.images||"[]").length?`<div><span class="small muted">Ảnh tải lên (chỉ dùng khi chưa có thư mục ảnh)</span><div class="thumbs" style="margin-top:4px">${JSON.parse(p.images||"[]").map(src=>`<figure><img src="${src.startsWith("data:")?src:"/"+esc(src)}" alt="Ảnh ${esc(p.name)}"><button type="button" data-delimg="${esc(src)}" data-p="${p.id}" aria-label="Xóa ảnh">×</button></figure>`).join("")}</div></div>`:""}
@@ -71,8 +72,8 @@ $("#prodGrid").addEventListener("click",async e=>{ const fs=e.target.closest("[d
   const d=e.target.closest("[data-delimg]"); if(d){ await api(`/products/${d.dataset.p}/images?path=${encodeURIComponent(d.dataset.delimg)}`,"DELETE"); return loadProducts(); }
   const b=e.target.closest("[data-pr]"); if(!b) return; if(b.dataset.confirm!=="1"){ b.dataset.confirm="1"; b.textContent="Bấm lần nữa để xóa"; return; } const r=await api(`/products/${b.dataset.pr}`,"DELETE"); toast(r.drafts_removed?`Đã xóa sản phẩm và ${r.drafts_removed} bài nháp/chờ đăng của nó`:"Đã xóa sản phẩm"); loadProducts(); });
 $("#prodGrid").addEventListener("submit",async e=>{ const f=e.target.closest("[data-pedit]"); if(!f) return; e.preventDefault(); const id=+f.dataset.pedit;
-  try{ await api(`/products/${id}`,"PATCH",{name:$(`#en-${id}`).value,category:$(`#ec-${id}`).value,moq:$(`#em-${id}`).value,description:$(`#ed-${id}`).value,selling_points:$(`#es-${id}`).value,hot:$(`#eh-${id}`).checked,hot_note:$(`#eo-${id}`).value});
+  try{ await api(`/products/${id}`,"PATCH",{name:$(`#en-${id}`).value,category:$(`#ec-${id}`).value,moq:$(`#em-${id}`).value,description:$(`#ed-${id}`).value,selling_points:$(`#es-${id}`).value,uses:$(`#eu-${id}`).value,hot:$(`#eh-${id}`).checked,hot_note:$(`#eo-${id}`).value});
     ST.editProd=null; toast("Đã lưu sản phẩm. Các agent dùng thông tin mới từ việc tiếp theo."); }catch(err){ toast(err.message); }
   loadProducts(); });
-$("#prodForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/products","POST",{name:$("#pName").value,category:$("#pCat").value,description:$("#pDesc").value,moq:$("#pMoq").value,selling_points:$("#pSell").value,image_folder:$("#pFolder").value,hot:$("#pHot").checked,hot_note:$("#pHotNote").value,is_general:$("#pGen").checked}); e.target.reset(); toast("Đã thêm sản phẩm. Lan và Hà dùng sản phẩm này từ việc tiếp theo."); }catch(err){ toast(err.message); } loadProducts(); });
+$("#prodForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ await api("/products","POST",{name:$("#pName").value,category:$("#pCat").value,description:$("#pDesc").value,moq:$("#pMoq").value,selling_points:$("#pSell").value,uses:$("#pUses").value,image_folder:$("#pFolder").value,hot:$("#pHot").checked,hot_note:$("#pHotNote").value,is_general:$("#pGen").checked}); e.target.reset(); toast("Đã thêm sản phẩm. Lan và Hà dùng sản phẩm này từ việc tiếp theo."); }catch(err){ toast(err.message); } loadProducts(); });
 

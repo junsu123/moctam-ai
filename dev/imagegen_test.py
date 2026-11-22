@@ -124,4 +124,37 @@ chk("gửi ảnh qua Telegram kèm chú thích “ảnh 3D <tên>”: lưu đún
 chk("ảnh không có chú thích 3D thì xử lý như ảnh bài bình thường", N.on_photo_3d({"caption": "", "photo": [{"file_id": "p"}]}, Bot) is None)
 r = c.delete(f"/api/products/{prods[0]['id']}/images3d", params={"path": json.loads(db.one("SELECT images3d FROM products WHERE id=?", (prods[0]["id"],))["images3d"])[0]}).json()
 chk("xóa ảnh 3D", len(r["images3d"]) == 1)
+# ---- công dụng sản phẩm: Nhi tự chọn sản phẩm cho nội dung
+from llm import llm
+c.put("/api/nhi-images", json={"on": True}); N.handle_text("ghép ảnh 3D tự chọn")
+pa, pb = prods[0], prods[1]
+r = c.patch(f"/api/products/{pb['id']}", json={"uses": "uống ấm bụng ngày lạnh, dễ ngủ hơn buổi tối"}).json()
+chk("lưu công dụng sản phẩm", db.one("SELECT uses FROM products WHERE id=?", (pb["id"],))["uses"].startswith("uống ấm bụng"))
+asks = []
+orig = llm.json
+def fake(system, prompt, mock=None, **kw):
+    asks.append(prompt)
+    if "FANPAGE" in prompt:
+        return {"content": f"Trời trở lạnh, một tách {pb['name']} giúp ấm bụng, tối dễ ngủ hơn. Nhà bạn hay uống gì ngày lạnh?",
+                "hashtags": "#tra", "product": pb["name"], "image_scene": "cozy winter window table with steaming cup, warm lamp light"}
+    if "Trang Facebook" in prompt:
+        return {"content": "Ngày lạnh nấu gì cho ấm? Bát canh gừng nóng, thêm tách trà ấm là đủ ấm cả nhà. Bạn thích món gì ngày lạnh?",
+                "hashtags": "#ngaylanh", "image_prompt": "warm ginger soup on a winter kitchen table, cozy light", "image_note": "ấm cúng",
+                "product": pb["name"]}
+    return mock() if mock else {}
+llm.json = fake
+w = G.write(gp, topic="knowledge")
+q = db.one("SELECT * FROM posts WHERE id=?", (w["id"],))
+chk("bài nuôi Trang: đề bài có danh sách sản phẩm + công dụng; Nhi chọn sản phẩm hợp nội dung, lưu cảnh ảnh",
+    "công dụng: uống ấm bụng" in asks[-1] and q["product_id"] == pb["id"] and q["image_scene"].startswith("cozy winter"), (q["product_id"], q["image_scene"]))
+chk("ảnh ghép dùng cảnh Nhi nghĩ theo nội dung", (q["image_src"] or "").startswith("p3d") and "cozy winter" in net["prompts"][-1],
+    (q["image_src"], net["prompts"][-1][:60]))
+db.set_setting("trend_review", "0")
+tw = T.write_post(db.one("SELECT * FROM fb_pages WHERE id=?", (pg,)), when)
+tq = db.one("SELECT * FROM posts WHERE id=?", (tw["id"],))
+chk("bài Trang xu hướng hợp công dụng: Nhi gắn sản phẩm và tự ghép ảnh 3D vào cảnh của bài, xếp đăng",
+    tq["product_id"] == pb["id"] and tq["status"] == "scheduled" and (tq["image_src"] or "").startswith("p3d"), (tq["product_id"], tq["status"], tq["image_src"]))
+llm.json = orig
+chk("không có Claude: Nhi chọn theo chữ trùng tên / công dụng", (IG.match_product(f"Mùa lạnh uống {pb['name']} cho ấm") or {}).get("id") == pb["id"]
+    and IG.match_product("Cách chọn giày chạy bộ") is None)
 print(f"XONG {sum(ok)}/{len(ok)}" if all(ok) else f"CÓ LỖI {sum(ok)}/{len(ok)}")

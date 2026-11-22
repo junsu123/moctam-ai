@@ -7,6 +7,7 @@ class Product(BaseModel):
     retail_price: str = ""
     moq: str = ""
     selling_points: str = ""
+    uses: str = ""  # công dụng: Nhi dựa vào đây để chọn sản phẩm cho bài, viết và tạo ảnh
     image_folder: str = ""
     hot: bool = False
     hot_note: str = ""
@@ -21,6 +22,7 @@ class ProductPatch(BaseModel):
     retail_price: str | None = None
     moq: str | None = None
     selling_points: str | None = None
+    uses: str | None = None
     image_folder: str | None = None
     hot: bool | None = None
     hot_note: str | None = None
@@ -57,8 +59,8 @@ def add_product(p: Product):
     if db.one("SELECT id FROM products WHERE lower(name)=lower(?)", (p.name.strip(),)):
         raise HTTPException(400, "Đã có sản phẩm cùng tên. Sửa sản phẩm đó thay vì thêm mới")
     pid = db.run("""INSERT INTO products(name, category, description, wholesale_price, retail_price, moq,
-                    selling_points, image_folder, hot_note, created_at) VALUES (?,?,?,'','',?,?,?,?,?)""",
-                 (p.name.strip(), p.category, p.description, p.moq, p.selling_points,
+                    selling_points, uses, image_folder, hot_note, created_at) VALUES (?,?,?,'','',?,?,?,?,?,?)""",
+                 (p.name.strip(), p.category, p.description, p.moq, p.selling_points, p.uses.strip(),
                   p.image_folder.strip().strip('"'), p.hot_note.strip(), db.now()))
     db.log("minh", "Thêm sản phẩm", f"{p.name.strip()}: Lan có thể viết bài, Hà tư vấn sản phẩm này từ giờ")
     if p.hot:

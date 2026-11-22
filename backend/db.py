@@ -408,7 +408,7 @@ MIGRATIONS = [
     ("sales", "hired_by", "TEXT"), ("sales", "hire_reason", "TEXT"), ("sales", "ceo_reminded_at", "TEXT"),
     ("sales", "ceo_handled", "INTEGER"), ("sales", "fire_review", "TEXT"),
     ("posts", "sale_id", "INTEGER"), ("posts", "error", "TEXT"), ("posts", "screenshot", "TEXT"),
-    ("groups", "member_sale_ids", "TEXT DEFAULT ''"), ("products", "images", "TEXT DEFAULT '[]'"), ("products", "images3d", "TEXT DEFAULT '[]'"),
+    ("groups", "member_sale_ids", "TEXT DEFAULT ''"), ("products", "images", "TEXT DEFAULT '[]'"), ("products", "images3d", "TEXT DEFAULT '[]'"), ("products", "uses", "TEXT DEFAULT ''"), ("posts", "image_scene", "TEXT"),
     ("posts", "permalink_status", "TEXT"), ("posts", "bump_enabled", "INTEGER DEFAULT 1"),
     ("posts", "bump_count", "INTEGER DEFAULT 0"), ("posts", "last_bump_at", "TEXT"),
     ("bumps", "comments_before", "INTEGER"), ("bumps", "leads_before", "INTEGER"), ("bumps", "gain_comments", "INTEGER"),

@@ -308,6 +308,13 @@ Cài một lần: Cloudflare (dash.cloudflare.com → AI → Workers AI → Use 
 (đăng ký, mở pixabay.com/api/docs, chép key). Dán vào thẻ rồi bấm **Kiểm tra**, hoặc nhắn bot của Nhi `cloudflare <Account ID> <Token>`,
 `pixabay <key>` (Nhi lưu rồi tự xóa tin chứa khóa). Khóa không hiện lại trên giao diện. Nhắn “tắt / bật tự làm ảnh” để tắt / bật.
 
+**Công dụng sản phẩm, Nhi tự chọn sản phẩm cho bài**: mỗi sản phẩm có ô **Công dụng** (thêm mới / Sửa thông tin ở trang Sản phẩm; ghi đúng
+sự thật, không ghi chữa bệnh). Khi viết, Nhi xem danh sách sản phẩm kèm công dụng và **tự chọn sản phẩm hợp nội dung**: bài nuôi Trang chọn
+sản phẩm hợp nhất (bài giới thiệu sản phẩm bắt buộc chọn, bài khác không cần thì thôi); bài Trang xu hướng chỉ nhắc nhẹ khi chủ đề thật sự
+hợp công dụng và hợp ngành nghề của Trang. Nhi viết đúng công dụng đã ghi (không thêm, không hứa như thuốc; Luật Facebook vẫn kiểm), tự
+nghĩ cảnh ảnh theo nội dung, và nếu sản phẩm có ảnh 3D thì ghép ảnh 3D vào cảnh đó (cả bài Trang xu hướng). Chưa có Claude thì Nhi chọn theo
+chữ trùng giữa bài và tên / công dụng sản phẩm.
+
 **Ảnh 3D sản phẩm**: mỗi thẻ ở trang **Sản phẩm** có mục **Ảnh 3D sản phẩm** (tải nhiều ảnh, xóa được; PNG nền trong suốt là đẹp
 nhất, ảnh nền trắng / đồng màu Nhi tự xóa nền). Hoặc gửi bot Telegram ảnh kèm chú thích “ảnh 3D Trà gừng” (gửi dạng tệp để giữ nền trong
 suốt). Bài nuôi Trang có sản phẩm đã có ảnh 3D: Nhi tự ghép ảnh cho bài, gửi Telegram cho sếp xem:
