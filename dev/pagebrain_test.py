@@ -35,7 +35,8 @@ chk("tin nóng giao đúng Trang hợp nhất (canh chua → Bếp, mèo con →
 n0 = len(sent)
 when = (db.clock() + timedelta(hours=2)).strftime("%Y-%m-%d %H:%M")
 p1 = T.write_post(pb, when)
-chk("bật duyệt: bài chờ sếp duyệt, chưa xin ảnh Telegram, lưu từ khóa và bản nháp", p1["status"] == "page_review" and len(sent) == n0
+chk("bật duyệt: bài chờ sếp duyệt, gửi Telegram tin duyệt (chưa xin ảnh), lưu từ khóa và bản nháp", p1["status"] == "page_review" and len(sent) == n0 + 1
+    and "Bài chờ duyệt" in sent[-1] and "Cần ảnh" not in sent[-1]
     and p1["page_kw"] == "canh chua" and p1["nhi_draft"] == p1["content"], p1["status"])
 p2 = T.write_post(db.one("SELECT * FROM fb_pages WHERE id=?", (bep,)), when)
 chk("tin nóng đã dùng không giao lại; tin có chủ đề sếp tránh bị bỏ; bài sau viết theo từ khóa", p2["trend_kind"] == "evergreen"
@@ -46,7 +47,7 @@ d = c.get("/api/nhi-pages").json()
 chk("màn Các Trang của Nhi: 2 Trang, hàng chờ duyệt 2 bài, thống kê từ khóa", len(d["pages"]) == 2 and len(d["queue"]) == 2 and d["review"]
     and next(p for p in d["pages"] if p["id"] == bep)["kw"][0]["kw"] == "món chay")
 a = c.post(f"/api/nhi-pages/posts/{p1['id']}/review", json={"action": "approve"}).json()
-chk("duyệt ngay: bài chờ ảnh, gửi prompt ảnh lên Telegram", a["status"] == "need_image" and a["review_result"] == "ok" and len(sent) == n0 + 1)
+chk("duyệt ngay: bài chờ ảnh, gửi prompt ảnh lên Telegram", a["status"] == "need_image" and a["review_result"] == "ok" and "Cần ảnh" in sent[-1])
 short = "Canh chua cá lóc kiểu miền Tây, mình nấu 15 phút là xong. Nhà bạn hay nấu với cá gì?"
 B.review(p2["id"], "approve", short, wait=True)
 mem = B.memory(bep)

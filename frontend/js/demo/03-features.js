@@ -6,12 +6,12 @@
           {id:951,page_id:1,page_kw:null,trend_kind:"trend",trend_topic:"món ngon cuối tuần",scheduled_for:`${td} 21:00`,content:"🍲 Cuối tuần này nấu gì? 3 món cả nhà mê mà không tốn công\n\n1. Canh chua cá lóc\n2. Thịt kho trứng\n3. Rau muống xào tỏi\n\nBạn chọn món nào? Bình luận để mình gửi cách làm nhé!"}]};
       S.tr.pages.forEach(p=>{ if(p.id===1&&p.keywords==null) Object.assign(p,{keywords:"món chay, canh chua, mẹo nấu cơm, món ngon cuối tuần",avoid:"rượu bia",boss_note:"Giọng thân mật, xưng mình"}); }); }
     const N=S.np, smart=h=>{ const n=h.ok+h.edit+h.reject; return {n,ok:h.ok,edit:h.edit,reject:h.reject,pct:n?Math.round(100*h.ok/n):0,need:20,suggest_off:n>=20&&h.ok/n>=0.85}; }; let m;
-    if(P==="/nhi-pages"&&method==="GET") return {review:N.review,smart:smart(N.hist),reasons:["Sai chủ đề của Trang","Không đúng từ khóa","Giọng văn chưa hợp","Quá dài","Quá ngắn","Thông tin chưa đúng / bịa","Trùng bài cũ","Khác"],
+    if(P==="/nhi-pages"&&method==="GET") return {review:N.review,noimg:N.noimg!==false,auto_kw:N.auto_kw!==false,smart:smart(N.hist),reasons:["Sai chủ đề của Trang","Không đúng từ khóa","Giọng văn chưa hợp","Quá dài","Quá ngắn","Thông tin chưa đúng / bịa","Trùng bài cũ","Khác"],
       queue:N.queue.map(q=>({...q,page_name:pn(q.page_id)})),
       pages:S.tr.pages.filter(p=>["active","paused","creating"].includes(p.status)).map(p=>({...p,admin_name:p.admin_name||"Linh 1",posts_per_day:p.posts_per_day||2,times:p.times||"09:00,19:30",
         kw:(p.keywords||"").split(",").map(x=>x.trim()).filter(Boolean).map((k,i)=>({kw:k,n:[5,3,2,1][i]||0,ok:[4,2,1,0][i]||0,bad:i===1?1:0,eng:[42,30,18,9][i]||0,last:""})),
         memory:N.mem.filter(x=>x.page_id===p.id).slice().reverse(),smart:smart(N.hist),today:N.queue.filter(q=>q.page_id===p.id).map(q=>({...q,status:"page_review"}))}))};
-    if(P==="/nhi-pages/settings"){ N.review=!!body.review; return {ok:true}; }
+    if(P==="/nhi-pages/settings"){ if("review" in body) N.review=!!body.review; ["noimg","auto_kw"].forEach(k=>{ if(k in body) N[k]=!!body[k]; }); return {ok:true}; }
     if(P==="/nhi-pages/approve-all"){ const n=N.queue.length; N.hist.ok+=n; N.queue=[]; return {approved:n}; }
     if((m=P.match(/^\/nhi-pages\/posts\/(\d+)\/review$/))){ const q=N.queue.find(x=>x.id==m[1]); if(!q) throw new Error("Bài này không còn chờ duyệt"); N.queue=N.queue.filter(x=>x!==q);
       if(body.action==="reject"){ N.hist.reject++; N.mem.push({id:++N.seq,page_id:q.page_id,kind:"reject",text:body.reason}); return {status:"rejected"}; }

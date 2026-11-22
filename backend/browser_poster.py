@@ -862,7 +862,7 @@ def _do_post(ctx, page, aid: int, post_id: int, dry_run: bool):
         else:
             url, labels = f"{FB_BASE}/me", selectors()["profile_composer"]
         imgs, warn = media_folder.pick_for_post(post, acc["sale_id"])
-        if not imgs and media_folder.required():
+        if not imgs and media_folder.required() and not post.get("text_only"):
             raise NoImage(media_folder.missing(post) or "Bài chưa chọn được ảnh nên không đăng (sếp quy định bài phải có ảnh)")
         if warn:
             db.log("tuan", "Thiếu ảnh mới", f"Bài #{post_id}: {warn}")

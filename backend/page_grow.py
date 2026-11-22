@@ -209,6 +209,9 @@ def write(pg=None, topic: str | None = None, when: str | None = None) -> dict:
                  (writer, p["id"] if p else None, f"Nuôi Trang: {TOPICS[topic][0]}", f"{pg['name']} · {TOPICS[topic][0]}"[:120],
                   text, (data or {}).get("hashtags") or "", "page_review" if review else "scheduled", sched, topic, adm.get("id"), adm.get("sale_id"),
                   pg["id"], kw, text, db.now()))
+    if review:
+        import nhi_tg
+        nhi_tg.send_review(pid)
     db.log(writer, "Viết bài nuôi Trang", f"{pg['name']} · bài #{pid} ({TOPICS[topic][0]})" + (" chờ sếp duyệt" if review else f", đăng lúc {sched[11:16]} {sched[8:10]}/{sched[5:7]}"))
     return db.one("SELECT * FROM posts WHERE id=?", (pid,))
 
@@ -238,10 +241,12 @@ def plan_today(force: bool = False) -> int:
     if not force and st.get("page_grow_planned") == db.today():
         return 0
     db.set_setting("page_grow_planned", db.today())
+    import nhi_tg
     today, now, n = db.today(), db.clock().strftime("%H:%M"), 0
     for pg in pages(True):
         if ready(pg):
             continue
+        pg = nhi_tg.auto_keywords(pg)
         per_day = max(1, min(3, int(pg.get("posts_per_day") or 1)))
         have = db.one("""SELECT COUNT(*) n FROM posts WHERE fb_page_ref=? AND status != 'rejected' AND substr(scheduled_for,1,10)=?""", (pg["id"], today))["n"]
         for t in [t for t in slots(pg)[:per_day] if t > now][:max(0, per_day - have)]:
@@ -249,7 +254,10 @@ def plan_today(force: bool = False) -> int:
             n += 1
     if n:
         import page_brain
-        db.log("nhi", "Lên lịch nuôi Trang", f"Viết {n} bài cho các Trang" + (", chờ sếp duyệt ở mục Các Trang của Nhi" if page_brain.review_on() else ""))
+        db.log("nhi", "Lên lịch nuôi Trang", f"Viết {n} bài cho các Trang" + (", chờ sếp duyệt" if page_brain.review_on() else ""))
+        if page_brain.review_on():
+            nhi_tg.batch_notice(n)
+            nhi_tg.maybe_ask_off()
     return n
 
 

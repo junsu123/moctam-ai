@@ -18,9 +18,10 @@ from telegram_bot import API, TOKEN_RX, e, mask_token, verify_token  # noqa: F40
 _state = {"started": False, "bot": None, "error": None}
 _buf: list[str] = []
 _lock = threading.Lock()
-HELP = ("Bot này chỉ lo phần <b>Trang xu hướng</b> của Nhi:\n"
-        "• Nhi gửi prompt tạo ảnh cho từng bài. Tạo ảnh xong, <b>trả lời (reply) đúng tin đó bằng ảnh</b>, Nhi tự gắn ảnh và xếp đăng.\n"
-        "• /anh: bài đang chờ ảnh (gửi lại prompt)\n• /trang: các Trang đang chạy\n• /xuhuong: chủ đề nóng hôm nay\n• /baocao: việc hôm nay")
+HELP = ("Bot riêng của <b>Nhi</b> (mọi Trang Facebook): sếp điều khiển Nhi hoàn toàn ở đây.\n"
+        "• Bài chờ duyệt: bấm ✅ Duyệt / ❌ Loại, hoặc trả lời tin bài bằng bản sửa.\n"
+        "• Ảnh: trả lời (reply) tin xin ảnh bằng ảnh. Không kịp thì tới giờ Nhi đăng chữ.\n"
+        "• /anh: bài chờ ảnh · /trang: các Trang · /xuhuong: chủ đề nóng · /baocao: việc hôm nay\n\n")
 
 
 def token() -> str:
@@ -51,11 +52,14 @@ def file_bytes(file_id: str) -> bytes:
     return httpx.get(f"{API}/file/bot{token()}/{info['file_path']}", timeout=60).content
 
 
-def send(text: str, chat_ids=None) -> list:
+def send(text: str, chat_ids=None, buttons=None) -> list:
     out = []
     for c in chat_ids or chats():
         try:
-            out.append(call("sendMessage", chat_id=c, text=text[:4000], parse_mode="HTML", disable_web_page_preview=True))
+            params = {"chat_id": c, "text": text[:4000], "parse_mode": "HTML", "disable_web_page_preview": True}
+            if buttons:
+                params["reply_markup"] = {"inline_keyboard": buttons}
+            out.append(call("sendMessage", **params))
         except Exception as ex:
             _state["error"] = str(ex)[:200]
             import errors
@@ -170,7 +174,8 @@ def handle_message(msg: dict):
             db.set_setting("tg2_chat_ids", ",".join(chats() + [chat_id]))
             db.set_setting("tg2_pair_code", "")
             db.log("nhi", "Kết nối bot ảnh", f"Đã ghép nối bot ảnh với {msg.get('from', {}).get('first_name') or chat_id}")
-            _reply(chat_id, "✅ Đã kết nối bot ảnh của Nhi.\n\n" + HELP)
+            import nhi_tg
+            _reply(chat_id, "✅ Đã kết nối bot của Nhi.\n\n" + HELP + nhi_tg.HELP)
         else:
             _reply(chat_id, "Xin chào! Gửi <b>mã ghép nối 6 số</b> hiển thị ở mục Trang xu hướng của phần mềm để kết nối.")
         return
@@ -182,19 +187,29 @@ def handle_message(msg: dict):
             r = f"Chưa lấy được ảnh: {ex}"
         _reply(chat_id, e(r or "Không đọc được ảnh"))
         return
+    import nhi_tg
+    r = nhi_tg.on_reply(msg)
+    if r:
+        _reply(chat_id, r)
+        return
     cmd = text.split()[0].lower().split("@")[0] if text.startswith("/") else ""
+    if text and not cmd:
+        _reply(chat_id, nhi_tg.handle_text(text))
+        return
     if cmd == "/anh":
         _reply(chat_id, waiting_text())
         for r in db.q("SELECT id FROM posts WHERE status='need_image' ORDER BY scheduled_for LIMIT 5"):
             trend_pages.ask_image(r["id"])
-    elif cmd in ("/baocao", "/trang"):
+    elif cmd == "/trang":
+        _reply(chat_id, nhi_tg.report())
+    elif cmd == "/baocao":
         _reply(chat_id, report_text())
     elif cmd == "/xuhuong":
         hot = db.q("SELECT title, score, niche FROM trend_hot WHERE day=(SELECT MAX(day) FROM trend_hot) ORDER BY score DESC LIMIT 10")
         _reply(chat_id, ("🔥 <b>Chủ đề Nhi chọn</b>\n" + "\n".join(f"• {e(h['title'])} ({h['score']}) · {e(h['niche'] or '')}" for h in hot))
                if hot else "Nhi chưa đọc xu hướng hôm nay.")
     else:
-        _reply(chat_id, HELP)
+        _reply(chat_id, HELP + nhi_tg.HELP)
 
 
 def tick(now):
@@ -213,7 +228,7 @@ def _poll():
             continue
         offset = int(db.get_settings().get("tg2_offset") or 0)
         try:
-            ups = httpx.post(f"{API}/bot{t}/getUpdates", json={"offset": offset, "timeout": 25, "allowed_updates": ["message"]}, timeout=40).json()
+            ups = httpx.post(f"{API}/bot{t}/getUpdates", json={"offset": offset, "timeout": 25, "allowed_updates": ["message", "callback_query"]}, timeout=40).json()
             if not ups.get("ok"):
                 _state["error"] = ups.get("description")
                 time.sleep(10)
@@ -221,6 +236,15 @@ def _poll():
             _state["error"] = None
             for u in ups["result"]:
                 db.set_setting("tg2_offset", str(u["update_id"] + 1))
+                if "callback_query" in u:
+                    try:
+                        cb = u["callback_query"]
+                        if str(cb.get("message", {}).get("chat", {}).get("id")) in chats():
+                            import nhi_tg
+                            nhi_tg.on_callback(cb, call)
+                    except Exception as ex:
+                        import errors
+                        errors.report_exc("telegram", "Bot của Nhi xử lý nút bấm bị lỗi", ex, screen="nhipages")
                 if "message" in u:
                     try:
                         handle_message(u["message"])

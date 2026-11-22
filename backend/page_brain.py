@@ -279,4 +279,6 @@ def overview() -> dict:
         p["today"] = [t for t in today if t["pid"] == p["id"]]
     queue = db.q("""SELECT p.id, p.content, p.scheduled_for, COALESCE(p.trend_topic, p.angle) trend_topic, p.trend_kind, p.page_kw, p.source, p.created_at, p.agent_id, f.name page_name, f.niche
                     FROM posts p JOIN fb_pages f ON f.id=p.fb_page_ref WHERE p.status='page_review' ORDER BY p.scheduled_for""")
-    return {"pages": pages, "queue": queue, "smart": smartness(), "review": review_on(), "reasons": REASONS}
+    s = _s()
+    return {"pages": pages, "queue": queue, "smart": smartness(), "review": review_on(), "reasons": REASONS,
+            "noimg": s.get("trend_noimg_post", "1") == "1", "auto_kw": s.get("nhi_auto_kw", "1") == "1"}

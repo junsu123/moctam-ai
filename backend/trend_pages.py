@@ -233,7 +233,10 @@ JSON: {{"content": "...", "hashtags": "...", "image_prompt": "...", "image_note"
                     VALUES (?, 'page', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'trend_page', ?, ?, ?)""",
                  (writer, f"{pg['name']} · {topic}"[:120], text, d.get("hashtags") or "", "page_review" if review else "need_image", when, acc.get("id"), acc.get("sale_id"), pg["id"], topic, kind,
                   (d.get("image_prompt") or _mock_post(pg, topic)["image_prompt"])[:900], (d.get("image_note") or "")[:300], db.now(), ch["kw"], text))
-    if not review:
+    if review:
+        import nhi_tg
+        nhi_tg.send_review(pid)
+    else:
         ask_image(pid)
     return db.one("SELECT * FROM posts WHERE id=?", (pid,))
 
@@ -262,7 +265,8 @@ def ask_image(post_id: int) -> bool:
     msg = (f"🖼 <b>Cần ảnh cho bài #{p['id']}</b> · Trang <b>{e(p['page_name'])}</b> · đăng lúc {(p['scheduled_for'] or '')[11:16]} {(p['scheduled_for'] or '')[8:10]}/{(p['scheduled_for'] or '')[5:7]}\n"
            f"{e((p['content'] or '')[:300])}\n\n<b>Prompt tạo ảnh</b> (chạm để chép):\n<code>{e(p['image_prompt'])}</code>\n"
            + (f"Gợi ý: {e(p['image_note'])}\n" if p.get("image_note") else "")
-           + f"\n👉 Tạo ảnh xong, <b>trả lời (reply) tin này bằng ảnh</b>. Nhi tự lấy ảnh và xếp đăng.")
+           + f"\n👉 Tạo ảnh xong, <b>trả lời (reply) tin này bằng ảnh</b>. Nhi tự lấy ảnh và xếp đăng."
+           + ("\nKhông kịp gửi ảnh thì tới giờ Nhi đăng bài chỉ có chữ." if _s().get("trend_noimg_post", "1") == "1" else ""))
     res = _tg(msg)
     ids = ",".join(str(r.get("message_id")) for r in res if isinstance(r, dict) and r.get("message_id"))
     if ids:
@@ -339,15 +343,18 @@ def plan_today(force: bool = False) -> int:
     import page_brain
     page_brain.cleanup()
     now, n = db.clock().strftime("%H:%M"), 0
+    import nhi_tg
     for pg in db.q("SELECT * FROM fb_pages WHERE status='active' AND admin_account_id IS NOT NULL AND COALESCE(kind,'trend')='trend'"):
+        pg = nhi_tg.auto_keywords(pg)
         have = db.one("SELECT COUNT(*) n FROM posts WHERE fb_page_ref=? AND substr(scheduled_for,1,10)=?", (pg["id"], db.today()))["n"]
         slots = [t for t in (pg["times"] or "09:00,19:30").split(",")[:pg["posts_per_day"] or 1] if t > now]
         for t in slots[:max(0, (pg["posts_per_day"] or 1) - have)]:
             write_post(pg, f"{db.today()} {t}")
             n += 1
     if n and page_brain.review_on():
-        db.log("nhi", "Lên lịch bài Trang xu hướng", f"Viết {n} bài, chờ sếp duyệt ở mục Các Trang của Nhi")
-        _tg(f"📝 Nhi viết {n} bài cho các Trang, chờ sếp duyệt trong phần mềm (mục <b>Các Trang của Nhi</b>). Duyệt xong Nhi gửi prompt ảnh.")
+        db.log("nhi", "Lên lịch bài Trang xu hướng", f"Viết {n} bài, chờ sếp duyệt (Telegram hoặc mục Các Trang của Nhi)")
+        nhi_tg.batch_notice(n)
+        nhi_tg.maybe_ask_off()
     elif n:
         db.log("nhi", "Lên lịch bài Trang xu hướng", f"Viết {n} bài, đã gửi prompt ảnh lên Telegram")
     return n
@@ -420,6 +427,8 @@ def tick(now):
     st = _s()
     if st.get("trend_on", "1") != "1":
         return
+    import nhi_tg
+    nhi_tg.noimg_due()
     hm = now.strftime("%H:%M")
     import threading
     if hm >= (st.get("trend_time") or "07:40") and st.get("trend_research_day") != db.today() and st.get("trend_running") != db.today():

@@ -417,7 +417,7 @@ MIGRATIONS = [
     ("posts", "image_path", "TEXT"), ("posts", "img_req_msg", "TEXT"), ("posts", "img_req_at", "TEXT"),
     ("posts", "page_topic", "TEXT"), ("posts", "reactions", "INTEGER DEFAULT 0"), ("posts", "shares", "INTEGER DEFAULT 0"), ("posts", "trend_kind", "TEXT"), ("fb_pages", "create_tries", "INTEGER DEFAULT 0"), ("fb_pages", "create_error", "TEXT"), ("fb_pages", "create_at", "TEXT"), ("fb_pages", "auto_created_at", "TEXT"), ("fb_pages", "requested_name", "TEXT"), ("fb_pages", "alt_names", "TEXT"), ("fb_pages", "name_note", "TEXT"),
     ("fb_pages", "kind", "TEXT DEFAULT 'trend'"), ("fb_pages", "keywords", "TEXT"), ("fb_pages", "avoid", "TEXT"), ("fb_pages", "boss_note", "TEXT"),
-    ("posts", "page_kw", "TEXT"), ("posts", "nhi_draft", "TEXT"), ("posts", "review_result", "TEXT"), ("posts", "reviewed_at", "TEXT"),
+    ("posts", "review_msg", "TEXT"), ("posts", "text_only", "INTEGER"), ("posts", "page_kw", "TEXT"), ("posts", "nhi_draft", "TEXT"), ("posts", "review_result", "TEXT"), ("posts", "reviewed_at", "TEXT"),
     ("fb_pages", "avatar_path", "TEXT"), ("fb_pages", "cover_path", "TEXT"), ("fb_pages", "avatar_done", "INTEGER DEFAULT 0"), ("fb_pages", "cover_done", "INTEGER DEFAULT 0"),
     ("fb_pages", "avatar_msg", "TEXT"), ("fb_pages", "cover_msg", "TEXT"), ("fb_pages", "img_tries", "INTEGER DEFAULT 0"), ("fb_pages", "img_error", "TEXT"),
     ("bumps", "removed", "INTEGER DEFAULT 0"), ("groups", "no_bump_until", "TEXT"), ("posts", "bump_reset_at", "TEXT"),
@@ -480,6 +480,8 @@ DEFAULT_SETTINGS = {
     "bump_check": "1",  # 6 giờ sau nick mở lại bài xem bình luận còn không; nhóm xóa thì ngừng bình luận nhóm đó
     "bump_rest_days": "30",
     "trend_on": "1", "trend_time": "07:40",
+    "trend_noimg_post": "1",  # tới giờ đăng mà sếp chưa gửi ảnh: Nhi đăng bài Trang chỉ có chữ (0 = chờ ảnh, quá 24 giờ thì bỏ)
+    "nhi_auto_kw": "1",  # Trang chưa có từ khóa: Nhi tự đặt từ khóa rồi báo sếp
     "trend_review": "1",  # sếp duyệt bài Trang của Nhi trước khi xin ảnh / đăng (tắt khi Nhi đã hiểu ý sếp)
     "trend_learn_min": "8",
     "dept_on": "1", "dept_review_weekday": "1", "dept_review_time": "08:40",  # trưởng phòng tự đánh giá phòng mỗi tuần (departments.py)

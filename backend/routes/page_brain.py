@@ -7,6 +7,11 @@ def nhi_pages_get():
 
 @app.put("/api/nhi-pages/settings")
 def nhi_pages_settings(data: dict):
+    for k, key in (("noimg", "trend_noimg_post"), ("auto_kw", "nhi_auto_kw")):
+        if k in data:
+            db.set_setting(key, "1" if data[k] else "0")
+    if "review" not in data:
+        return {"ok": True}
     db.set_setting("trend_review", "1" if data.get("review") else "0")
     db.log("nhi", "Sếp đổi cách duyệt bài Trang", "Sếp duyệt từng bài trước khi đăng" if data.get("review") else "Nhi tự đăng, không chờ sếp duyệt")
     return {"ok": True}

@@ -39,7 +39,7 @@ backend/                 Python (FastAPI + SQLite)
   ceo_orders.py          CEO hiểu lệnh sếp: mẫu câu (_rule_plan), việc được làm (ACTIONS_DOC), thực hiện (execute)
   telegram_bot.py        Bot Telegram chính (báo cáo, khách, CEO)
   telegram_img.py        Bot Telegram riêng cho ảnh + việc của Nhi
-  <tính năng>.py         Mỗi tính năng một file: post_care (up bài), comments, bump_watch, page_grow, trend_pages (Nhi tự học: trend_learn, tự tạo Trang: trend_create, từ khóa / duyệt bài / ghi nhớ theo sếp: page_brain),
+  <tính năng>.py         Mỗi tính năng một file: post_care (up bài), comments, bump_watch, page_grow, trend_pages (Nhi tự học: trend_learn, tự tạo Trang: trend_create, từ khóa / duyệt bài / ghi nhớ theo sếp: page_brain, điều khiển Nhi qua Telegram: nhi_tg),
                          page_inbox, nick_health, replies, group_feed, friends, prospect, website...
 frontend/                Giao diện (HTML + CSS + JS thuần, không cần build)
   app.html               Khuôn trang: các dòng @@include ghép file con lại

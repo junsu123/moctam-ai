@@ -11,6 +11,7 @@ import html
 import json
 import os
 import random
+import re
 import threading
 import time
 from datetime import datetime, timedelta
@@ -465,6 +466,14 @@ def handle_message(msg: dict):
         if r:
             _reply(chat_id, e(r))
         return
+    import nhi_tg
+    r = nhi_tg.on_reply(msg)
+    if r:
+        _reply(chat_id, r)
+        return
+    if re.match(r"^\s*nhi\b", text, re.I):  # “Nhi ơi …”: lệnh cho Nhi (các Trang Facebook)
+        _reply(chat_id, nhi_tg.handle_text(text))
+        return
     if chat_id in _pending_order and not text.startswith("/"):
         import company
         amount = company.parse_vnd(text)
@@ -599,6 +608,10 @@ def handle_callback(cb: dict):
     import learning
     chat_id = str(cb["message"]["chat"]["id"])
     if chat_id not in chats():
+        return
+    if cb.get("data", "").startswith("nr:"):  # nút duyệt bài Trang của Nhi
+        import nhi_tg
+        nhi_tg.on_callback(cb, call)
         return
     if cb.get("data", "").startswith("q:"):  # sếp chọn 1 lựa chọn khi CEO hỏi lại
         import ceo_orders

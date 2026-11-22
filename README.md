@@ -277,6 +277,22 @@ Mục **Các Trang của Nhi** (thanh bên, dưới Trang xu hướng): danh sá
   từng Trang). Đủ 20 lần duyệt và từ 85% thì trang báo sếp có thể tắt. Bỏ ô **Sếp duyệt bài trước khi đăng** (hoặc nhắn CEO “tắt duyệt
   bài Trang của Nhi”) thì Nhi viết xong xin ảnh ngay như trước; bật lại bất cứ lúc nào.
 
+### Điều khiển Nhi hoàn toàn qua Telegram
+
+Sếp không cần mở phần mềm cho việc của Nhi. Dùng **bot riêng của Nhi** (thẻ Bot Telegram riêng ở mục Trang xu hướng; mọi tin nhắn
+thường là lệnh cho Nhi) hoặc **bot chính** (tin bắt đầu bằng “Nhi”, VD “Nhi ơi các trang”):
+- **Duyệt bài**: mỗi bài Nhi viết gửi lên kèm nút **✅ Duyệt / ❌ Loại** (Loại thì chọn lý do bằng nút). **Trả lời (reply) tin bài bằng bản sửa**
+  là sếp sửa rồi duyệt (Nhi ghi nhớ); trả lời “loại: lý do” để loại. Lên lịch nhiều bài thì có thêm nút **Duyệt tất cả**.
+- **Nhắn lệnh bằng lời**: “các trang”, “bài chờ duyệt”, “duyệt tất cả”, “thêm trang Bếp Nhà Mình https://facebook.com/…” (Nhi tự chọn nick
+  quản trị đang ít Trang nhất, hoặc ghi tên nick trong tin), “Bếp Nhà Mình từ khóa: món chay, canh chua” (“thêm từ khóa” để thêm),
+  “… không viết về: …”, “… ngành nghề: …”, “… 2 bài/ngày lúc 09:00, 19:30”, “tạm dừng / chạy lại …”, “viết bài cho …”, “tạo trang Góc
+  Thú Cưng về nuôi chó mèo”, “… nhớ: luôn xưng mình”, “gợi ý từ khóa …”, “tắt duyệt / bật duyệt”, “luôn chờ ảnh / đăng chữ khi thiếu ảnh”.
+  Có khóa Claude thì Nhi hiểu cả câu nói tự do; chưa có thì theo các mẫu câu trên. Lệnh `/trang` xem danh sách Trang.
+- **Nhi tự lo**: Trang chưa có từ khóa thì Nhi tự đặt (theo tên Trang, ngành nghề, bài được hưởng ứng) rồi báo sếp sửa nếu muốn (chưa có
+  Claude và Trang chưa ghi ngành nghề thì không đoán); Nhi đủ hiểu ý sếp (20 lần duyệt, từ 85% duyệt ngay) thì tự hỏi bằng nút **Nhi tự đăng /
+  Vẫn duyệt** (tối đa 1 lần/tuần); **tới giờ đăng mà sếp chưa gửi ảnh thì Nhi đăng bài chỉ có chữ** (không lấy ảnh sản phẩm khác) và báo lại.
+  Tắt từng việc ở mục Các Trang của Nhi hoặc nhắn Nhi.
+
 ## Nuôi Page (không dùng Graph API)
 
 Mục **Nuôi Page** (thanh bên, dưới Bình luận). **Nhi nuôi nhiều Trang cùng lúc**: bấm **+ Thêm Trang**, điền tên, link Trang, nick
@@ -1497,6 +1513,7 @@ docs/
   departments.py Phòng ban: trưởng phòng tự đánh giá, đề xuất tuyển, CEO xét, nhân viên mới làm việc thật theo vị trí
   trend_create.py Nhi tự tạo Trang: chọn ý tưởng + nick an toàn, tạo trong ca của nick, chuyển về nick cá nhân, báo Telegram
   trend_learn.py Nhi tự học: điểm bài Trang so với mức của Trang, bài học kiểu bài / độ dài / giờ, độ chính xác chọn xu hướng
+  nhi_tg.py      Sếp điều khiển Nhi qua Telegram: nút duyệt / loại, trả lời bằng bản sửa, lệnh bằng lời, Nhi tự đặt từ khóa, đăng chữ khi thiếu ảnh
   page_brain.py  Các Trang của Nhi: từ khóa sếp đặt, chia chủ đề cho các Trang, sếp duyệt / sửa / loại, Nhi ghi nhớ theo sếp
   trend_pages.py Nhi: Google Trends, đề xuất Trang, lịch bài Trang xu hướng, prompt ảnh gửi Telegram, nhận ảnh sếp trả lời
   page_grow.py   Nuôi nhiều Page không API (fb_pages kind='grow'): Nhi viết lịch 80/20 cho từng Trang, nick quản trị chuyển sang Trang đăng bài, đọc tương tác, học chủ đề
