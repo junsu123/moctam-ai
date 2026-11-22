@@ -96,4 +96,28 @@ for i, (kw, rc, cm) in enumerate([("canh chua", 40, 12), ("canh chua", 30, 8), (
               VALUES ('page','x','posted',?,?,'trend_page',?,?,?,1,?)""", (db.now(), pg["id"], kw, rc, cm, db.now()))
 r = say("chủ đề nào được quan tâm nhất")
 chk("hỏi Nhi chủ đề được quan tâm nhất: xếp theo tương tác thật, nói rõ khi ít số liệu", r.index("canh chua") < r.index("món chay") and "chưa đủ để kết luận" in r, r[:160])
+# ---- ngách trọng tâm
+import page_brain as PB2
+from llm import llm
+r = say("trọng tâm")
+chk("xem trọng tâm: 3 ngách mặc định, ngách cấm, Trang ngoài trọng tâm", "ẩm thực" in r and "mẹo vặt" in r and "sống khỏe" in r and "bói toán" in r, r[:200])
+db.run("INSERT INTO trends(day, title, traffic, traffic_n, news, created_at) VALUES (?, 'trời trở lạnh', '20N+', 20000, '[]', ?)", (db.today(), db.now()))
+asks, orig = [], llm.json
+def fake(system, prompt, mock=None, **kw):
+    asks.append(prompt)
+    return {"hot": [{"title": "món canh ấm ngày lạnh", "score": 90, "niche": "ẩm thực", "why": "trời lạnh"},
+                    {"title": "tử vi tuần mới", "score": 85, "niche": "tử vi", "why": "nhiều người tìm"},
+                    {"title": "kết quả bóng đá", "score": 80, "niche": "thể thao", "why": "trận lớn"}],
+            "ideas": [{"name": "Bếp Ấm Ngày Lạnh", "niche": "ẩm thực", "description": "món ăn ấm cho gia đình"},
+                      {"name": "Tử Vi Mỗi Ngày", "niche": "tử vi", "description": "xem tử vi"},
+                      {"name": "Tin Nóng 24h", "niche": "tin tức thời sự", "description": "tin tức"}]}
+llm.json = fake
+T.research(fetch=lambda *a, **k: (_ for _ in ()).throw(RuntimeError("offline")))
+llm.json = orig
+hot = [h["title"] for h in db.q("SELECT title FROM trend_hot WHERE day=?", (db.today(),))]
+ideas = [i["name"] for i in db.q("SELECT name FROM fb_pages WHERE status='idea'")]
+chk("đọc xu hướng: đề bài có trọng tâm; bỏ tử vi / tin tức, ý tưởng Trang chỉ thuộc trọng tâm", "TRỌNG TÂM CỦA SẾP" in asks[-1]
+    and hot == ["món canh ấm ngày lạnh"] and "Bếp Ấm Ngày Lạnh" in ideas and not {"Tử Vi Mỗi Ngày", "Tin Nóng 24h"} & set(ideas), (hot, ideas))
+r = say("Nhi tập trung: ẩm thực | sống khỏe")
+chk("đổi trọng tâm bằng lời", PB2.focus() == ["ẩm thực", "sống khỏe"] and not PB2.in_focus("Mẹo dọn nhà sạch") and PB2.in_focus("Ngủ ngon mùa đông"), PB2.focus())
 print(f"XONG {sum(ok)}/{len(ok)}" if all(ok) else f"CÓ LỖI {sum(ok)}/{len(ok)}")

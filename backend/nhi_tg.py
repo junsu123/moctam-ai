@@ -260,6 +260,7 @@ HELP = ("Sếp nhắn Nhi bằng lời, ví dụ:\n"
         "• <code>Bếp Nhà Mình 2 bài/ngày lúc 09:00, 19:30</code> · <code>tạm dừng Bếp Nhà Mình</code> · <code>chạy lại Bếp Nhà Mình</code>\n"
         "• <code>viết bài cho Bếp Nhà Mình</code> · <code>tạo trang Góc Thú Cưng về nuôi chó mèo</code>\n"
         "• <code>Bếp Nhà Mình nhớ: luôn xưng mình, kết bằng câu hỏi</code> · <code>gợi ý từ khóa Bếp Nhà Mình</code>\n"
+        "• <code>trọng tâm</code> · <code>Nhi tập trung: ẩm thực | mẹo vặt gia đình | sống khỏe</code>\n"
         "• <code>chủ đề nào được quan tâm nhất</code> (thêm tên Trang để xem riêng Trang đó)\n"
         "• <code>tắt duyệt</code> / <code>bật duyệt</code> · <code>luôn chờ ảnh</code> / <code>đăng chữ khi thiếu ảnh</code>\n"
         "• Ảnh 3D sản phẩm: gửi ảnh kèm chú thích <code>ảnh 3D Trà gừng</code> · <code>ghép ảnh 3D chính xác / hòa trộn / tự chọn</code>\n"
@@ -378,6 +379,11 @@ def _rule(text: str) -> list[dict]:
         return [{"type": "img_auto", "on": True}]
     if re.search(r"chu de nao|quan tam nhat|tuong tac (nhat|cao)|hieu qua nhat|chu de hot|chu de (tot|hay) nhat|nguoi xem nhieu", low):
         return [{"type": "top_topics", "page": name or ""}]
+    m = re.match(r"^\s*(?:nhi\s+)?(?:tập trung|trọng tâm|ngách trọng tâm)\s*(?:vào|là)?\s*:\s*(.+)$", t, re.I)
+    if m:
+        return [{"type": "focus", "text": m.group(1)}]
+    if re.search(r"^(nhi )?(trong tam|ngach trong tam|tap trung)( nao| gi)?\??$", low.strip()):
+        return [{"type": "focus"}]
     if re.search(r"^(cac trang|danh sach trang|bao cao|tinh hinh|trang)$", low.strip()):
         return [{"type": "list"}]
     if "cho duyet" in low and "duyet tat ca" not in low:
@@ -453,6 +459,14 @@ def execute(a: dict) -> str:
         return e(a.get("text"))
     if t == "list":
         return report()
+    if t == "focus":
+        import page_brain
+        if (a.get("text") or "").strip():
+            parts = [x.strip(" .") for x in re.split(r"\s*(?:\||;|\n)\s*", a["text"]) if x.strip(" .")]
+            if len(parts) == 1:
+                parts = [x.strip(" .") for x in re.split(r"\s*,\s*|\s+và\s+", a["text"]) if x.strip(" .")]
+            db.set_setting("nhi_focus", " | ".join(parts[:8]))
+        return page_brain.focus_report()
     if t == "top_topics":
         return top_topics(_pg(a.get("page")))
     if t == "img_keys":

@@ -485,7 +485,9 @@ DEFAULT_SETTINGS = {
     "cf_account_id": "", "cf_api_token": "", "pixabay_key": "",
     "trend_noimg_post": "1",  # tới giờ đăng mà sếp chưa gửi ảnh: Nhi đăng bài Trang chỉ có chữ (0 = chờ ảnh, quá 24 giờ thì bỏ)
     "nhi_auto_kw": "1",  # Trang chưa có từ khóa: Nhi tự đặt từ khóa rồi báo sếp
-    "trend_review": "1",  # sếp duyệt bài Trang của Nhi trước khi xin ảnh / đăng (tắt khi Nhi đã hiểu ý sếp)
+    "trend_review": "1",
+    "nhi_focus": "ẩm thực, nấu ăn | mẹo vặt gia đình | lối sống, sống khỏe nhẹ nhàng",  # ngách trọng tâm của Nhi
+    "nhi_avoid_niches": "tin tức thời sự | bói toán, tử vi, phong thủy | cờ bạc, xổ số, cá độ | chính trị, tôn giáo",  # sếp duyệt bài Trang của Nhi trước khi xin ảnh / đăng (tắt khi Nhi đã hiểu ý sếp)
     "trend_learn_min": "8",
     "dept_on": "1", "dept_review_weekday": "1", "dept_review_time": "08:40",  # trưởng phòng tự đánh giá phòng mỗi tuần (departments.py)
     "trend_autocreate": "1", "trend_create_per_week": "1", "trend_create_nick": "", "trend_create_posts": "2", "trend_create_times": "09:00,19:30",  # Nhi tự tạo Trang (trend_create.py)  # Nhi tự học: mỗi kiểu bài / độ dài / khung giờ cần từng này bài Trang mới so sánh

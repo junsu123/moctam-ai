@@ -96,8 +96,13 @@ def pick(pid: int | None = None) -> dict:
     idea = db.one("SELECT * FROM fb_pages WHERE id=? AND status='idea'", (pid,)) if pid else \
         db.one(f"SELECT * FROM fb_pages WHERE status='idea' AND COALESCE(create_tries,0) < {MAX_TRIES} AND COALESCE(reason,'') != 'Sếp thêm' "
                "ORDER BY id DESC LIMIT 1")
+    if not pid and idea:  # Nhi tự tạo: chỉ ý tưởng thuộc ngách trọng tâm sếp chọn
+        import page_brain
+        ideas = db.q(f"SELECT * FROM fb_pages WHERE status='idea' AND COALESCE(create_tries,0) < {MAX_TRIES} AND COALESCE(reason,'') != 'Sếp thêm' ORDER BY id DESC")
+        idea = next((i for i in ideas if page_brain.in_focus(f"{i['name']} {i['niche'] or ''} {i.get('description') or ''}")
+                     and not page_brain.is_avoided(f"{i['name']} {i['niche'] or ''}")), None)
     if not idea:
-        return {"ok": False, "why": "Không có ý tưởng Trang nào chờ tạo"}
+        return {"ok": False, "why": "Không có ý tưởng Trang nào chờ tạo (thuộc ngách trọng tâm)"}
     acc, why = choose_nick()
     if not acc:
         if _s().get("trend_create_warn") != db.today():

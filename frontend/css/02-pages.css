@@ -241,3 +241,4 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:
 .dp-mem li.hd{font-size:14px}
 .dp-pos{margin:0;padding-left:18px}
 .dp-prop{border-top:1px dashed var(--line,#e5e0d4);padding:6px 0;margin-top:4px}
+.np-focus{margin-top:8px}.np-focus input{width:100%;max-width:560px}

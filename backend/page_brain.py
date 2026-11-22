@@ -7,6 +7,7 @@
   Nhi ghi nhớ theo từng Trang (page_memory) và đưa vào đề bài lần sau. Tỉ lệ duyệt ngay = "Nhi hiểu ý sếp"; đủ cao thì gợi ý tắt duyệt.
 """
 import random
+import re
 import threading
 
 import db
@@ -281,4 +282,65 @@ def overview() -> dict:
                     FROM posts p JOIN fb_pages f ON f.id=p.fb_page_ref WHERE p.status='page_review' ORDER BY p.scheduled_for""")
     s = _s()
     return {"pages": pages, "queue": queue, "smart": smartness(), "review": review_on(), "reasons": REASONS,
-            "noimg": s.get("trend_noimg_post", "1") == "1", "auto_kw": s.get("nhi_auto_kw", "1") == "1"}
+            "noimg": s.get("trend_noimg_post", "1") == "1", "auto_kw": s.get("nhi_auto_kw", "1") == "1",
+            "focus": " | ".join(focus()), "avoid": " | ".join(avoid_niches())}
+
+
+# ---------------------------------------------------------------- ngách trọng tâm sếp chọn cho Nhi
+FOCUS_DEFAULT = "ẩm thực, nấu ăn | mẹo vặt gia đình | lối sống, sống khỏe nhẹ nhàng"
+AVOID_DEFAULT = "tin tức thời sự | bói toán, tử vi, phong thủy | cờ bạc, xổ số, cá độ | chính trị, tôn giáo"
+FOCUS_PHRASES = {  # cụm từ nhận diện từng ngách (không dấu, so nguyên cụm), dùng khi chưa có Claude và để lọc lại kết quả
+    "am thuc": "am thuc|nau an|mon an|mon ngon|cong thuc|nha bep|vao bep|do uong|tra sua|ca phe|an vat|an sang|bua sang|bua com|bua toi|nuoc ep|sinh to|"
+               "lau|nuong|banh|canh|kho to|xao|chien|hap|thuc don|dac san|mon chay|tra |pha che|bep nha",
+    "meo vat": "meo vat|meo hay|meo nho|meo nau|meo don|meo giat|meo bao quan|meo tiet kiem|meo gia dinh|meo nha|nha cua|don dep|tiet kiem|noi tro|"
+               "giat ui|bep nuc|sap xep|bao quan|khu mui|ve sinh nha|cham soc nha|gia dinh",
+    "song khoe": "song khoe|suc khoe|lanh manh|giac ngu|ngu ngon|yoga|tap the duc|the duc|dinh duong|thu gian|song cham|thien |di bo|giu am|"
+                 "cang thang|an uong lanh manh|song xanh|loi song|cham soc ban than|eat clean|healthy",
+}
+def focus() -> list[str]:
+    return [x.strip() for x in (_s().get("nhi_focus") or FOCUS_DEFAULT).split("|") if x.strip()]
+
+
+def avoid_niches() -> list[str]:
+    return [x.strip() for x in (_s().get("nhi_avoid_niches") or AVOID_DEFAULT).split("|") if x.strip()]
+
+
+def _plain_set(t: str) -> set:
+    return set(tokens(t or ""))
+
+
+def in_focus(text: str) -> bool:
+    """Chủ đề / Trang thuộc ngách trọng tâm: có cụm từ của ngách sếp đặt hoặc cụm nhận diện của ngách đó (so nguyên cụm, không dấu)."""
+    t = " " + plain(text or "") + " "
+    for f in focus():
+        pf = plain(f)
+        phrases = [plain(x).strip() for x in re.split(r"[,;/]", f) if len(plain(x).strip()) > 2]
+        for key, ph in FOCUS_PHRASES.items():
+            if key in pf:
+                phrases += [x for x in ph.split("|") if x.strip()]
+        if any((f" {x.strip()} " in t) if not x.endswith(" ") else (f" {x}" in t) for x in phrases):
+            return True
+    return False
+
+
+def is_avoided(text: str) -> bool:
+    t = " " + plain(text or "") + " "
+    pairs = ("tin tuc", "thoi su", "tu vi", "phong thuy", "xo so", "ca do", "co bac", "chinh tri", "ton giao", "boi toan", "xem boi", "vu an", "tai nan")
+    return any(f" {p} " in t for p in pairs) or any(f" {p} " in t for a in avoid_niches() for p in [plain(a).strip()] if p)
+
+
+def focus_prompt() -> str:
+    return (f"TRỌNG TÂM CỦA SẾP: Nhi chỉ chọn chủ đề và đề xuất Trang trong các ngách: {'; '.join(focus())}. "
+            "Tin nóng ngoài các ngách này chỉ dùng khi có góc liên quan rõ (VD trời lạnh → món ăn ấm, mẹo giữ ấm, cách ngủ ngon), gán vào ngách trọng tâm. "
+            f"Không bao giờ làm: {'; '.join(avoid_niches())}.")
+
+
+def focus_report() -> str:
+    rows = db.q("SELECT name, niche, status FROM fb_pages WHERE status IN ('active','paused','creating','idea') ORDER BY status, id")
+    out = ["🎯 <b>Ngách trọng tâm của Nhi</b>: " + "; ".join(focus()), "🚫 Không làm: " + "; ".join(avoid_niches())]
+    off = [r for r in rows if r["status"] != "idea" and not in_focus(f"{r['name']} {r['niche'] or ''}")]
+    if off:
+        out.append("⚠️ Trang ngoài trọng tâm (Nhi vẫn viết đúng ngành nghề của Trang; muốn dừng thì nhắn “tạm dừng &lt;tên Trang&gt;”): "
+                   + ", ".join(f"{r['name']} ({r['niche'] or 'chưa ghi ngành'})" for r in off))
+    out.append("Đổi trọng tâm: nhắn <code>Nhi tập trung: ẩm thực | mẹo vặt gia đình | sống khỏe</code>")
+    return "\n".join(out)

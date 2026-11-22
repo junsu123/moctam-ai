@@ -124,6 +124,7 @@ Việc của bạn:
    cơ quan / báo chí. Tên Trang tự nhiên, không giả làm Trang chính thức của tổ chức hay người nào.
    Mỗi ý tưởng: name, niche, category (hạng mục Trang trên Facebook), description (≤ 200 ký tự), avatar_prompt và cover_prompt (tiếng Anh,
    cho công cụ tạo ảnh: không chữ, không logo, không mặt người thật), why, trends (các xu hướng làm căn cứ).
+{__import__("page_brain").focus_prompt()}
 Trả về JSON: {{"hot": [{{"title","score","niche","why"}}], "ideas": [...]}}"""
         try:  # Nhi tự học: kết quả chủ đề đã viết + độ chính xác chọn xu hướng
             import trend_learn
@@ -136,6 +137,11 @@ Trả về JSON: {{"hot": [{{"title","score","niche","why"}}], "ideas": [...]}}"
         trends = [dict(r) for r in rows]
         d = llm.json(system_prompt("nhi", _s()), ask, mock=lambda: _mock_research(trends, pages), max_tokens=2500, task="posts") or {}
         db.run("DELETE FROM trend_hot WHERE day=?", (db.today(),))
+        import page_brain  # giữ đúng trọng tâm sếp chọn: bỏ chủ đề / Trang thuộc ngách cấm hoặc ngoài trọng tâm
+        d["hot"] = [h for h in (d.get("hot") or []) if not page_brain.is_avoided(f"{h.get('title')} {h.get('niche')}")
+                    and page_brain.in_focus(f"{h.get('title')} {h.get('niche')}")]
+        d["ideas"] = [i for i in (d.get("ideas") or []) if not page_brain.is_avoided(f"{i.get('name')} {i.get('niche')} {i.get('description')}")
+                      and page_brain.in_focus(f"{i.get('name')} {i.get('niche')} {i.get('description')}")]
         for h in (d.get("hot") or [])[:10]:
             db.run("INSERT INTO trend_hot(day, title, score, niche, why, created_at) VALUES (?,?,?,?,?,?)",
                    (db.today(), str(h.get("title"))[:120], int(h.get("score") or 0), str(h.get("niche") or "")[:60], str(h.get("why") or "")[:300], db.now()))

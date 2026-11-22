@@ -293,6 +293,10 @@ thường là lệnh cho Nhi) hoặc **bot chính** (tin bắt đầu bằng “
   Claude và Trang chưa ghi ngành nghề thì không đoán); Nhi đủ hiểu ý sếp (20 lần duyệt, từ 85% duyệt ngay) thì tự hỏi bằng nút **Nhi tự đăng /
   Vẫn duyệt** (tối đa 1 lần/tuần); **tới giờ đăng mà sếp chưa gửi ảnh thì Nhi đăng bài chỉ có chữ** (không lấy ảnh sản phẩm khác) và báo lại.
   Tắt từng việc ở mục Các Trang của Nhi hoặc nhắn Nhi.
+- **Ngách trọng tâm** (mặc định: ẩm thực, nấu ăn | mẹo vặt gia đình | lối sống, sống khỏe nhẹ nhàng): Nhi chỉ chọn xu hướng và đề xuất /
+  tự tạo Trang mới trong các ngách này; không bao giờ làm tin tức thời sự, bói toán / tử vi, cờ bạc / xổ số, chính trị / tôn giáo.
+  Nhắn Nhi “trọng tâm” để xem (kèm Trang đang ngoài ngách — Nhi chỉ báo, không tự dừng), “Nhi tập trung vào: …” để đổi;
+  hoặc sửa ô **Trọng tâm** ở mục Các Trang của Nhi (ngách cách nhau bằng dấu |).
 
 ### Nhi tự làm ảnh (miễn phí)
 
