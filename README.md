@@ -286,7 +286,8 @@ thường là lệnh cho Nhi) hoặc **bot chính** (tin bắt đầu bằng “
 - **Nhắn lệnh bằng lời**: “các trang”, “bài chờ duyệt”, “duyệt tất cả”, “thêm trang Bếp Nhà Mình https://facebook.com/…” (Nhi tự chọn nick
   quản trị đang ít Trang nhất, hoặc ghi tên nick trong tin), “Bếp Nhà Mình từ khóa: món chay, canh chua” (“thêm từ khóa” để thêm),
   “… không viết về: …”, “… ngành nghề: …”, “… 2 bài/ngày lúc 09:00, 19:30”, “tạm dừng / chạy lại …”, “viết bài cho …”, “tạo trang Góc
-  Thú Cưng về nuôi chó mèo”, “… nhớ: luôn xưng mình”, “gợi ý từ khóa …”, “tắt duyệt / bật duyệt”, “luôn chờ ảnh / đăng chữ khi thiếu ảnh”.
+  Thú Cưng về nuôi chó mèo”, “… nhớ: luôn xưng mình”, “gợi ý từ khóa …”, “tắt duyệt / bật duyệt”, “luôn chờ ảnh / đăng chữ khi thiếu ảnh”, “chủ đề nào được quan tâm nhất” (30 ngày, xếp theo tương tác thật
+  của từng chủ đề / từ khóa, Trang hút tương tác nhất, xu hướng Google hôm nay; thêm tên Trang để xem riêng; ít bài thì Nhi nói rõ chưa đủ để kết luận).
   Có khóa Claude thì Nhi hiểu cả câu nói tự do; chưa có thì theo các mẫu câu trên. Lệnh `/trang` xem danh sách Trang.
 - **Nhi tự lo**: Trang chưa có từ khóa thì Nhi tự đặt (theo tên Trang, ngành nghề, bài được hưởng ứng) rồi báo sếp sửa nếu muốn (chưa có
   Claude và Trang chưa ghi ngành nghề thì không đoán); Nhi đủ hiểu ý sếp (20 lần duyệt, từ 85% duyệt ngay) thì tự hỏi bằng nút **Nhi tự đăng /

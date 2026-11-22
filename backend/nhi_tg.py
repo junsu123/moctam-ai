@@ -260,6 +260,7 @@ HELP = ("Sếp nhắn Nhi bằng lời, ví dụ:\n"
         "• <code>Bếp Nhà Mình 2 bài/ngày lúc 09:00, 19:30</code> · <code>tạm dừng Bếp Nhà Mình</code> · <code>chạy lại Bếp Nhà Mình</code>\n"
         "• <code>viết bài cho Bếp Nhà Mình</code> · <code>tạo trang Góc Thú Cưng về nuôi chó mèo</code>\n"
         "• <code>Bếp Nhà Mình nhớ: luôn xưng mình, kết bằng câu hỏi</code> · <code>gợi ý từ khóa Bếp Nhà Mình</code>\n"
+        "• <code>chủ đề nào được quan tâm nhất</code> (thêm tên Trang để xem riêng Trang đó)\n"
         "• <code>tắt duyệt</code> / <code>bật duyệt</code> · <code>luôn chờ ảnh</code> / <code>đăng chữ khi thiếu ảnh</code>\n"
         "• Ảnh 3D sản phẩm: gửi ảnh kèm chú thích <code>ảnh 3D Trà gừng</code> · <code>ghép ảnh 3D chính xác / hòa trộn / tự chọn</code>\n"
         "• Ảnh: <code>đổi ảnh #12</code> · <code>tắt tự làm ảnh</code> / <code>bật tự làm ảnh</code> · cài khóa: <code>cloudflare &lt;Account ID&gt; &lt;API Token&gt;</code>, <code>pixabay &lt;key&gt;</code>\n"
@@ -322,6 +323,37 @@ def report() -> str:
     return "\n".join(out) if rows else "Nhi chưa nuôi Trang nào. Nhắn: thêm trang &lt;tên&gt; &lt;link&gt;"
 
 
+def top_topics(pg: dict | None = None, days: int = 30) -> str:
+    """Chủ đề / từ khóa được quan tâm nhất trên các Trang (tương tác thật = cảm xúc + 2×bình luận + 3×chia sẻ), kèm xu hướng Google hôm nay."""
+    from datetime import timedelta
+    since = (db.clock() - timedelta(days=days)).strftime("%Y-%m-%d")
+    where, args = "p.status='posted' AND p.fb_page_ref IS NOT NULL AND p.posted_at >= ?", [since]
+    if pg:
+        where += " AND p.fb_page_ref=?"
+        args.append(pg["id"])
+    eng = "COALESCE(p.reactions,0)+2*COALESCE(p.comments,0)+3*COALESCE(p.shares,0)"
+    rows = db.q(f"""SELECT COALESCE(NULLIF(p.page_kw,''), NULLIF(p.trend_topic,''), p.angle, 'khác') t, COUNT(*) n, AVG({eng}) e,
+                    SUM(COALESCE(p.comments,0)) cm, SUM(COALESCE(p.leads,0)) ld, COUNT(DISTINCT p.fb_page_ref) pages
+                    FROM posts p WHERE {where} GROUP BY t ORDER BY e DESC LIMIT 8""", args)
+    pages = db.q(f"""SELECT f.name, COUNT(*) n, AVG({eng}) e FROM posts p JOIN fb_pages f ON f.id=p.fb_page_ref WHERE {where}
+                     GROUP BY f.id ORDER BY e DESC LIMIT 5""", args)
+    total = sum(r["n"] for r in rows)
+    out = [f"📊 <b>Chủ đề được quan tâm nhất · {days} ngày</b>" + (f" · Trang {e(pg['name'])}" if pg else " · mọi Trang")]
+    if rows:
+        out += [f"{i}. <b>{e(r['t'])}</b>: tương tác TB {r['e']:.0f}/bài · {r['n']} bài · {r['cm']} bình luận" + (f" · {r['ld']} khách" if r["ld"] else "")
+                for i, r in enumerate(rows, 1)]
+        if total < 15:
+            out.append("<i>Mới có " + str(total) + " bài đã đăng có số liệu: xem để tham khảo, chưa đủ để kết luận.</i>")
+    else:
+        out.append("Chưa có bài Trang nào đã đăng kèm số liệu tương tác (nick quản trị đọc số liệu mỗi ngày trong ca làm việc).")
+    if len(pages) > 1 and not pg:
+        out.append("\n🏆 <b>Trang hút tương tác nhất</b>: " + " · ".join(f"{e(p['name'])} ({p['e']:.0f}/bài)" for p in pages))
+    hot = db.q("SELECT title, score FROM trend_hot WHERE day=(SELECT MAX(day) FROM trend_hot) ORDER BY score DESC LIMIT 5")
+    if hot:
+        out.append("\n🔥 <b>Đang lên Google Trends</b> (Nhi chọn): " + " · ".join(f"{e(h['title'])} ({h['score']})" for h in hot))
+    return "\n".join(out)
+
+
 def _rule(text: str) -> list[dict]:
     t, low = text.strip(), plain(text)
     pg = find_page(t)
@@ -344,6 +376,8 @@ def _rule(text: str) -> list[dict]:
         return [{"type": "img_auto", "on": False}]
     if re.search(r"\b(bat|cho nhi) (tu )?lam anh\b", low):
         return [{"type": "img_auto", "on": True}]
+    if re.search(r"chu de nao|quan tam nhat|tuong tac (nhat|cao)|hieu qua nhat|chu de hot|chu de (tot|hay) nhat|nguoi xem nhieu", low):
+        return [{"type": "top_topics", "page": name or ""}]
     if re.search(r"^(cac trang|danh sach trang|bao cao|tinh hinh|trang)$", low.strip()):
         return [{"type": "list"}]
     if "cho duyet" in low and "duyet tat ca" not in low:
@@ -419,6 +453,8 @@ def execute(a: dict) -> str:
         return e(a.get("text"))
     if t == "list":
         return report()
+    if t == "top_topics":
+        return top_topics(_pg(a.get("page")))
     if t == "img_keys":
         import image_gen
         for k in ("cf_account_id", "cf_api_token", "pixabay_key"):
