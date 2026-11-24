@@ -215,5 +215,6 @@ def site_preview(path: str = ""):
     if f.suffix == ".html":
         doc = f.read_text(encoding="utf-8")
         doc = re.sub(r'(href|src)="/(?!/)', r'\1="/site/', doc)
+        doc = re.sub(r'(url=|replace\(")/(?!/)', r'\1/site/', doc)  # trang chuyển từ địa chỉ cũ
         return HTMLResponse(doc, status_code=code)
     return FileResponse(f)

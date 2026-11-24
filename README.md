@@ -405,6 +405,14 @@ Mục **Website** (nhóm Bán hàng). Vy (Biên tập Website & SEO) quản lý 
   tức (phân trang 12 bài), Liên hệ, 404.
 - **Chuẩn kỹ thuật**: sitemap.xml, robots.txt, thẻ canonical và Open Graph, dữ liệu có cấu trúc schema.org (Organization,
   WebSite, Article, FAQPage, BreadcrumbList, Product, Service), mục lục bài, nút Chat Zalo, HTML tĩnh nhẹ, chạy tốt trên điện thoại.
+- **Đường dẫn đuôi .html**: `/san-pham.html`, `/san-pham/<tên>.html`, `/gia-cong.html`, `/gioi-thieu.html`, `/tin-tuc.html`,
+  `/tin-tuc/<bài>.html`, `/tin-tuc/trang-2.html`, `/lien-he.html` (trang chủ vẫn là `/`). Địa chỉ kiểu cũ (`/tin-tuc/<bài>/`) vẫn mở
+  được: trang chuyển ngay sang bản .html (Google coi như chuyển hướng vĩnh viễn, giữ thứ hạng cũ). Liên kết `[chữ](/gia-cong/)` trong
+  bài cũ tự đổi sang `.html` khi dựng.
+- **Tối ưu SEO kỹ thuật**: thẻ tiêu đề / mô tả cắt theo từ (không cụt chữ như “ngũ cố”), sản phẩm dài tên thì bỏ “| MỘC TÂM” thay vì
+  cắt tên; 404 không cho Google lập chỉ mục; sitemap kèm ảnh sản phẩm / ảnh bài (Google Hình ảnh), `lastmod` là ngày đổi thật;
+  ảnh chính tải ưu tiên (`fetchpriority`), phông chữ không chặn hiển thị (trang lên nhanh hơn trên điện thoại); ảnh thẻ bài có
+  chữ thay thế; `max-image-preview:large`; hai sản phẩm trùng tên không ghi đè trang của nhau.
 
 **Kế hoạch từ khóa**: 16 từ khóa ban đầu cho người tìm xưởng gia công và nguồn sỉ (gia công trà túi lọc, OEM thương hiệu
 riêng, nguồn hàng trà túi lọc sỉ...). Sếp thêm từ khóa; bấm **Vy nghĩ thêm từ khóa** để Vy đề xuất theo sản phẩm thật.

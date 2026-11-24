@@ -31,16 +31,18 @@ c.post(f"/api/website/posts/{r2['id']}/publish")
 site = W.SITE_DIR
 files = sorted(str(f.relative_to(site)) for f in site.rglob("*") if f.is_file())
 print("6. website:", len(files), "tệp:", [f for f in files if not f.startswith("media")][:14])
-art = (site / "tin-tuc" / p["slug"] / "index.html").read_text()
+art = (site / "tin-tuc" / f"{p['slug']}.html").read_text()
+old = (site / "tin-tuc" / p["slug"] / "index.html").read_text()
+print("   địa chỉ cũ chuyển sang .html:", f'tin-tuc/{p["slug"]}.html"' in old and "noindex" in old)
 lds = [json.loads(x) for x in re.findall(r'<script type="application/ld\+json">(.*?)</script>', art, re.S)]
 print("   schema bài:", [x["@type"] for x in lds], "| canonical:", re.search(r'rel="canonical" href="([^"]+)"', art).group(1))
 print("   h1:", len(re.findall("<h1", art)), "| h2:", len(re.findall("<h2", art)), "| mục lục:", "toc" in art, "| ảnh:", "/media/" in art, "| og:image:", 'og:image' in art)
 sm = (site / "sitemap.xml").read_text(); print("   sitemap:", sm.count("<url>"), "trang; có bài:", p["slug"] in sm, "| robots:", (site / "robots.txt").read_text().strip().replace("\n", " | "))
-prod_pages = list((site / "san-pham").glob("*/index.html"))
+prod_pages = list((site / "san-pham").glob("*.html"))
 txt = " ".join(x.read_text() for x in prod_pages)
 print("   trang sản phẩm:", len(prod_pages), "| có giá tiền:", bool(re.search(r"\d[\d.,]*\s*(đ|vnđ|k\b|000)", re.sub(r"<[^>]+>", " ", txt), re.I)), "| có Zalo:", "0386992326" in txt)
-pv = c.get("/site/"); print("7. xem trước /site/:", pv.status_code, 'href="/site/tin-tuc/' in pv.text, 'href="/site/assets/style.css"' in pv.text)
-print("   bài:", c.get(f"/site/tin-tuc/{p['slug']}/").status_code, "| css:", c.get("/site/assets/style.css").status_code, "| 404:", c.get("/site/khong-co/").status_code, "| thoát thư mục:", c.get("/site/../../etc/passwd").status_code)
+pv = c.get("/site/"); print("7. xem trước /site/:", pv.status_code, 'href="/site/tin-tuc.html"' in pv.text, 'href="/site/assets/style.css"' in pv.text)
+print("   bài:", c.get(f"/site/tin-tuc/{p['slug']}.html").status_code, "| css:", c.get("/site/assets/style.css").status_code, "| 404:", c.get("/site/khong-co/").status_code, "| thoát thư mục:", c.get("/site/../../etc/passwd").status_code)
 z = zipfile.ZipFile(io.BytesIO(c.get("/api/website/export.zip").content)); print("8. zip:", len(z.namelist()), "tệp, có index:", "index.html" in z.namelist())
 # FTP
 from pyftpdlib.authorizers import DummyAuthorizer
@@ -53,7 +55,7 @@ srv = FTPServer(("127.0.0.1", 2121), h); threading.Thread(target=srv.serve_forev
 print("9. FTP chưa cài:", c.post("/api/website/deploy").json())
 c.put("/api/website/settings", json={"site_ftp_host": "127.0.0.1:2121", "site_ftp_user": "moctam", "site_ftp_pass": "secret", "site_ftp_dir": "/public_html", "site_ftp_tls": "0"})
 print("   mật khẩu không trả về:", "secret" not in json.dumps(c.get("/api/website").json()))
-d = c.post("/api/website/deploy").json(); print("   đăng hosting:", d, "| có trên máy chủ:", (ftproot / "public_html" / "tin-tuc" / p["slug"] / "index.html").exists())
+d = c.post("/api/website/deploy").json(); print("   đăng hosting:", d, "| có trên máy chủ:", (ftproot / "public_html" / "tin-tuc" / f"{p['slug']}.html").exists())
 print("10. kế hoạch thêm:", c.post("/api/website/keywords/plan").json()["added"], "| gỡ bài:", c.post(f"/api/website/posts/{r2['id']}/unpublish").json()["status"])
 o = c.get("/api/website").json(); print("   tổng quan:", o["stats"], o["pages"], "trang")
 import fb_policy, agents

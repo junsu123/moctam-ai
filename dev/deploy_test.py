@@ -43,7 +43,7 @@ t = c.post("/api/website/deploy/test").json()
 chk("kiểm tra kết nối ok, tự chuyển FTP thường", t["ok"] and t["mode"] == "ftp", [s["name"] for s in t["steps"]])
 chk("dò ra thư mục DirectAdmin", t["root"] == "/domains/moctamvn.vn/public_html", t["root"])
 d = c.post("/api/website/deploy").json()
-chk("đăng lần đầu", d["files"] > 5 and (web / "tin-tuc" / slug / "index.html").exists() and (web / "index.html").exists(), d)
+chk("đăng lần đầu", d["files"] > 5 and (web / "tin-tuc" / f"{slug}.html").exists() and (web / "index.html").exists(), d)
 chk("không tạo nhầm /public_html", not (root / "public_html").exists())
 d2 = c.post("/api/website/deploy").json(); chk("lần 2 không tải lại gì", d2["files"] == 0 and d2["deleted"] == 0, d2)
 chk("không còn thay đổi chờ đẩy", not c.get("/api/website").json()["settings"]["site_sync_pending"])
@@ -52,11 +52,11 @@ before = len(list(web.rglob("*.html")))
 c.post(f"/api/website/posts/{pid}/unpublish")
 chk("gỡ bài: có thay đổi chờ đẩy", c.get("/api/website").json()["settings"]["site_sync_pending"])
 D.tick(wait=0)
-chk("tự đồng bộ xóa bài đã gỡ trên hosting", not (web / "tin-tuc" / slug / "index.html").exists(), f"{before} → {len(list(web.rglob('*.html')))} trang")
+chk("tự đồng bộ xóa bài đã gỡ trên hosting", not (web / "tin-tuc" / f"{slug}.html").exists(), f"{before} → {len(list(web.rglob('*.html')))} trang")
 c.post(f"/api/website/posts/{pid}/publish"); D.tick(wait=0)
-chk("đăng lại: tự đẩy lên", (web / "tin-tuc" / slug / "index.html").exists())
+chk("đăng lại: tự đẩy lên", (web / "tin-tuc" / f"{slug}.html").exists())
 db.set_setting("site_auto_deploy", "0"); c.post(f"/api/website/posts/{pid}/unpublish"); D.tick(wait=0)
-chk("tắt tự đẩy thì không đẩy", (web / "tin-tuc" / slug / "index.html").exists())
+chk("tắt tự đẩy thì không đẩy", (web / "tin-tuc" / f"{slug}.html").exists())
 db.set_setting("site_auto_deploy", "1"); c.post(f"/api/website/posts/{pid}/publish")
 srv.close_all()
 
@@ -70,7 +70,7 @@ class T(TLS_FTPHandler): authorizer = au2; certfile = str(cert); tls_control_req
 srv2 = FTPServer(("127.0.0.1", 2132), T); threading.Thread(target=srv2.serve_forever, daemon=True).start(); time.sleep(0.3)
 c.put("/api/website/settings", json={"site_ftp_host": "127.0.0.1:2132", "site_deploy_mode": "auto", "site_ftp_dir": "/public_html"})
 d = c.post("/api/website/deploy").json()
-chk("FTPS đăng được", d["mode"] == "ftps" and (root2 / "public_html" / "tin-tuc" / slug / "index.html").exists(), d)
+chk("FTPS đăng được", d["mode"] == "ftps" and (root2 / "public_html" / "tin-tuc" / f"{slug}.html").exists(), d)
 srv2.close_all()
 
 # --- máy chủ không có / cổng đóng
@@ -97,7 +97,7 @@ try:
     db.set_setting("site_sync_url", "http://127.0.0.1:8137/mt-sync.php")
     t = c.post("/api/website/deploy/test").json(); chk("kiểm tra cổng PHP", t["ok"], [s["msg"] for s in t["steps"]])
     d = c.post("/api/website/deploy").json()
-    chk("đăng qua cổng PHP", d["mode"] == "http" and (php / "tin-tuc" / slug / "index.html").exists() and (php / "sitemap.xml").exists(), d)
+    chk("đăng qua cổng PHP", d["mode"] == "http" and (php / "tin-tuc" / f"{slug}.html").exists() and (php / "sitemap.xml").exists(), d)
     chk("cổng PHP đặt quyền 755", oct((php / "sitemap.xml").stat().st_mode & 0o777)[2:] == "755" and oct((php / "tin-tuc").stat().st_mode & 0o777)[2:] == "755"
         and d["perm_fail"] == 0)
     import httpx
@@ -107,7 +107,7 @@ try:
     chk("chặn tệp .php / .htaccess / thoát thư mục", [call(x) for x in ("x.php", "a/b.phtml", ".htaccess", "../x.html", "a/.user.ini", "mt-sync.php", "/etc/x")]
         == [400] * 7 and not (php / "x.php").exists())
     c.post(f"/api/website/posts/{pid}/unpublish"); D.tick(wait=0)
-    chk("cổng PHP xóa bài đã gỡ", not (php / "tin-tuc" / slug / "index.html").exists() and (php / "mt-sync.php").exists())
+    chk("cổng PHP xóa bài đã gỡ", not (php / "tin-tuc" / f"{slug}.html").exists() and (php / "mt-sync.php").exists())
     (php / "mt-sync.php").write_text(code.replace(tok, "x" * 40))
     e = c.post("/api/website/deploy", params={"full": 1}); chk("tệp cũ mã khác: báo tải lại", e.status_code == 400 and "Tải lại tệp mới" in e.json()["detail"])
     (php / "mt-sync.php").unlink()
@@ -152,9 +152,9 @@ try:
     np = W.get(w["id"])
     chk("Vy viết xong: tự đăng", w["published"] and np["status"] == "published" and w["pushing"], w)
     for _ in range(60):
-        if (served / "tin-tuc" / np["slug"] / "index.html").exists() and np["slug"] in (served / "sitemap.xml").read_text(): break
+        if (served / "tin-tuc" / f"{np['slug']}.html").exists() and np["slug"] in (served / "sitemap.xml").read_text(): break
         time.sleep(0.25)
-    chk("bài mới lên hosting và sitemap không cần bấm", (served / "tin-tuc" / np["slug"] / "index.html").exists() and np["slug"] in (served / "sitemap.xml").read_text())
+    chk("bài mới lên hosting và sitemap không cần bấm", (served / "tin-tuc" / f"{np['slug']}.html").exists() and np["slug"] in (served / "sitemap.xml").read_text())
     db.run("UPDATE site_posts SET status='review' WHERE id=?", (pid,)); db.set_setting("site_min_seo", "0")
     chk("bài chờ duyệt đạt chuẩn: tự đăng ở lượt sau", W.auto_publish_waiting() >= 1 and W.get(pid)["status"] == "published")
     db.set_setting("site_min_seo", "75")
