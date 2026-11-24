@@ -43,6 +43,7 @@ def website_settings(data: dict):
 class SiteKeyword(BaseModel):
     keyword: str
     priority: int = 2
+    force: bool = False
 
 
 @app.post("/api/website/keywords")
@@ -51,6 +52,11 @@ def website_add_kw(k: SiteKeyword):
     kw = k.keyword.strip()
     if len(kw) < 3:
         raise HTTPException(400, "Ghi từ khóa")
+    if not k.force:
+        dup = website.similar_kw(kw, [r["keyword"] for r in db.q("SELECT keyword FROM site_keywords WHERE status!='dup'")])
+        if dup:
+            raise HTTPException(409, f"Gần giống từ khóa đã có “{dup}”: hai bài cùng chủ đề sẽ tự tranh hạng Google. "
+                                     "Bấm Thêm lần nữa nếu vẫn muốn thêm")
     db.run("INSERT OR IGNORE INTO site_keywords(keyword, cluster, intent, priority, status, source, created_at) VALUES (?,?,?,?,?,?,?)",
            (kw[:100], "", "", max(1, min(3, k.priority)), "planned", "boss", db.now()))
     return website.overview()
@@ -193,6 +199,20 @@ def website_sync_php(new: int = 0):
     from fastapi.responses import Response
     return Response(site_deploy.sync_php(new=bool(new)), media_type="application/octet-stream",
                     headers={"Content-Disposition": f'attachment; filename="{site_deploy.SYNC_FILE}"'})
+
+
+class SiteMerge(BaseModel):
+    into: int
+
+
+@app.post("/api/website/posts/{pid}/merge")
+def website_merge(pid: int, m: SiteMerge):
+    import website
+    try:
+        website.merge(pid, m.into)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return website.overview()
 
 
 @app.get("/site", include_in_schema=False)

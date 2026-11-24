@@ -392,6 +392,7 @@ MIGRATIONS = [
     ("posts", "orig_content", "TEXT"), ("posts", "fit_group_id", "INTEGER"), ("posts", "fit_note", "TEXT"),  # Lan chỉnh bài theo nhóm
     ("products", "hot", "INTEGER DEFAULT 0"), ("products", "hot_note", "TEXT DEFAULT ''"), ("products", "hot_since", "TEXT"),
     ("products", "is_general", "INTEGER DEFAULT 0"), ("products", "site_show", "INTEGER"),
+    ("site_posts", "merged_into", "INTEGER"), ("site_keywords", "note", "TEXT"),
     ("posts", "img_fails", "INTEGER DEFAULT 0"),  # số lần Facebook không nhận ảnh khi đăng
     ("posts", "policy_note", "TEXT"),  # bài vi phạm luật Facebook (CEO kiểm)
     ("fb_accounts", "rest_until", "TEXT"), ("fb_accounts", "limit_factor", "REAL DEFAULT 1"), ("fb_accounts", "factor_until", "TEXT"),

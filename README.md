@@ -413,6 +413,15 @@ Mục **Website** (nhóm Bán hàng). Vy (Biên tập Website & SEO) quản lý 
   cắt tên; 404 không cho Google lập chỉ mục; sitemap kèm ảnh sản phẩm / ảnh bài (Google Hình ảnh), `lastmod` là ngày đổi thật;
   ảnh chính tải ưu tiên (`fetchpriority`), phông chữ không chặn hiển thị (trang lên nhanh hơn trên điện thoại); ảnh thẻ bài có
   chữ thay thế; `max-image-preview:large`; hai sản phẩm trùng tên không ghi đè trang của nhau.
+- **Không có liên kết hỏng**: khi dựng web, link tới trang không còn (sản phẩm đang ẩn, bài đã gỡ) tự trỏ về trang Sản phẩm /
+  Tin tức (nhật ký ghi số link đã sửa); Vy chỉ gợi ý link tới sản phẩm đang hiện trên website.
+- **Một chủ đề một bài** (tránh các bài tự tranh hạng Google): Vy so từ khóa theo chủ đề và ý định tìm (gia công / nguồn sỉ /
+  kiến thức). “Nguồn hàng sỉ trà túi lọc” và “nguồn hàng trà túi lọc sỉ” là trùng; “gia công trà túi lọc” và “nguồn hàng trà túi lọc sỉ”
+  thì không. Vy nghĩ thêm từ khóa không ra từ khóa trùng; tới lượt viết mà từ khóa trùng bài đã có thì Vy bỏ (chip **Trùng chủ đề,
+  bỏ**, vẫn bấm Viết ngay được); sếp thêm từ khóa trùng thì phần mềm báo, bấm Thêm lần nữa nếu vẫn muốn.
+- **Gộp bài trùng**: tab Bài viết hiện thẻ **Bài trùng chủ đề** (bài đang đăng cùng chủ đề, Vy chọn bài giữ lại theo điểm SEO, số
+  chữ). Bấm **Gộp vào bài giữ**: bài kia rời website và sitemap, địa chỉ cũ (.html và dạng thư mục) chuyển ngay sang bài giữ lại, link
+  trong các bài khác cũng trỏ thẳng về bài giữ. Đăng lại bài đã gộp thì bỏ gộp.
 
 **Kế hoạch từ khóa**: 16 từ khóa ban đầu cho người tìm xưởng gia công và nguồn sỉ (gia công trà túi lọc, OEM thương hiệu
 riêng, nguồn hàng trà túi lọc sỉ...). Sếp thêm từ khóa; bấm **Vy nghĩ thêm từ khóa** để Vy đề xuất theo sản phẩm thật.

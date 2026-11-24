@@ -42,6 +42,7 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:
 .fbp-issue{display:flex;gap:6px;align-items:baseline;font-size:13px;margin:6px 0}
 .ws-stats{grid-template-columns:repeat(5,minmax(0,1fr));margin:0 0 12px}
 @media (max-width:760px){.ws-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.ws-dups{border-left:3px solid var(--warn,#d98a00)}.ws-dup{padding:8px 0;border-top:1px solid var(--line)}.ws-dup .btn{margin-left:auto}
 .ws-table{min-width:720px}.ws-table td{vertical-align:middle}.ws-table .ws-t{font-weight:600}
 .ws-edit > td{background:var(--panel-2);padding:12px}
 .ws-ed{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px}

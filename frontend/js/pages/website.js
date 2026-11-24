@@ -1,7 +1,7 @@
 /* ---------- WEBSITE ---------- */
 const WS_INFO=[["site_name","Tên thương hiệu"],["site_legal_name","Tên công ty (pháp lý)"],["site_tagline","Khẩu hiệu"],["site_domain","Tên miền (VD moctam.vn)"],["site_phone","Zalo / điện thoại"],["site_email","Email"],
   ["site_address","Địa chỉ nhà máy"],["site_certs","Tiêu chuẩn, chứng nhận"],["site_color","Màu thương hiệu"],["site_ga_id","Mã Google Analytics (G-...)"]];
-const WS_ST={draft:["","Nháp"],review:["warn","Chờ sếp duyệt"],published:["ok","Đã đăng"]};
+const WS_ST={draft:["","Nháp"],review:["warn","Chờ sếp duyệt"],published:["ok","Đã đăng"],merged:["","Đã gộp vào bài khác"]};
 function wsTab(k){ ST.wsTab=k; for(const x of ["posts","kw","prod","info","host"]){ const on=x===k; $("#wtab-"+x).setAttribute("aria-selected",on); $("#wtab-"+x).tabIndex=on?0:-1; $("#wpanel-"+x).hidden=!on; } }
 $("#wsProds").addEventListener("change",async e=>{ const sel=e.target.closest("[data-wsshow]"); if(!sel) return; const v=sel.value;
   try{ await api(`/website/products/${sel.dataset.wsshow}`,"PUT",{show:v==="auto"?null:v==="1"}); await loadWs(); toast("Đã lưu. Bấm Dựng lại website để cập nhật trang sản phẩm"); }catch(err){ toast(err.message); } });
@@ -26,9 +26,13 @@ function renderWs(){
       +(open?`<tr class="ws-edit"><td colspan="5" id="wsEd-${p.id}"><p class="muted small">Đang tải…</p></td></tr>`:""); }).join("")
     :`<tr><td colspan="5"><div class="empty">Chưa có bài nào. Bấm “Vy viết bài mới”.</div></td></tr>`;
   if(ST.wsOpen&&d.posts.some(p=>p.id===ST.wsOpen)) openWsPost(ST.wsOpen);
+  const dg=d.dups||[]; $("#wsDups").hidden=!dg.length;
+  $("#wsDups").innerHTML=dg.length?`<h3>Bài trùng chủ đề: đang tự tranh hạng Google</h3><p class="small muted">Mỗi nhóm nên giữ một bài (Vy chọn bài điểm SEO cao, dài nhất). Gộp thì bài kia rời website, địa chỉ cũ tự chuyển sang bài giữ lại nên không mất người đọc.</p>`
+    +dg.map(g=>`<div class="ws-dup"><div class="small"><span class="chip ok">Giữ</span> <b>${esc(g.keep.title)}</b> <span class="muted">· SEO ${g.keep.seo_score} · ${g.keep.words||0} chữ</span></div>`
+      +g.others.map(o=>`<div class="row wrap small" style="margin-top:4px"><span class="chip warn">Trùng</span> ${esc(o.title)} <span class="muted">· SEO ${o.seo_score} · ${o.words||0} chữ</span><button class="btn sm" data-merge="${o.id}" data-into="${g.keep.id}">Gộp vào bài giữ</button></div>`).join("")+`</div>`).join(""):"";
   $("#wsKws").innerHTML=d.keywords.map(k=>`<tr><td>${esc(k.keyword)}</td><td class="small">${esc(k.cluster||"")}</td><td class="small">${["","Cao","Vừa","Thấp"][k.priority]||k.priority}</td>
-    <td>${k.status==="written"?'<span class="chip ok">Đã viết</span>':'<span class="chip">Chờ viết</span>'}</td>
-    <td>${k.status==="planned"?`<button class="btn sm" data-kwwrite="${k.id}">Viết ngay</button> <button class="btn sm ghost" data-kwdel="${k.id}">Xóa</button>`:""}</td></tr>`).join("");
+    <td>${k.status==="written"?'<span class="chip ok">Đã viết</span>':k.status==="dup"?`<span class="chip warn" title="${esc(k.note||"")}">Trùng chủ đề, bỏ</span>`:'<span class="chip">Chờ viết</span>'}</td>
+    <td>${k.status==="planned"||k.status==="dup"?`<button class="btn sm" data-kwwrite="${k.id}">Viết ngay</button> <button class="btn sm ghost" data-kwdel="${k.id}">Xóa</button>`:""}</td></tr>`).join("");
   $("#wsInfoFields").innerHTML=WS_INFO.map(([k,l])=>`<label class="f" for="wi-${k}">${l}<input type="${k==="site_color"?"color":"text"}" id="wi-${k}" data-k="${k}" value="${esc(cf[k]||"")}"></label>`).join("")
     +`<label class="f" for="wi-site_about" style="grid-column:1/-1">Giới thiệu nhà máy (trang Giới thiệu)<textarea id="wi-site_about" data-k="site_about" rows="4" placeholder="Để trống: Vy viết đoạn giới thiệu từ thông tin nhà máy">${esc(cf.site_about||"")}</textarea></label>`;
   $("#wsSchedFields").innerHTML=[["site_posts_week","Số bài / tuần","number"],["site_write_days","Ngày viết (1=T2 … 7=CN)","text"],["site_write_time","Giờ viết","time"],["site_min_seo","Điểm SEO tối thiểu để đăng","number"]]
@@ -90,7 +94,9 @@ $("#wsPosts").addEventListener("click",async e=>{
   const r=e.target.closest("tr[data-ws]"); if(!r) return; const id=+r.dataset.ws; ST.wsOpen=ST.wsOpen===id?null:id; renderWs(); });
 $("#wsPosts").addEventListener("keydown",e=>{ if((e.key==="Enter"||e.key===" ")&&e.target.matches("tr[data-ws]")){ e.preventDefault(); e.target.click(); } });
 $("#wsWrite").onclick=async e=>{ e.target.disabled=true; try{ await api("/website/write","POST",{}); toast("Vy đang viết bài theo từ khóa ưu tiên kế tiếp (khoảng 1–2 phút)"); setTimeout(loadWs,4000); setTimeout(loadWs,30000); setTimeout(loadWs,90000); }catch(err){ toast(err.message); } setTimeout(()=>e.target.disabled=false,5000); };
-$("#wsKwForm").addEventListener("submit",async e=>{ e.preventDefault(); try{ ST.ws=await api("/website/keywords","POST",{keyword:$("#wsKw").value,priority:+$("#wsKwPr").value}); e.target.reset(); $("#wsKwPr").value="2"; renderWs(); toast("Đã thêm từ khóa vào kế hoạch của Vy"); }catch(err){ toast(err.message); } });
+$("#wsKwForm").addEventListener("submit",async e=>{ e.preventDefault(); const kw=$("#wsKw").value.trim(); try{ ST.ws=await api("/website/keywords","POST",{keyword:kw,priority:+$("#wsKwPr").value,force:ST.wsKwDup===kw}); ST.wsKwDup=null; e.target.reset(); $("#wsKwPr").value="2"; renderWs(); toast("Đã thêm từ khóa vào kế hoạch của Vy"); }catch(err){ ST.wsKwDup=/Gần giống/.test(err.message)?kw:null; toast(err.message); } });
+$("#wsDups").addEventListener("click",async e=>{ const b=e.target.closest("[data-merge]"); if(!b) return; b.disabled=true;
+  try{ ST.ws=await api(`/website/posts/${b.dataset.merge}/merge`,"POST",{into:+b.dataset.into}); renderWs(); toast("Đã gộp bài, địa chỉ cũ chuyển sang bài giữ lại. Website tự đẩy lên sau ít phút"); }catch(err){ toast(err.message); b.disabled=false; } });
 $("#wsKwPlan").onclick=async e=>{ e.target.disabled=true; try{ const r=await api("/website/keywords/plan","POST"); ST.ws=r; renderWs(); toast(r.added?`Vy thêm ${r.added} từ khóa mới`:"Vy chưa nghĩ ra từ khóa mới"); }catch(err){ toast(err.message); } e.target.disabled=false; };
 $("#wsKws").addEventListener("click",async e=>{ const w=e.target.closest("[data-kwwrite]"), d=e.target.closest("[data-kwdel]");
   try{ if(w){ w.disabled=true; await api("/website/write","POST",{kid:+w.dataset.kwwrite}); toast("Vy đang viết bài cho từ khóa này"); setTimeout(loadWs,4000); setTimeout(loadWs,30000); }

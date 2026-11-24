@@ -91,6 +91,41 @@ def cut(t: str, n: int, dots: bool = False) -> str:
     return t + ("…" if dots else "")
 
 
+# ---------------------------------------------------------------- từ khóa trùng chủ đề (tự tranh hạng Google)
+_GC = ("gia cong", "oem", "odm", "thuong hieu rieng")
+_GC_WEAK = ("san xuat", "xuong", "nha may")  # "giá xưởng", "tại xưởng" đi với nguồn sỉ thì vẫn là ý định mua sỉ
+_SI = ("nguon hang", "nguon", "nhap si", "bo si", "lay si", "gia si", "si", "dai ly", "phan phoi", "nhap hang", "gia xuong")
+_INFO = ("la gi", "cach", "thu tuc", "quy trinh", "tieu chuan", "kinh nghiem", "chuan bi", "thiet ke", "huong dan", "co nen",
+         "bao nhieu", "chi phi", "kinh doanh")
+_STOP = set("nguon hang nhap bo lay gia si dai ly phan phoi cong oem odm san xuat xuong nha may thuong hieu rieng theo yeu cau tai "
+            "cho cua va voi tu nhan uy tin chat luong online".split())
+
+
+def kw_sig(kw: str) -> tuple[str, set]:
+    """(ý định, chữ chủ đề): ý định = info / gc (gia công) / si (nguồn sỉ) / '' (chung chung)."""
+    t = " " + plain(kw) + " "
+    has = lambda ps: any(f" {p} " in t for p in ps)
+    intent = "info" if has(_INFO) else "gc" if has(_GC) else "si" if has(_SI) else "gc" if has(_GC_WEAK) else ""
+    return intent, {w for w in t.split() if w not in _STOP}
+
+
+def kw_similar(a: str, b: str) -> bool:
+    """Hai từ khóa cùng chủ đề + cùng ý định tìm: viết 2 bài sẽ tự kéo hạng nhau xuống."""
+    (ia, ta), (ib, tb) = kw_sig(a), kw_sig(b)
+    if not ta or not tb:
+        return False
+    inter = len(ta & tb)
+    if "info" in (ia, ib):
+        return ia == ib and inter / len(ta | tb) >= 0.6
+    if ia and ib and ia != ib:
+        return False
+    return inter >= min(2, len(ta), len(tb)) and inter / min(len(ta), len(tb)) >= 0.66
+
+
+def similar_kw(kw: str, others) -> str | None:
+    return next((o for o in others if o and plain(o) != plain(kw) and kw_similar(kw, o)), None)
+
+
 def title_with(main: str, brand: str, n: int = 60) -> str:
     """“Tên | Thương hiệu” nếu vừa; dài quá thì bỏ thương hiệu chứ không cắt cụt tên."""
     full = f"{main} | {brand}"
@@ -245,7 +280,8 @@ def _products(limit: int = 6) -> list[dict]:
 
 def _related_products(kw: str, n: int = 3) -> list[dict]:
     k = set(plain(kw).split())
-    rows = _products(40)
+    vis = {p["id"] for p in site_products()}  # chỉ sản phẩm đang có trang trên website (không tạo link hỏng)
+    rows = [p for p in _products(200) if p["id"] in vis]
     rows.sort(key=lambda p: -len(k & set(plain(f"{p['name']} {p.get('category') or ''}").split())))
     return rows[:n]
 
@@ -421,7 +457,18 @@ def write(keyword: str | None = None, kid: int | None = None, agent: str = "vy")
                (keyword.strip(), "", "", 2, "planned", "boss", db.now()))
         k = db.one("SELECT * FROM site_keywords WHERE keyword=?", (keyword.strip(),))
     else:
-        k = db.one("SELECT * FROM site_keywords WHERE status='planned' ORDER BY priority, id LIMIT 1")
+        k = None
+        have = [r["keyword"] for r in db.q("SELECT keyword FROM site_posts WHERE status IN ('published','review','draft')")]
+        for attempt in range(2):
+            for c in db.q("SELECT * FROM site_keywords WHERE status='planned' ORDER BY priority, id"):
+                dup = similar_kw(c["keyword"], have)
+                if not dup:
+                    k = c
+                    break
+                db.run("UPDATE site_keywords SET status='dup', note=? WHERE id=?", (f"Trùng chủ đề với bài “{dup}”", c["id"]))
+                db.log("vy", "Bỏ từ khóa trùng", f"“{c['keyword']}” trùng chủ đề bài “{dup}”: viết thêm sẽ tự tranh hạng Google")
+            if k or attempt or not plan_more():
+                break
     if not k:
         raise ValueError("Hết từ khóa trong kế hoạch. Thêm từ khóa mới ở mục Website")
     kw = k["keyword"]
@@ -524,11 +571,49 @@ def publish(pid: int) -> dict:
     r = seo_check(p)
     if any(x["level"] == "high" for x in r["policy"]):
         raise ValueError("Bài phạm luật quảng cáo: " + "; ".join(x["msg"] for x in r["policy"]))
-    db.run("UPDATE site_posts SET status='published', published_at=COALESCE(published_at, ?), updated_at=? WHERE id=?",
+    db.run("UPDATE site_posts SET status='published', merged_into=NULL, published_at=COALESCE(published_at, ?), updated_at=? WHERE id=?",
            (db.now(), db.now(), pid))
     db.log("vy", "Đăng bài website", f"“{p['title']}” lên mục Tin tức")
     build()
     return get(pid)
+
+
+def merge(pid: int, into: int) -> dict:
+    """Gộp bài trùng chủ đề: bài pid rời khỏi website, địa chỉ của nó chuyển thẳng sang bài into (giữ thứ hạng cũ dồn về một bài)."""
+    a, b = get(pid), get(into)
+    if not a or not b or pid == into:
+        raise ValueError("Chọn hai bài khác nhau")
+    if b["status"] != "published":
+        raise ValueError("Bài giữ lại phải đang đăng trên website")
+    db.run("UPDATE site_posts SET status='merged', merged_into=?, updated_at=? WHERE id=?", (into, db.now(), pid))
+    db.run("UPDATE site_posts SET merged_into=? WHERE merged_into=?", (into, pid))  # bài từng gộp vào pid thì chuyển tiếp sang into
+    db.log("vy", "Gộp bài trùng chủ đề", f"“{a['title']}” → “{b['title']}” (địa chỉ cũ chuyển sang bài giữ lại)")
+    build()
+    return get(pid)
+
+
+def dup_groups() -> list[dict]:
+    """Các nhóm bài đang đăng trùng chủ đề; giữ bài mạnh nhất (điểm SEO, số chữ), các bài khác nên gộp vào."""
+    rows = db.q("SELECT id, keyword, title, slug, seo_score, words, published_at FROM site_posts WHERE status='published' ORDER BY id")
+    grp = list(range(len(rows)))
+
+    def root(i):
+        while grp[i] != i:
+            i = grp[i]
+        return i
+    for i in range(len(rows)):
+        for j in range(i + 1, len(rows)):
+            if kw_similar(rows[i]["keyword"] or "", rows[j]["keyword"] or ""):
+                grp[root(j)] = root(i)
+    out = {}
+    for i, r in enumerate(rows):
+        out.setdefault(root(i), []).append(r)
+    res = []
+    for g in out.values():
+        if len(g) > 1:
+            g.sort(key=lambda r: (-(r["seo_score"] or 0), -(r["words"] or 0), r["id"]))
+            res.append({"keep": g[0], "others": g[1:]})
+    return res
 
 
 def _push_now() -> bool:
@@ -563,7 +648,7 @@ def auto_publish_waiting() -> int:
 
 
 def unpublish(pid: int) -> dict:
-    db.run("UPDATE site_posts SET status='review', updated_at=? WHERE id=?", (db.now(), pid))
+    db.run("UPDATE site_posts SET status='review', merged_into=NULL, updated_at=? WHERE id=?", (db.now(), pid))
     build()
     return get(pid)
 
@@ -1062,8 +1147,26 @@ def _build() -> dict:
     pages["/lien-he.html"] = (_page("/lien-he.html", "Liên hệ %s: báo giá sỉ & gia công" % c["name"],
                                 ("Liên hệ nhà máy %s qua Zalo %s để nhận catalog, bảng giá sỉ và tư vấn gia công thương hiệu riêng." % (c["name"], c["phone"])),
                                 body, [cld]), None, "0.6")
+    # bài đã gộp: địa chỉ của bài chuyển sang bài giữ lại
+    alias = {}
+    pub = {p["id"]: p["slug"] for p in posts}
+    for m in db.q("SELECT slug, merged_into FROM site_posts WHERE status='merged' AND merged_into IS NOT NULL"):
+        if m["merged_into"] in pub:
+            alias[u_post(m["slug"])] = u_post(pub[m["merged_into"]])
+    # liên kết nội bộ tới trang không còn (sản phẩm ẩn, bài gỡ): trỏ về trang danh sách, không để Google gặp lỗi 404
+    fixed = []
+
+    def fix_link(m):
+        u = m.group(1)
+        path = re.split(r"[#?]", u)[0]
+        if path in pages:
+            return m.group(0)
+        to = alias.get(path) or ("/san-pham.html" if path.startswith("/san-pham/") else "/tin-tuc.html" if path.startswith("/tin-tuc/") else "/")
+        fixed.append(path)
+        return f'href="{to}"'
     # ghi file: /tin-tuc.html, /tin-tuc/<bài>.html ...; đường dẫn kiểu cũ /tin-tuc/<bài>/ thành trang chuyển ngay sang .html
-    for path, (doc, lastmod, prio) in pages.items():
+    for path, (doc, lastmod, prio) in list(pages.items()):
+        doc = re.sub(r'href="(/[^"]*?\.html(?:[#?][^"]*)?)"', fix_link, doc)
         f = tmp / "index.html" if path == "/" else tmp / path.lstrip("/")
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text(doc, encoding="utf-8")
@@ -1071,6 +1174,10 @@ def _build() -> dict:
             old = tmp / path.lstrip("/")[:-5] / "index.html"
             old.parent.mkdir(parents=True, exist_ok=True)
             old.write_text(_redirect(_abs(path)), encoding="utf-8")
+    for src, dst in alias.items():
+        for f in (tmp / src.lstrip("/"), tmp / src.lstrip("/")[:-5] / "index.html"):
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_text(_redirect(_abs(dst)), encoding="utf-8")
     (tmp / "404.html").write_text(_page("/404.html", f"Không tìm thấy trang | {c['name']}", "Trang không tồn tại.",
                                         '<div class="wrap"><article class="post"><h1>Không tìm thấy trang</h1><p>Trang bạn tìm đã đổi địa chỉ hoặc không còn. '
                                         'Xem <a href="/san-pham.html">sản phẩm</a>, <a href="/tin-tuc.html">tin tức</a> hoặc <a href="/">về trang chủ</a>.</p></article></div>',
@@ -1098,7 +1205,9 @@ def _build() -> dict:
     tmp.rename(SITE_DIR)
     db.set_setting("site_last_build", db.now())
     n = {"pages": len(pages), "posts": len(posts), "products": len(prods), "domain": bool(c["domain"])}
+    n["fixed_links"] = len(fixed)
     db.log("vy", "Dựng lại website", f"{n['pages']} trang, {n['posts']} bài viết, {n['products']} sản phẩm"
+           + (f", sửa {len(fixed)} liên kết tới trang không còn ({', '.join(sorted(set(fixed))[:3])})" if fixed else "")
            + ("" if c["domain"] else ". Chưa điền tên miền: sitemap và thẻ canonical đang dùng đường dẫn tương đối"))
     return n
 
@@ -1167,6 +1276,7 @@ def plan_more(n: int = 6) -> int:
     """Vy nghĩ thêm từ khóa: AI gợi ý theo sản phẩm thật; chưa có AI thì ghép sản phẩm với ý định tìm kiếm."""
     from llm import llm
     have = {plain(r["keyword"]) for r in db.q("SELECT keyword FROM site_keywords")}
+    have_kw = [r["keyword"] for r in db.q("SELECT keyword FROM site_keywords WHERE status!='dup'")]
     cands = []
     if llm.live:
         try:
@@ -1186,11 +1296,12 @@ def plan_more(n: int = 6) -> int:
             cands += [(f"gia công {base}", "gia công", 2), (f"nguồn sỉ {base}", "bán sỉ", 2)]
     added = 0
     for kw, cl, pr in cands:
-        if added >= n or plain(kw) in have or len(kw) > 80:
+        if added >= n or plain(kw) in have or len(kw) > 80 or similar_kw(kw, have_kw):
             continue
         db.run("INSERT OR IGNORE INTO site_keywords(keyword, cluster, intent, priority, status, source, created_at) VALUES (?,?,?,?,?,?,?)",
                (kw.strip(), cl, "", pr, "planned", "vy", db.now()))
         have.add(plain(kw))
+        have_kw.append(kw)
         added += 1
     if added:
         db.log("vy", "Lên kế hoạch từ khóa", f"Thêm {added} từ khóa mới cho website")
@@ -1202,7 +1313,7 @@ def overview() -> dict:
     st = s()
     posts = db.q("""SELECT id, keyword, title, slug, status, seo_score, words, policy_note, cover, created_at, updated_at, published_at
                     FROM site_posts ORDER BY id DESC""")
-    kws = db.q("SELECT * FROM site_keywords ORDER BY status='written', priority, id")
+    kws = db.q("SELECT * FROM site_keywords ORDER BY status='dup', status='written', priority, id")
     keys = ["site_name", "site_legal_name", "site_tagline", "site_domain", "site_about", "site_address", "site_email", "site_phone",
             "site_certs", "site_founded", "site_color", "site_ga_id", "site_posts_week", "site_write_days", "site_write_time",
             "site_auto_publish", "site_min_seo", "site_ftp_host", "site_ftp_user", "site_ftp_dir", "site_ftp_tls",
@@ -1215,7 +1326,7 @@ def overview() -> dict:
     cfg["site_sync_pending"] = site_deploy.configured(st) and st.get("site_auto_deploy", "1") == "1" and site_deploy.fingerprint() != st.get("site_sync_fp")
     prods = [{"id": p["id"], "name": p["name"], "category": p.get("category"), "on": p["site_on"], "why": p["site_why"],
               "auto": p["site_auto"], "general": bool(p.get("is_general"))} for p in site_products(all_rows=True)]
-    return {"posts": posts, "products": prods, "keywords": kws, "settings": cfg, "built": (SITE_DIR / "index.html").exists(),
+    return {"posts": posts, "products": prods, "keywords": kws, "settings": cfg, "dups": dup_groups(), "built": (SITE_DIR / "index.html").exists(),
             "last_build": st.get("site_last_build"), "last_deploy": st.get("site_last_deploy"), "last_write": st.get("site_last_write"),
             "stats": {"published": sum(p["status"] == "published" for p in posts), "review": sum(p["status"] == "review" for p in posts),
                       "planned": sum(k["status"] == "planned" for k in kws),
