@@ -911,6 +911,7 @@ def _build() -> dict:
     shutil.copyfile(ASSETS / "site.js", tmp / "assets" / "site.js")
     pages = {}  # path -> (html, lastmod, priority)
     prods = _product_pages()
+    pseo = {r["product_id"]: r for r in db.q("SELECT * FROM site_product_seo WHERE status='approved'")}
     used = set()
     for p in prods:
         for big, small in p["imgs"]:
@@ -1039,6 +1040,7 @@ def _build() -> dict:
         same = [x for x in prods if x["id"] != p["id"] and (x.get("category") or "Sản phẩm") == cat]
         same = (same + [x for x in prods if x["id"] != p["id"] and x not in same])[:4]  # cùng nhóm trước, thiếu thì thêm sản phẩm khác
         cr, cld = _crumbs([("/", "Trang chủ"), ("/san-pham.html", "Sản phẩm"), (None, p["name"])])
+        ps = pseo.get(p["id"])  # nội dung SEO Hương viết, Vy / sếp đã duyệt
         pld = {"@context": "https://schema.org", "@type": "Product", "name": p["name"], "description": (p.get("description") or p["name"])[:500],
                "brand": {"@type": "Brand", "name": c["name"]}}
         if p["imgs"]:
@@ -1082,12 +1084,21 @@ def _build() -> dict:
                    zalo, ICON["zalo"], c["phone"], ICON["phone"], c["phone"], e(c["certs"])))
         more = ('<section class="blk tint"><div class="wrap"><div class="blk-h"><h2>Sản phẩm khác của nhà máy</h2><a class="more" href="/san-pham.html">Tất cả sản phẩm</a></div>'
                 '<div class="pgrid">' + "".join(_pcard(x, zalo) for x in same) + "</div></div></section>") if same else ""
+        pfaq = json.loads(ps["faq"] or "[]") if ps else []
+        seo_html = (md_html(ps["body"]) + (('<h2>Câu hỏi thường gặp</h2><div class="faq">' + "".join(
+            "<details><summary>%s</summary><p>%s</p></details>" % (e(q.get("q", "")), e(q.get("a", ""))) for q in pfaq) + "</div>") if pfaq else "")) if ps else ""
+        if pfaq:
+            lds_extra = [{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+                {"@type": "Question", "name": q.get("q", ""), "acceptedAnswer": {"@type": "Answer", "text": q.get("a", "")}} for q in pfaq]}]
+        else:
+            lds_extra = []
         body = ('<div class="wrap">' + cr + '<div class="pd">' + gallery + info + "</div>"
-                + (('<section class="pdesc"><h2>Mô tả sản phẩm</h2>' + desc + rel_html + "</section>") if (desc or rel_html) else "")
+                + (('<section class="pdesc">' + seo_html + (('<h2>Thông tin thêm</h2>' if ps else '<h2>Mô tả sản phẩm</h2>') + desc if desc else "")
+                    + rel_html + "</section>") if (desc or rel_html or ps) else "")
                 + "</div>" + more + band + lightbox)
-        pages[path] = (_page(path, title_with(p["name"], c["name"]),
-                             "%s: %s. Nhận sỉ, gia công. Zalo %s." % (p["name"], cut(lead or p["name"], 100).rstrip("."), c["phone"]),
-                             body, [cld, pld], _media_url(p["img"]), "product"), None, "0.7")
+        pages[path] = (_page(path, (ps and ps["title"]) or title_with(p["name"], c["name"]),
+                             (ps and ps["meta"]) or "%s: %s. Nhận sỉ, gia công. Zalo %s." % (p["name"], cut(lead or p["name"], 100).rstrip("."), c["phone"]),
+                             body, [cld, pld] + lds_extra, _media_url(p["img"]), "product"), (ps["updated_at"] or "")[:10] if ps else None, "0.7")
     # tin tức (phân trang)
     n_pages = max(1, math.ceil(len(posts) / PER_PAGE))
     page_url = lambda k: "/tin-tuc.html" if k == 0 else "/tin-tuc/trang-%d.html" % (k + 1)
@@ -1251,7 +1262,7 @@ def tick(now):
     if (st.get("site_last_write") or "")[:10] == now.strftime("%Y-%m-%d") or _busy["on"]:
         return
     import departments  # mỗi Biên tập viên SEO viết thêm 1 bài / tuần, bài chia lần lượt cho Vy và các biên tập viên
-    who = departments.writers("seo_writer", "vy")
+    who = ["huong"] + departments.writers("seo_writer", "vy")  # Hương (Content) viết cùng Vy, Vy duyệt
     per = max(1, math.ceil((_i("site_posts_week", 3) + len(who) - 1) / len(days)))
 
     def run():

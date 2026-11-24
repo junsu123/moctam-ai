@@ -27,7 +27,9 @@ Trang **Tìm khách sỉ** có dòng số SĐT tìm được theo từng kênh t
 | **Hà** | Chăm sóc khách | Chấm điểm khách, soạn tin nhắn trả lời, nhắc bám khách sau 2 ngày |
 | **Khoa** | Phân tích | Đo số bài, số khách, nhóm hiệu quả nhất; đưa số liệu vào cuộc họp |
 | **Mai** | Tìm khách sỉ | Tìm người đang bán hàng online (livestream, Facebook, TikTok Shop, Shopee, đa nền tảng), chấm điểm 100 có bằng chứng, đưa khách hạng A/B vào mục Khách hàng; không tự nhắn tin |
-| **Vy** | Trưởng phòng Website & SEO | Quản lý website công ty, lên kế hoạch từ khóa, viết bài chuẩn SEO (tự chấm theo bảng kiểm), dựng website và đăng lên hosting |
+| **Vy** | Trưởng phòng Website & SEO (SEO Leader) | Chiến lược SEO: đọc Search Console, GA4, theo dõi thứ hạng, chọn từ khóa ra khách, phân từ khóa cho từng trang, giao việc và duyệt nội dung của Hương, báo cáo SEO tuần; dựng website và đăng lên hosting |
+| **Hương** | SEO Content Specialist, Phòng Website | Viết nội dung trang sản phẩm và bài website chuẩn SEO, sửa tiêu đề / mô tả trang có cơ hội trên Google, kiểm chứng số liệu |
+| **Khải** | Technical SEO, Phòng Website | Mỗi sáng kiểm tra kỹ thuật website (link hỏng, tiêu đề, H1, canonical, schema, ảnh, tốc độ điện thoại, https, 404, index Google), gửi sitemap, tự sửa được thì sửa |
 | **Bảo** | Chăm sóc bài đã đăng, bình luận khách | Mỗi ngày rà soát các bài đã đăng còn hiển thị, giao đúng nick đã đăng bình luận 1 ảnh sản phẩm kèm câu ngắn tự viết và dòng liên hệ Zalo của sếp; đọc bảng tin nhóm của mọi nick, viết sẵn bình luận cho người hỏi mua và người bán online (sếp duyệt) |
 | **Sale 1…8** | Nhân viên sale | Mỗi sale giữ **3–5 tài khoản Facebook**, mỗi nick một hồ sơ Chrome riêng; làm theo ca từng nick: đăng bài vào nhóm và trang cá nhân, up bài, quét bình luận, rồi chuyển nick kế tiếp |
 
@@ -472,6 +474,37 @@ công ty (VD `moctamvn.vn`). Tab **Đăng lên hosting**:
 
 Hoặc tải zip rồi tải lên `public_html`. Sau đó gửi `https://ten-mien/sitemap.xml` vào Google Search Console (lần gửi đầu Search
 Console có thể báo “Không thể tìm nạp” vài giờ; kiểm tra sitemap ổn thì bấm Gửi lại).
+
+### Đội SEO: Vy (SEO Leader), Hương (SEO Content), Khải (Technical SEO)
+
+Tab **Website → Đội SEO**. Phòng Website có 3 người cố định, mỗi người một bàn trong khu Website của văn phòng 3D (Hương, Khải ngồi
+hàng sau Vy). CEO gọi đúng người khi sếp nhắn “báo cáo seo”, “kiểm tra tốc độ website”, “tối ưu trang sản phẩm”.
+
+**Kết nối Google** (một lần, khoảng 15 phút; hướng dẫn từng bước ngay trên thẻ *Kết nối Google*): tạo tài khoản dịch vụ trong Google
+Cloud, bật Search Console API + Analytics Data API, dán tệp khóa JSON, thêm email tài khoản dịch vụ vào Search Console (quyền Đầy đủ)
+và GA4 (Người xem), điền mã thuộc tính GA4. **Kiểm tra kết nối** báo từng bước bằng tiếng Việt (chưa bật API, chưa cấp quyền, sai mã
+GA4...). Khóa không bao giờ hiện lại trên giao diện. Website tự gửi sự kiện **contact_click** khi khách bấm Zalo / Gọi (cần mã G-XXXX ở
+tab Thông tin công ty); đánh dấu sự kiện này là *sự kiện chính* trong GA4 để đo khách liên hệ từ website.
+
+- **Vy · SEO Leader** (mỗi sáng 07:50, nút *Vy phân tích ngay*): đọc Search Console 28 ngày (so 28 ngày trước) và GA4 (truy cập, bấm
+  Zalo / Gọi). Tìm **cơ hội**: từ khóa đang ở vị trí 4–20 (đẩy lên trang 1) và từ khóa top 3 mà ít người bấm (sửa tiêu đề / mô tả);
+  giao Hương sửa đúng trang đó. Thêm tối đa 5 từ khóa/ngày khách đang tìm thật (đúng ngành, không trùng chủ đề). **Theo dõi thứ hạng**
+  từ khóa đang viết / đã viết (so tuần trước). **Từ khóa → trang đích**: mỗi từ khóa gắn với bài viết, trang sản phẩm, trang Gia công /
+  danh mục, hoặc “cần bài mới” (topic cluster). **Duyệt nội dung** của Hương. Thứ Hai gửi **báo cáo SEO tuần** qua Telegram: lượt bấm,
+  hiển thị, vị trí TB, truy cập, bấm Zalo / Gọi (so kỳ trước), từ khóa lên / xuống hạng, cơ hội, điểm kỹ thuật, số trang sản phẩm đã tối ưu.
+- **Hương · SEO Content** (10:20, nút *Hương làm việc ngay*): làm việc Vy giao trước, rồi mỗi ngày viết nội dung SEO cho 2 trang sản phẩm
+  đang hiện trên website (sửa `seo_product_per_day`): từ khóa (từ khóa Google đang đưa khách tới trang đó, chưa có thì “tên + sỉ”), tiêu đề,
+  mô tả, thân trang 200–350 chữ (thông tin sản phẩm, bán cho ai, nhập sỉ & gia công), 3 câu hỏi thường gặp (schema FAQPage). Chỉ dùng thông
+  tin của sản phẩm; **con số không có trong thông tin sản phẩm** thì không cho tự duyệt (chờ sếp kiểm lại). Đạt chuẩn (từ 80 điểm, không
+  hứa chữa bệnh) và đang bật Vy tự đăng thì **Vy duyệt** lên website; còn lại sếp **Xem / duyệt** (sửa thẳng rồi duyệt) hoặc **Bỏ**. Sửa
+  tiêu đề / mô tả bài có cơ hội chỉ giữ khi điểm SEO không giảm. Hương cũng viết bài website lần lượt với Vy.
+- **Khải · Technical SEO** (06:50, nút *Khải kiểm tra ngay*): kiểm tra mọi trang: link hỏng, sitemap có trang không tồn tại (tự dựng lại
+  để sửa), tiêu đề / mô tả sai độ dài hoặc trùng, H1, canonical, JSON-LD lỗi, ảnh thiếu alt, ảnh trên 400 KB, trang sản phẩm dưới 120 chữ
+  (giao Hương), chưa có tên miền / GA4; trên mạng: http có chuyển sang https không, trang không tồn tại có trả mã 404 không, **PageSpeed
+  điện thoại** 3 trang (điểm, LCP, CLS); có Google thì **gửi lại sitemap** khi đổi và **kiểm tra index** 8 trang/ngày (trang chưa vào chỉ
+  mục kèm lý do). Mỗi lỗi có mức (nặng / vừa / nhẹ), cách sửa và ai sửa (Khải, Hương, sếp). **Sức khỏe kỹ thuật** 0–100 (so lần trước).
+- Cài đặt: `seo_on` (tắt cả đội), `seo_audit_time`, `seo_leader_time`, `seo_content_time`, `seo_product_per_day`, `seo_inspect_per_day`,
+  `seo_report_weekday`.
 
 ### Giao diện website (bán hàng)
 
@@ -1556,6 +1589,7 @@ docs/
   junk.py        Data rác sếp loại: chặn đích danh, học chữ chung của data rác, trừ điểm/loại khách giống vậy
   fb_policy.py   Luật Facebook: bộ luật, kiểm bài, giới hạn an toàn mỗi nick, sự cố & bài học, theo dõi chính sách Meta
   website.py     Website công ty + Vy: từ khóa, viết bài, bảng kiểm SEO, dựng trang tĩnh, sitemap, schema, zip
+  seo_team.py    Đội SEO: Google (Search Console, GA4, PageSpeed), Vy phân tích / giao việc / báo cáo, Hương trang sản phẩm, Khải kiểm tra kỹ thuật
   site_deploy.py Đưa website lên hosting: FTP/FTPS/SFTP/cổng PHP, kiểm tra kết nối, tải tệp đổi, tự đồng bộ
   group_target.py Sếp chỉ đạo nơi đăng: chế độ all/prefer/only, từ khóa nên đăng / tránh, nhóm tập trung, xem trước
   post_care.py   Bảo chăm bài đã đăng: câu bình luận up bài tự viết (Claude hoặc mẫu), dòng liên hệ Zalo, xem thử

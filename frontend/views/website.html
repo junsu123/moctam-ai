@@ -8,6 +8,7 @@
         <button type="button" role="tab" id="wtab-prod" aria-controls="wpanel-prod" aria-selected="false" tabindex="-1">Sản phẩm</button>
         <button type="button" role="tab" id="wtab-info" aria-controls="wpanel-info" aria-selected="false" tabindex="-1">Thông tin công ty</button>
         <button type="button" role="tab" id="wtab-host" aria-controls="wpanel-host" aria-selected="false" tabindex="-1">Đăng lên hosting</button>
+        <button type="button" role="tab" id="wtab-seo" aria-controls="wpanel-seo" aria-selected="false" tabindex="-1">Đội SEO</button>
       </div>
       <div role="tabpanel" id="wpanel-posts" aria-labelledby="wtab-posts" class="ppanel">
         <div class="row wrap"><button class="btn primary" type="button" id="wsWrite">Vy viết bài mới</button><span class="small muted" id="wsWriteInfo"></span></div>
@@ -54,6 +55,30 @@
           <label class="row small"><input type="checkbox" id="wsAutoDeploy"> Tự đẩy lên hosting khi có tin tức / sản phẩm mới hoặc sửa đổi</label>
           <div class="row wrap"><button class="btn" type="submit">Lưu</button><button class="btn" type="button" id="wsTest">Kiểm tra kết nối</button><button class="btn primary" type="button" id="wsDeploy">Đăng lên hosting</button><span class="small muted" id="wsDeployInfo"></span></div>
           <ul class="ws-steps" id="wsTestOut" hidden></ul></form>
+      </div>
+      <div role="tabpanel" id="wpanel-seo" aria-labelledby="wtab-seo" class="ppanel" hidden>
+        <p class="small muted">Vy (SEO Leader) đọc Google mỗi sáng, giao việc và duyệt; Hương (SEO Content) viết trang sản phẩm, sửa tiêu đề / mô tả; Khải (Technical SEO) kiểm tra kỹ thuật lúc 06:50.</p>
+        <div class="pr-stats ws-stats" id="seoStats"></div>
+        <div class="grid2 seo-grid">
+          <section class="card" id="seoVy"></section>
+          <section class="card" id="seoKhai"></section>
+        </div>
+        <section class="card" id="seoHuong"></section>
+        <form class="card" id="seoGoogle"><h3>Kết nối Google (Search Console, GA4)</h3>
+          <ol class="steps small">
+            <li>Vào <b>console.cloud.google.com</b>, tạo dự án, bật <b>Google Search Console API</b> và <b>Google Analytics Data API</b> (APIs &amp; Services → Library).</li>
+            <li>IAM &amp; Admin → Service Accounts → <b>Create service account</b> → mở tài khoản → Keys → Add key → JSON. Tệp .json tải về: mở bằng Notepad, chép toàn bộ dán vào ô dưới.</li>
+            <li>Search Console → Cài đặt → Người dùng và quyền → <b>Thêm người dùng</b>: email tài khoản dịch vụ, quyền <b>Đầy đủ</b>. GA4 → Quản trị → Quyền truy cập thuộc tính → thêm email đó, vai trò <b>Người xem</b>.</li>
+            <li>GA4: đánh dấu sự kiện <code>contact_click</code> (bấm Zalo / Gọi trên website) là <b>sự kiện chính</b> để đo khách liên hệ.</li></ol>
+          <p class="small" id="seoGEmail"></p>
+          <label class="f" for="seoSa">Khóa JSON tài khoản dịch vụ<textarea id="seoSa" rows="3" placeholder='{"type": "service_account", "client_email": "...", "private_key": "..."}' autocomplete="off" spellcheck="false"></textarea></label>
+          <div class="grid3">
+            <label class="f" for="seoGsc">Trang web trong Search Console (để trống: tự tìm)<input type="text" id="seoGsc" placeholder="sc-domain:moctamvn.vn"></label>
+            <label class="f" for="seoGa4">Mã thuộc tính GA4 (dãy số)<input type="text" id="seoGa4" inputmode="numeric" placeholder="412345678"></label>
+            <label class="f" for="seoPsi">Khóa PageSpeed (không bắt buộc)<input type="password" id="seoPsi" autocomplete="off"></label>
+          </div>
+          <div class="row wrap"><button class="btn primary" type="submit">Lưu</button><button class="btn" type="button" id="seoTest">Kiểm tra kết nối</button><button class="btn ghost danger" type="button" id="seoDel">Gỡ kết nối</button></div>
+          <ul class="ws-steps" id="seoTestOut" hidden></ul></form>
       </div>
     </section>
 

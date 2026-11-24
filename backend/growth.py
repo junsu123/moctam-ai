@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 
 import db
 
-CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy", "bao", "nhi"]
+CORE = ["ceo", "minh", "lan", "tuan", "ha", "khoa", "mai", "vy", "huong", "khai", "bao", "nhi"]
 _lock = threading.Lock()
 _busy: set[str] = set()      # agent đang chạy một buổi học có gọi Claude
 _session: dict[str, dict] = {}  # agent -> {"until": datetime, "kind": ...}
@@ -143,6 +143,11 @@ def _practice(aid: str) -> str | None:
     if aid == "bao":
         r = db.one("SELECT COUNT(*) n FROM posts WHERE status='posted' AND COALESCE(permalink_status,'')!='removed'")
         return f"Rà lại {r['n']} bài đã đăng, chọn bài cần up" if r and r["n"] else "Chuẩn bị câu bình luận up bài mới"
+    if aid == "huong":
+        r = db.one("SELECT name FROM products WHERE id NOT IN (SELECT product_id FROM site_product_seo WHERE status='approved') ORDER BY RANDOM() LIMIT 1")
+        return f"Đọc lại thông tin sản phẩm: {r['name'][:45]}" if r else "Đọc lại bài website, tìm chỗ thêm liên kết nội bộ"
+    if aid == "khai":
+        return "Xem lại báo cáo kỹ thuật website, ghi việc cần sửa"
     if aid == "vy":
         r = db.one("SELECT keyword FROM site_keywords WHERE status='planned' ORDER BY priority, id LIMIT 1")
         return f"Nghiên cứu từ khóa: {r['keyword'][:50]}" if r else "Đọc lại bài website, sửa chỗ chưa chuẩn SEO"

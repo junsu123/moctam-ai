@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 
 import db
 
-AGENT_ALIASES = {"minh": "minh", "lan": "lan", "tuan": "tuan", "tuấn": "tuan", "ha": "ha", "hà": "ha", "khoa": "khoa", "mai": "mai", "vy": "vy", "bao": "bao", "nhi": "nhi",
+AGENT_ALIASES = {"minh": "minh", "lan": "lan", "tuan": "tuan", "tuấn": "tuan", "ha": "ha", "hà": "ha", "khoa": "khoa", "mai": "mai", "vy": "vy", "hương": "huong", "khải": "khai", "bao": "bao", "nhi": "nhi",
                  "đức": "ceo", "duc": "ceo", "ceo": "ceo", "trưởng phòng": "minh"}
 def _aliases() -> dict:
     """Tên gọi agent: tên mặc định + tên sếp đã đổi (CEO hiểu “Ngọc viết dài quá” là nói Lan nếu sếp đổi tên Lan thành Ngọc)."""
@@ -281,6 +281,28 @@ def execute(act: dict) -> str:
         return ("Từ lượt lướt bảng tin tới, bài không liên quan Bảo viết câu mời sỉ (đáp một câu đúng bài rồi mời nhập sỉ, làm đại lý), "
                 "kèm Zalo, sếp duyệt rồi nick mới gửi; vẫn giữ trần mỗi nick / mỗi nhóm và bỏ qua nhóm cấm bán hàng"
                 if style == "invite" else "Từ lượt tới, bài không liên quan Bảo bình luận tự nhiên, chỉ giới thiệu nhẹ là xưởng")
+    if t == "seo_team":
+        import seo_team
+        job = act.get("job") or "report"
+
+        def seo_job(via):
+            try:
+                if job == "audit":
+                    r = seo_team.run_audit()
+                    hi = [i for i in r["issues"] if i["sev"] != "low"][:4]
+                    followup(f"Khải kiểm tra website: sức khỏe kỹ thuật {r['score']}/100"
+                             + ("; " + "; ".join(f"{i['msg']} → {i['fix']}" for i in hi) if hi else ", không có lỗi đáng kể"), via)
+                elif job == "content":
+                    r = seo_team.run_content()
+                    followup(f"Hương đã làm {r['done']} việc nội dung (trang sản phẩm / tiêu đề, mô tả); bài đạt chuẩn Vy đã duyệt lên website", via)
+                else:
+                    seo_team.run_leader()
+                    followup(re.sub(r"<[^>]+>", "", seo_team.weekly_report()), via)
+            except Exception as e:
+                followup(f"Đội SEO chưa làm được: {e}", via)
+        _bg(seo_job, act.get("_via", "web"))
+        return {"audit": "Khải đang kiểm tra kỹ thuật website, xong em báo sếp", "content": "Hương đang tối ưu trang sản phẩm, xong em báo sếp"}.get(
+            job, "Vy đang đọc Search Console, GA4 và làm báo cáo SEO, xong em báo sếp")
     if t == "site_deploy":
         import site_deploy
 
@@ -700,7 +722,9 @@ def _context() -> str:
         "agents": {k: f"{__import__('agents').name_of(k)}, {v}" for k, v in {
             "minh": "trưởng phòng Kinh doanh, chủ trì họp", "lan": "viết bài", "tuan": "trưởng phòng Hội nhóm: chọn nhóm và xếp lịch đăng", "ha": "chăm sóc khách, soạn tin",
             "khoa": "số liệu", "mai": "tìm khách sỉ (người bán online, livestream) trên Facebook, TikTok, Shopee",
-            "vy": "trưởng phòng Website: quản lý website công ty và viết bài chuẩn SEO",
+            "vy": "SEO Leader, trưởng phòng Website: chiến lược từ khóa, Search Console, GA4, duyệt nội dung, viết bài chuẩn SEO",
+            "huong": "SEO Content Specialist (Phòng Website): viết trang sản phẩm, bài website, sửa tiêu đề / mô tả",
+            "khai": "Technical SEO (Phòng Website): kiểm tra kỹ thuật website, tốc độ, index Google, sitemap",
             "bao": "rà soát bài đã đăng, cho nick bình luận ảnh kèm câu ngắn và Zalo liên hệ (up bài)",
             "nhi": "trưởng phòng Trang Facebook: đọc xu hướng, tự tạo Trang mới, lên lịch bài cho Trang xu hướng (ảnh sếp tạo, gửi qua Telegram)"}.items()},
         "sales": [{"id": r["id"], "ten": r["name"], "nick": r["fb_name"], "dang_nhap": r["login_status"] == "ok",
@@ -718,6 +742,7 @@ ACTIONS_DOC = """Các việc được phép (type và tham số):
 - plan {}: giao Tuấn xếp lịch đăng các bài đã duyệt
 - feed_style {style: invite|natural}: sếp muốn bình luận MỜI SỈ vào cả bài không liên quan (invite) hoặc chỉ bình luận tự nhiên (natural)
 - site_deploy {test?: true, check?: true}: check true khi sếp nói sitemap / Google không đọc được website. Sếp bảo đẩy / đăng / cập nhật website lên hosting (tin tức, sản phẩm lên online); test true khi sếp hỏi kiểm tra kết nối hosting
+- seo_team {job: report|audit|content}: report = Vy báo cáo SEO (thứ hạng, lượt bấm Google, traffic, cơ hội từ khóa); audit = Khải kiểm tra kỹ thuật website (tốc độ, lỗi, index); content = Hương tối ưu trang sản phẩm / tiêu đề, mô tả
 - trend_page_idea {name, niche?, note?}: sếp giao Nhi mở / tạo Trang Facebook có tên (hoặc ý tưởng) cụ thể; Nhi tự đổi tên nếu trùng
 - dept_review {dept?: sales|groups|pages|website}: sếp bảo các trưởng phòng (hoặc một phòng) đánh giá phòng, xem phòng nào thiếu người / đề xuất tuyển
 - coach_now {}: cho các agent đủ kết quả thật mới gửi việc cho Claude kèm cặp ngay (theo lô, giảm 50%)
@@ -867,6 +892,12 @@ def _rule_plan(text: str) -> dict:
         return {"reply": "Dạ.", "actions": [{"type": "call", "agent": agent, "text": t[mc.start(1):].strip(" .,:-")}]}
     if re.search(r"trưởng phòng.{0,30}(đánh giá|xem lại|báo cáo|đề xuất)|(đánh giá|rà soát|xem lại) (các )?phòng( ban)?|phòng nào thiếu người", low):
         return {"reply": "Dạ.", "actions": [{"type": "dept_review"}]}
+    if re.search(r"(kiểm tra|rà soát|audit).{0,20}(kỹ thuật|tốc độ|lỗi).{0,15}(web|website|seo)|seo kỹ thuật|technical seo|pagespeed|tốc độ (web|website)", low):
+        return {"reply": "Dạ.", "actions": [{"type": "seo_team", "job": "audit"}]}
+    if re.search(r"(tối ưu|viết( lại)?) (nội dung )?trang sản phẩm|seo trang sản phẩm", low):
+        return {"reply": "Dạ.", "actions": [{"type": "seo_team", "job": "content"}]}
+    if re.search(r"báo cáo seo|seo (tuần|thế nào|ra sao)|thứ hạng (google|từ khóa)|traffic|lượt truy cập (web|website)|lượt bấm (từ )?google", low):
+        return {"reply": "Dạ.", "actions": [{"type": "seo_team", "job": "report"}]}
     if re.search(r"sitemap|site ?map|search console|google (không|chưa) (đọc|tìm|index)", low):
         return {"reply": "Dạ.", "actions": [{"type": "site_deploy", "check": True}]}
     if re.search(r"(kiểm tra|test|thử).{0,15}(kết nối )?(hosting|ftp)|(hosting|ftp).{0,20}(lỗi|không (kết nối|vào|đăng))", low):
@@ -1044,7 +1075,7 @@ def _rule_plan(text: str) -> dict:
 
 # ---------------------------------------------------------------- CEO gọi người phụ trách lên phòng nhận việc
 WHO = {  # việc → ai phụ trách (CEO gọi người đó lên phòng giao việc; văn phòng 3D cho người đó đi sang bàn CEO)
-    "write_posts": ["lan"], "plan": ["tuan"], "feed_style": ["bao"], "site_deploy": ["vy"], "trend_page_idea": ["nhi"],
+    "write_posts": ["lan"], "plan": ["tuan"], "feed_style": ["bao"], "site_deploy": ["vy"], "seo_team": ["vy"], "trend_page_idea": ["nhi"],
     "focus_review": ["khoa"], "suggest_keywords": ["mai", "tuan"], "weekly_report": ["khoa"], "status": ["khoa"],
     "scan_fanpage": ["ha"], "set_hot": ["minh"], "find_groups": ["tuan"], "join_groups": ["tuan"], "teach_mai": ["mai"],
     "review_my_groups": ["tuan"], "find_prospects": ["mai"], "scan_comments": ["ha"], "pause_sale": ["tuan"],

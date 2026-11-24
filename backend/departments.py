@@ -24,7 +24,7 @@ DEPTS = {
                "goal": "Nhóm đăng được, nhóm tương tác cao, bình luận có ích, không để nick bị chặn"},
     "pages": {"name": "Phòng Trang Facebook", "head": "nhi", "core": ["nhi"], "color": "#e0559b",
               "goal": "Trang mới theo xu hướng bền, người theo dõi và tương tác bài Trang tăng đều"},
-    "website": {"name": "Phòng Website", "head": "vy", "core": ["vy"], "color": "#3c6fd8",
+    "website": {"name": "Phòng Website", "head": "vy", "core": ["vy", "huong", "khai"], "color": "#3c6fd8",
                 "goal": "Bài website chuẩn SEO đúng hạn, website luôn lên đúng hosting"},
 }
 ORDER = ["director", "sales", "groups", "pages", "website"]
@@ -46,7 +46,8 @@ MINDSET = {
     "minh": "Bạn nghĩ bằng phễu: số khách có SĐT → sếp gọi → chốt đơn. Nút thắt nằm ở bước nào thì dồn sức vào bước đó.",
     "tuan": "Bạn nghĩ bằng an toàn và chất lượng nhóm: nhóm tương tác cao, đúng tệp, nick không bị chặn quan trọng hơn số bài.",
     "nhi": "Bạn nghĩ bằng xu hướng bền và tương tác thật: Trang nào được hưởng ứng thì chăm thêm, Trang chậm thì đổi cách viết trước khi mở Trang mới.",
-    "vy": "Bạn nghĩ bằng từ khóa và chất lượng SEO: viết đều, đạt chuẩn, mỗi bài nhắm đúng người tìm nguồn hàng / gia công.",
+    "vy": "Bạn là SEO Leader, nghĩ bằng doanh thu: từ khóa nào đưa người bán hàng tới Zalo của xưởng, thứ hạng và lượt bấm từ Google, "
+          "mỗi chủ đề một trang mạnh; Hương lo nội dung, Khải lo kỹ thuật, bạn duyệt và chọn việc ưu tiên.",
 }
 
 

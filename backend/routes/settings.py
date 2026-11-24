@@ -64,7 +64,7 @@ def settings():
     s = db.get_settings()
     s["fb_page_token"] = "••••••" if s.get("fb_page_token") else ""
     s["tg_token"] = "••••••" if s.get("tg_token") else ""
-    for k in ("tg2_token", "cf_api_token", "pixabay_key"):  # khóa bí mật: không trả về giao diện
+    for k in ("tg2_token", "cf_api_token", "pixabay_key", "seo_google_sa", "seo_psi_key", "site_ftp_pass", "site_sync_token"):  # khóa bí mật: không trả về giao diện
         s[k] = "••••••" if s.get(k) else ""
     key, src = llm.current_key()
     s["anthropic_api_key"] = ""
@@ -80,7 +80,8 @@ def settings():
 @app.put("/api/settings")
 def put_settings(data: dict):
     for k, v in data.items():
-        if k in ("fb_page_token", "tg_token") and v == "••••••":
+        if k in ("fb_page_token", "tg_token", "tg2_token", "cf_api_token", "pixabay_key", "seo_google_sa", "seo_psi_key", "site_ftp_pass",
+                 "site_sync_token") and v == "••••••":
             continue
         if k == "anthropic_api_key":
             continue  # chỉ lưu qua /api/ai-key sau khi kiểm tra

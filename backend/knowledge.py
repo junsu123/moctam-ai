@@ -20,7 +20,7 @@ import db
 STOP = set("""co khong la cua va cho voi thi ma nay do em anh chi ben minh a nhe oi duoc nhung cac mot nao gi sao the nhu de khi
 neu vay roi con hay hoac ve tu tren duoi trong ngoai ra vao lai nua cung rat qua lam bi da se ban toi chung ta ho no
 nha nhi ah u uh ok vang da cai chiec bao nhieu may""".split())
-ROLE_NAME = {"ceo": "CEO Đức", "minh": "Minh", "lan": "Lan", "tuan": "Tuấn", "ha": "Hà", "khoa": "Khoa", "mai": "Mai", "vy": "Vy", "bao": "Bảo", "nhi": "Nhi",
+ROLE_NAME = {"ceo": "CEO Đức", "minh": "Minh", "lan": "Lan", "tuan": "Tuấn", "ha": "Hà", "khoa": "Khoa", "mai": "Mai", "vy": "Vy", "huong": "Hương", "khai": "Khải", "bao": "Bảo", "nhi": "Nhi",
              "sale": "Nhân viên sale",
              "all": "Cả đội"}
 SOURCE_TXT = {"study": "Tự học", "claude": "Hỏi Claude", "boss": "Sếp dạy", "library": "Thư viện có sẵn", "experience": "Kinh nghiệm thực tế",
@@ -66,6 +66,11 @@ CURRICULUM = {
     "nhi": ["cách đọc Google Trends: xu hướng chớp nhoáng và xu hướng bền", "chọn ngách Trang Facebook có cộng đồng quan tâm lâu dài",
             "viết bài Trang bám tin nóng mà không giật tít sai sự thật", "giờ đăng bài Trang có nhiều người xem ở Việt Nam",
             "cách viết prompt tạo ảnh minh họa rõ cảnh, phong cách, tỉ lệ", "chủ đề nên tránh khi làm Trang: chính trị, người thật, tai nạn"],
+    "huong": ["viết trang sản phẩm B2B: quy cách, nhập sỉ, bán cho ai", "search intent: người tìm nguồn sỉ khác người tìm gia công",
+              "thẻ title và meta description tăng tỉ lệ bấm", "liên kết nội bộ theo cụm chủ đề (topic cluster)",
+              "kiểm chứng thông tin trước khi đăng: không thêm số liệu không có nguồn"],
+    "khai": ["Core Web Vitals: LCP, CLS, INP trên điện thoại", "canonical, redirect 301, trang 404 đúng mã", "sitemap.xml và robots.txt",
+             "Search Console: báo cáo lập chỉ mục, kiểm tra URL", "schema Product, Article, FAQPage, BreadcrumbList", "GA4: sự kiện chuyển đổi (bấm Zalo, gọi)"],
     "vy": ["cách nghiên cứu từ khóa cho website nhà máy gia công thực phẩm", "cấu trúc bài viết chuẩn SEO: tiêu đề, mô tả, H2, FAQ",
            "cách viết thẻ meta description thu hút người tìm kiếm", "liên kết nội bộ giữa bài viết và trang sản phẩm",
            "cách viết bài cho từ khóa gia công trà túi lọc", "nội dung E-E-A-T: kinh nghiệm, chuyên môn, uy tín của nhà máy",
@@ -426,7 +431,7 @@ def study_agent(agent_id: str, n: int = 2) -> list[int]:
     return saved
 
 
-STUDY_AGENTS = ["lan", "tuan", "ha", "khoa", "mai", "vy", "bao", "nhi", "minh", "ceo", "sale"]
+STUDY_AGENTS = ["lan", "tuan", "ha", "khoa", "mai", "vy", "huong", "khai", "bao", "nhi", "minh", "ceo", "sale"]
 
 
 def study_all(n: int | None = None) -> dict:

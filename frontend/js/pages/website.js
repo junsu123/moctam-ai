@@ -2,12 +2,12 @@
 const WS_INFO=[["site_name","Tên thương hiệu"],["site_legal_name","Tên công ty (pháp lý)"],["site_tagline","Khẩu hiệu"],["site_domain","Tên miền (VD moctam.vn)"],["site_phone","Zalo / điện thoại"],["site_email","Email"],
   ["site_address","Địa chỉ nhà máy"],["site_certs","Tiêu chuẩn, chứng nhận"],["site_color","Màu thương hiệu"],["site_ga_id","Mã Google Analytics (G-...)"]];
 const WS_ST={draft:["","Nháp"],review:["warn","Chờ sếp duyệt"],published:["ok","Đã đăng"],merged:["","Đã gộp vào bài khác"]};
-function wsTab(k){ ST.wsTab=k; for(const x of ["posts","kw","prod","info","host"]){ const on=x===k; $("#wtab-"+x).setAttribute("aria-selected",on); $("#wtab-"+x).tabIndex=on?0:-1; $("#wpanel-"+x).hidden=!on; } }
+function wsTab(k){ ST.wsTab=k; for(const x of ["posts","kw","prod","info","host","seo"]){ const on=x===k; $("#wtab-"+x).setAttribute("aria-selected",on); $("#wtab-"+x).tabIndex=on?0:-1; $("#wpanel-"+x).hidden=!on; } if(k==="seo") loadSeo(); }
 $("#wsProds").addEventListener("change",async e=>{ const sel=e.target.closest("[data-wsshow]"); if(!sel) return; const v=sel.value;
   try{ await api(`/website/products/${sel.dataset.wsshow}`,"PUT",{show:v==="auto"?null:v==="1"}); await loadWs(); toast("Đã lưu. Bấm Dựng lại website để cập nhật trang sản phẩm"); }catch(err){ toast(err.message); } });
 $("#wsTabs").addEventListener("click",e=>{ const b=e.target.closest("[role=tab]"); if(b) wsTab(b.id.replace("wtab-","")); });
-$("#wsTabs").addEventListener("keydown",e=>{ const ks=["posts","kw","prod","info","host"]; if(!["ArrowLeft","ArrowRight"].includes(e.key)) return; e.preventDefault();
-  const i=(ks.indexOf(ST.wsTab||"posts")+(e.key==="ArrowRight"?1:4))%5; wsTab(ks[i]); $("#wtab-"+ks[i]).focus(); });
+$("#wsTabs").addEventListener("keydown",e=>{ const ks=["posts","kw","prod","info","host","seo"]; if(!["ArrowLeft","ArrowRight"].includes(e.key)) return; e.preventDefault();
+  const i=(ks.indexOf(ST.wsTab||"posts")+(e.key==="ArrowRight"?1:5))%6; wsTab(ks[i]); $("#wtab-"+ks[i]).focus(); });
 async function loadWs(){ try{ ST.ws=await api("/website"); }catch(e){ toast(e.message); return; } renderWs(); }
 function renderWs(){
   const d=ST.ws; if(!d) return; const s=d.stats, cf=d.settings;

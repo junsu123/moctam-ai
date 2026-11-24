@@ -25,4 +25,6 @@
     lb.addEventListener('close',function(){go(i,false)});
     document.addEventListener('keydown',function(e){if(!lb.open)return;if(e.key==='ArrowLeft'){i=(i-1+n)%n;show()}if(e.key==='ArrowRight'){i=(i+1)%n;show()}});}
   mark();
+  document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href^="https://zalo.me"],a[href^="tel:"]');
+    if(a&&window.gtag)gtag('event','contact_click',{method:a.href.indexOf('tel:')===0?'phone':'zalo',page_path:location.pathname});});
 })();

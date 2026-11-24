@@ -103,6 +103,8 @@ def _tick():
     page_inbox.tick(now)  # tin nhắn Fanpage mới: Hà soạn trả lời chờ sếp duyệt (Graph API, trong 24 giờ)
     import website
     website.tick(now)  # Vy viết bài website theo lịch
+    import seo_team
+    seo_team.tick(now)  # đội SEO: Khải kiểm tra kỹ thuật, Vy đọc Google, Hương tối ưu trang sản phẩm
     import coach
     coach.tick(now)  # agent đủ 5 kết quả thật mới: gửi việc cho Claude kèm cặp (một lô, giảm 50%)
     import housekeeping

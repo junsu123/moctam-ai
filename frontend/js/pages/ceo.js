@@ -1,6 +1,6 @@
 /* --------------------------------------------- sếp giao việc cho CEO */
 async function renderOrders(){ const box=$("#ceoOrders"); if(!box) return; let d; try{ d=await api("/ceo/chat"); }catch(e){ return; }
-  const AG={all:"Cả đội",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",vy:"Vy",bao:"Bảo",nhi:"Nhi",ceo:"CEO"};
+  const AG={all:"Cả đội",minh:"Minh",lan:"Lan",tuan:"Tuấn",ha:"Hà",khoa:"Khoa",mai:"Mai",vy:"Vy",huong:"Hương",khai:"Khải",bao:"Bảo",nhi:"Nhi",ceo:"CEO"};
   box.innerHTML=d.orders.length?`<h4 style="margin:4px 0 6px;font-size:13px">Chỉ đạo lâu dài của sếp (CEO đưa vào lời dặn của agent)</h4><ul class="recent">${d.orders.map(o=>`<li><b>${esc(AG[o.agent]||o.agent)}</b><span>${esc(o.text)}</span><span class="muted small">${fmtDate(o.created_at)}</span><button type="button" class="btn sm ghost danger" data-orderoff="${o.id}">Bỏ</button></li>`).join("")}</ul>`:""; }
 document.addEventListener("click",async e=>{ const b=e.target.closest("[data-orderoff]"); if(!b) return; await api(`/ceo/orders/${b.dataset.orderoff}`,"DELETE"); toast("Đã bỏ chỉ đạo"); renderOrders(); });
 async function loadCeoChat(force){

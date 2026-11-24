@@ -318,3 +318,28 @@
       d.staff.push({id:++d.id,dept:p.dept,position:p.position,name,desk}); p.status="done"; p.ceo_note="Sếp duyệt"; log("ceo","Tuyển nhân viên",`${name} vào làm ${DP_POS[p.position][1]}`); return {status:"done",name}; }
     if((m=P.match(/^\/departments\/staff\/(\d+)\/leave$/))){ d.staff=d.staff.filter(s=>s.id!=m[1]); return {ok:true}; }
     return {}; }
+  // Đội SEO (bản xem trước): số liệu mẫu, không gọi Google
+  function demoSeoTeam(method,P,body){ const d=S.seo||(S.seo={google:{email:"",gsc_site:"",ga4:"",psi_key_set:false,ga_id:"",configured:false},busy:{leader:false,content:false,audit:false},
+      last:{leader:today()+" 07:50:12",content:today()+" 10:20:40",audit:today()+" 06:50:03",report:""},
+      summary:{cur:{clicks:184,impressions:9620,position:14.2,sessions:412,contacts:23},prev:{clicks:121,impressions:7310,position:17.8,sessions:305,contacts:14},days:28,series:[]},
+      opps:[{query:"nguồn hàng trà túi lọc sỉ",impressions:820,clicks:9,position:8.4,prev_position:11.2,page:"https://moctamvn.vn/tin-tuc/nguon-hang-si-tra-tui-loc.html",kind:"Đẩy lên trang 1"},
+            {query:"trà đinh lăng túi lọc sỉ",impressions:410,clicks:3,position:12.6,prev_position:null,page:"https://moctamvn.vn/san-pham/tra-dinh-lang-tui-loc-hop-30-goi-x-3-gam.html",kind:"Đẩy lên trang 1"},
+            {query:"gia công trà túi lọc",impressions:350,clicks:4,position:3.1,prev_position:4.0,page:"https://moctamvn.vn/tin-tuc/gia-cong-tra-tui-loc.html",kind:"Nhiều người thấy, ít người bấm: sửa tiêu đề / mô tả"}],
+      ranks:[{keyword:"gia công trà túi lọc",position:3.1,prev:4.0,clicks:4,impressions:350},{keyword:"gia công bột ngũ cốc",position:9.8,prev:14.5,clicks:6,impressions:290},{keyword:"gia công cốm",position:18.2,prev:16.9,clicks:0,impressions:60}],
+      kwmap:[{keyword:"gia công trà túi lọc",cluster:"gia công",status:"written",url:"/tin-tuc/gia-cong-tra-tui-loc.html",kind:"Bài viết"},{keyword:"trà đinh lăng túi lọc sỉ",cluster:"Trà túi lọc",status:"planned",url:"/san-pham/tra-dinh-lang-tui-loc-hop-30-goi-x-3-gam.html",kind:"Trang sản phẩm"},{keyword:"tiêu chuẩn GMP trong sản xuất thực phẩm",cluster:"nhà máy",status:"planned",url:"",kind:"Cần bài mới"}],
+      tasks:[{id:1,kind:"product",ref_id:1,query:"trà đinh lăng túi lọc sỉ",reason:"Đẩy lên trang 1: “trà đinh lăng túi lọc sỉ” vị trí 12.6, 410 lượt hiển thị",status:"todo"}],
+      products:S.products.slice(0,4).map((p,i)=>i===0?{id:p.id,name:p.name,keyword:p.name.toLowerCase()+" sỉ",title:p.name+" sỉ | MỘC TÂM",meta:p.name+" giá sỉ tại nhà máy MỘC TÂM đạt GMP – ISO – FDA – VSATTP. Nhận sỉ toàn quốc, gia công in nhãn riêng, có mẫu thử. Zalo 0386992326.",body:"## Thông tin sản phẩm\n\n- "+p.name,faq:"[]",status:"review",score:83,note:"Chờ sếp: Số liệu không có trong thông tin sản phẩm: 20 (sếp kiểm lại)"}:i===1?{id:p.id,name:p.name,keyword:p.name.toLowerCase()+" sỉ",status:"approved",score:100,note:"Vy duyệt: đạt chuẩn",faq:"[]"}:{id:p.id,name:p.name,status:"none"}),
+      audit:{at:today()+" 06:50:03",score:72,prev:64,psi:[{url:"https://moctamvn.vn/",score:81,lcp:2.9,cls:0.02},{url:"https://moctamvn.vn/san-pham.html",score:74,lcp:3.4,cls:0.01}],index:{checked:16,indexed:11,not:[]},
+        issues:[{sev:"high",area:"Index",msg:"5/16 trang chưa vào chỉ mục Google (VD Đã thu thập dữ liệu - hiện chưa được lập chỉ mục)",fix:"Làm nội dung dày hơn, thêm link nội bộ",who:"khai",url:"https://moctamvn.vn/tin-tuc/tra-tui-loc.html"},
+          {sev:"med",area:"Tốc độ",msg:"Điện thoại 74/100, LCP 3.4 giây (tốt: ≥ 90, LCP ≤ 2,5 giây)",fix:"Nén ảnh, giảm ảnh đầu trang",who:"khai",url:"https://moctamvn.vn/san-pham.html"},
+          {sev:"med",area:"Trang mỏng",msg:"1 trang sản phẩm dưới 120 chữ",fix:"Hương viết nội dung trang sản phẩm",who:"huong",url:"/san-pham/tra-ca-gai-leo-an-xoa.html"},
+          {sev:"med",area:"Đo lường",msg:"Website chưa gắn GA4 (không đo được truy cập, lượt bấm Zalo)",fix:"Điền mã G-XXXX ở tab Thông tin công ty",who:"sep",url:""}]}});
+    let m;
+    if(P==="/seo/run"){ log({audit:"khai",leader:"vy",content:"huong"}[body.job]||"vy",{audit:"Kiểm tra kỹ thuật SEO",leader:"Phân tích SEO",content:"Viết trang sản phẩm"}[body.job]||"","Bản xem trước: dùng số liệu mẫu"); return {started:true,...d}; }
+    if(P==="/seo/google/test") return {ok:false,steps:[{name:"Khóa tài khoản dịch vụ",ok:false,msg:"Bản xem trước không kết nối Google"}]};
+    if(P==="/seo/google"&&method==="PUT"){ if(body.ga4!=null) d.google.ga4=body.ga4; if(body.gsc_site!=null) d.google.gsc_site=body.gsc_site; return d; }
+    if((m=P.match(/^\/seo\/products\/(\d+)\/write$/))){ const p=d.products.find(x=>x.id==m[1]); Object.assign(p,{keyword:(p.name||"").toLowerCase()+" sỉ",title:p.name+" sỉ | MỘC TÂM",meta:p.name+" giá sỉ tại nhà máy MỘC TÂM. Nhận sỉ toàn quốc, gia công in nhãn riêng, có mẫu thử. Zalo 0386992326.",body:"## Thông tin sản phẩm\n\n- "+p.name+"\n\n## Phù hợp với ai\n\n- Shop online, đại lý",faq:"[]",status:"approved",score:100,note:"Vy duyệt: đạt chuẩn"}); return {result:{status:"approved"},...d}; }
+    if((m=P.match(/^\/seo\/products\/(\d+)\/reject$/))){ d.products.find(x=>x.id==m[1]).status="rejected"; return d; }
+    if((m=P.match(/^\/seo\/products\/(\d+)$/))){ Object.assign(d.products.find(x=>x.id==m[1]),{...body,faq:JSON.stringify(body.faq||[]),status:"approved",note:"Sếp duyệt"}); return d; }
+    return d; }
+

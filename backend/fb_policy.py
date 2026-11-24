@@ -598,7 +598,7 @@ def overview() -> dict:
 
 # ---------------------------------------------------------------- dạy luật vào sổ kiến thức của từng agent
 TEACH = {"lan": ["content", "law"], "ceo": ["content", "law", "account", "rate", "group"], "tuan": ["rate", "group", "account"],
-         "sale": ["rate", "account", "group"], "vy": ["law"], "mai": ["account"], "bao": ["rate", "content"], "nhi": ["content", "rate"]}
+         "sale": ["rate", "account", "group"], "vy": ["law"], "huong": ["law"], "mai": ["account"], "bao": ["rate", "content"], "nhi": ["content", "rate"]}
 
 
 def teach() -> int:

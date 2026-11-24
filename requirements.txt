@@ -9,3 +9,4 @@ psutil>=5.9
 Pillow>=10.0  # ảnh mặt agent, ảnh website
 tzdata>=2024.1  # dữ liệu múi giờ cho Windows (giờ Việt Nam)
 paramiko>=3.0  # đăng website qua SFTP
+cryptography>=41  # ký khóa tài khoản dịch vụ Google (Search Console, GA4)

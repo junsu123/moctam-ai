@@ -599,7 +599,8 @@ def fingerprint() -> str:
             "site_auto_publish", "site_min_seo")
     cfg = {k: v for k, v in st.items() if k.startswith("site_") and not k.startswith(skip)}
     data = [cfg, db.q("SELECT * FROM products ORDER BY id"),
-            db.q("SELECT id, slug, status, updated_at, published_at FROM site_posts WHERE status='published' ORDER BY id")]
+            db.q("SELECT id, slug, status, updated_at, published_at, meta_title, meta_desc FROM site_posts WHERE status='published' ORDER BY id"),
+            db.q("SELECT product_id, updated_at FROM site_product_seo WHERE status='approved' ORDER BY product_id")]
     return hashlib.md5(json.dumps(data, ensure_ascii=False, default=str, sort_keys=True).encode()).hexdigest()
 
 

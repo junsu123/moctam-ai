@@ -316,6 +316,16 @@ CREATE TABLE IF NOT EXISTS site_keywords (
   id INTEGER PRIMARY KEY AUTOINCREMENT, keyword TEXT UNIQUE, intent TEXT, cluster TEXT, priority INTEGER DEFAULT 2,
   status TEXT DEFAULT 'planned', post_id INTEGER, source TEXT DEFAULT 'vy', created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS seo_gsc (query TEXT, page TEXT, clicks INTEGER, impressions INTEGER, ctr REAL, position REAL, period TEXT);
+CREATE INDEX IF NOT EXISTS idx_seo_gsc ON seo_gsc(period, query);
+CREATE TABLE IF NOT EXISTS seo_daily (day TEXT PRIMARY KEY, clicks INTEGER, impressions INTEGER, position REAL, sessions INTEGER, contacts INTEGER);
+CREATE TABLE IF NOT EXISTS seo_rank (day TEXT, keyword TEXT, position REAL, clicks INTEGER, impressions INTEGER, PRIMARY KEY(day, keyword));
+CREATE TABLE IF NOT EXISTS seo_tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, ref_id INTEGER, query TEXT, reason TEXT, status TEXT DEFAULT 'todo',
+  created_at TEXT, done_at TEXT);
+CREATE TABLE IF NOT EXISTS site_product_seo (product_id INTEGER PRIMARY KEY, keyword TEXT, title TEXT, meta TEXT, body TEXT, faq TEXT,
+  status TEXT DEFAULT 'review', score INTEGER DEFAULT 0, note TEXT, author TEXT, created_at TEXT, updated_at TEXT);
+CREATE TABLE IF NOT EXISTS seo_audit (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT, score INTEGER, issues TEXT, psi TEXT, index_stats TEXT);
+CREATE TABLE IF NOT EXISTS seo_pages (url TEXT PRIMARY KEY, verdict TEXT, coverage TEXT, last_crawl TEXT, inspected_at TEXT);
 CREATE TABLE IF NOT EXISTS comment_samples (
   id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, template TEXT, product TEXT, source TEXT, score INTEGER, created_at TEXT
 );
@@ -595,6 +605,10 @@ DEFAULT_SETTINGS = {
     "site_min_seo": "75", "site_last_write": "", "site_last_build": "", "site_last_deploy": "",
     "site_ftp_host": "", "site_ftp_user": "", "site_ftp_pass": "", "site_ftp_dir": "/public_html", "site_ftp_tls": "1", "site_deploy_mode": "auto", "site_auto_deploy": "1", "site_sync_url": "",
     "site_sync_token": "", "site_sync_fp": "", "site_deploy_ok_mode": "", "site_deploy_msg": "", "site_check_msg": "", "site_chmod_file": "755", "site_chmod_dir": "755",
+    # đội SEO (seo_team.py): Vy SEO Leader, Hương Content, Khải Technical; khóa tài khoản dịch vụ Google không trả về giao diện
+    "seo_on": "1", "seo_google_sa": "", "seo_gsc_site": "", "seo_ga4_property": "", "seo_psi_key": "", "seo_audit_time": "06:50",
+    "seo_leader_time": "07:50", "seo_content_time": "10:20", "seo_product_per_day": "2", "seo_inspect_per_day": "8", "seo_report_weekday": "1",
+    "seo_last_audit": "", "seo_last_leader": "", "seo_last_content": "", "seo_last_report": "", "seo_sitemap_sent": "",
 }
 
 DATA_DIR = DB_PATH.parent

@@ -1,6 +1,6 @@
 /* --------------------------------------------- văn phòng */
 /* agent tự đi sang bàn đồng nghiệp khi việc cần trao đổi (theo nhật ký việc vừa xong), thỉnh thoảng báo cáo trưởng phòng */
-const DEPT_OF={ceo:"director",khoa:"director",minh:"sales",lan:"sales",ha:"sales",mai:"sales",tuan:"groups",bao:"groups",nhi:"pages",vy:"website"};
+const DEPT_OF={ceo:"director",khoa:"director",minh:"sales",lan:"sales",ha:"sales",mai:"sales",tuan:"groups",bao:"groups",nhi:"pages",vy:"website",huong:"website",khai:"website"};
 const DEPT_HEAD={director:"ceo",sales:"minh",groups:"tuan",pages:"nhi",website:"vy"};
 const VISIT={lastId:null,lastChat:Date.now(),wait:[]};  // wait: người đang bận đi việc khác, rảnh sẽ đi (giữ 90 giây)
 function visitTarget(x,agents){ const a=x.agent_id||"", act=x.action||"", det=x.detail||"";

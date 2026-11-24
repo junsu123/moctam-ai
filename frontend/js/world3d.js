@@ -88,7 +88,8 @@ const World = (() => {
     [6.2,13.4], // 17: bàn Nhi (trưởng phòng Trang Facebook)
     [-6.8,13.4],[-4.4,13.4], // 18-19: nhân viên tuyển thêm Phòng Hội nhóm
     [0.8,13.4],[3.2,13.4], // 20-21: nhân viên Phòng Website
-    [8.6,13.4],[11,13.4]]; // 22-23: nhân viên Phòng Trang Facebook
+    [8.6,13.4],[11,13.4], // 22-23: nhân viên Phòng Trang Facebook
+    [-1.6,15.5],[0.8,15.5]]; // 24-25: Hương (SEO Content), Khải (Technical SEO) Phòng Website
   // phòng ban có vách ngăn và cửa: Giám đốc, Kinh doanh (bàn trưởng phòng + chuyên viên), khu Sale, Hội nhóm, Website, Trang Facebook
   Object.assign(DESKS,{0:[-3.8,-6.4],1:[-0.8,-6.4],3:[-3.8,-3.6],14:[-0.8,-3.6],4:[-8,-4.6],13:[-10.6,-4.6],2:[-11.6,13.4]});
   const ROOMS=[
