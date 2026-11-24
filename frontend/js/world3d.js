@@ -89,7 +89,7 @@ const World = (() => {
     [-6.8,13.4],[-4.4,13.4], // 18-19: nhân viên tuyển thêm Phòng Hội nhóm
     [0.8,13.4],[3.2,13.4], // 20-21: nhân viên Phòng Website
     [8.6,13.4],[11,13.4], // 22-23: nhân viên Phòng Trang Facebook
-    [-1.6,15.5],[0.8,15.5]]; // 24-25: Hương (SEO Content), Khải (Technical SEO) Phòng Website
+    [-0.4,15.6],[2.0,15.6]]; // 24-25: Hương (SEO Content), Khải (Technical SEO) Phòng Website
   // phòng ban có vách ngăn và cửa: Giám đốc, Kinh doanh (bàn trưởng phòng + chuyên viên), khu Sale, Hội nhóm, Website, Trang Facebook
   Object.assign(DESKS,{0:[-3.8,-6.4],1:[-0.8,-6.4],3:[-3.8,-3.6],14:[-0.8,-3.6],4:[-8,-4.6],13:[-10.6,-4.6],2:[-11.6,13.4]});
   const ROOMS=[
@@ -131,6 +131,8 @@ const World = (() => {
   for(let i=0;i<5;i++) buildDesk(i,["#2f4b8f","#e2557a","#2e9e6b","#f08a24","#7a4fc9"][i]);
   { const g=buildDesk(15,"#3c6fd8"); const [x,z]=DESKS[15]; mesh(new THREE.SphereGeometry(0.12,14,10),"#3c6fd8",{parent:g,x:x-0.7,y:0.95,z:z+0.75}); } // quả địa cầu trên bàn Vy
   { const g=buildDesk(16,"#2f9e6a"); const [x,z]=DESKS[16]; mesh(box(0.28,0.2,0.04),"#f4efe2",{parent:g,x:x-0.7,y:0.92,z:z+0.75}); mesh(box(0.2,0.12,0.045),"#2f9e6a",{parent:g,x:x-0.7,y:0.93,z:z+0.75}); } // khung ảnh trên bàn Bảo
+  { const g=buildDesk(24,"#5b8def"); const [x,z]=DESKS[24]; [0,1,2].forEach(i=>mesh(box(0.22,0.04,0.3),["#f4efe2","#dbe7ff","#5b8def"][i],{parent:g,x:x-0.72,y:0.82+i*0.045,z:z+0.75})); } // chồng bản thảo trên bàn Hương
+  { const g=buildDesk(25,"#2a5bb8"); const [x,z]=DESKS[25]; mesh(new THREE.CylinderGeometry(0.11,0.11,0.05,16),"#2a5bb8",{parent:g,x:x-0.72,y:0.82,z:z+0.75}); mesh(box(0.03,0.16,0.03),"#c9d8f5",{parent:g,x:x-0.72,y:0.92,z:z+0.75}); } // đồng hồ đo tốc độ trên bàn Khải
   { const g=buildDesk(17,"#e0559b"); const [x,z]=DESKS[17]; [0.12,0.2,0.3].forEach((h,i)=>mesh(box(0.06,h,0.06),"#e0559b",{parent:g,x:x-0.82+i*0.09,y:0.82+h/2,z:z+0.75})); } // biểu đồ xu hướng trên bàn Nhi
   { const g=buildDesk(14,"#0f8b8d"); const [x,z]=DESKS[14]; mesh(new THREE.TorusGeometry(0.13,0.03,8,18),"#0f8b8d",{parent:g,x:x-0.7,y:1.02,z:z+0.75}); } // kính lúp trên bàn Mai
   { const g=buildDesk(13,"#d4af37"); const [x,z]=DESKS[13]; // bàn CEO: biển tên mạ vàng + cờ nhỏ
